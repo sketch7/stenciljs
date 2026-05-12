@@ -1,0 +1,49 @@
+{
+  "name": "tanstack-stenciljs-store",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "libs/tanstack.stenciljs-store/src",
+  "tags": ["type:lib", "scope:tanstack"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm build",
+        "cwd": "libs/tanstack.stenciljs-store"
+      },
+      "outputs": ["{projectRoot}/dist"],
+      "cache": true,
+      "dependsOn": ["^build"]
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm test",
+        "cwd": "libs/tanstack.stenciljs-store"
+      },
+      "cache": true,
+      "dependsOn": []
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm oxlint src/",
+        "cwd": "libs/tanstack.stenciljs-store"
+      }
+    },
+    "fmt": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm oxfmt src/",
+        "cwd": "libs/tanstack.stenciljs-store"
+      }
+    },
+    "fmt:check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm oxfmt --check src/",
+        "cwd": "libs/tanstack.stenciljs-store"
+      }
+    }
+  }
+}

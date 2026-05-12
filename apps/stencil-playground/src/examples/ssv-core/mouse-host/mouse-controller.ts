@@ -15,11 +15,11 @@ class MouseController implements ReactiveController {
 	}
 
 	hostConnected() {
-		window.addEventListener("mousemove", this.onMouseMove);
+		globalThis.addEventListener("mousemove", this.onMouseMove);
 	}
 
 	hostDisconnected() {
-		window.removeEventListener("mousemove", this.onMouseMove);
+		globalThis.removeEventListener("mousemove", this.onMouseMove);
 	}
 }
 

@@ -54,6 +54,8 @@
     "fmt:check": "oxfmt --check src/"
   },
   "dependencies": {
+    "@ssv/stenciljs.core": "workspace:*",
+    "@ssv/tanstack.stenciljs-store": "workspace:*",
     "@stencil/core": "catalog:",
     "@stencil/react-output-target": "catalog:",
     "@stencil/store": "catalog:"

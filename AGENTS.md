@@ -58,13 +58,24 @@ pnpm nx g @nx/js:app apps/<name>
 - **Exports**: named exports only in libs; avoid default exports
 - **StencilJS output targets**: configure React/Vue/Angular output targets in `stencil.config.ts` for framework consumers
 
+## Key Libraries
+
+| Package                                                                                                 | Purpose                                                                                                                                                         |
+| ------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`@ssv/stenciljs.core`](libs/stenciljs.core/src/index.ts)                                               | `ReactiveController`/`ReactiveControllerHost` for lifecycle-aware controllers; `SsvElement` and `SsvElementMixin` for hosting controllers in Stencil components |
+| [`@ssv/vite-plugin-stencil-watch`](libs/vite-plugin-stencil-watch/src/lib/vite-plugin-stencil-watch.ts) | Vite plugin that watches Stencil sources, triggers rebuilds, and invalidates the Vite module graph for HMR in consuming apps                                    |
+
+## Dev Workflow
+
+`pnpm dev` starts `vike-playground` on port 3000. [`vite-plugin-stencil-watch`](apps/vike-playground/vite.config.ts) watches `stencil-playground/src` (and peer libs via `watchDirs`), rebuilds Stencil on change, then hot-reloads the Vike app. React wrappers are auto-generated to `apps/stencil-playground/src/react/` on each Stencil build via `@stencil/react-output-target`.
+
 ## Skills Available
 
-- `stenciljs-component-development` — StencilJS component best practices, decorators, lifecycle
-- `stencil-atomic-design-system` — Atomic design system with Stencil, design tokens, theming
+- `stenciljs-component-development` — StencilJS patterns: vertical slices, @stencil/store, ReactiveController, output targets
 - `nx-generate` — Scaffold libs/apps via NX generators (use this first for any scaffolding)
 - `nx-workspace` — Explore projects, targets, and dependencies
 - `link-workspace-packages` — Wire up workspace package dependencies
+- `oxlint` — Run and configure oxlint after making code changes
 
 <!-- nx configuration start-->
 <!-- Leave the start & end comments to automatically receive updates. -->

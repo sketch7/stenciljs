@@ -6,10 +6,19 @@ StencilJS component library monorepo. `libs/` holds publishable web-component li
 
 ```
 apps/
-  stencil-playground/   # StencilJS components (counter + todo) using @stencil/store — non-published
+  stencil-playground/   # StencilJS components (counter, todo, mouse, timer) — non-published
   vike-playground/      # Vike SSR app consuming stencil-playground via @stencil/ssr
-libs/                   # Publishable @ssv/* web-component libraries (empty — add new libs here)
+libs/
+  stenciljs.core/              # @ssv/stenciljs.core — ReactiveController host utilities
+  vite-plugin-stencil-watch/   # @ssv/vite-plugin-stencil-watch — HMR plugin for Stencil in Vite
 ```
+
+## Libraries
+
+| Package                                                                      | Description                                                                                                  |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| [`@ssv/stenciljs.core`](libs/stenciljs.core/README.md)                       | `ReactiveController` / `ReactiveControllerHost` pattern — lifecycle-aware controllers for Stencil components |
+| [`@ssv/vite-plugin-stencil-watch`](libs/vite-plugin-stencil-watch/README.md) | Vite plugin that watches Stencil sources and triggers HMR in consuming apps                                  |
 
 ## Tech stack
 
@@ -47,11 +56,13 @@ pnpm dev
 
 This builds `stencil-playground` (generates `hydrate/`, `loader/`, `src/react/`) then starts both the Stencil watch build and the Vike dev server in parallel.
 
-| URL                           | Page            |
-| ----------------------------- | --------------- |
-| http://localhost:3000         | Landing         |
-| http://localhost:3000/counter | Counter example |
-| http://localhost:3000/todo    | Todo example    |
+| URL                                                   | Page                       |
+| ----------------------------------------------------- | -------------------------- |
+| http://localhost:3000                                 | Landing                    |
+| http://localhost:3000/stencil/counter                 | Counter (@stencil/store)   |
+| http://localhost:3000/stencil/todo                    | Todo (@stencil/store)      |
+| http://localhost:3000/ssv-stencil/reactive-host/mouse | Mouse (ReactiveController) |
+| http://localhost:3000/ssv-stencil/reactive-host/timer | Timer (ReactiveController) |
 
 **HMR behaviour:**
 

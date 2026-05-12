@@ -74,7 +74,7 @@ export function ReactiveControllerHostMixin<B extends MixedInCtor>(Base: B) {
 				}
 			});
 			if (promises.length > 0) {
-				return Promise.all(promises).then(() => void 0);
+				return Promise.all(promises).then();
 			}
 		}
 
@@ -91,7 +91,7 @@ export function ReactiveControllerHostMixin<B extends MixedInCtor>(Base: B) {
 				}
 			});
 			if (promises.length > 0) {
-				return Promise.all(promises).then(() => void 0);
+				return Promise.all(promises).then();
 			}
 		}
 
@@ -108,7 +108,7 @@ export function ReactiveControllerHostMixin<B extends MixedInCtor>(Base: B) {
 				}
 			});
 			if (promises.length > 0) {
-				return Promise.all(promises).then(() => void 0);
+				return Promise.all(promises).then();
 			}
 		}
 

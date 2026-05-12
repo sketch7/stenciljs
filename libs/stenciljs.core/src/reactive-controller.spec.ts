@@ -143,7 +143,9 @@ describe("ReactiveControllerHostMixin", () => {
 			const order: string[] = [];
 			const ctrl: ReactiveController = {
 				hostWillLoad: async () => {
-					await new Promise(r => setTimeout(r, 0));
+					await new Promise(resolve => {
+						setTimeout(resolve, 0);
+					});
 					order.push("loaded");
 				},
 			};

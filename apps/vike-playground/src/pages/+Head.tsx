@@ -3,9 +3,5 @@
 import logoUrl from "../../assets/logo.svg";
 
 export function Head() {
-	return (
-		<>
-			<link rel="icon" href={logoUrl} />
-		</>
-	);
+	return <link rel="icon" href={logoUrl} />;
 }

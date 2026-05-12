@@ -13,9 +13,6 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "es2022",
-    "customConditions": ["@org/source"],
-    "paths": {
-      "@ssv/stenciljs.core": ["./libs/stenciljs.core/src/index.ts"]
-    }
+    "customConditions": ["@ssv/source"]
   }
 }

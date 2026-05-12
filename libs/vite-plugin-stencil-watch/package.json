@@ -1,6 +1,6 @@
 {
   "name": "@ssv/vite-plugin-stencil-watch",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "files": [
     "dist"
   ],
@@ -11,7 +11,7 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "@ssv/source": "./src/index.ts",
+      "@ssv/node-source": "./src/index.ts",
       "types": "./dist/index.d.mts",
       "import": "./dist/index.mjs",
       "default": "./dist/index.mjs"

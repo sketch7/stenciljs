@@ -44,6 +44,22 @@ export type StencilWatchOptions = {
 	 * Defaults to `path.basename(packageDir)`.
 	 */
 	packageId?: string;
+
+	/**
+	 * Additional source directories to watch. Changes in these directories also
+	 * trigger a Stencil rebuild. Use this to watch workspace peer-dependency
+	 * sources (e.g. `libs/stenciljs.core/src`) so HMR works when those packages
+	 * change without a separate build step.
+	 */
+	watchDirs?: string[];
+
+	/**
+	 * Optional command to run before the main Stencil build command.
+	 * Use this to rebuild workspace dependencies (e.g. `pnpm --filter @ssv/stenciljs.core build`)
+	 * so their dist is up-to-date before Stencil bundles them.
+	 * Runs in the same `cwd` as `buildCommand` (i.e. `packageDir`).
+	 */
+	preBuildCommand?: string;
 };
 
 /**
@@ -73,10 +89,13 @@ export function stencilWatch(options: StencilWatchOptions): Plugin {
 		generatedDirs = ["react", "vue", "angular"],
 		buildCommand = "pnpm stencil build",
 		packageId,
+		watchDirs = [],
+		preBuildCommand,
 	} = options;
 
 	const srcDir = path.normalize(srcDirOption ?? path.join(packageDir, "src"));
 	const resolvedPackageId = packageId ?? path.basename(packageDir);
+	const resolvedWatchDirs = watchDirs.map(d => path.normalize(d));
 
 	const excludedDirs = generatedDirs.map(d =>
 		path.isAbsolute(d) ? path.normalize(d) : path.normalize(path.join(srcDir, d)),
@@ -84,7 +103,9 @@ export function stencilWatch(options: StencilWatchOptions): Plugin {
 
 	const isUserFile = (file: string): boolean => {
 		const f = path.normalize(file);
-		return f.startsWith(srcDir) && !f.endsWith(".d.ts") && excludedDirs.every(excluded => !f.startsWith(excluded));
+		if (f.endsWith(".d.ts")) return false;
+		if (f.startsWith(srcDir) && excludedDirs.every(excluded => !f.startsWith(excluded))) return true;
+		return resolvedWatchDirs.some(d => f.startsWith(d));
 	};
 
 	let building = false;
@@ -98,6 +119,9 @@ export function stencilWatch(options: StencilWatchOptions): Plugin {
 		building = true;
 		server.config.logger.info("[stencil] rebuilding…", { timestamp: true });
 		try {
+			if (preBuildCommand) {
+				await execAsync(preBuildCommand, { cwd: packageDir });
+			}
 			await execAsync(buildCommand, { cwd: packageDir });
 			server.config.logger.info("[stencil] rebuild done", { timestamp: true });
 			// Invalidate every cached module from the Stencil package so Vite
@@ -124,6 +148,9 @@ export function stencilWatch(options: StencilWatchOptions): Plugin {
 		apply: "serve",
 		configureServer(server) {
 			server.watcher.add(srcDir);
+			for (const d of resolvedWatchDirs) {
+				server.watcher.add(d);
+			}
 			server.watcher.on("change", file => {
 				if (isUserFile(file)) {
 					build(server);

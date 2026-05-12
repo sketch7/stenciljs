@@ -1,3 +1,65 @@
+# stenciljs
+
+StencilJS component library monorepo. `libs/` holds publishable web-component libraries; `apps/` holds example/demo applications that consume them.
+
+## Monorepo Structure
+
+```
+libs/   # StencilJS web-component libraries (publishable)
+apps/   # Example/demo apps built with modern tooling (Vite + React / plain HTML)
+```
+
+> `pnpm-workspace.yaml` currently declares `packages/*`. Update it to `libs/*` and `apps/*` once the first lib/app is scaffolded.
+
+## Tech Stack
+
+| Tool                                | Role                                                     |
+| ----------------------------------- | -------------------------------------------------------- |
+| [StencilJS](https://stenciljs.com/) | Web-component authoring (libs)                           |
+| [NX](https://nx.dev/)               | Monorepo task runner & code generation                   |
+| [pnpm](https://pnpm.io/)            | Package manager (workspaces)                             |
+| TypeScript 5                        | Strict mode, ES2022 target, `nodenext` module resolution |
+| SWC (`@swc-node/register`)          | Fast TS compilation for NX tasks                         |
+| Prettier                            | Formatter — single quotes, config in `.prettierrc`       |
+
+## Key Commands
+
+```bash
+pnpm install                        # install all deps
+pnpm nx run <project>:<target>      # run a task (build, test, lint, etc.)
+pnpm nx run-many -t build           # build all projects
+pnpm nx affected -t build           # build only affected projects
+pnpm nx graph                       # visualise project dependency graph
+```
+
+### Scaffolding
+
+Use the `nx-generate` skill before scaffolding anything. Typical generators:
+
+```bash
+# New StencilJS library
+pnpm nx g @nx/js:lib libs/<name> --publishable --importPath=@ssv/<name>
+
+# New example app
+pnpm nx g @nx/js:app apps/<name>
+```
+
+## Conventions
+
+- **TypeScript**: strict mode, `es2022` target, `nodenext` module resolution, `@org/source` custom condition for local workspace imports
+- **Formatter**: Prettier with `singleQuote: true` — run `pnpm nx run-many -t fmt` (or `prettier --write .`)
+- **Naming**: library packages use `@ssv/<name>` import paths; component names follow `<prefix>-<name>` convention (e.g. `ssv-button`)
+- **Exports**: named exports only in libs; avoid default exports
+- **StencilJS output targets**: configure React/Vue/Angular output targets in `stencil.config.ts` for framework consumers
+
+## Skills Available
+
+- `stenciljs-component-development` — StencilJS component best practices, decorators, lifecycle
+- `stencil-atomic-design-system` — Atomic design system with Stencil, design tokens, theming
+- `nx-generate` — Scaffold libs/apps via NX generators (use this first for any scaffolding)
+- `nx-workspace` — Explore projects, targets, and dependencies
+- `link-workspace-packages` — Wire up workspace package dependencies
+
 <!-- nx configuration start-->
 <!-- Leave the start & end comments to automatically receive updates. -->
 

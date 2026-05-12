@@ -1,9 +1,12 @@
+import { stencilWatch } from "@ssv/vite-plugin-stencil-watch";
 import { stencilSSR } from "@stencil/ssr";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
 import vike from "vike/plugin";
 import { defineConfig, loadEnv } from "vite";
+
+const stencilPkgDir = path.resolve(__dirname, "../stencil-playground");
 
 export default defineConfig(({ mode }) => {
 	const env = loadEnv(mode, process.cwd(), "");
@@ -15,10 +18,7 @@ export default defineConfig(({ mode }) => {
 			vike(),
 			react(),
 			tailwindcss(),
-			// Compile-time SSR for @app/stencil-playground components.
-			// The plugin intercepts JSX references to the react wrappers,
-			// calls the hydrate module, and replaces them with pre-rendered
-			// Declarative Shadow DOM so components are server-rendered.
+			stencilWatch({ packageDir: stencilPkgDir }),
 			stencilSSR({
 				module: import("@app/stencil-playground/react"),
 				from: "@app/stencil-playground/react",
@@ -32,6 +32,15 @@ export default defineConfig(({ mode }) => {
 					find: "@/",
 					replacement: path.resolve(__dirname, "./src") + "/",
 				},
+			],
+		},
+		optimizeDeps: {
+			exclude: [
+				"@app/stencil-playground",
+				"@app/stencil-playground/react",
+				"@app/stencil-playground/hydrate",
+				"@app/stencil-playground/loader",
+				"@app/stencil-playground/custom-elements",
 			],
 		},
 		server: {

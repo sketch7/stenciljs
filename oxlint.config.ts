@@ -60,7 +60,7 @@ export default defineConfig({
 		"import/no-relative-parent-imports": "off",
 		"import/exports-last": "off",
 		"import/no-nodejs-modules": "off",
-		"import/no-unassigned-import": "error",
+		"import/no-unassigned-import": ["error", { allow: ["**/*.css"] }],
 		"import/extensions": [
 			"error",
 			{
@@ -249,6 +249,33 @@ export default defineConfig({
 				"vitest/require-hook": "warn",
 			},
 		},
+		{
+			// Vike convention files — require default exports for pages, layouts, config
+			files: ["**/pages/+*.ts", "**/pages/+*.tsx", "**/pages/*/+*.ts", "**/pages/*/+*.tsx"],
+			rules: {
+				"import/no-default-export": "off",
+			},
+		},
+		{
+			// StencilJS app components — override the general apps override (later wins)
+			// Stencil uses h() not React, class components, HTML attributes (not React attrs)
+			files: ["apps/stencil-playground/src/**/*.tsx", "apps/stencil-playground/src/**/*.ts"],
+			rules: {
+				"react/prefer-function-component": "off",
+				"react/no-unknown-property": "off",
+				"new-cap": "off",
+				"class-methods-use-this": "off",
+				"typescript/no-inferrable-types": "off",
+				"typescript/explicit-function-return-type": "off",
+				"typescript/explicit-module-boundary-types": "off",
+				"typescript/consistent-type-imports": "off",
+				"typescript/no-unsafe-return": "off",
+				"react-perf/jsx-no-new-array-as-prop": "off",
+				"react-perf/jsx-no-new-object-as-prop": "off",
+				"react-perf/jsx-no-new-function-as-prop": "off",
+				"react-perf/jsx-no-jsx-as-prop": "off",
+			},
+		},
 	],
 	ignorePatterns: [
 		"dist/**",
@@ -262,6 +289,8 @@ export default defineConfig({
 		"libs/*/src/react/**",
 		"libs/*/src/vue/**",
 		"libs/*/src/angular/**",
+		"apps/stencil-playground/src/react/**",
+		"apps/stencil-playground/src/components.d.ts",
 		"loader/**",
 		"hydrate/**",
 	],

@@ -16,6 +16,8 @@
     "fmt": "nx run-many -t fmt",
     "fmt:check": "nx run-many -t fmt:check",
     "nx:reset": "nx reset",
+    "dev:playground": "nx run stencil-playground:build && nx run-many -p stencil-playground,vike-playground -t dev --parallel",
+    "kill-ports": "bash scripts/kill-ports.sh",
     "__CI__": "",
     "pre-release-build": "nx release version $VERSION",
     "release": "nx release publish"

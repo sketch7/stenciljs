@@ -1,0 +1,71 @@
+{
+  "name": "@ssv/stencil-playground",
+  "version": "0.0.1",
+  "private": true,
+  "description": "StencilJS demo components (counter + todo) using @stencil/store — consumed by vike-playground.",
+  "type": "module",
+  "files": [
+    "dist/",
+    "loader/",
+    "hydrate/",
+    "src/react/"
+  ],
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.js",
+  "types": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs.js"
+    },
+    "./react": {
+      "types": "./src/react/components.ts",
+      "import": "./src/react/components.ts"
+    },
+    "./loader": {
+      "import": "./loader/index.js"
+    },
+    "./hydrate": {
+      "types": "./hydrate/index.d.ts",
+      "import": "./hydrate/index.mjs",
+      "require": "./hydrate/index.js",
+      "default": "./hydrate/index.js"
+    },
+    "./dist/components": {
+      "types": "./dist/components/index.d.ts",
+      "import": "./dist/components/index.js"
+    },
+    "./dist/components/*.js": {
+      "types": "./dist/components/*.d.ts",
+      "import": "./dist/components/*.js"
+    },
+    "./dist/components/*": {
+      "types": "./dist/components/*.d.ts",
+      "import": "./dist/components/*.js"
+    }
+  },
+  "scripts": {
+    "build": "stencil build",
+    "dev": "stencil build --dev --watch",
+    "generate": "stencil generate",
+    "lint": "oxlint src/",
+    "fmt": "oxfmt src/",
+    "fmt:check": "oxfmt --check src/"
+  },
+  "dependencies": {
+    "@stencil/core": "catalog:",
+    "@stencil/react-output-target": "catalog:",
+    "@stencil/store": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "oxlint": "catalog:"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  },
+  "collection": "dist/collection/collection-manifest.json",
+  "collection:main": "dist/collection/index.js",
+  "es2017": "dist/esm/index.mjs"
+}

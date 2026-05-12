@@ -1,8 +1,8 @@
 import { forceUpdate } from "@stencil/core";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-import { ReactiveControllerHostMixin } from "./reactive-controller.js";
-import type { ReactiveController } from "./reactive-controller.js";
+import { ReactiveControllerHostMixin } from "./reactive-controller";
+import type { ReactiveController } from "./reactive-controller";
 
 // Mock @stencil/core before importing the module under test
 vi.mock(import("@stencil/core"), () => ({
@@ -10,7 +10,7 @@ vi.mock(import("@stencil/core"), () => ({
 }));
 
 // Create a concrete host class by applying the mixin to a base class
-class BaseClass {}
+class BaseClass { }
 const ReactiveControllerHostClass = ReactiveControllerHostMixin(BaseClass as any);
 
 describe("ReactiveControllerHostMixin", () => {

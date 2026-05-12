@@ -2,7 +2,7 @@ import type { ReactiveController, ReactiveControllerHost } from "@ssv/stenciljs.
 import { createStore } from "@tanstack/store";
 import { describe, expect, it, beforeEach } from "vitest";
 
-import { createSelectorCtrl, StoreSelector } from "./store-selector.js";
+import { createSelectorCtrl, StoreSelector } from "./store-selector";
 
 function createMockHost(): ReactiveControllerHost & {
 	controllers: Set<ReactiveController>;

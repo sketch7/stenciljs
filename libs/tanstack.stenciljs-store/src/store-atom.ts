@@ -1,8 +1,8 @@
 import type { ReactiveController, ReactiveControllerHost } from "@ssv/stenciljs.core";
 import type { Atom } from "@tanstack/store";
 
-import type { SelectionSource, UseSelectorOptions } from "./store-selector.js";
-import { StoreSelector } from "./store-selector.js";
+import type { SelectionSource, UseSelectorOptions } from "./store-selector";
+import { StoreSelector } from "./store-selector";
 
 class StoreAtom<TValue> {
 	readonly #getAtom: () => Atom<TValue> | undefined;

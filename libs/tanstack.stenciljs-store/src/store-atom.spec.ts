@@ -2,7 +2,7 @@ import type { ReactiveController, ReactiveControllerHost } from "@ssv/stenciljs.
 import { createAtom } from "@tanstack/store";
 import { describe, expect, it, beforeEach } from "vitest";
 
-import { createAtomCtrl } from "./store-atom.js";
+import { createAtomCtrl } from "./store-atom";
 
 function createMockHost(): ReactiveControllerHost & {
 	controllers: Set<ReactiveController>;

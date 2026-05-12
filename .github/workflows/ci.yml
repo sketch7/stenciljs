@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - "v*"
+      - "workflow"
+    paths-ignore:
+      - "**.md"
+
+  pull_request:
+    branches:
+      - main
+      - "v*"
+    paths-ignore:
+      - "**.md"
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: node CI
+    uses: sketch7/.github/.github/workflows/node-ci.yml@node-libs-v2
+    with:
+      package-manager: "pnpm"

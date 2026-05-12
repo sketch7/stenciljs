@@ -1,8 +1,25 @@
 {
   "name": "@ssv/stenciljs",
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=24.15.0",
+    "pnpm": ">=9.0.0",
+    "npm": ">=10.0.0"
+  },
   "license": "MIT",
-  "scripts": {},
+  "type": "module",
+  "scripts": {
+    "build": "nx run-many -t build",
+    "test": "nx run-many -t test --if-present",
+    "lint": "nx run-many -t lint",
+    "fmt": "nx run-many -t fmt",
+    "fmt:check": "nx run-many -t fmt:check",
+    "nx:reset": "nx reset",
+    "__CI__": "",
+    "pre-release-build": "nx release version $VERSION",
+    "release": "nx release publish"
+  },
   "private": true,
   "dependencies": {},
   "devDependencies": {
@@ -11,8 +28,9 @@
     "@swc/core": "1.15.8",
     "@swc/helpers": "0.5.18",
     "nx": "22.7.0",
-    "prettier": "^3.8.1",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
     "tslib": "^2.3.0",
-    "typescript": "~5.9.2"
+    "typescript": "catalog:"
   }
 }

@@ -2,11 +2,11 @@
   "name": "@ssv/stenciljs.core",
   "version": "0.1.0",
   "description": "Core utilities for StencilJS — ReactiveController, ReactiveControllerHost, SsvElement.",
-  "type": "module",
   "license": "MIT",
   "files": [
     "dist"
   ],
+  "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -27,9 +27,6 @@
     "fmt": "oxfmt src/",
     "fmt:check": "oxfmt --check src/"
   },
-  "peerDependencies": {
-    "@stencil/core": ">=4.0.0"
-  },
   "devDependencies": {
     "@stencil/core": "catalog:",
     "@types/node": "catalog:",
@@ -39,5 +36,8 @@
     "tsdown": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "@stencil/core": ">=4.0.0"
   }
 }

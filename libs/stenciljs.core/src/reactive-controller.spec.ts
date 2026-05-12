@@ -10,7 +10,7 @@ vi.mock(import("@stencil/core"), () => ({
 }));
 
 // Create a concrete host class by applying the mixin to a base class
-class BaseClass { }
+class BaseClass {}
 const ReactiveControllerHostClass = ReactiveControllerHostMixin(BaseClass as any);
 
 describe("ReactiveControllerHostMixin", () => {

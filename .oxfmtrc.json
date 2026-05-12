@@ -30,7 +30,12 @@
     "libs/*/src/vue/**",
     "libs/*/src/angular/**",
     "loader/**",
-    "hydrate/**"
+    "hydrate/**",
+    // Agent skills / instructions
+    ".agents/**",
+    ".github/agents/**",
+    ".github/skills/**",
+    ".github/prompts/**"
   ],
   "overrides": [
     {

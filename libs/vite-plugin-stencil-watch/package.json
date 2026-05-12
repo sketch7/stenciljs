@@ -20,11 +20,11 @@
   "scripts": {
     "build": "tsdown"
   },
-  "peerDependencies": {
-    "vite": ">=5"
-  },
   "devDependencies": {
     "tsdown": "catalog:",
     "vite": "catalog:"
+  },
+  "peerDependencies": {
+    "vite": ">=5"
   }
 }

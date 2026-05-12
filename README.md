@@ -54,6 +54,7 @@ This builds `stencil-playground` (generates `hydrate/`, `loader/`, `src/react/`)
 | http://localhost:3000/todo    | Todo example    |
 
 **HMR behaviour:**
+
 - Changes to `apps/vike-playground/src/**` (pages, CSS, layout) → instant HMR via Vite
 - Changes to `apps/stencil-playground/src/**` (components, stores) → picked up by the parallel `stencil build --watch`; Vite will reload the module when the output files change
 
@@ -104,5 +105,3 @@ pnpm nx g @nx/js:app apps/<name>
 - **Formatter:** Oxfmt — config at `.oxfmtrc.json`
 - **Linter:** Oxlint — config at `oxlint.config.ts`
 - **Catalog:** shared dependency versions are pinned in `pnpm-workspace.yaml` under `catalog:` — use `catalog:` references in new `package.json` files
-
-

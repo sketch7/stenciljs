@@ -1,107 +1,108 @@
-# New Nx Repository
+# sketch7.stenciljs
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+StencilJS component library monorepo. `libs/` holds publishable web-component libraries; `apps/` holds example/demo applications that consume them.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
-
-[Learn more about this workspace setup and its capabilities](https://nx.dev/nx-api/js?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
-
-## Try the full Nx platform
-🚀 If you haven't connected to Nx Cloud yet, [complete your setup here](https://cloud.nx.app/setup/connect-workspace/guide). Get faster builds with remote caching, distributed task execution, and self-healing CI. [See how your workspace can benefit](#nx-cloud).
-
-## Generate a library
-
-```sh
-npx nx g @nx/js:lib packages/pkg1 --publishable --importPath=@my-org/pkg1
-```
-
-## Run tasks
-
-To build the library use:
-
-```sh
-npx nx build pkg1
-```
-
-To run any task with Nx use:
-
-```sh
-npx nx <target> <project-name>
-```
-
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
-
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Versioning and releasing
-
-To version and release the library use
+## Structure
 
 ```
-npx nx release
+apps/
+  stencil-playground/   # StencilJS components (counter + todo) using @stencil/store — non-published
+  vike-playground/      # Vike SSR app consuming stencil-playground via @stencil/ssr
+libs/                   # Publishable @ssv/* web-component libraries (empty — add new libs here)
 ```
 
-Pass `--dry-run` to see what would happen without actually releasing the library.
+## Tech stack
 
-[Learn more about Nx release &raquo;](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+| Tool                                                                  | Role                                             |
+| --------------------------------------------------------------------- | ------------------------------------------------ |
+| [StencilJS](https://stenciljs.com/)                                   | Web-component authoring                          |
+| [Vike](https://vike.dev/) + [vike-react](https://vike.dev/vike-react) | SSR framework (`vike-playground`)                |
+| [@stencil/ssr](https://github.com/ionic-team/stencil-ssr)             | Compile-time SSR with Declarative Shadow DOM     |
+| [@stencil/store](https://stenciljs.com/docs/stencil-store)            | Reactive state management for Stencil components |
+| [Tailwind CSS v4](https://tailwindcss.com/)                           | Utility-first CSS (dark theme by default)        |
+| [NX](https://nx.dev/)                                                 | Monorepo task runner                             |
+| [pnpm](https://pnpm.io/) workspaces                                   | Package manager with catalog                     |
+| [Oxlint](https://oxc.rs/docs/guide/usage/linter.html)                 | Linter                                           |
+| [Oxfmt](https://oxc.rs/docs/guide/usage/formatter.html)               | Formatter                                        |
+| TypeScript 6                                                          | Strict mode                                      |
 
-## Keep TypeScript project references up to date
+## Prerequisites
 
-Nx automatically updates TypeScript [project references](https://www.typescriptlang.org/docs/handbook/project-references.html) in `tsconfig.json` files to ensure they remain accurate based on your project dependencies (`import` or `require` statements). This sync is automatically done when running tasks such as `build` or `typecheck`, which require updated references to function correctly.
+- Node.js ≥ 24.15.0
+- pnpm ≥ 9.0.0
 
-To manually trigger the process to sync the project graph dependencies information to the TypeScript project references, run the following command:
+## Getting started
 
-```sh
-npx nx sync
+```bash
+pnpm install
 ```
 
-You can enforce that the TypeScript project references are always in the correct state when running in CI by adding a step to your CI job configuration that runs the following command:
+## Development
 
-```sh
-npx nx sync:check
+### `vike-playground` — SSR demo app with StencilJS components
+
+```bash
+pnpm dev
 ```
 
-[Learn more about nx sync](https://nx.dev/reference/nx-commands#sync)
+This builds `stencil-playground` (generates `hydrate/`, `loader/`, `src/react/`) then starts both the Stencil watch build and the Vike dev server in parallel.
 
-## Nx Cloud
+| URL                           | Page            |
+| ----------------------------- | --------------- |
+| http://localhost:3000         | Landing         |
+| http://localhost:3000/counter | Counter example |
+| http://localhost:3000/todo    | Todo example    |
 
-Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
+**HMR behaviour:**
+- Changes to `apps/vike-playground/src/**` (pages, CSS, layout) → instant HMR via Vite
+- Changes to `apps/stencil-playground/src/**` (components, stores) → picked up by the parallel `stencil build --watch`; Vite will reload the module when the output files change
 
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+### Run individual packages
 
-### Set up CI (non-Github Actions CI)
-
-**Note:** This is only required if your CI provider is not GitHub Actions.
-
-Use the following command to configure a CI workflow for your workspace:
-
-```sh
-npx nx g ci-workflow
+```bash
+pnpm nx run stencil-playground:build   # build Stencil components once
+pnpm nx run stencil-playground:dev     # Stencil watch mode only
+pnpm nx run vike-playground:dev        # Vike dev server only (stencil must be built first)
 ```
 
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+## Common tasks
 
-## Install Nx Console
+```bash
+pnpm build          # build all projects
+pnpm lint           # lint all projects
+pnpm fmt            # format all projects
+pnpm fmt:check      # check formatting (CI)
+pnpm test           # run unit tests (if present)
+```
 
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
+NX-scoped commands:
 
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+```bash
+pnpm nx run <project>:<target>          # run a single target
+pnpm nx run-many -t build               # build all
+pnpm nx affected -t build               # build only affected
+pnpm nx graph                           # visualise project dependency graph
+pnpm nx:reset                           # clear NX cache
+```
 
-## Useful links
+## Scaffolding new packages
 
-Learn more:
+```bash
+# New publishable StencilJS library
+pnpm nx g @nx/js:lib libs/<name> --publishable --importPath=@ssv/<name>
 
-- [Learn more about this workspace setup](https://nx.dev/nx-api/js?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+# New example app
+pnpm nx g @nx/js:app apps/<name>
+```
 
-And join the Nx community:
+> After generating: add a `project.json` with NX targets, update root `tsconfig.json` references, and register any new catalog deps in `pnpm-workspace.yaml`.
 
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+## Conventions
+
+- **Naming:** library packages use `@ssv/<name>`; component tags follow `<prefix>-<name>` (e.g. `ssv-button`)
+- **Exports:** named exports only in `libs/`; avoid default exports
+- **Formatter:** Oxfmt — config at `.oxfmtrc.json`
+- **Linter:** Oxlint — config at `oxlint.config.ts`
+- **Catalog:** shared dependency versions are pinned in `pnpm-workspace.yaml` under `catalog:` — use `catalog:` references in new `package.json` files
+
+

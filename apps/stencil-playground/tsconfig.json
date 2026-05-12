@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "experimentalDecorators": true,
+    "lib": ["dom", "es2022"],
+    "moduleResolution": "bundler",
+    "module": "esnext",
+    "target": "es2022",
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "jsx": "react",
+    "jsxFactory": "h",
+    "jsxFragmentFactory": "h.Fragment"
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist", "loader", "hydrate", "www", "src/react"]
+}

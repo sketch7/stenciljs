@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Kill all processes listening on the dev/preview port ranges:
-#   3000–3002  shell + MFEs (vike dev/preview servers)
-#   3100–3104  api (Hono)
+#   3000–3002  apps
+#   3100–3102  apps api
 
-RANGES=("3000-3005" "3100-3102" )
+RANGES=("3000-3002" "3100-3102" )
+# RANGES=("3000-3002" "3100-3102" )
 
 killed=0
 ports=()

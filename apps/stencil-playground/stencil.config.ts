@@ -1,4 +1,4 @@
-import { Config } from "@stencil/core";
+import type { Config } from "@stencil/core";
 import { reactOutputTarget } from "@stencil/react-output-target";
 
 export const config: Config = {
@@ -22,8 +22,8 @@ export const config: Config = {
 			type: "dist-hydrate-script",
 			dir: "./hydrate",
 		},
-		{
-			type: "docs-readme",
-		},
+		// {
+		// 	type: "docs-readme",
+		// },
 	],
 };

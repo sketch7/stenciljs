@@ -1,6 +1,6 @@
 {
   "name": "@ssv/stencil-playground",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "private": true,
   "description": "StencilJS demo components (counter + todo) using @stencil/store — consumed by vike-playground.",
   "type": "module",

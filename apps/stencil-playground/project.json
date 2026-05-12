@@ -16,6 +16,7 @@
     },
     "dev": {
       "executor": "nx:run-commands",
+      "continuous": true,
       "options": {
         "command": "pnpm dev",
         "cwd": "apps/stencil-playground"

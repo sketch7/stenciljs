@@ -16,6 +16,7 @@
     },
     "dev": {
       "executor": "nx:run-commands",
+      "continuous": true,
       "options": {
         "command": "pnpm dev",
         "cwd": "apps/vike-playground"
@@ -33,7 +34,7 @@
     "lint": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm oxlint --type-aware src/",
+        "command": "pnpm oxlint src/",
         "cwd": "apps/vike-playground"
       }
     },

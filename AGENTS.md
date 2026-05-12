@@ -50,7 +50,7 @@ pnpm nx g @nx/js:app apps/<name>
 
 ## Conventions
 
-- **TypeScript**: strict mode, `es2022` target, `nodenext` module resolution, `@org/source` custom condition for local workspace imports
+- **TypeScript**: strict mode, `es2022` target, `nodenext` module resolution, `@ssv/source` custom condition for local workspace imports
 - **Formatter**: Oxfmt — config at `.oxfmtrc.json`, run `pnpm fmt` to format
 - **Linter**: Oxlint — config at `oxlint.config.ts`, run `pnpm lint` to lint
 - **Post-task**: always run `pnpm lint` then `pnpm fmt` after modifying files

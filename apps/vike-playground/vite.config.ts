@@ -18,7 +18,11 @@ export default defineConfig(({ mode }) => {
 			vike(),
 			react(),
 			tailwindcss(),
-			stencilWatch({ packageDir: stencilPkgDir }),
+			stencilWatch({
+				packageDir: stencilPkgDir,
+				watchDirs: [path.resolve(__dirname, "../../libs/stenciljs.core/src")],
+				preBuildCommand: "pnpm --filter @ssv/stenciljs.core build",
+			}),
 			stencilSSR({
 				module: import("@app/stencil-playground/react"),
 				from: "@app/stencil-playground/react",

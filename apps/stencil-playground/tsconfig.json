@@ -7,6 +7,7 @@
     "moduleResolution": "bundler",
     "module": "esnext",
     "target": "es2022",
+    "customConditions": ["@ssv/source"],
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
     "noImplicitReturns": true,

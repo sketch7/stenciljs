@@ -34,22 +34,40 @@ export default function Page(): JSX.Element {
 				</p>
 				<p className="text-sm text-[var(--color-muted-fg)]">
 					Components are rendered on the server via <code className="text-[var(--color-primary)]">@stencil/ssr</code>{" "}
-					with Declarative Shadow DOM, then hydrated on the client. State is managed with{" "}
-					<code className="text-[var(--color-primary)]">@stencil/store</code>.
+					with Declarative Shadow DOM, then hydrated on the client.
 				</p>
 			</section>
 
-			<section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-				<ExampleCard
-					href="/counter"
-					title="Counter"
-					description="Increment / decrement with an additional value multiplied by 2. Global state via @stencil/store."
-				/>
-				<ExampleCard
-					href="/todo"
-					title="Todo List"
-					description="Add, complete, and delete tasks. Reactive list with store-driven state updates."
-				/>
+			<section className="flex flex-col gap-3">
+				<h2 className="text-sm font-semibold uppercase tracking-widest text-[var(--color-muted-fg)]">SSV Stencil</h2>
+				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+					<ExampleCard
+						href="/ssv-stencil/reactive-host/mouse"
+						title="Mouse Controller"
+						description="Tracks cursor position via a ReactiveController. No @State — controller calls requestUpdate() directly."
+					/>
+					<ExampleCard
+						href="/ssv-stencil/reactive-host/timer"
+						title="Timer Controller"
+						description="Elapsed time ticker using setInterval inside a ReactiveController — auto-starts and cleans up with the host lifecycle."
+					/>
+				</div>
+			</section>
+
+			<section className="flex flex-col gap-3">
+				<h2 className="text-sm font-semibold uppercase tracking-widest text-[var(--color-muted-fg)]">Stencil</h2>
+				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+					<ExampleCard
+						href="/stencil/counter"
+						title="Counter"
+						description="Increment / decrement with an additional value multiplied by 2. Global state via @stencil/store."
+					/>
+					<ExampleCard
+						href="/stencil/todo"
+						title="Todo List"
+						description="Add, complete, and delete tasks. Reactive list with store-driven state updates."
+					/>
+				</div>
 			</section>
 		</div>
 	);

@@ -1,0 +1,49 @@
+{
+  "name": "stenciljs-core",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "libs/stenciljs.core/src",
+  "tags": ["type:lib", "scope:core"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm build",
+        "cwd": "libs/stenciljs.core"
+      },
+      "outputs": ["{projectRoot}/dist"],
+      "cache": true,
+      "dependsOn": ["^build"]
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm test",
+        "cwd": "libs/stenciljs.core"
+      },
+      "cache": true,
+      "dependsOn": []
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm oxlint src/",
+        "cwd": "libs/stenciljs.core"
+      }
+    },
+    "fmt": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm oxfmt src/",
+        "cwd": "libs/stenciljs.core"
+      }
+    },
+    "fmt:check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm oxfmt --check src/",
+        "cwd": "libs/stenciljs.core"
+      }
+    }
+  }
+}

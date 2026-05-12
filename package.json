@@ -13,6 +13,7 @@
     "dev": "nx run-many -p vike-playground -t dev --parallel",
     "build": "nx run-many -t build",
     "test": "nx run-many -t test --if-present",
+    "vitest": "vitest",
     "lint": "nx run-many -t lint",
     "fmt": "nx run-many -t fmt",
     "fmt:check": "nx run-many -t fmt:check",
@@ -34,6 +35,7 @@
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "tslib": "^2.3.0",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

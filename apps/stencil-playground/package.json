@@ -63,6 +63,7 @@
     "oxlint": "catalog:"
   },
   "peerDependencies": {
+    "@ssv/stenciljs.core": "workspace:*",
     "react": ">=18.0.0"
   },
   "collection": "dist/collection/collection-manifest.json",

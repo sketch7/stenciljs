@@ -134,11 +134,14 @@ export default defineConfig({
 		// ── Vitest ─────────────────────────────────────────────────────────────
 		"vitest/no-focused-tests": "error",
 		"vitest/no-disabled-tests": "warn",
-		"vitest/expect-expect": "error",
+		"vitest/expect-expect": "warn", // helper assertion wrappers won't always have direct expect() calls
 		"vitest/valid-expect": "error",
-		"vitest/no-standalone-expect": "error",
+		"vitest/no-standalone-expect": "warn", // too strict in shared test-helper patterns
 		"vitest/consistent-test-it": ["warn", { fn: "it" }],
 		"vitest/require-hook": "off",
+		"vitest/no-hooks": "off",
+		"vitest/prefer-expect-assertions": "off",
+		"vitest/max-expects": "off",
 
 		// ── Unicorn ────────────────────────────────────────────────────────────
 		"unicorn/no-array-for-each": "off",
@@ -245,15 +248,29 @@ export default defineConfig({
 			rules: {
 				"typescript/no-explicit-any": "off",
 				"typescript/no-non-null-assertion": "off",
+				"typescript/no-extraneous-class": "off",
 				"max-statements": "off",
-				"vitest/require-hook": "warn",
+				// jest plugin rules that fire via pedantic category — too opinionated for vitest usage
+				"jest/prefer-lowercase-title": "off", // PascalCase describe names are idiomatic
+				"jest/prefer-expect-assertions": "off", // requiring expect.assertions() in every test is excessive
+				"jest/max-expects": "off", // splitting tests just to stay under 5 assertions is counter-productive
+				// vitest — opinionated style rules
+				"vitest/prefer-called-times": "off", // toHaveBeenCalledOnce() is readable vitest API
+				"vitest/prefer-strict-boolean-matchers": "off", // toBeTruthy/toBeFalsy are idiomatic for non-boolean checks
+				"vitest/no-importing-vitest-globals": "off", // explicit imports are preferred over globals
+				"vitest/require-test-timeout": "off", // requiring a timeout on every unit test is excessive
+				"vitest/consistent-test-filename": "off", // .spec.ts is a valid convention
+				"vitest/prefer-describe-function-title": "off", // describe title matching an imported name is fine
+				"jest/no-hooks": "off", // beforeEach/afterEach are standard vitest setup patterns
 			},
 		},
 		{
 			// Vike convention files — require default exports for pages, layouts, config
-			files: ["**/pages/+*.ts", "**/pages/+*.tsx", "**/pages/*/+*.ts", "**/pages/*/+*.tsx"],
+			files: ["**/pages/+*.ts", "**/pages/+*.tsx", "**/pages/**/+*.ts", "**/pages/**/+*.tsx"],
 			rules: {
 				"import/no-default-export": "off",
+				// Page/Layout/Head components return JSX — explicit return type is noise
+				"typescript/explicit-function-return-type": "off",
 			},
 		},
 		{

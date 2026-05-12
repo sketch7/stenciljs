@@ -1,7 +1,7 @@
 import type { ReactiveController, ReactiveControllerHost } from "@ssv/stenciljs.core";
 
 export type UseSelectorOptions<TSelected> = {
-	compare?: (a: TSelected, b: TSelected) => boolean;
+	compare?: (a: TSelected | undefined, b: TSelected | undefined) => boolean;
 };
 
 export type SelectionSource<T> = {
@@ -9,7 +9,7 @@ export type SelectionSource<T> = {
 	subscribe: (listener: (value: T) => void) => { unsubscribe: () => void };
 };
 
-function defaultCompare<T>(a: T, b: T): boolean {
+function defaultCompare<T>(a: T | undefined, b: T | undefined): boolean {
 	return a === b;
 }
 
@@ -17,12 +17,11 @@ function defaultSelector<TSource, TSelected>(snapshot: TSource): TSelected {
 	return snapshot as unknown as TSelected;
 }
 
-// eslint-disable-next-line max-params
 export class StoreSelector<TSource, TSelected = TSource> implements ReactiveController {
 	readonly #host: ReactiveControllerHost;
 	readonly #getStore: () => SelectionSource<TSource> | undefined;
 	readonly #selector: (snapshot: TSource) => TSelected;
-	readonly #compare: (a: TSelected, b: TSelected) => boolean;
+	readonly #compare: (a: TSelected | undefined, b: TSelected) => boolean;
 	#unsubscribe?: () => void;
 	#subscribedStore?: SelectionSource<TSource>;
 	#hasSelected = false;
@@ -62,8 +61,7 @@ export class StoreSelector<TSource, TSelected = TSource> implements ReactiveCont
 		this.#hasSelected = true;
 		this.#unsubscribe = store.subscribe(value => {
 			const next = this.#selector(value);
-			// eslint-disable-next-line typescript/no-non-null-assertion
-			if (this.#hasSelected && this.#compare(this.#lastSelected!, next)) {
+			if (this.#hasSelected && this.#compare(this.#lastSelected, next)) {
 				return;
 			}
 			this.#lastSelected = next;

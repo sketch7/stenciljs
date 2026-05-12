@@ -139,6 +139,9 @@ export default defineConfig({
 		"vitest/no-standalone-expect": "error",
 		"vitest/consistent-test-it": ["warn", { fn: "it" }],
 		"vitest/require-hook": "off",
+		"vitest/no-hooks": "off",
+		"vitest/prefer-expect-assertions": "off",
+		"vitest/max-expects": "off",
 
 		// ── Unicorn ────────────────────────────────────────────────────────────
 		"unicorn/no-array-for-each": "off",
@@ -245,13 +248,14 @@ export default defineConfig({
 			rules: {
 				"typescript/no-explicit-any": "off",
 				"typescript/no-non-null-assertion": "off",
+				"typescript/no-extraneous-class": "off",
 				"max-statements": "off",
 				"vitest/require-hook": "warn",
 			},
 		},
 		{
 			// Vike convention files — require default exports for pages, layouts, config
-			files: ["**/pages/+*.ts", "**/pages/+*.tsx", "**/pages/*/+*.ts", "**/pages/*/+*.tsx"],
+			files: ["**/pages/**/+*.ts", "**/pages/**/+*.tsx"],
 			rules: {
 				"import/no-default-export": "off",
 			},

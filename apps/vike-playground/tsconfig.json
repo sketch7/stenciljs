@@ -3,9 +3,9 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "jsxImportSource": "react",
-    "lib": ["dom", "dom.iterable", "es2022"],
+    "lib": ["dom", "es2022"],
     "moduleResolution": "bundler",
-    "module": "esnext",
+    "module": "preserve",
     "noEmit": true,
     "paths": {
       "@/*": ["./src/*"]

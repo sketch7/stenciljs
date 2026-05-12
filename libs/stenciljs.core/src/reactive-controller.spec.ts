@@ -1,17 +1,16 @@
+import { forceUpdate } from "@stencil/core";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 import { ReactiveControllerHostMixin } from "./reactive-controller.js";
 import type { ReactiveController } from "./reactive-controller.js";
 
 // Mock @stencil/core before importing the module under test
-vi.mock("@stencil/core", () => ({
-	forceUpdate: vi.fn(),
+vi.mock(import("@stencil/core"), () => ({
+	forceUpdate: vi.fn<() => void>(),
 }));
 
-import { forceUpdate } from "@stencil/core";
-
 // Create a concrete host class by applying the mixin to a base class
-class BaseClass {}
+class BaseClass { }
 const ReactiveControllerHostClass = ReactiveControllerHostMixin(BaseClass as any);
 
 describe("ReactiveControllerHostMixin", () => {
@@ -57,64 +56,64 @@ describe("ReactiveControllerHostMixin", () => {
 
 		beforeEach(() => {
 			ctrl = {
-				hostConnected: vi.fn(),
-				hostDisconnected: vi.fn(),
-				hostWillLoad: vi.fn(),
-				hostDidLoad: vi.fn(),
-				hostWillRender: vi.fn(),
-				hostDidRender: vi.fn(),
-				hostWillUpdate: vi.fn(),
-				hostDidUpdate: vi.fn(),
+				hostConnected: vi.fn<() => void>(),
+				hostDisconnected: vi.fn<() => void>(),
+				hostWillLoad: vi.fn<() => Promise<void> | void>(),
+				hostDidLoad: vi.fn<() => void>(),
+				hostWillRender: vi.fn<() => Promise<void> | void>(),
+				hostDidRender: vi.fn<() => void>(),
+				hostWillUpdate: vi.fn<() => Promise<void> | void>(),
+				hostDidUpdate: vi.fn<() => void>(),
 			};
 			host.addController(ctrl);
 		});
 
 		it("connectedCallback → hostConnected", () => {
 			host.connectedCallback();
-			expect(ctrl.hostConnected).toHaveBeenCalledOnce();
+			expect(ctrl.hostConnected).toHaveBeenCalledTimes(1);
 		});
 
 		it("disconnectedCallback → hostDisconnected", () => {
 			host.disconnectedCallback();
-			expect(ctrl.hostDisconnected).toHaveBeenCalledOnce();
+			expect(ctrl.hostDisconnected).toHaveBeenCalledTimes(1);
 		});
 
 		it("componentWillLoad → hostWillLoad", async () => {
 			await host.componentWillLoad();
-			expect(ctrl.hostWillLoad).toHaveBeenCalledOnce();
+			expect(ctrl.hostWillLoad).toHaveBeenCalledTimes(1);
 		});
 
 		it("componentDidLoad → hostDidLoad", () => {
 			host.componentDidLoad();
-			expect(ctrl.hostDidLoad).toHaveBeenCalledOnce();
+			expect(ctrl.hostDidLoad).toHaveBeenCalledTimes(1);
 		});
 
 		it("componentWillRender → hostWillRender", async () => {
 			await host.componentWillRender();
-			expect(ctrl.hostWillRender).toHaveBeenCalledOnce();
+			expect(ctrl.hostWillRender).toHaveBeenCalledTimes(1);
 		});
 
 		it("componentDidRender → hostDidRender", () => {
 			host.componentDidRender();
-			expect(ctrl.hostDidRender).toHaveBeenCalledOnce();
+			expect(ctrl.hostDidRender).toHaveBeenCalledTimes(1);
 		});
 
 		it("componentWillUpdate → hostWillUpdate", async () => {
 			await host.componentWillUpdate();
-			expect(ctrl.hostWillUpdate).toHaveBeenCalledOnce();
+			expect(ctrl.hostWillUpdate).toHaveBeenCalledTimes(1);
 		});
 
 		it("componentDidUpdate → hostDidUpdate", () => {
 			host.componentDidUpdate();
-			expect(ctrl.hostDidUpdate).toHaveBeenCalledOnce();
+			expect(ctrl.hostDidUpdate).toHaveBeenCalledTimes(1);
 		});
 
 		it("delegates lifecycle to all registered controllers", () => {
-			const ctrl2: ReactiveController = { hostConnected: vi.fn() };
+			const ctrl2: ReactiveController = { hostConnected: vi.fn<() => void>() };
 			host.addController(ctrl2);
 			host.connectedCallback();
-			expect(ctrl.hostConnected).toHaveBeenCalledOnce();
-			expect(ctrl2.hostConnected).toHaveBeenCalledOnce();
+			expect(ctrl.hostConnected).toHaveBeenCalledTimes(1);
+			expect(ctrl2.hostConnected).toHaveBeenCalledTimes(1);
 		});
 
 		it("does not delegate to removed controllers", () => {

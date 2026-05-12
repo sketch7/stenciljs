@@ -69,9 +69,13 @@ export function ReactiveControllerHostMixin<B extends MixedInCtor>(Base: B) {
 			const promises: Promise<void>[] = [];
 			this.controllers.forEach(c => {
 				const result = c.hostWillLoad?.();
-				if (result) promises.push(result);
+				if (result) {
+					promises.push(result);
+				}
 			});
-			if (promises.length > 0) return Promise.all(promises).then(() => void 0);
+			if (promises.length > 0) {
+				return Promise.all(promises).then(() => void 0);
+			}
 		}
 
 		componentDidLoad(): void {
@@ -82,9 +86,13 @@ export function ReactiveControllerHostMixin<B extends MixedInCtor>(Base: B) {
 			const promises: Promise<void>[] = [];
 			this.controllers.forEach(c => {
 				const result = c.hostWillRender?.();
-				if (result) promises.push(result);
+				if (result) {
+					promises.push(result);
+				}
 			});
-			if (promises.length > 0) return Promise.all(promises).then(() => void 0);
+			if (promises.length > 0) {
+				return Promise.all(promises).then(() => void 0);
+			}
 		}
 
 		componentDidRender(): void {
@@ -95,9 +103,13 @@ export function ReactiveControllerHostMixin<B extends MixedInCtor>(Base: B) {
 			const promises: Promise<void>[] = [];
 			this.controllers.forEach(c => {
 				const result = c.hostWillUpdate?.();
-				if (result) promises.push(result);
+				if (result) {
+					promises.push(result);
+				}
 			});
-			if (promises.length > 0) return Promise.all(promises).then(() => void 0);
+			if (promises.length > 0) {
+				return Promise.all(promises).then(() => void 0);
+			}
 		}
 
 		componentDidUpdate(): void {

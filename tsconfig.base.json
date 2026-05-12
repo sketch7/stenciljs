@@ -14,9 +14,8 @@
     "strict": true,
     "target": "es2022",
     "customConditions": ["@org/source"],
-    "baseUrl": ".",
     "paths": {
-      "@ssv/stenciljs.core": ["libs/stenciljs.core/src/index.ts"]
+      "@ssv/stenciljs.core": ["./libs/stenciljs.core/src/index.ts"]
     }
   }
 }

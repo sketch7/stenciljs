@@ -3,6 +3,10 @@ import { Component, Mixin, h } from "@stencil/core";
 
 import { withTimerController } from "./timer-controller";
 
+function pad(n: number): string {
+	return String(n).padStart(2, "0");
+}
+
 @Component({
 	tag: "app-timer-host",
 	styleUrl: "timer-host.css",
@@ -16,8 +20,6 @@ export class AppTimerHost extends Mixin(SsvElementMixin) {
 		const hours = Math.floor(totalSeconds / 3600);
 		const minutes = Math.floor((totalSeconds % 3600) / 60);
 		const seconds = totalSeconds % 60;
-
-		const pad = (n: number) => String(n).padStart(2, "0");
 
 		return (
 			<div class="timer-host">

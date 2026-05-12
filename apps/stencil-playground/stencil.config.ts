@@ -2,12 +2,12 @@ import type { Config } from "@stencil/core";
 import { reactOutputTarget } from "@stencil/react-output-target";
 
 export const config: Config = {
-	namespace: "ssv-playground",
+	namespace: "app-playground",
 	outputTargets: [
 		reactOutputTarget({
 			outDir: "src/react",
-			hydrateModule: "@ssv/stencil-playground/hydrate",
-			clientModule: "@ssv/stencil-playground/react",
+			hydrateModule: "@app/stencil-playground/hydrate",
+			clientModule: "@app/stencil-playground/react",
 		}),
 		{
 			type: "dist",

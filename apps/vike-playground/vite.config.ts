@@ -15,14 +15,14 @@ export default defineConfig(({ mode }) => {
 			vike(),
 			react(),
 			tailwindcss(),
-			// Compile-time SSR for @ssv/stencil-playground components.
+			// Compile-time SSR for @app/stencil-playground components.
 			// The plugin intercepts JSX references to the react wrappers,
 			// calls the hydrate module, and replaces them with pre-rendered
 			// Declarative Shadow DOM so components are server-rendered.
 			stencilSSR({
-				module: import("@ssv/stencil-playground/react"),
-				from: "@ssv/stencil-playground/react",
-				hydrateModule: import("@ssv/stencil-playground/hydrate"),
+				module: import("@app/stencil-playground/react"),
+				from: "@app/stencil-playground/react",
+				hydrateModule: import("@app/stencil-playground/hydrate"),
 				serializeShadowRoot: { default: "declarative-shadow-dom" },
 			}),
 		],

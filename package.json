@@ -10,7 +10,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "nx run stencil-playground:build && nx run-many -p stencil-playground,vike-playground -t dev --parallel",
+    "dev": "nx run-many -p vike-playground -t dev --parallel",
     "build": "nx run-many -t build",
     "test": "nx run-many -t test --if-present",
     "lint": "nx run-many -t lint",

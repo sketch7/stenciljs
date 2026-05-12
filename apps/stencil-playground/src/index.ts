@@ -1,3 +1,3 @@
-export { SsvCounter } from "./components/ssv-counter/ssv-counter";
-export { SsvTodo } from "./components/ssv-todo/ssv-todo";
+export { AppCounter } from "./components/counter/counter";
+export { AppTodo } from "./components/todo/todo";
 export type { Todo } from "./store/todo.store";

@@ -3,11 +3,11 @@ import { Component, h, State } from "@stencil/core";
 import { todoStore } from "../../store/todo.store";
 
 @Component({
-	tag: "ssv-todo",
-	styleUrl: "ssv-todo.css",
+	tag: "app-todo",
+	styleUrl: "todo.css",
 	shadow: true,
 })
-export class SsvTodo {
+export class AppTodo {
 	@State() todos = todoStore.todos;
 	@State() inputValue = "";
 

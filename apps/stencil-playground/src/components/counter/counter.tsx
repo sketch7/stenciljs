@@ -3,11 +3,11 @@ import { Component, h, State } from "@stencil/core";
 import { counterStore } from "../../store/counter.store";
 
 @Component({
-	tag: "ssv-counter",
-	styleUrl: "ssv-counter.css",
+	tag: "app-counter",
+	styleUrl: "counter.css",
 	shadow: true,
 })
-export class SsvCounter {
+export class AppCounter {
 	@State() count = counterStore.count;
 	@State() additionalValue = counterStore.additionalValue;
 

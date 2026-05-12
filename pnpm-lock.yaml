@@ -120,7 +120,7 @@ importers:
 
   apps/vike-playground:
     dependencies:
-      '@ssv/stencil-playground':
+      '@app/stencil-playground':
         specifier: workspace:*
         version: link:../stencil-playground
       dotenv:

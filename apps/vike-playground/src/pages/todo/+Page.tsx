@@ -1,4 +1,4 @@
-import { SsvTodo } from "@ssv/stencil-playground/react";
+import { AppTodo } from "@app/stencil-playground/react";
 import type { JSX } from "react";
 
 export default function Page(): JSX.Element {
@@ -12,7 +12,7 @@ export default function Page(): JSX.Element {
 			</div>
 
 			<div className="rounded-xl border border-[var(--color-card-border)] bg-[var(--color-card)] p-6">
-				<SsvTodo />
+				<AppTodo />
 			</div>
 
 			<p className="text-xs text-[var(--color-muted-fg)]">

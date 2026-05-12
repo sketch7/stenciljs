@@ -2,7 +2,7 @@ import { SsvElement } from "@ssv/stenciljs.core";
 import { createSelectorCtrl } from "@ssv/tanstack.stenciljs-store";
 import { Component, State, h } from "@stencil/core";
 
-import { todoStore } from "./todo.store.js";
+import { todoStore } from "./todo.store";
 
 @Component({
 	tag: "app-tan-todo",

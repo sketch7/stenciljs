@@ -1,28 +1,15 @@
-import type { ReactiveController, ReactiveControllerHost } from "@ssv/stenciljs.core";
+import type { ReactiveController } from "@ssv/stenciljs.core";
+import { SsvElement } from "@ssv/stenciljs.core";
+import { forceUpdate } from "@stencil/core";
 import { createAtom } from "@tanstack/store";
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 
 import { createAtomCtrl } from "./store-atom";
 
-function createMockHost(): ReactiveControllerHost & {
-	controllers: Set<ReactiveController>;
-	requestUpdateCount: number;
-} {
-	const controllers = new Set<ReactiveController>();
-	return {
-		controllers,
-		requestUpdateCount: 0,
-		addController(ctrl) {
-			controllers.add(ctrl);
-		},
-		removeController(ctrl) {
-			controllers.delete(ctrl);
-		},
-		requestUpdate() {
-			(this as { requestUpdateCount: number }).requestUpdateCount++;
-		},
-	};
-}
+vi.mock(import("@stencil/core"), () => ({
+	forceUpdate: vi.fn<() => void>(),
+	Mixin: (fn: (base: unknown) => unknown) => fn(class { }),
+}));
 
 /** Simulate the host calling hostWillRender on all registered controllers. */
 function triggerWillRender(host: { controllers: Set<ReactiveController> }) {
@@ -39,10 +26,11 @@ function triggerDisconnected(host: { controllers: Set<ReactiveController> }) {
 }
 
 describe("createAtomCtrl", () => {
-	let host: ReturnType<typeof createMockHost>;
+	let host: SsvElement;
 
 	beforeEach(() => {
-		host = createMockHost();
+		vi.clearAllMocks();
+		host = new SsvElement();
 	});
 
 	it("reads the current atom value", () => {
@@ -85,7 +73,7 @@ describe("createAtomCtrl", () => {
 
 		ctrl.set(1);
 
-		expect(host.requestUpdateCount).toBe(1);
+		expect(forceUpdate).toHaveBeenCalledOnce();
 	});
 
 	it("does not trigger requestUpdate when set() value is unchanged", () => {
@@ -95,7 +83,7 @@ describe("createAtomCtrl", () => {
 
 		ctrl.set(5);
 
-		expect(host.requestUpdateCount).toBe(0);
+		expect(forceUpdate).not.toHaveBeenCalled();
 	});
 
 	it("set() is a no-op when atom getter returns undefined", () => {
@@ -113,11 +101,11 @@ describe("createAtomCtrl", () => {
 
 		ctrl.set(3);
 		// diff < 5 → no update
-		expect(host.requestUpdateCount).toBe(0);
+		expect(forceUpdate).not.toHaveBeenCalled();
 
 		ctrl.set(10);
 		// diff >= 5 → update
-		expect(host.requestUpdateCount).toBe(1);
+		expect(forceUpdate).toHaveBeenCalledOnce();
 	});
 
 	it("unsubscribes on hostDisconnected", () => {
@@ -128,6 +116,6 @@ describe("createAtomCtrl", () => {
 
 		ctrl.set(99);
 
-		expect(host.requestUpdateCount).toBe(0);
+		expect(forceUpdate).not.toHaveBeenCalled();
 	});
 });

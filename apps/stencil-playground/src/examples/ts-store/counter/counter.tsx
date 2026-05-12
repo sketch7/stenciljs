@@ -2,7 +2,7 @@ import { SsvElement } from "@ssv/stenciljs.core";
 import { createAtomCtrl } from "@ssv/tanstack.stenciljs-store";
 import { Component, h } from "@stencil/core";
 
-import { countAtom, additionalAtom } from "./counter.store.js";
+import { countAtom, additionalAtom } from "./counter.store";
 
 @Component({
 	tag: "app-tan-counter",

@@ -1,34 +1,22 @@
-import type { ReactiveController, ReactiveControllerHost } from "@ssv/stenciljs.core";
+// oxlint-disable unicorn/empty-brace-spaces
+import { SsvElement } from "@ssv/stenciljs.core";
+import { forceUpdate } from "@stencil/core";
 import { createStore } from "@tanstack/store";
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 
 import { createSelectorCtrl, StoreSelector } from "./store-selector";
 
-function createMockHost(): ReactiveControllerHost & {
-	controllers: Set<ReactiveController>;
-	requestUpdateCount: number;
-} {
-	const controllers = new Set<ReactiveController>();
-	return {
-		controllers,
-		requestUpdateCount: 0,
-		addController(ctrl) {
-			controllers.add(ctrl);
-		},
-		removeController(ctrl) {
-			controllers.delete(ctrl);
-		},
-		requestUpdate() {
-			(this as { requestUpdateCount: number }).requestUpdateCount++;
-		},
-	};
-}
+vi.mock(import("@stencil/core"), () => ({
+	forceUpdate: vi.fn<() => void>(),
+	Mixin: (fn: (base: unknown) => unknown) => fn(class { }),
+}));
 
 describe("StoreSelector", () => {
-	let host: ReturnType<typeof createMockHost>;
+	let host: SsvElement;
 
 	beforeEach(() => {
-		host = createMockHost();
+		vi.clearAllMocks();
+		host = new SsvElement();
 	});
 
 	it("registers itself with the host on construction", () => {
@@ -44,7 +32,7 @@ describe("StoreSelector", () => {
 		ctrl.hostWillRender();
 		store.setState(() => 1);
 
-		expect(host.requestUpdateCount).toBe(1);
+		expect(forceUpdate).toHaveBeenCalledOnce();
 	});
 
 	it("calls requestUpdate() when store value changes", () => {
@@ -54,7 +42,7 @@ describe("StoreSelector", () => {
 
 		store.setState(() => 42);
 
-		expect(host.requestUpdateCount).toBe(1);
+		expect(forceUpdate).toHaveBeenCalledOnce();
 	});
 
 	it("does not call requestUpdate() when value is unchanged", () => {
@@ -64,7 +52,7 @@ describe("StoreSelector", () => {
 
 		store.setState(() => 0);
 
-		expect(host.requestUpdateCount).toBe(0);
+		expect(forceUpdate).not.toHaveBeenCalled();
 	});
 
 	it("selector suppresses requestUpdate when selected value is unchanged", () => {
@@ -78,7 +66,7 @@ describe("StoreSelector", () => {
 
 		store.setState(prev => ({ ...prev, ignored: prev.ignored + 1 }));
 
-		expect(host.requestUpdateCount).toBe(0);
+		expect(forceUpdate).not.toHaveBeenCalled();
 	});
 
 	it("selector triggers requestUpdate when selected value changes", () => {
@@ -92,7 +80,7 @@ describe("StoreSelector", () => {
 
 		store.setState(prev => ({ ...prev, count: prev.count + 1 }));
 
-		expect(host.requestUpdateCount).toBe(1);
+		expect(forceUpdate).toHaveBeenCalledOnce();
 	});
 
 	it("re-subscribes when store reference changes on next hostWillRender()", () => {
@@ -109,11 +97,11 @@ describe("StoreSelector", () => {
 
 		// update on old store should not trigger
 		store1.setState(() => 99);
-		expect(host.requestUpdateCount).toBe(0);
+		expect(forceUpdate).not.toHaveBeenCalled();
 
 		// update on new store should trigger
 		store2.setState(() => 30);
-		expect(host.requestUpdateCount).toBe(1);
+		expect(forceUpdate).toHaveBeenCalledOnce();
 	});
 
 	it("unsubscribes on hostDisconnected()", () => {
@@ -124,7 +112,7 @@ describe("StoreSelector", () => {
 
 		store.setState(() => 1);
 
-		expect(host.requestUpdateCount).toBe(0);
+		expect(forceUpdate).not.toHaveBeenCalled();
 	});
 
 	it("handles undefined store gracefully", () => {
@@ -143,11 +131,11 @@ describe("StoreSelector", () => {
 
 		store.setState(() => 3);
 		// diff < 5, no update
-		expect(host.requestUpdateCount).toBe(0);
+		expect(forceUpdate).not.toHaveBeenCalled();
 
 		store.setState(() => 10);
 		// diff >= 5 from 3, triggers update
-		expect(host.requestUpdateCount).toBe(1);
+		expect(forceUpdate).toHaveBeenCalledOnce();
 	});
 
 	it("createSelectorCtrl returns a StoreSelector instance", () => {

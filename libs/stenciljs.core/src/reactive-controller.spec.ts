@@ -25,14 +25,14 @@ describe("ReactiveControllerHostMixin", () => {
 		it("adds a controller", () => {
 			const ctrl: ReactiveController = {};
 			host.addController(ctrl);
-			expect(host.controllers.has(ctrl)).toBe(true);
+			expect(host.controllers.has(ctrl)).toBeTruthy();
 		});
 
 		it("removes a controller", () => {
 			const ctrl: ReactiveController = {};
 			host.addController(ctrl);
 			host.removeController(ctrl);
-			expect(host.controllers.has(ctrl)).toBe(false);
+			expect(host.controllers.has(ctrl)).toBeFalsy();
 		});
 
 		it("can add multiple controllers", () => {
@@ -70,50 +70,50 @@ describe("ReactiveControllerHostMixin", () => {
 
 		it("connectedCallback → hostConnected", () => {
 			host.connectedCallback();
-			expect(ctrl.hostConnected).toHaveBeenCalledTimes(1);
+			expect(ctrl.hostConnected).toHaveBeenCalledOnce();
 		});
 
 		it("disconnectedCallback → hostDisconnected", () => {
 			host.disconnectedCallback();
-			expect(ctrl.hostDisconnected).toHaveBeenCalledTimes(1);
+			expect(ctrl.hostDisconnected).toHaveBeenCalledOnce();
 		});
 
 		it("componentWillLoad → hostWillLoad", async () => {
 			await host.componentWillLoad();
-			expect(ctrl.hostWillLoad).toHaveBeenCalledTimes(1);
+			expect(ctrl.hostWillLoad).toHaveBeenCalledOnce();
 		});
 
 		it("componentDidLoad → hostDidLoad", () => {
 			host.componentDidLoad();
-			expect(ctrl.hostDidLoad).toHaveBeenCalledTimes(1);
+			expect(ctrl.hostDidLoad).toHaveBeenCalledOnce();
 		});
 
 		it("componentWillRender → hostWillRender", async () => {
 			await host.componentWillRender();
-			expect(ctrl.hostWillRender).toHaveBeenCalledTimes(1);
+			expect(ctrl.hostWillRender).toHaveBeenCalledOnce();
 		});
 
 		it("componentDidRender → hostDidRender", () => {
 			host.componentDidRender();
-			expect(ctrl.hostDidRender).toHaveBeenCalledTimes(1);
+			expect(ctrl.hostDidRender).toHaveBeenCalledOnce();
 		});
 
 		it("componentWillUpdate → hostWillUpdate", async () => {
 			await host.componentWillUpdate();
-			expect(ctrl.hostWillUpdate).toHaveBeenCalledTimes(1);
+			expect(ctrl.hostWillUpdate).toHaveBeenCalledOnce();
 		});
 
 		it("componentDidUpdate → hostDidUpdate", () => {
 			host.componentDidUpdate();
-			expect(ctrl.hostDidUpdate).toHaveBeenCalledTimes(1);
+			expect(ctrl.hostDidUpdate).toHaveBeenCalledOnce();
 		});
 
 		it("delegates lifecycle to all registered controllers", () => {
 			const ctrl2: ReactiveController = { hostConnected: vi.fn<() => void>() };
 			host.addController(ctrl2);
 			host.connectedCallback();
-			expect(ctrl.hostConnected).toHaveBeenCalledTimes(1);
-			expect(ctrl2.hostConnected).toHaveBeenCalledTimes(1);
+			expect(ctrl.hostConnected).toHaveBeenCalledOnce();
+			expect(ctrl2.hostConnected).toHaveBeenCalledOnce();
 		});
 
 		it("does not delegate to removed controllers", () => {
@@ -150,7 +150,7 @@ describe("ReactiveControllerHostMixin", () => {
 			host.addController(ctrl);
 			await host.componentWillLoad();
 			order.push("after");
-			expect(order).toEqual(["loaded", "after"]);
+			expect(order).toStrictEqual(["loaded", "after"]);
 		});
 
 		it("awaits multiple async hostWillLoad hooks in parallel", async () => {

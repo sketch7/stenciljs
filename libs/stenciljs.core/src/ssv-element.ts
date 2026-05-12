@@ -16,9 +16,7 @@ import { ReactiveControllerHostMixin } from "./reactive-controller";
  *
  * When you need mixin composition, use {@link SsvElementMixin} with Stencil's `Mixin()` helper instead.
  */
-export class SsvElement extends Mixin(ReactiveControllerHostMixin) {
-
-}
+export class SsvElement extends Mixin(ReactiveControllerHostMixin) {}
 
 /**
  * Convenience mixin that bundles `ReactiveControllerHostMixin`.

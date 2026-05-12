@@ -103,8 +103,12 @@ export function stencilWatch(options: StencilWatchOptions): Plugin {
 
 	const isUserFile = (file: string): boolean => {
 		const f = path.normalize(file);
-		if (f.endsWith(".d.ts")) return false;
-		if (f.startsWith(srcDir) && excludedDirs.every(excluded => !f.startsWith(excluded))) return true;
+		if (f.endsWith(".d.ts")) {
+			return false;
+		}
+		if (f.startsWith(srcDir) && excludedDirs.every(excluded => !f.startsWith(excluded))) {
+			return true;
+		}
 		return resolvedWatchDirs.some(d => f.startsWith(d));
 	};
 

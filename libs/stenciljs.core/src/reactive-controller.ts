@@ -5,7 +5,7 @@ import type { ComponentInterface, MixedInCtor } from "@stencil/core";
  * Interface for controllers that hook into a host component's lifecycle.
  * All methods are optional — implement only what you need.
  */
-export interface ReactiveController {
+export type ReactiveController = {
 	hostConnected?(): void;
 	hostDisconnected?(): void;
 	hostWillLoad?(): Promise<void> | void;
@@ -14,16 +14,16 @@ export interface ReactiveController {
 	hostDidRender?(): void;
 	hostWillUpdate?(): Promise<void> | void;
 	hostDidUpdate?(): void;
-}
+};
 
 /**
  * The host API exposed to ReactiveControllers.
  */
-export interface ReactiveControllerHost {
+export type ReactiveControllerHost = {
 	addController(controller: ReactiveController): void;
 	removeController(controller: ReactiveController): void;
 	requestUpdate(): void;
-}
+};
 
 /**
  * Mixin factory that adds reactive controller support to a Stencil component.

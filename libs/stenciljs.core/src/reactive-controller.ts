@@ -19,7 +19,7 @@ export interface ReactiveController {
 /**
  * The host API exposed to ReactiveControllers.
  */
-export interface ReactiveControllerHostInterface {
+export interface ReactiveControllerHost {
 	addController(controller: ReactiveController): void;
 	removeController(controller: ReactiveController): void;
 	requestUpdate(): void;
@@ -40,7 +40,7 @@ export interface ReactiveControllerHostInterface {
  * ```
  */
 export function ReactiveControllerHostMixin<B extends MixedInCtor>(Base: B) {
-	class ReactiveControllerHostClass extends Base implements ComponentInterface, ReactiveControllerHostInterface {
+	class ReactiveControllerHostClass extends Base implements ComponentInterface, ReactiveControllerHost {
 		readonly controllers = new Set<ReactiveController>();
 
 		addController(controller: ReactiveController): void {

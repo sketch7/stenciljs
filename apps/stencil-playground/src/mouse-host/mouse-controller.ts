@@ -1,7 +1,7 @@
-import type { ReactiveController, ReactiveControllerHostInterface } from "@ssv/stenciljs.core";
+import type { ReactiveController, ReactiveControllerHost } from "@ssv/stenciljs.core";
 
 class MouseController implements ReactiveController {
-	private host: ReactiveControllerHostInterface;
+	private host: ReactiveControllerHost;
 	pos = { x: 0, y: 0 };
 
 	readonly onMouseMove = ({ clientX, clientY }: MouseEvent) => {
@@ -9,7 +9,7 @@ class MouseController implements ReactiveController {
 		this.host.requestUpdate();
 	};
 
-	constructor(host: ReactiveControllerHostInterface) {
+	constructor(host: ReactiveControllerHost) {
 		this.host = host;
 		host.addController(this);
 	}
@@ -23,6 +23,6 @@ class MouseController implements ReactiveController {
 	}
 }
 
-export function withMouseController(host: ReactiveControllerHostInterface): MouseController {
+export function withMouseController(host: ReactiveControllerHost): MouseController {
 	return new MouseController(host);
 }

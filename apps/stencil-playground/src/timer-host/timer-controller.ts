@@ -1,12 +1,12 @@
-import type { ReactiveController, ReactiveControllerHostInterface } from "@ssv/stenciljs.core";
+import type { ReactiveController, ReactiveControllerHost } from "@ssv/stenciljs.core";
 
 class TimerController implements ReactiveController {
-	private host: ReactiveControllerHostInterface;
+	private host: ReactiveControllerHost;
 	private intervalId: ReturnType<typeof setInterval> | undefined;
 	readonly intervalMs: number;
 	elapsed = 0;
 
-	constructor(host: ReactiveControllerHostInterface, intervalMs = 1000) {
+	constructor(host: ReactiveControllerHost, intervalMs = 1000) {
 		this.host = host;
 		this.intervalMs = intervalMs;
 		host.addController(this);
@@ -28,6 +28,6 @@ class TimerController implements ReactiveController {
 	}
 }
 
-export function withTimerController(host: ReactiveControllerHostInterface, intervalMs?: number): TimerController {
+export function withTimerController(host: ReactiveControllerHost, intervalMs?: number): TimerController {
 	return new TimerController(host, intervalMs);
 }

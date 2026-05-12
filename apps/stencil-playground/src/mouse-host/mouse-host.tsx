@@ -1,5 +1,5 @@
-import { SsvElementMixin } from "@ssv/stenciljs.core";
-import { Component, Mixin, h } from "@stencil/core";
+import { SsvElement } from "@ssv/stenciljs.core";
+import { Component, h } from "@stencil/core";
 
 import { withMouseController } from "./mouse-controller";
 
@@ -8,7 +8,7 @@ import { withMouseController } from "./mouse-controller";
 	styleUrl: "mouse-host.css",
 	shadow: true,
 })
-export class AppMouseHost extends Mixin(SsvElementMixin) {
+export class AppMouseHost extends SsvElement {
 	private mouse = withMouseController(this);
 
 	render() {

@@ -3,29 +3,60 @@ import "../app.css";
 
 export default function Layout({ children }: { children: React.ReactNode }): JSX.Element {
 	return (
-		<div className="min-h-screen flex flex-col bg-[var(--color-bg)] text-[var(--color-fg)]">
-			<Nav />
-			<main className="flex-1 container mx-auto px-4 py-10 max-w-2xl">{children}</main>
+		<div className="flex min-h-screen bg-[var(--color-bg)] text-[var(--color-fg)]">
+			<Sidebar />
+			<main className="flex-1 min-w-0 px-6 py-8 max-w-3xl">{children}</main>
 		</div>
 	);
 }
 
-function Nav(): JSX.Element {
+type NavItem = { href: string; label: string };
+type NavSection = { title: string; items: NavItem[] };
+
+const navSections: NavSection[] = [
+	{
+		title: "SSV Stencil",
+		items: [
+			{ href: "/ssv-stencil/reactive-host/mouse", label: "Mouse Controller" },
+			{ href: "/ssv-stencil/reactive-host/timer", label: "Timer Controller" },
+		],
+	},
+	{
+		title: "Stencil",
+		items: [
+			{ href: "/stencil/counter", label: "Counter" },
+			{ href: "/stencil/todo", label: "Todo List" },
+		],
+	},
+];
+
+function Sidebar(): JSX.Element {
 	return (
-		<header className="border-b border-[var(--color-border)] bg-[var(--color-surface)] sticky top-0 z-10">
-			<div className="container mx-auto px-4 h-14 flex items-center justify-between max-w-2xl">
-				<a href="/" className="font-semibold text-[var(--color-fg)] tracking-tight">
+		<aside className="w-56 shrink-0 border-r border-[var(--color-border)] bg-[var(--color-surface)] flex flex-col sticky top-0 h-screen overflow-y-auto">
+			<div className="px-4 py-5 border-b border-[var(--color-border)]">
+				<a
+					href="/"
+					className="font-semibold tracking-tight text-[var(--color-fg)] hover:text-[var(--color-primary)] transition-colors">
 					Vike Playground
 				</a>
-				<nav className="flex items-center gap-5 text-sm text-[var(--color-muted-fg)]">
-					<a href="/counter" className="hover:text-[var(--color-fg)] transition-colors">
-						Counter
-					</a>
-					<a href="/todo" className="hover:text-[var(--color-fg)] transition-colors">
-						Todo
-					</a>
-				</nav>
 			</div>
-		</header>
+			<nav className="flex flex-col gap-5 px-3 py-4 flex-1">
+				{navSections.map(section => (
+					<div key={section.title} className="flex flex-col gap-1">
+						<span className="px-2 mb-1 text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--color-muted-fg)]">
+							{section.title}
+						</span>
+						{section.items.map(item => (
+							<a
+								key={item.href}
+								href={item.href}
+								className="px-2 py-1.5 rounded-md text-sm text-[var(--color-muted-fg)] hover:text-[var(--color-fg)] hover:bg-[var(--color-surface-hover)] transition-colors">
+								{item.label}
+							</a>
+						))}
+					</div>
+				))}
+			</nav>
+		</aside>
 	);
 }

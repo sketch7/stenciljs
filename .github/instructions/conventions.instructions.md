@@ -1,6 +1,6 @@
 ---
 applyTo: "**"
-description: Package naming and vertical slice structure conventions for this monorepo
+description: Package naming, web component tag prefixes, and vertical slice structure conventions for this monorepo
 ---
 
 # Monorepo Conventions
@@ -16,6 +16,19 @@ description: Package naming and vertical slice structure conventions for this mo
 - `@ssv/*` is reserved for publishable `libs/` only — do **not** use it for anything in `apps/`
 - All `apps/` packages use `@app/<name>` regardless of what they consume
 - `pnpm-workspace.yaml` `catalog:` entries are shared across both scopes; the scope only applies to the `"name"` field in `package.json`
+
+## Web Component Tag Naming
+
+| Location | Tag prefix | Example |
+| --- | --- | --- |
+| `libs/*` | `ssv-` | `ssv-button`, `ssv-data-grid`, `ssv-mouse-host` |
+| `apps/*` | `app-` | `app-counter`, `app-todo`, `app-mouse-host` |
+
+**Rules:**
+- Components in `libs/*` use the `ssv-` prefix — these are the published, reusable web components
+- Components in `apps/*` use the `app-` prefix — these are demo/example components local to the app
+- **Never** use `ssv-` as a tag name inside `apps/*`; it misleads consumers into thinking the component is a published lib
+- The prefix applies to the `tag` property of the Stencil `@Component` decorator and to the class name (e.g., `AppCounter` / `app-counter`)
 
 ## Structure: Vertical Slices (Feature-First)
 
@@ -65,3 +78,4 @@ Feature pages co-locate their data-fetching (`+data.ts`) alongside `+Page.tsx` w
 - **Avoid** `src/components/`, `src/hooks/`, `src/services/` — these are type-first groupings
 - **Avoid** a shared `src/store/` folder — stores belong to the feature that owns them
 - **Avoid** `@ssv/*` for `apps/` packages — that scope signals "publishable library"
+- **Avoid** `ssv-` tag prefix in `apps/*` — use `app-` to clearly signal a demo-only component

@@ -2,5 +2,9 @@
   "extends": "./tsconfig.base.json",
   "compileOnSave": false,
   "files": [],
-  "references": [{ "path": "./apps/stencil-playground" }, { "path": "./apps/vike-playground" }]
+  "references": [
+    { "path": "./libs/stenciljs.core" },
+    { "path": "./apps/stencil-playground" },
+    { "path": "./apps/vike-playground" }
+  ]
 }

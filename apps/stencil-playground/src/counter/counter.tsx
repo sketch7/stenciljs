@@ -1,6 +1,6 @@
 import { Component, h, State } from "@stencil/core";
 
-import { counterStore } from "../../store/counter.store";
+import { counterStore } from "./counter.store";
 
 @Component({
 	tag: "app-counter",

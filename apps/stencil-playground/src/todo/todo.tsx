@@ -1,6 +1,6 @@
 import { Component, h, State } from "@stencil/core";
 
-import { todoStore } from "../../store/todo.store";
+import { todoStore } from "./todo.store";
 
 @Component({
 	tag: "app-todo",

@@ -10,7 +10,11 @@ import { todoStore } from "./todo.store";
 	shadow: true,
 })
 export class AppTanTodo extends SsvElement {
-	private sel = useSelector(this, () => todoStore, state => state.todos);
+	readonly #todos = useSelector(
+		this,
+		() => todoStore,
+		state => state.todos,
+	);
 
 	@State() inputValue = "";
 
@@ -52,7 +56,7 @@ export class AppTanTodo extends SsvElement {
 	}
 
 	render() {
-		const todos = this.sel.value ?? [];
+		const todos = this.#todos() ?? [];
 		const completed = todos.filter(t => t.completed).length;
 		const total = todos.length;
 

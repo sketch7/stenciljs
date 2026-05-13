@@ -9,7 +9,7 @@ import { useMouseController } from "./mouse-controller";
 	shadow: true,
 })
 export class AppMouseHost extends SsvElement {
-	private mouse = useMouseController(this);
+	#mouse = useMouseController(this);
 
 	render() {
 		return (
@@ -17,11 +17,11 @@ export class AppMouseHost extends SsvElement {
 				<div class="pos-display">
 					<div class="pos-item">
 						<span class="pos-label">X</span>
-						<span class="pos-value">{this.mouse.pos.x}</span>
+						<span class="pos-value">{this.#mouse.pos.x}</span>
 					</div>
 					<div class="pos-item">
 						<span class="pos-label">Y</span>
-						<span class="pos-value">{this.mouse.pos.y}</span>
+						<span class="pos-value">{this.#mouse.pos.y}</span>
 					</div>
 				</div>
 				<p class="hint">Move your mouse to update the position.</p>

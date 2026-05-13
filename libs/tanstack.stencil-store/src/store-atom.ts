@@ -1,46 +1,45 @@
-import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
+import type { ReactiveControllerHost } from "@ssv/stencil.core";
 import type { Atom } from "@tanstack/store";
 
-import type { SelectionSource, UseSelectorOptions } from "./store-selector";
-import { StoreSelector } from "./store-selector";
+import type { UseSelectorOptions } from "./store-selector";
+import { useSelector } from "./store-selector";
 
-class StoreAtom<TValue> {
-	readonly #getAtom: () => Atom<TValue> | undefined;
-	// stored to satisfy no-new lint rule; lifecycle is managed via host controllers
-	// eslint-disable-next-line no-unused-private-class-members
-	readonly #selector: StoreSelector<TValue, TValue>;
+/** Return type of {@link useAtom}. */
+type AtomResult<TValue> = {
+	/** The current atom value, or `undefined` before the first render. */
+	get value(): TValue | undefined;
+	/** Updates the atom. Accepts a new value or an updater function. */
+	set: Atom<TValue>["set"];
+};
 
-	constructor(
-		host: ReactiveControllerHost,
-		getAtom: () => Atom<TValue> | undefined,
-		options?: UseSelectorOptions<TValue>,
-	) {
-		this.#getAtom = getAtom;
-		this.#selector = new StoreSelector<TValue, TValue>(host, getAtom, undefined, options);
-	}
-
-	get value(): TValue | undefined {
-		return this.#getAtom()?.get();
-	}
-
-	set(value: TValue): void;
-	set(updater: (prev: TValue) => TValue): void;
-	set(valueOrUpdater: TValue | ((prev: TValue) => TValue)): void {
-		const atom = this.#getAtom();
-		if (!atom) {
-			return;
-		}
-		(atom.set as (v: TValue | ((prev: TValue) => TValue)) => void)(valueOrUpdater);
-	}
-}
-
-export type { SelectionSource, UseSelectorOptions };
-export type { ReactiveController, ReactiveControllerHost };
-
+/**
+ * Returns the current atom value and a setter, re-rendering when the atom changes.
+ *
+ * @example
+ * ```ts
+ * readonly #count = useAtom(this, () => countAtom);
+ *
+ * render() {
+ *   return <button onClick={() => this.#count.set((p) => p + 1)}>{this.#count.value}</button>;
+ * }
+ * ```
+ */
 export function useAtom<TValue>(
 	host: ReactiveControllerHost,
 	getAtom: () => Atom<TValue> | undefined,
 	options?: UseSelectorOptions<TValue>,
-): StoreAtom<TValue> {
-	return new StoreAtom(host, getAtom, options);
+): AtomResult<TValue> {
+	const value = useSelector(host, getAtom, undefined, options);
+	return {
+		get value() {
+			return value();
+		},
+		set(valueOrUpdater) {
+			const atom = getAtom();
+			if (!atom) {
+				return;
+			}
+			(atom.set as (v: TValue | ((prev: TValue) => TValue)) => void)(valueOrUpdater);
+		},
+	};
 }

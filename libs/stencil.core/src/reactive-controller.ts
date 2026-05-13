@@ -2,37 +2,61 @@ import { forceUpdate } from "@stencil/core";
 import type { ComponentInterface, MixedInCtor } from "@stencil/core";
 
 /**
- * Interface for controllers that hook into a host component's lifecycle.
+ * Lifecycle-aware controller interface for Stencil components.
  * All methods are optional — implement only what you need.
+ *
+ * @see {@link https://stenciljs.com/docs/component-lifecycle | Stencil Component Lifecycle}
+ *
+ * @example
+ * ```ts
+ * const ctrl: ReactiveController = {
+ *   hostConnected() { window.addEventListener('resize', onResize); },
+ *   hostDisconnected() { window.removeEventListener('resize', onResize); },
+ * };
+ * ```
  */
 export type ReactiveController = {
+	/** Called every time the host connects to the DOM. May be called more than once if the element is moved. */
 	hostConnected?(): void;
+	/** Called every time the host disconnects from the DOM. May be called more than once. */
 	hostDisconnected?(): void;
+	/** Called once just before the first render. Return a `Promise` to delay rendering. */
 	hostWillLoad?(): Promise<void> | void;
+	/** Called once just after the first render. */
 	hostDidLoad?(): void;
+	/** Called before every render. Return a `Promise` to delay rendering. */
 	hostWillRender?(): Promise<void> | void;
+	/** Called after every render. */
 	hostDidRender?(): void;
+	/** Called before a re-render when `Prop` or `State` changes. Never called on first render. Return a `Promise` to delay the update. */
 	hostWillUpdate?(): Promise<void> | void;
+	/** Called after a re-render when `Prop` or `State` changes. Never called on first render. */
 	hostDidUpdate?(): void;
 };
 
 /**
- * The host API exposed to ReactiveControllers.
+ * Host API exposed to `ReactiveController`s.
+ *
+ * @example
+ * ```ts
+ * host.addController(ctrl);
+ * host.requestUpdate();
+ * ```
  */
 export type ReactiveControllerHost = {
+	/** Registers a controller with this host. */
 	addController(controller: ReactiveController): void;
+	/** Unregisters a controller from this host. */
 	removeController(controller: ReactiveController): void;
+	/** Schedules a re-render of the host component. */
 	requestUpdate(): void;
 };
 
 /**
- * Mixin factory that adds reactive controller support to a Stencil component.
+ * Mixin factory that adds `ReactiveController` support to any Stencil component class.
  *
- * Use this with Stencil's `Mixin()` helper:
+ * @example
  * ```ts
- * import { Mixin } from '@stencil/core';
- * import { ReactiveControllerHostMixin } from '@ssv/stencil.core';
- *
  * @Component({ tag: 'my-component', shadow: true })
  * export class MyComponent extends Mixin(ReactiveControllerHostMixin) {
  *   private mouse = useMouseController(this);

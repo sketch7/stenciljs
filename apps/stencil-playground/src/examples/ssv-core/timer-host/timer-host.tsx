@@ -1,7 +1,7 @@
 import { SsvElementMixin } from "@ssv/stencil.core";
 import { Component, Mixin, h } from "@stencil/core";
 
-import { withTimerController } from "./timer-controller";
+import { useTimerController } from "./timer-controller";
 
 function pad(n: number): string {
 	return String(n).padStart(2, "0");
@@ -13,7 +13,7 @@ function pad(n: number): string {
 	shadow: true,
 })
 export class AppTimerHost extends Mixin(SsvElementMixin) {
-	private timer = withTimerController(this, 1000);
+	private timer = useTimerController(this, 1000);
 
 	render() {
 		const totalSeconds = Math.floor(this.timer.elapsed / 1000);

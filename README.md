@@ -18,6 +18,7 @@ libs/
 | Package                                                                      | Description                                                                                                  |
 | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | [`@ssv/stencil.core`](libs/stencil.core/README.md)                           | `ReactiveController` / `ReactiveControllerHost` pattern — lifecycle-aware controllers for Stencil components |
+| [`@ssv/tanstack.stencil-store`](libs/tanstack.stencil-store/README.md)       | TanStack Store bindings for Stencil — `useSelector` and `useAtom` hooks with lifecycle-aware subscriptions   |
 | [`@ssv/vite-plugin-stencil-watch`](libs/vite-plugin-stencil-watch/README.md) | Vite plugin that watches Stencil sources and triggers HMR in consuming apps                                  |
 
 ## Tech stack
@@ -53,21 +54,6 @@ pnpm install
 ```bash
 pnpm dev
 ```
-
-This builds `stencil-playground` (generates `hydrate/`, `loader/`, `src/react/`) then starts both the Stencil watch build and the Vike dev server in parallel.
-
-| URL                                                   | Page                       |
-| ----------------------------------------------------- | -------------------------- |
-| http://localhost:3000                                 | Landing                    |
-| http://localhost:3000/stencil/counter                 | Counter (@stencil/store)   |
-| http://localhost:3000/stencil/todo                    | Todo (@stencil/store)      |
-| http://localhost:3000/ssv-stencil/reactive-host/mouse | Mouse (ReactiveController) |
-| http://localhost:3000/ssv-stencil/reactive-host/timer | Timer (ReactiveController) |
-
-**HMR behaviour:**
-
-- Changes to `apps/vike-playground/src/**` (pages, CSS, layout) → instant HMR via Vite
-- Changes to `apps/stencil-playground/src/**` (components, stores) → picked up by the parallel `stencil build --watch`; Vite will reload the module when the output files change
 
 ### Run individual packages
 

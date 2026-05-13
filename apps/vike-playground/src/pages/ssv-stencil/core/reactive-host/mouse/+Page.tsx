@@ -8,7 +8,7 @@ export default function Page(): JSX.Element {
 				<h1 className="text-2xl font-bold text-[var(--color-fg)]">Mouse Controller</h1>
 				<p className="text-sm text-[var(--color-muted-fg)]">
 					A <code>ReactiveController</code> that tracks the cursor position via{" "}
-					<code>{'window.addEventListener("mousemove")'}</code>. The controller registers itself with the host in its
+					<code>window.addEventListener("mousemove")</code>. The controller registers itself with the host in its
 					constructor and cleans up on disconnect.
 				</p>
 			</div>

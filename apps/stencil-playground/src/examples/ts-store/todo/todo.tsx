@@ -10,7 +10,11 @@ import { todoStore } from "./todo.store";
 	shadow: true,
 })
 export class AppTanTodo extends SsvElement {
-	private sel = useSelector(this, () => todoStore, state => state.todos);
+	private sel = useSelector(
+		this,
+		() => todoStore,
+		state => state.todos,
+	);
 
 	@State() inputValue = "";
 

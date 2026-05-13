@@ -89,7 +89,11 @@ describe("useSelector", () => {
 
 	it("selector suppresses re-render when selected value is unchanged", () => {
 		const store = createStore({ count: 0, ignored: 0 });
-		const ctrl = useSelector(host, () => store, s => s.count);
+		const ctrl = useSelector(
+			host,
+			() => store,
+			s => s.count,
+		);
 		host.render();
 
 		store.setState(prev => ({ ...prev, ignored: prev.ignored + 1 }));
@@ -100,7 +104,11 @@ describe("useSelector", () => {
 
 	it("selector triggers re-render when selected value changes", () => {
 		const store = createStore({ count: 0, ignored: 0 });
-		const ctrl = useSelector(host, () => store, s => s.count);
+		const ctrl = useSelector(
+			host,
+			() => store,
+			s => s.count,
+		);
 		host.render();
 
 		store.setState(prev => ({ ...prev, count: prev.count + 1 }));
@@ -111,7 +119,11 @@ describe("useSelector", () => {
 
 	it("selector returns updated value on re-render", () => {
 		const store = createStore({ count: 0, ignored: 0 });
-		const ctrl = useSelector(host, () => store, s => s.count);
+		const ctrl = useSelector(
+			host,
+			() => store,
+			s => s.count,
+		);
 		host.render();
 
 		store.setState(prev => ({ ...prev, count: 5 }));

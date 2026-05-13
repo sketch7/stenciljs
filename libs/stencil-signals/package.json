@@ -1,0 +1,66 @@
+{
+  "name": "@ssv/stencil-signals",
+  "version": "0.0.0-PLACEHOLDER",
+  "description": "TC39 and Preact Signals integration for StencilJS",
+  "homepage": "https://github.com/sketch7/stenciljs/tree/main/libs/stencil-signals#readme",
+  "bugs": "https://github.com/sketch7/stenciljs/issues",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sketch7/stenciljs.git"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./extensions": {
+      "types": "./dist/extensions.d.ts",
+      "import": "./dist/extensions.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "oxlint src/",
+    "fmt": "oxfmt src/",
+    "fmt:check": "oxfmt --check src/"
+  },
+  "peerDependencies": {
+    "@ssv/stencil.core": "workspace:*",
+    "@preact/signals-core": ">=1.0.0",
+    "@stencil/core": ">=4.0.0",
+    "signal-polyfill": ">=0.2.0"
+  },
+  "peerDependenciesMeta": {
+    "@stencil/core": ">=4.0.0",
+    "signal-polyfill": {
+      "optional": true
+    },
+    "@preact/signals-core": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@ssv/stencil.core": "workspace:*",
+    "@preact/signals-core": "catalog:",
+    "@stencil/core": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "signal-polyfill": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "packageManager": "pnpm@9.15.0"
+}

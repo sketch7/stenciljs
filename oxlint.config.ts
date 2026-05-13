@@ -30,6 +30,7 @@ export default defineConfig({
 		"no-nested-ternary": "off",
 		"no-continue": "off",
 		"no-plusplus": "off",
+		"no-underscore-dangle": "off",
 		"no-magic-numbers": "off",
 		"no-use-before-define": "off",
 		"no-duplicate-imports": ["error", { allowSeparateTypeImports: true }],

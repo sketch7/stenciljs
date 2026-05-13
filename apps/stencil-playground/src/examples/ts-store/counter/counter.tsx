@@ -1,8 +1,15 @@
 import { SsvElement } from "@ssv/stencil.core";
-import { useAtom } from "@ssv/tanstack.stencil-store";
+import { createAtom, useAtom, useSelector } from "@ssv/tanstack.stencil-store";
 import { Component, h } from "@stencil/core";
 
-import { countAtom, additionalAtom } from "./counter.store";
+// standalone atoms — demonstrates useAtom usage
+const countAtom = createAtom(0);
+const additionalAtom = createAtom(0);
+const doubledAtom = createAtom(() => additionalAtom.get() * 2);
+const totalAtom = createAtom(() => {
+	const count = countAtom.get() ?? 0;
+	return count + doubledAtom.get();
+});
 
 @Component({
 	tag: "app-tan-counter",
@@ -10,19 +17,21 @@ import { countAtom, additionalAtom } from "./counter.store";
 	shadow: true,
 })
 export class AppTanCounter extends SsvElement {
-	private count = useAtom(this, () => countAtom);
-	private additional = useAtom(this, () => additionalAtom);
+	readonly #count = useAtom(this, () => countAtom);
+	readonly #additional = useAtom(this, () => additionalAtom);
+	readonly #doubled = useSelector(this, () => doubledAtom);
+	readonly #total = useSelector(this, () => totalAtom);
 
 	private handleAdditionalChange(event: Event) {
 		const value = Number.parseInt((event.target as HTMLInputElement).value, 10);
-		this.additional.set(Number.isNaN(value) ? 0 : value);
+		this.#additional.set(Number.isNaN(value) ? 0 : value);
 	}
 
 	render() {
-		const count = this.count.value ?? 0;
-		const additionalValue = this.additional.value ?? 0;
-		const doubled = additionalValue * 2;
-		const total = count + doubled;
+		const count = this.#count.value ?? 0;
+		const additionalValue = this.#additional.value ?? 0;
+		const doubled = this.#doubled();
+		const total = this.#total();
 
 		return (
 			<div class="counter">
@@ -32,10 +41,10 @@ export class AppTanCounter extends SsvElement {
 				</div>
 
 				<div class="controls">
-					<button type="button" class="btn btn-outline" onClick={() => this.count.set(prev => prev - 1)}>
+					<button type="button" class="btn btn-outline" onClick={() => this.#count.set(prev => prev - 1)}>
 						−
 					</button>
-					<button type="button" class="btn btn-primary" onClick={() => this.count.set(prev => prev + 1)}>
+					<button type="button" class="btn btn-primary" onClick={() => this.#count.set(prev => prev + 1)}>
 						+
 					</button>
 				</div>

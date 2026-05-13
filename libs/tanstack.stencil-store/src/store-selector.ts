@@ -1,11 +1,16 @@
 import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
 
+/** Options for {@link useSelector}. */
 export type UseSelectorOptions<TSelected> = {
+	/** Custom equality — return `true` to skip re-render. Defaults to `===`. */
 	compare?: (a: TSelected | undefined, b: TSelected | undefined) => boolean;
 };
 
+/** Minimal interface satisfied by any TanStack Store atom or store. */
 export type SelectionSource<T> = {
+	/** Returns the current state snapshot. */
 	get: () => T;
+	/** Subscribes to state changes. Returns an object with an `unsubscribe` teardown. */
 	subscribe: (listener: (value: T) => void) => { unsubscribe: () => void };
 };
 
@@ -17,78 +22,68 @@ function defaultSelector<TSource, TSelected>(snapshot: TSource): TSelected {
 	return snapshot as unknown as TSelected;
 }
 
-export class StoreSelector<TSource, TSelected = TSource> implements ReactiveController {
-	readonly #host: ReactiveControllerHost;
-	readonly #getStore: () => SelectionSource<TSource> | undefined;
-	readonly #selector: (snapshot: TSource) => TSelected;
-	readonly #compare: (a: TSelected | undefined, b: TSelected) => boolean;
-	#unsubscribe?: () => void;
-	#subscribedStore?: SelectionSource<TSource>;
-	#hasSelected = false;
-	#lastSelected?: TSelected;
-
-	// eslint-disable-next-line max-params
-	constructor(
-		host: ReactiveControllerHost,
-		getStore: () => SelectionSource<TSource> | undefined,
-		selector?: (snapshot: TSource) => TSelected,
-		options?: UseSelectorOptions<TSelected>,
-	) {
-		this.#host = host;
-		this.#getStore = getStore;
-		this.#selector = selector ?? (defaultSelector as unknown as (snapshot: TSource) => TSelected);
-		this.#compare = options?.compare ?? defaultCompare;
-		host.addController(this);
-	}
-
-	hostWillRender(): void {
-		const store = this.#getStore();
-		if (store === this.#subscribedStore) {
-			return;
-		}
-
-		this.#unsubscribe?.();
-		this.#subscribedStore = store;
-
-		if (!store) {
-			this.#unsubscribe = undefined;
-			this.#hasSelected = false;
-			this.#lastSelected = undefined;
-			return;
-		}
-
-		this.#lastSelected = this.#selector(store.get());
-		this.#hasSelected = true;
-		this.#unsubscribe = store.subscribe(value => {
-			const next = this.#selector(value);
-			if (this.#hasSelected && this.#compare(this.#lastSelected, next)) {
-				return;
-			}
-			this.#lastSelected = next;
-			this.#hasSelected = true;
-			this.#host.requestUpdate();
-		}).unsubscribe;
-	}
-
-	hostDisconnected(): void {
-		this.#unsubscribe?.();
-		this.#unsubscribe = undefined;
-		this.#subscribedStore = undefined;
-		this.#hasSelected = false;
-		this.#lastSelected = undefined;
-	}
-
-	get value(): TSelected | undefined {
-		return this.#lastSelected;
-	}
-}
-
+/**
+ * Subscribes to a store or atom and schedules a re-render when the selected value changes.
+ *
+ * Omit `selector` to subscribe to the whole value.
+ *
+ * @example
+ * ```ts
+ * readonly #count = useSelector(this, () => counterStore, (s) => s.count);
+ * ```
+ *
+ * @example
+ * ```ts
+ * readonly #todos = useSelector(this, () => todoStore);
+ * ```
+ */
 // eslint-disable-next-line max-params
 export function useSelector<TSource, TSelected = TSource>(
 	host: ReactiveControllerHost,
 	getStore: () => SelectionSource<TSource> | undefined,
 	selector?: (snapshot: TSource) => TSelected,
 	options?: UseSelectorOptions<TSelected>,
-): StoreSelector<TSource, TSelected> {
-	return new StoreSelector(host, getStore, selector, options);
+): () => TSelected | undefined {
+	const compare = options?.compare ?? defaultCompare;
+	const select = selector ?? defaultSelector;
+	let unsubscribe: (() => void) | undefined;
+	let subscribedStore: SelectionSource<TSource> | undefined;
+	let lastSelected: TSelected | undefined;
+
+	const ctrl: ReactiveController = {
+		hostWillRender(): void {
+			const store = getStore();
+			if (store === subscribedStore) {
+				return;
+			}
+
+			unsubscribe?.();
+			subscribedStore = store;
+
+			if (!store) {
+				unsubscribe = undefined;
+				lastSelected = undefined;
+				return;
+			}
+
+			lastSelected = select(store.get());
+			unsubscribe = store.subscribe(value => {
+				const next = select(value);
+				if (compare(lastSelected, next)) {
+					return;
+				}
+				lastSelected = next;
+				host.requestUpdate();
+			}).unsubscribe;
+		},
+		hostDisconnected(): void {
+			unsubscribe?.();
+			unsubscribe = undefined;
+			subscribedStore = undefined;
+			lastSelected = undefined;
+		},
+	};
+
+	host.addController(ctrl);
+	return () => lastSelected;
 }

@@ -1,6 +1,6 @@
 ---
 name: stenciljs-component-development
-description: StencilJS component patterns for this workspace. Use when creating new Stencil components, adding reactive state with @stencil/store, implementing ReactiveController from @ssv/stencil.core, or working with output targets. Trigger words - component, stencil, @Component, store, reactive controller, SsvElement, output target, web component.
+description: StencilJS component patterns for this workspace. Use when creating new Stencil components, adding reactive state with @stencil/store or @ssv/tanstack.stencil-store, implementing ReactiveController from @ssv/stencil.core, or working with output targets. Trigger words - component, stencil, @Component, store, reactive controller, SsvElement, output target, web component, useSelector, useAtom, tanstack.
 ---
 
 # StencilJS Component Development
@@ -69,39 +69,89 @@ export class AppCounter {
 }
 ```
 
-See: [apps/stencil-playground/src/counter/](../../../apps/stencil-playground/src/counter/)
+See: [apps/stencil-playground/src/examples/stencil-store/counter/](../../../apps/stencil-playground/src/examples/stencil-store/counter/)
 
 ## Reactive Controllers (@ssv/stencil.core)
 
 Use `ReactiveController` for lifecycle-aware, reusable behaviour (event listeners, intervals, subscriptions). The controller calls `host.requestUpdate()` to trigger re-renders.
 
-### 1. Implement the controller
+### Controller styles
+
+Two styles are supported. Prefer **fn-only** — it is simpler and avoids a class.
+
+#### Style A — fn-only ✅ preferred
+
+State lives in the closure. An object literal satisfies the `ReactiveController` interface.
 
 ```typescript
 // <feature>/<feature>-controller.ts
 import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
 
-class FeatureController implements ReactiveController {
-  private host: ReactiveControllerHost;
-  value = …;
-
-  constructor(host: ReactiveControllerHost) {
-    this.host = host;
-    host.addController(this); // registers with the host lifecycle
-  }
-
-  hostConnected() { /* setup: add listeners, start timers */ }
-  hostDisconnected() { /* cleanup: remove listeners, clear timers */ }
-}
-
-export function useFeatureController(host: ReactiveControllerHost): FeatureController {
-  return new FeatureController(host);
+export function useMouseController(host: ReactiveControllerHost): { pos: { x: number; y: number } } {
+  let pos = { x: 0, y: 0 };
+  const onMouseMove = ({ clientX, clientY }: MouseEvent) => {
+    pos = { x: clientX, y: clientY };
+    host.requestUpdate();
+  };
+  const ctrl: ReactiveController = {
+    hostConnected() { globalThis.addEventListener("mousemove", onMouseMove); },
+    hostDisconnected() { globalThis.removeEventListener("mousemove", onMouseMove); },
+  };
+  host.addController(ctrl);
+  return {
+    get pos() { return pos; },
+  };
 }
 ```
 
-### 2. Host the controller in the component
+See: [ssv-core/mouse-host/mouse-controller.ts](../../../apps/stencil-playground/src/examples/ssv-core/mouse-host/mouse-controller.ts)
 
-Extend `SsvElement` (single inheritance) or `Mixin(SsvElementMixin)` (when extending another class):
+#### Style B — class (use when you need methods or private fields)
+
+The class constructor calls `host.addController(this)` to self-register. Expose it via a factory function so consumers use the same `use*` call-site convention.
+
+```typescript
+// <feature>/<feature>-controller.ts
+import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
+
+class TimerController implements ReactiveController {
+  #elapsed = 0;
+  #intervalId: ReturnType<typeof setInterval> | undefined;
+  get elapsed() { return this.#elapsed; }
+
+  constructor(
+    private readonly host: ReactiveControllerHost,
+    private readonly intervalMs = 1000,
+  ) {
+    host.addController(this);
+  }
+
+  hostConnected() {
+    this.#elapsed = 0;
+    this.#intervalId = setInterval(() => {
+      this.#elapsed += this.intervalMs;
+      this.host.requestUpdate();
+    }, this.intervalMs);
+  }
+
+  hostDisconnected() {
+    if (this.#intervalId !== undefined) {
+      clearInterval(this.#intervalId);
+      this.#intervalId = undefined;
+    }
+  }
+}
+
+export function useTimerController(host: ReactiveControllerHost, intervalMs?: number): TimerController {
+  return new TimerController(host, intervalMs);
+}
+```
+
+See: [ssv-core/timer-host/timer-controller.ts](../../../apps/stencil-playground/src/examples/ssv-core/timer-host/timer-controller.ts)
+
+### Host the controller in the component
+
+Extend `SsvElement` (single inheritance) or `Mixin(SsvElementMixin)` (when extending another base class):
 
 ```typescript
 // Option A — single inheritance
@@ -117,15 +167,16 @@ import { SsvElementMixin } from "@ssv/stencil.core";
 import { Mixin } from "@stencil/core";
 
 export class AppTimerHost extends Mixin(SsvElementMixin) {
-  private timer = withTimerController(this, 1000);
+  private timer = useTimerController(this, 1000);
+  render() { return <div>{this.timer.elapsed}ms</div>; }
 }
 ```
 
 See:
 
-- Mouse tracking example: [apps/stencil-playground/src/mouse-host/](../../../apps/stencil-playground/src/mouse-host/)
-- Timer example: [apps/stencil-playground/src/timer-host/](../../../apps/stencil-playground/src/timer-host/)
-- Library source: [libs/stenciljs.core/src/](../../../libs/stenciljs.core/src/)
+- Mouse tracking example: [apps/stencil-playground/src/examples/ssv-core/mouse-host/](../../../apps/stencil-playground/src/examples/ssv-core/mouse-host/)
+- Timer example: [apps/stencil-playground/src/examples/ssv-core/timer-host/](../../../apps/stencil-playground/src/examples/ssv-core/timer-host/)
+- Library source: [libs/stencil.core/src/](../../../libs/stencil.core/src/)
 
 ## Output Targets (stencil.config.ts)
 
@@ -154,8 +205,9 @@ See: [apps/stencil-playground/stencil.config.ts](../../../apps/stencil-playgroun
 
 | Pattern                                     | Example Files                                                                 |
 | ------------------------------------------- | ----------------------------------------------------------------------------- |
-| Component + @stencil/store                  | [counter/](../../../apps/stencil-playground/src/counter/)                     |
-| Component + ReactiveController (SsvElement) | [mouse-host/](../../../apps/stencil-playground/src/mouse-host/)               |
-| Component + ReactiveController (Mixin)      | [timer-host/](../../../apps/stencil-playground/src/timer-host/)               |
-| Output targets config                       | [stencil.config.ts](../../../apps/stencil-playground/stencil.config.ts)       |
-| Core library API                            | [libs/stenciljs.core/src/index.ts](../../../libs/stenciljs.core/src/index.ts) |
+| Component + @stencil/store                  | [stencil-store/counter/](../../../apps/stencil-playground/src/examples/stencil-store/counter/)     |
+| Component + @ssv/tanstack.stencil-store      | [ts-store/counter/](../../../apps/stencil-playground/src/examples/ts-store/counter/)               |
+| Component + ReactiveController (SsvElement) | [ssv-core/mouse-host/](../../../apps/stencil-playground/src/examples/ssv-core/mouse-host/)         |
+| Component + ReactiveController (Mixin)      | [ssv-core/timer-host/](../../../apps/stencil-playground/src/examples/ssv-core/timer-host/)         |
+| Output targets config                       | [stencil.config.ts](../../../apps/stencil-playground/stencil.config.ts)                            |
+| Core library API                            | [libs/stencil.core/src/index.ts](../../../libs/stencil.core/src/index.ts)                          |

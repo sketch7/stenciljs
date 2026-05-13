@@ -101,6 +101,7 @@ export default defineConfig({
 		"typescript/restrict-template-expressions": "warn",
 		"typescript/no-unnecessary-type-assertion": "error",
 		"typescript/no-wrapper-object-types": "error",
+		"typescript/parameter-properties": ["error", { prefer: "parameter-property" }],
 
 		// ── React (disabled globally — enabled in app overrides as needed) ─────
 		"react/react-in-jsx-scope": "off",
@@ -174,6 +175,7 @@ export default defineConfig({
 				"new-cap": "off",
 				// render() is a Stencil lifecycle method
 				"class-methods-use-this": "off",
+
 				// @Prop() requires explicit types for Stencil compiler type generation
 				"typescript/no-inferrable-types": "off",
 				// render() return type is implicit JSX; Stencil convention omits it

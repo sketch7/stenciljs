@@ -19,7 +19,7 @@ export default function Page(): JSX.Element {
 
 			<div className="flex flex-col gap-2 text-xs text-[var(--color-muted-fg)]">
 				<p>
-					Implemented with <code>withTimerController(this, 1000)</code> — a factory that creates and registers a{" "}
+					Implemented with <code>useTimerController(this, 1000)</code> — a factory that creates and registers a{" "}
 					<code>TimerController</code> with a configurable interval.
 				</p>
 				<p>

@@ -24,33 +24,69 @@ pnpm add @ssv/stencil.core
 
 ### 1. Implement a controller
 
-All lifecycle hooks are optional — implement only what you need.
+Prefer **fn-only** (Style A) — state lives in the closure, no class needed.
+
+#### Style A — fn-only ✅ preferred
 
 ```ts
 // mouse-controller.ts
 import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
 
-class MouseController implements ReactiveController {
-  pos = { x: 0, y: 0 };
-  readonly onMouseMove = ({ clientX, clientY }: MouseEvent) => {
-    this.pos = { x: clientX, y: clientY };
-    this.host.requestUpdate(); // triggers re-render
+export function useMouseController(host: ReactiveControllerHost): { pos: { x: number; y: number } } {
+  let pos = { x: 0, y: 0 };
+  const onMouseMove = ({ clientX, clientY }: MouseEvent) => {
+    pos = { x: clientX, y: clientY };
+    host.requestUpdate();
   };
-
-  constructor(private host: ReactiveControllerHost) {
-    host.addController(this);
-  }
-
-  hostConnected() { window.addEventListener("mousemove", this.onMouseMove); }
-  hostDisconnected() { window.removeEventListener("mousemove", this.onMouseMove); }
-}
-
-export function useMouseController(host: ReactiveControllerHost) {
-  return new MouseController(host);
+  const ctrl: ReactiveController = {
+    hostConnected() { globalThis.addEventListener("mousemove", onMouseMove); },
+    hostDisconnected() { globalThis.removeEventListener("mousemove", onMouseMove); },
+  };
+  host.addController(ctrl);
+  return {
+    get pos() { return pos; },
+  };
 }
 ```
 
-Available hooks: `hostConnected`, `hostDisconnected`, `hostWillLoad`, `hostDidLoad`, `hostWillRender`, `hostDidRender`, `hostWillUpdate`, `hostDidUpdate`.
+#### Style B — class (when you need methods or private fields)
+
+```ts
+// timer-controller.ts
+import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
+
+class TimerController implements ReactiveController {
+  #elapsed = 0;
+  #intervalId: ReturnType<typeof setInterval> | undefined;
+  get elapsed() { return this.#elapsed; }
+
+  constructor(
+    private readonly host: ReactiveControllerHost,
+    private readonly intervalMs = 1000,
+  ) {
+    host.addController(this);
+  }
+
+  hostConnected() {
+    this.#elapsed = 0;
+    this.#intervalId = setInterval(() => {
+      this.#elapsed += this.intervalMs;
+      this.host.requestUpdate();
+    }, this.intervalMs);
+  }
+
+  hostDisconnected() {
+    if (this.#intervalId !== undefined) {
+      clearInterval(this.#intervalId);
+      this.#intervalId = undefined;
+    }
+  }
+}
+
+export function useTimerController(host: ReactiveControllerHost, intervalMs?: number): TimerController {
+  return new TimerController(host, intervalMs);
+}
+```
 
 ### 2. Host the controller — `SsvElement` (single inheritance)
 
@@ -76,13 +112,18 @@ Use this when you need to extend another base class alongside the mixin.
 ```ts
 import { SsvElementMixin } from "@ssv/stencil.core";
 import { Component, Mixin, h } from "@stencil/core";
+import { useTimerController } from "./timer-controller";
 
 @Component({ tag: "ssv-timer-host", shadow: true })
 export class SsvTimerHost extends Mixin(SsvElementMixin) {
-  private timer = withTimerController(this, 1000);
+  private timer = useTimerController(this, 1000);
+
+  render() {
+    return <div>{this.timer.elapsed}ms</div>;
+  }
 }
 ```
 
 ## Examples
 
-See [apps/stencil-playground/src/mouse-host/](../../apps/stencil-playground/src/mouse-host/) and [apps/stencil-playground/src/timer-host/](../../apps/stencil-playground/src/timer-host/) for full working examples.
+See [apps/stencil-playground/src/examples/ssv-core/mouse-host/](../../apps/stencil-playground/src/examples/ssv-core/mouse-host/) and [apps/stencil-playground/src/examples/ssv-core/timer-host/](../../apps/stencil-playground/src/examples/ssv-core/timer-host/) for full working examples.

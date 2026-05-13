@@ -47,48 +47,42 @@ describe("useAtom", () => {
 		host = new TestHost();
 	});
 
-	it("reads the current atom value before first render", () => {
-		const atom = createAtom(42);
-		const ctrl = useAtom(host, () => atom);
-		expect(ctrl.value).toBe(42);
-	});
-
 	it("reads the current atom value after render", () => {
 		const atom = createAtom(42);
-		const ctrl = useAtom(host, () => atom);
+		const state = useAtom(host, () => atom);
 		host.render();
-		expect(ctrl.value).toBe(42);
+		expect(state.value).toBe(42);
 	});
 
 	it("set(value) updates the atom", () => {
 		const atom = createAtom(0);
-		const ctrl = useAtom(host, () => atom);
+		const state = useAtom(host, () => atom);
 		host.render();
 
-		ctrl.set(99);
+		state.set(99);
 
 		expect(atom.get()).toBe(99);
 	});
 
 	it("set(updater) applies updater function", () => {
 		const atom = createAtom(10);
-		const ctrl = useAtom(host, () => atom);
+		const state = useAtom(host, () => atom);
 		host.render();
 
-		ctrl.set(prev => prev + 5);
+		state.set(prev => prev + 5);
 
 		expect(atom.get()).toBe(15);
 	});
 
 	it("triggers re-render when atom value changes via set()", () => {
 		const atom = createAtom(0);
-		const ctrl = useAtom(host, () => atom);
+		const state = useAtom(host, () => atom);
 		host.render();
 
-		ctrl.set(1);
+		state.set(1);
 
 		expect(host.renderCount).toBe(1);
-		expect(ctrl.value).toBe(1);
+		expect(state.value).toBe(1);
 	});
 
 	it("does not trigger re-render when set() value is unchanged", () => {
@@ -99,13 +93,13 @@ describe("useAtom", () => {
 		// setState with same value — @tanstack/store won't notify subscribers
 		// because the store's equality check prevents notification
 		const atom2 = createAtom(5);
-		const ctrl2 = useAtom(host, () => atom2);
+		const state2 = useAtom(host, () => atom2);
 		host.render();
 
 		atom2.set(5);
 
 		expect(host.renderCount).toBe(0);
-		expect(ctrl2.value).toBe(5);
+		expect(state2.value).toBe(5);
 	});
 
 	it("does not trigger re-render after disconnect", () => {
@@ -121,13 +115,13 @@ describe("useAtom", () => {
 
 	it("value reflects latest set() after re-render", () => {
 		const atom = createAtom(0);
-		const ctrl = useAtom(host, () => atom);
+		const state = useAtom(host, () => atom);
 		host.render();
 
-		ctrl.set(7);
-		ctrl.set(14);
+		state.set(7);
+		state.set(14);
 
-		expect(ctrl.value).toBe(14);
+		expect(state.value).toBe(14);
 		expect(host.renderCount).toBe(2);
 	});
 
@@ -146,7 +140,7 @@ describe("useAtom", () => {
 
 	it("respects custom compare option — re-renders when outside threshold", () => {
 		const atom = createAtom(1);
-		const ctrl = useAtom(host, () => atom, {
+		const state = useAtom(host, () => atom, {
 			compare: (a, b) => Math.abs((a as number) - (b as number)) < 5,
 		});
 		host.render();
@@ -155,6 +149,29 @@ describe("useAtom", () => {
 		atom.set(10);
 
 		expect(host.renderCount).toBe(1);
-		expect(ctrl.value).toBe(10);
+		expect(state.value).toBe(10);
+	});
+
+	it("value is accessible via a getter on a host subclass (component pattern)", () => {
+		const atom = createAtom(0);
+
+		// oxlint-disable-next-line max-classes-per-file
+		class ComponentLike extends TestHost {
+			readonly count = useAtom(this, () => atom);
+
+			increment() {
+				this.count.set(prev => prev + 1);
+			}
+		}
+
+		const component = new ComponentLike();
+		component.render();
+
+		expect(component.count.value).toBe(0);
+
+		component.increment();
+
+		expect(component.renderCount).toBe(1);
+		expect(component.count.value).toBe(1);
 	});
 });

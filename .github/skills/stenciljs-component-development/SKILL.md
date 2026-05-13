@@ -117,7 +117,7 @@ import { SsvElementMixin } from "@ssv/stencil.core";
 import { Mixin } from "@stencil/core";
 
 export class AppTimerHost extends Mixin(SsvElementMixin) {
-  private timer = withTimerController(this, 1000);
+  private timer = useTimerController(this, 1000);
 }
 ```
 

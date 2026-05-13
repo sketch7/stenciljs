@@ -79,7 +79,7 @@ import { Component, Mixin, h } from "@stencil/core";
 
 @Component({ tag: "ssv-timer-host", shadow: true })
 export class SsvTimerHost extends Mixin(SsvElementMixin) {
-  private timer = withTimerController(this, 1000);
+  private timer = useTimerController(this, 1000);
 }
 ```
 

@@ -3,11 +3,13 @@ import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.co
 class TimerController implements ReactiveController {
 	#elapsed = 0;
 	#intervalId: ReturnType<typeof setInterval> | undefined;
-	get elapsed() { return this.#elapsed; }
+	get elapsed() {
+		return this.#elapsed;
+	}
 
 	constructor(
 		private readonly host: ReactiveControllerHost,
-		private readonly intervalMs = 1000
+		private readonly intervalMs = 1000,
 	) {
 		host.addController(this);
 	}

@@ -4,9 +4,9 @@ import { Mixin } from "@stencil/core";
 import { ReactiveControllerHostMixin } from "./reactive-controller";
 
 /**
- * Abstract class version of {@link SsvElementMixin} for simple single-inheritance usage.
+ * Base class for Stencil components that host `ReactiveController`s.
  *
- * Use this when you don't need to compose with other mixins:
+ * @example
  * ```ts
  * @Component({ tag: 'my-component', shadow: true })
  * export class MyComponent extends SsvElement {
@@ -14,18 +14,15 @@ import { ReactiveControllerHostMixin } from "./reactive-controller";
  * }
  * ```
  *
- * When you need mixin composition, use {@link SsvElementMixin} with Stencil's `Mixin()` helper instead.
+ * For mixin composition, use {@link SsvElementMixin} with Stencil's `Mixin()` helper instead.
  */
 export class SsvElement extends Mixin(ReactiveControllerHostMixin) {}
 
 /**
- * Convenience mixin that bundles `ReactiveControllerHostMixin`.
+ * Composable mixin version of {@link SsvElement} for use with Stencil's `Mixin()` helper.
  *
- * Use with Stencil's `Mixin()` helper:
+ * @example
  * ```ts
- * import { Mixin } from '@stencil/core';
- * import { SsvElementMixin } from '@ssv/stencil.core';
- *
  * @Component({ tag: 'my-component', shadow: true })
  * export class MyComponent extends Mixin(SsvElementMixin) {
  *   private mouse = useMouseController(this);

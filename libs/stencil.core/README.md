@@ -24,14 +24,9 @@ pnpm add @ssv/stencil.core
 
 ### 1. Implement a controller
 
-Two styles are supported. Prefer **fn-only** — it is simpler and avoids a class.
-
-All lifecycle hooks are optional — implement only what you need.
-Available hooks: `hostConnected`, `hostDisconnected`, `hostWillLoad`, `hostDidLoad`, `hostWillRender`, `hostDidRender`, `hostWillUpdate`, `hostDidUpdate`.
+Prefer **fn-only** (Style A) — state lives in the closure, no class needed.
 
 #### Style A — fn-only ✅ preferred
-
-State lives in the closure. An object literal satisfies the `ReactiveController` interface.
 
 ```ts
 // mouse-controller.ts
@@ -54,9 +49,7 @@ export function useMouseController(host: ReactiveControllerHost): { pos: { x: nu
 }
 ```
 
-#### Style B — class (use when you need methods or private fields)
-
-The class constructor calls `host.addController(this)` to self-register. Expose it via a `use*` factory function.
+#### Style B — class (when you need methods or private fields)
 
 ```ts
 // timer-controller.ts

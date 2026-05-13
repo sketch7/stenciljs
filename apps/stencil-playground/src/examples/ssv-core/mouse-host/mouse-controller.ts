@@ -14,10 +14,12 @@ export function useMouseController(host: ReactiveControllerHost): {
 		},
 		hostDisconnected() {
 			globalThis.removeEventListener("mousemove", onMouseMove);
-		}
+		},
 	};
 	host.addController(ctrl);
 	return {
-		get pos() { return pos; }
+		get pos() {
+			return pos;
+		},
 	};
 }

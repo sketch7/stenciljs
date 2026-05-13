@@ -2,7 +2,7 @@ import { SsvElement } from "@ssv/stencil.core";
 import { useSelector } from "@ssv/tanstack.stencil-store";
 import { Component, State, h } from "@stencil/core";
 
-import { todoStore } from "./todo.store";
+import { todoStore, todoStatsStore } from "./todo.store";
 
 @Component({
 	tag: "app-tan-todo",
@@ -10,11 +10,10 @@ import { todoStore } from "./todo.store";
 	shadow: true,
 })
 export class AppTanTodo extends SsvElement {
-	readonly #todos = useSelector(
-		this,
-		() => todoStore,
-		state => state.todos,
-	);
+	readonly #todos = useSelector(this, () => todoStore, s => s.todos);
+	readonly #stats = useSelector(this, () => todoStatsStore);
+	// readonly #completed = useSelector(this, () => todoStore, s => s.todos.filter(t => t.completed).length);
+	// readonly #total = useSelector(this, () => todoStore, s => s.todos.length);
 
 	@State() inputValue = "";
 
@@ -29,36 +28,13 @@ export class AppTanTodo extends SsvElement {
 	}
 
 	private addTodo() {
-		const text = this.inputValue.trim();
-		if (!text) {
-			return;
-		}
-
-		todoStore.setState(prev => ({
-			todos: [...prev.todos, { id: prev.nextId, text, completed: false }],
-			nextId: prev.nextId + 1,
-		}));
+		todoStore.actions.add(this.inputValue);
 		this.inputValue = "";
-	}
-
-	private toggleTodo(id: number) {
-		todoStore.setState(prev => ({
-			...prev,
-			todos: prev.todos.map(t => (t.id === id ? { ...t, completed: !t.completed } : t)),
-		}));
-	}
-
-	private deleteTodo(id: number) {
-		todoStore.setState(prev => ({
-			...prev,
-			todos: prev.todos.filter(t => t.id !== id),
-		}));
 	}
 
 	render() {
 		const todos = this.#todos() ?? [];
-		const completed = todos.filter(t => t.completed).length;
-		const total = todos.length;
+		const { completed = 0, total = 0 } = this.#stats() ?? {};
 
 		return (
 			<div class="todo">
@@ -92,7 +68,7 @@ export class AppTanTodo extends SsvElement {
 									type="button"
 									class={`checkbox ${todo.completed ? "checkbox--checked" : ""}`}
 									aria-label={todo.completed ? "Mark incomplete" : "Mark complete"}
-									onClick={() => this.toggleTodo(todo.id)}>
+									onClick={() => todoStore.actions.toggle(todo.id)}>
 									{todo.completed && (
 										<svg viewBox="0 0 12 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 											<path
@@ -110,7 +86,7 @@ export class AppTanTodo extends SsvElement {
 									type="button"
 									class="delete-btn"
 									aria-label="Delete task"
-									onClick={() => this.deleteTodo(todo.id)}>
+									onClick={() => todoStore.actions.delete(todo.id)}>
 									<svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 										<path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
 									</svg>

@@ -17,5 +17,7 @@ export function useMouseController(host: ReactiveControllerHost): {
 		}
 	};
 	host.addController(ctrl);
-	return { get pos() { return pos; } };
+	return {
+		get pos() { return pos; }
+	};
 }

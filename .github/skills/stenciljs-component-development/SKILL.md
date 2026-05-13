@@ -75,33 +75,83 @@ See: [apps/stencil-playground/src/examples/stencil-store/counter/](../../../apps
 
 Use `ReactiveController` for lifecycle-aware, reusable behaviour (event listeners, intervals, subscriptions). The controller calls `host.requestUpdate()` to trigger re-renders.
 
-### 1. Implement the controller
+### Controller styles
+
+Two styles are supported. Prefer **fn-only** — it is simpler and avoids a class.
+
+#### Style A — fn-only ✅ preferred
+
+State lives in the closure. An object literal satisfies the `ReactiveController` interface.
 
 ```typescript
 // <feature>/<feature>-controller.ts
 import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
 
-class FeatureController implements ReactiveController {
-  private host: ReactiveControllerHost;
-  value = …;
-
-  constructor(host: ReactiveControllerHost) {
-    this.host = host;
-    host.addController(this); // registers with the host lifecycle
-  }
-
-  hostConnected() { /* setup: add listeners, start timers */ }
-  hostDisconnected() { /* cleanup: remove listeners, clear timers */ }
-}
-
-export function useFeatureController(host: ReactiveControllerHost): FeatureController {
-  return new FeatureController(host);
+export function useMouseController(host: ReactiveControllerHost): { pos: { x: number; y: number } } {
+  let pos = { x: 0, y: 0 };
+  const onMouseMove = ({ clientX, clientY }: MouseEvent) => {
+    pos = { x: clientX, y: clientY };
+    host.requestUpdate();
+  };
+  const ctrl: ReactiveController = {
+    hostConnected() { globalThis.addEventListener("mousemove", onMouseMove); },
+    hostDisconnected() { globalThis.removeEventListener("mousemove", onMouseMove); },
+  };
+  host.addController(ctrl);
+  return {
+    get pos() { return pos; },
+  };
 }
 ```
 
-### 2. Host the controller in the component
+See: [ssv-core/mouse-host/mouse-controller.ts](../../../apps/stencil-playground/src/examples/ssv-core/mouse-host/mouse-controller.ts)
 
-Extend `SsvElement` (single inheritance) or `Mixin(SsvElementMixin)` (when extending another class):
+#### Style B — class (use when you need methods or private fields)
+
+The class constructor calls `host.addController(this)` to self-register. Expose it via a factory function so consumers use the same `use*` call-site convention.
+
+```typescript
+// <feature>/<feature>-controller.ts
+import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
+
+class TimerController implements ReactiveController {
+  #elapsed = 0;
+  #intervalId: ReturnType<typeof setInterval> | undefined;
+  get elapsed() { return this.#elapsed; }
+
+  constructor(
+    private readonly host: ReactiveControllerHost,
+    private readonly intervalMs = 1000,
+  ) {
+    host.addController(this);
+  }
+
+  hostConnected() {
+    this.#elapsed = 0;
+    this.#intervalId = setInterval(() => {
+      this.#elapsed += this.intervalMs;
+      this.host.requestUpdate();
+    }, this.intervalMs);
+  }
+
+  hostDisconnected() {
+    if (this.#intervalId !== undefined) {
+      clearInterval(this.#intervalId);
+      this.#intervalId = undefined;
+    }
+  }
+}
+
+export function useTimerController(host: ReactiveControllerHost, intervalMs?: number): TimerController {
+  return new TimerController(host, intervalMs);
+}
+```
+
+See: [ssv-core/timer-host/timer-controller.ts](../../../apps/stencil-playground/src/examples/ssv-core/timer-host/timer-controller.ts)
+
+### Host the controller in the component
+
+Extend `SsvElement` (single inheritance) or `Mixin(SsvElementMixin)` (when extending another base class):
 
 ```typescript
 // Option A — single inheritance
@@ -118,6 +168,7 @@ import { Mixin } from "@stencil/core";
 
 export class AppTimerHost extends Mixin(SsvElementMixin) {
   private timer = useTimerController(this, 1000);
+  render() { return <div>{this.timer.elapsed}ms</div>; }
 }
 ```
 

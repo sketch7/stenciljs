@@ -84,7 +84,7 @@ export class StoreSelector<TSource, TSelected = TSource> implements ReactiveCont
 }
 
 // eslint-disable-next-line max-params
-export function createSelectorCtrl<TSource, TSelected = TSource>(
+export function useSelector<TSource, TSelected = TSource>(
 	host: ReactiveControllerHost,
 	getStore: () => SelectionSource<TSource> | undefined,
 	selector?: (snapshot: TSource) => TSelected,

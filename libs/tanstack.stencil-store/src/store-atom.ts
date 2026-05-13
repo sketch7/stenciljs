@@ -37,7 +37,7 @@ class StoreAtom<TValue> {
 export type { SelectionSource, UseSelectorOptions };
 export type { ReactiveController, ReactiveControllerHost };
 
-export function createAtomCtrl<TValue>(
+export function useAtom<TValue>(
 	host: ReactiveControllerHost,
 	getAtom: () => Atom<TValue> | undefined,
 	options?: UseSelectorOptions<TValue>,

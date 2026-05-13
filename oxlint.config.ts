@@ -160,6 +160,7 @@ export default defineConfig({
 			// StencilJS components — class-based, uses h() not React, HTML attrs not React attrs
 			files: ["libs/*/src/**/*.tsx", "libs/*/src/**/*.ts"],
 			rules: {
+				"react/rules-of-hooks": "off",
 				"react/prefer-function-component": "off",
 				// Stencil uses h() imported from @stencil/core, not React.createElement
 				"react/react-in-jsx-scope": "off",
@@ -278,6 +279,7 @@ export default defineConfig({
 			// Stencil uses h() not React, class components, HTML attributes (not React attrs)
 			files: ["apps/stencil-playground/src/**/*.tsx", "apps/stencil-playground/src/**/*.ts"],
 			rules: {
+				"react/rules-of-hooks": "off",
 				"react/prefer-function-component": "off",
 				"react/no-unknown-property": "off",
 				"new-cap": "off",

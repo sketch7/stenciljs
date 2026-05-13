@@ -1,5 +1,5 @@
 import { SsvElement } from "@ssv/stencil.core";
-import { createSelectorCtrl } from "@ssv/tanstack.stencil-store";
+import { useSelector } from "@ssv/tanstack.stencil-store";
 import { Component, State, h } from "@stencil/core";
 
 import { todoStore } from "./todo.store";
@@ -10,11 +10,7 @@ import { todoStore } from "./todo.store";
 	shadow: true,
 })
 export class AppTanTodo extends SsvElement {
-	private sel = createSelectorCtrl(
-		this,
-		() => todoStore,
-		state => state.todos,
-	);
+	private sel = useSelector(this, () => todoStore, state => state.todos);
 
 	@State() inputValue = "";
 

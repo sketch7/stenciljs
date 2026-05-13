@@ -1,5 +1,5 @@
 import { SsvElement } from "@ssv/stencil.core";
-import { createAtomCtrl } from "@ssv/tanstack.stencil-store";
+import { useAtom } from "@ssv/tanstack.stencil-store";
 import { Component, h } from "@stencil/core";
 
 import { countAtom, additionalAtom } from "./counter.store";
@@ -10,8 +10,8 @@ import { countAtom, additionalAtom } from "./counter.store";
 	shadow: true,
 })
 export class AppTanCounter extends SsvElement {
-	private count = createAtomCtrl(this, () => countAtom);
-	private additional = createAtomCtrl(this, () => additionalAtom);
+	private count = useAtom(this, () => countAtom);
+	private additional = useAtom(this, () => additionalAtom);
 
 	private handleAdditionalChange(event: Event) {
 		const value = Number.parseInt((event.target as HTMLInputElement).value, 10);

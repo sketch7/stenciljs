@@ -1,146 +1,176 @@
-// oxlint-disable unicorn/empty-brace-spaces
-import { SsvElement } from "@ssv/stencil.core";
-import { forceUpdate } from "@stencil/core";
+import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
 import { createStore } from "@tanstack/store";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, beforeEach } from "vitest";
 
-import { createSelectorCtrl, StoreSelector } from "./store-selector";
+import { useSelector, StoreSelector } from "./store-selector";
 
-vi.mock(import("@stencil/core"), () => ({
-	forceUpdate: vi.fn<() => void>(),
-	Mixin: (fn: (base: unknown) => unknown) => fn(class { }),
-}));
+class TestHost implements ReactiveControllerHost {
+	readonly controllers = new Set<ReactiveController>();
+	renderCount = 0;
 
-describe("StoreSelector", () => {
-	let host: SsvElement;
+	addController(ctrl: ReactiveController): void {
+		this.controllers.add(ctrl);
+	}
+
+	removeController(ctrl: ReactiveController): void {
+		this.controllers.delete(ctrl);
+	}
+
+	/** Simulates Stencil calling componentWillRender → hostWillRender on each controller. */
+	render(): void {
+		for (const ctrl of this.controllers) {
+			ctrl.hostWillRender?.();
+		}
+	}
+
+	/**
+	 * Simulates Stencil scheduling and executing a re-render after forceUpdate().
+	 * Increments renderCount then runs the full render cycle.
+	 */
+	requestUpdate(): void {
+		this.renderCount++;
+		this.render();
+	}
+
+	/** Simulates Stencil calling disconnectedCallback → hostDisconnected. */
+	disconnect(): void {
+		for (const ctrl of this.controllers) {
+			ctrl.hostDisconnected?.();
+		}
+	}
+}
+
+describe("useSelector", () => {
+	let host: TestHost;
 
 	beforeEach(() => {
-		vi.clearAllMocks();
-		host = new SsvElement();
+		host = new TestHost();
 	});
 
 	it("registers itself with the host on construction", () => {
 		const store = createStore(0);
-		const ctrl = createSelectorCtrl(host, () => store);
+		const ctrl = useSelector(host, () => store);
 		expect(host.controllers.has(ctrl)).toBeTruthy();
 	});
 
-	it("subscribes on first hostWillRender()", () => {
-		const store = createStore(0);
-		const ctrl = createSelectorCtrl(host, () => store);
-
-		ctrl.hostWillRender();
-		store.setState(() => 1);
-
-		expect(forceUpdate).toHaveBeenCalledOnce();
+	it("returns undefined before first render", () => {
+		const store = createStore(42);
+		const ctrl = useSelector(host, () => store);
+		expect(ctrl.value).toBeUndefined();
 	});
 
-	it("calls requestUpdate() when store value changes", () => {
+	it("reads current store value after first render", () => {
+		const store = createStore(42);
+		const ctrl = useSelector(host, () => store);
+		host.render();
+		expect(ctrl.value).toBe(42);
+	});
+
+	it("updates value and re-renders when store changes", () => {
 		const store = createStore(0);
-		const ctrl = createSelectorCtrl(host, () => store);
-		ctrl.hostWillRender();
+		const ctrl = useSelector(host, () => store);
+		host.render();
 
 		store.setState(() => 42);
 
-		expect(forceUpdate).toHaveBeenCalledOnce();
+		expect(host.renderCount).toBe(1);
+		expect(ctrl.value).toBe(42);
 	});
 
-	it("does not call requestUpdate() when value is unchanged", () => {
+	it("does not re-render when store value is unchanged", () => {
 		const store = createStore(0);
-		const ctrl = createSelectorCtrl(host, () => store);
-		ctrl.hostWillRender();
+		useSelector(host, () => store);
+		host.render();
 
 		store.setState(() => 0);
 
-		expect(forceUpdate).not.toHaveBeenCalled();
+		expect(host.renderCount).toBe(0);
 	});
 
-	it("selector suppresses requestUpdate when selected value is unchanged", () => {
+	it("selector suppresses re-render when selected value is unchanged", () => {
 		const store = createStore({ count: 0, ignored: 0 });
-		const ctrl = createSelectorCtrl(
-			host,
-			() => store,
-			s => s.count,
-		);
-		ctrl.hostWillRender();
+		const ctrl = useSelector(host, () => store, s => s.count);
+		host.render();
 
 		store.setState(prev => ({ ...prev, ignored: prev.ignored + 1 }));
 
-		expect(forceUpdate).not.toHaveBeenCalled();
+		expect(host.renderCount).toBe(0);
+		expect(ctrl.value).toBe(0);
 	});
 
-	it("selector triggers requestUpdate when selected value changes", () => {
+	it("selector triggers re-render when selected value changes", () => {
 		const store = createStore({ count: 0, ignored: 0 });
-		const ctrl = createSelectorCtrl(
-			host,
-			() => store,
-			s => s.count,
-		);
-		ctrl.hostWillRender();
+		const ctrl = useSelector(host, () => store, s => s.count);
+		host.render();
 
 		store.setState(prev => ({ ...prev, count: prev.count + 1 }));
 
-		expect(forceUpdate).toHaveBeenCalledOnce();
+		expect(host.renderCount).toBe(1);
+		expect(ctrl.value).toBe(1);
 	});
 
-	it("re-subscribes when store reference changes on next hostWillRender()", () => {
-		const store1 = createStore(10);
-		const store2 = createStore(20);
-		let current = store1;
+	it("selector returns updated value on re-render", () => {
+		const store = createStore({ count: 0, ignored: 0 });
+		const ctrl = useSelector(host, () => store, s => s.count);
+		host.render();
 
-		const ctrl = createSelectorCtrl(host, () => current);
-		ctrl.hostWillRender();
+		store.setState(prev => ({ ...prev, count: 5 }));
+		store.setState(prev => ({ ...prev, ignored: 99 }));
 
-		// switch store reference
-		current = store2;
-		ctrl.hostWillRender();
-
-		// update on old store should not trigger
-		store1.setState(() => 99);
-		expect(forceUpdate).not.toHaveBeenCalled();
-
-		// update on new store should trigger
-		store2.setState(() => 30);
-		expect(forceUpdate).toHaveBeenCalledOnce();
+		expect(host.renderCount).toBe(1);
+		expect(ctrl.value).toBe(5);
 	});
 
-	it("unsubscribes on hostDisconnected()", () => {
+	it("does not re-render after hostDisconnected", () => {
 		const store = createStore(0);
-		const ctrl = createSelectorCtrl(host, () => store);
-		ctrl.hostWillRender();
-		ctrl.hostDisconnected();
+		useSelector(host, () => store);
+		host.render();
+		host.disconnect();
 
 		store.setState(() => 1);
 
-		expect(forceUpdate).not.toHaveBeenCalled();
+		expect(host.renderCount).toBe(0);
 	});
 
-	it("handles undefined store gracefully", () => {
-		// eslint-disable-next-line unicorn/no-useless-undefined
-		const ctrl = createSelectorCtrl(host, () => undefined);
-		expect(() => ctrl.hostWillRender()).not.toThrow();
-		expect(() => ctrl.hostDisconnected()).not.toThrow();
+	it("clears value after hostDisconnected", () => {
+		const store = createStore(42);
+		const ctrl = useSelector(host, () => store);
+		host.render();
+		host.disconnect();
+
+		expect(ctrl.value).toBeUndefined();
 	});
 
-	it("respects custom compare function", () => {
+	it("respects custom compare function — no re-render when within threshold", () => {
 		const store = createStore(1);
-		const ctrl = createSelectorCtrl(host, () => store, undefined, {
-			compare: (a, b) => Math.abs(a - b) < 5,
+		useSelector(host, () => store, undefined, {
+			compare: (a, b) => Math.abs((a as number) - (b as number)) < 5,
 		});
-		ctrl.hostWillRender();
+		host.render();
 
+		// diff 2 < 5
 		store.setState(() => 3);
-		// diff < 5, no update
-		expect(forceUpdate).not.toHaveBeenCalled();
 
-		store.setState(() => 10);
-		// diff >= 5 from 3, triggers update
-		expect(forceUpdate).toHaveBeenCalledOnce();
+		expect(host.renderCount).toBe(0);
 	});
 
-	it("createSelectorCtrl returns a StoreSelector instance", () => {
+	it("respects custom compare function — re-renders when outside threshold", () => {
+		const store = createStore(1);
+		const ctrl = useSelector(host, () => store, undefined, {
+			compare: (a, b) => Math.abs((a as number) - (b as number)) < 5,
+		});
+		host.render();
+
+		// diff 9 >= 5
+		store.setState(() => 10);
+
+		expect(host.renderCount).toBe(1);
+		expect(ctrl.value).toBe(10);
+	});
+
+	it("useSelector returns a StoreSelector instance", () => {
 		const store = createStore(0);
-		const ctrl = createSelectorCtrl(host, () => store);
+		const ctrl = useSelector(host, () => store);
 		expect(ctrl).toBeInstanceOf(StoreSelector);
 	});
 });

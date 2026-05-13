@@ -32,12 +32,6 @@
  * For these utilities, import from "@ssv/stencil-signals/extensions".
  */
 
-// ─── Activate TC39 adapter ────────────────────────────────────────────────────
-import { _setAdapter } from "./adapters/active";
-import { tc39Adapter } from "./adapters/tc39";
-
-_setAdapter(tc39Adapter);
-
 // ─── Primitives ───────────────────────────────────────────────────────────────
 export { signal, computed, batch, scheduler, createWatcher, collectSignals } from "./signals/core";
 

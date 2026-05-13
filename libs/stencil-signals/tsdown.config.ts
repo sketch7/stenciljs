@@ -1,6 +1,7 @@
 import { defineConfig } from "tsdown";
 
 export default defineConfig({
+	entry: ["src/index.ts", "src/extensions.ts", "src/tc39.ts", "src/preact.ts"],
 	format: ["esm", "cjs"],
 	platform: "neutral",
 	hash: false,

@@ -1,0 +1,156 @@
+:host {
+	display: block;
+}
+
+.prev {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+}
+
+/* ── Values ── */
+.values {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 1.5rem;
+}
+
+.value-item {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.25rem;
+}
+
+.value-label {
+	font-size: 0.75rem;
+	font-weight: 500;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--color-muted-fg, #94a3b8);
+}
+
+.value-num {
+	font-size: 3rem;
+	font-weight: 700;
+	line-height: 1;
+	font-variant-numeric: tabular-nums;
+}
+
+.value-prev {
+	color: var(--color-muted-fg, #94a3b8);
+}
+
+.value-curr {
+	color: var(--color-fg, #f1f5f9);
+}
+
+/* ── Direction Indicator ── */
+.direction {
+	font-size: 2rem;
+	font-weight: 700;
+	min-width: 2rem;
+	text-align: center;
+	transition: color 0.2s ease;
+	color: var(--color-muted-fg, #94a3b8);
+}
+
+.dir-up {
+	color: var(--color-success, #4ade80);
+}
+
+.dir-down {
+	color: var(--color-danger, #f87171);
+}
+
+.dir-same {
+	color: var(--color-muted-fg, #94a3b8);
+}
+
+/* ── Controls ── */
+.controls {
+	display: flex;
+	justify-content: center;
+	gap: 0.75rem;
+}
+
+.btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 3rem;
+	height: 3rem;
+	border-radius: 0.5rem;
+	border: none;
+	font-size: 1.5rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition:
+		background-color 0.15s ease,
+		transform 0.1s ease;
+}
+
+.btn:active {
+	transform: scale(0.95);
+}
+
+.btn-primary {
+	background-color: var(--color-primary, #6366f1);
+	color: var(--color-primary-fg, #fff);
+}
+
+.btn-primary:hover {
+	background-color: var(--color-primary-hover, #4f46e5);
+}
+
+.btn-outline {
+	background-color: transparent;
+	color: var(--color-fg, #f1f5f9);
+	border: 1px solid var(--color-border, #334155);
+}
+
+.btn-outline:hover {
+	background-color: var(--color-surface-hover, #1e293b);
+}
+
+/* ── Trail ── */
+.trail-row {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.625rem 0.875rem;
+	background-color: var(--color-surface, #1e293b);
+	border: 1px solid var(--color-border, #334155);
+	border-radius: 0.5rem;
+}
+
+.trail-label {
+	font-size: 0.75rem;
+	font-weight: 500;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--color-muted-fg, #94a3b8);
+	flex-shrink: 0;
+}
+
+.trail {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: 0.875rem;
+	font-variant-numeric: tabular-nums;
+}
+
+.trail-prev {
+	color: var(--color-muted-fg, #94a3b8);
+}
+
+.trail-arrow {
+	color: var(--color-border, #475569);
+}
+
+.trail-curr {
+	color: var(--color-primary, #6366f1);
+	font-weight: 600;
+}

@@ -21,6 +21,14 @@
     "./extensions": {
       "types": "./dist/extensions.d.ts",
       "import": "./dist/extensions.js"
+    },
+    "./tc39": {
+      "types": "./dist/tc39.d.ts",
+      "import": "./dist/tc39.js"
+    },
+    "./preact": {
+      "types": "./dist/preact.d.ts",
+      "import": "./dist/preact.js"
     }
   },
   "files": [

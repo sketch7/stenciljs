@@ -8,7 +8,7 @@
 
 `stencil-signals` brings reactive signal-based state management to StencilJS components. Any signal accessed during `render()` is automatically tracked — when that signal changes, the component re-renders. No `@Watch`, no event buses, no manual subscription wiring.
 
-The library is inspired by [`@lit-labs/signals`](https://github.com/lit/lit/tree/main/packages/labs/signals) and supports two backends: the [TC39 Signals Proposal](https://github.com/tc39/proposal-signals) (via `signal-polyfill`, default) and [Preact Signals](https://github.com/preactjs/signals). Both expose the same API; the backend is selected by import path.
+The library is inspired by [`@lit-labs/signals`](https://github.com/lit/lit/tree/main/packages/labs/signals) and supports two backends: the [TC39 Signals Proposal](https://github.com/tc39/proposal-signals) (via `signal-polyfill`) and [Preact Signals](https://github.com/preactjs/signals). Both expose the same API; the backend is chosen explicitly by import path — there is no runtime auto-detection.
 
 ## Why stencil-signals?
 
@@ -18,16 +18,22 @@ StencilJS is already reactive — but `@State` and `@Prop` are **local and push-
 
 ```tsx
 // State is isolated per component; sharing requires prop drilling or a shared service
-@Component({ tag: 'my-counter' })
+@Component({ tag: "my-counter" })
 export class MyCounter {
   @State() count = 0;
   @State() doubled = 0;
 
-  @Watch('count')
-  syncDoubled(next: number) { this.doubled = next * 2; } // manual derived state
+  @Watch("count")
+  syncDoubled(next: number) {
+    this.doubled = next * 2;
+  } // manual derived state
 
   render() {
-    return <button onClick={() => this.count++}>{this.count} (×2: {this.doubled})</button>;
+    return (
+      <button onClick={() => this.count++}>
+        {this.count} (×2: {this.doubled})
+      </button>
+    );
   }
 }
 ```
@@ -39,7 +45,7 @@ export class MyCounter {
 export const count = signal(0);
 export const doubled = computed(() => count() * 2);
 
-@Component({ tag: 'my-counter' })
+@Component({ tag: "my-counter" })
 export class MyCounter extends SignalWatcher(class {}) {
   render() {
     return (
@@ -51,16 +57,16 @@ export class MyCounter extends SignalWatcher(class {}) {
 }
 ```
 
-| Feature | `@State()` | stencil-signals |
-|---------|-----------|-----------------|
-| Triggers re-render | ✅ | ✅ |
-| Shared across components | ❌ | ✅ |
-| Computed/derived values | ❌ | ✅ `computed()` |
-| Auto-tracking side effects | ❌ | ✅ `effect(fn)` |
-| Explicit-dep side effects | ❌ | ✅ `effect(deps, fn)` |
-| Async derived state | ❌ | ✅ `computedAsync` |
-| Previous value tracking | ❌ | ✅ `computedPrevious` |
-| TC39 standard | ❌ | ✅ |
+| Feature                    | `@State()` | stencil-signals       |
+| -------------------------- | ---------- | --------------------- |
+| Triggers re-render         | ✅         | ✅                    |
+| Shared across components   | ❌         | ✅                    |
+| Computed/derived values    | ❌         | ✅ `computed()`       |
+| Auto-tracking side effects | ❌         | ✅ `effect(fn)`       |
+| Explicit-dep side effects  | ❌         | ✅ `effect(deps, fn)` |
+| Async derived state        | ❌         | ✅ `computedAsync`    |
+| Previous value tracking    | ❌         | ✅ `computedPrevious` |
+| TC39 standard              | ❌         | ✅                    |
 
 ## Features
 
@@ -71,22 +77,40 @@ export class MyCounter extends SignalWatcher(class {}) {
 - **`computedAsync`** — async derived signals with `pending`/`resolved`/`error` status and automatic `AbortSignal` cancellation
 - **`computedPrevious`** — derived signal that holds the previous value of another signal
 - **`createStore`** — wrap a plain object in per-property signals via a reactive Proxy
-- **Dual-backend** — TC39 (`signal-polyfill`, default) or Preact Signals; same API, swap by import
+- **Dual-backend** — TC39 (`signal-polyfill`) or Preact Signals; same API, swap by changing the import path
 - **Stencil `Mixin()` compatible** — composes with other Stencil controller mixins (v4.37+)
 
 ## Installation
 
+Choose one signal backend and install it alongside the library:
+
 ```bash
+# TC39 backend (recommended)
 npm install @ssv/stencil-signals signal-polyfill
-```
 
-To use the Preact Signals backend instead:
-
-```bash
+# Preact Signals backend
 npm install @ssv/stencil-signals @preact/signals-core
 ```
 
 **Peer requirements:** `@stencil/core >=4.43.0`
+
+Then activate the adapter once at app startup — before any component mounts. In a StencilJS app the right place is a [global script](https://stenciljs.com/docs/config#globalscript):
+
+```ts
+// src/global.ts
+import "@ssv/stencil-signals/tc39"; // or "/preact"
+export default function globalScript() {}
+```
+
+```ts
+// stencil.config.ts
+export const config: Config = {
+  globalScript: "src/global.ts",
+  // ...
+};
+```
+
+The side-effect import registers the adapter synchronously, so it is always ready before the first component render.
 
 ## Quick Start
 
@@ -126,7 +150,7 @@ Any other component that reads `count` or `doubled` will also re-render when tho
 **Direct extension** (no other mixins, or Stencil < 4.37):
 
 ```tsx
-@Component({ tag: 'my-comp', shadow: true })
+@Component({ tag: "my-comp", shadow: true })
 export class MyComp extends SignalWatcher(class {}) {
   render() {
     return <p>{mySignal()}</p>;
@@ -137,11 +161,11 @@ export class MyComp extends SignalWatcher(class {}) {
 **`Mixin()` composition** (Stencil v4.37+, when combining with other mixins):
 
 ```tsx
-import { Component, Mixin } from '@stencil/core';
-import { SignalWatcher } from '@ssv/stencil-signals';
-import { LoggingMixin } from './mixins/logging-mixin';
+import { Component, Mixin } from "@stencil/core";
+import { SignalWatcher } from "@ssv/stencil-signals";
+import { LoggingMixin } from "./mixins/logging-mixin";
 
-@Component({ tag: 'my-comp', shadow: true })
+@Component({ tag: "my-comp", shadow: true })
 export class MyComp extends Mixin(SignalWatcher, LoggingMixin) {
   componentDidLoad() {
     super.componentDidLoad?.();
@@ -170,7 +194,7 @@ Stencil does not ship `ReactiveControllerHost` or `ReactiveController` — you d
 
 ```ts
 // reactive-controller.ts — consumer-owned boilerplate
-import { forceUpdate } from '@stencil/core';
+import { forceUpdate } from "@stencil/core";
 
 export interface ReactiveController {
   hostConnected?(): void;
@@ -186,15 +210,31 @@ export interface ReactiveController {
 export class ReactiveControllerHost {
   private __controllers = new Set<ReactiveController>();
 
-  addController(c: ReactiveController) { this.__controllers.add(c); }
-  removeController(c: ReactiveController) { this.__controllers.delete(c); }
-  requestUpdate() { forceUpdate(this as any); }
+  addController(c: ReactiveController) {
+    this.__controllers.add(c);
+  }
+  removeController(c: ReactiveController) {
+    this.__controllers.delete(c);
+  }
+  requestUpdate() {
+    forceUpdate(this as any);
+  }
 
-  connectedCallback()  { for (const c of this.__controllers) c.hostConnected?.(); }
-  disconnectedCallback() { for (const c of this.__controllers) c.hostDisconnected?.(); }
-  componentDidLoad()   { for (const c of this.__controllers) c.hostDidLoad?.(); }
-  componentDidRender() { for (const c of this.__controllers) c.hostDidRender?.(); }
-  componentDidUpdate() { for (const c of this.__controllers) c.hostDidUpdate?.(); }
+  connectedCallback() {
+    for (const c of this.__controllers) c.hostConnected?.();
+  }
+  disconnectedCallback() {
+    for (const c of this.__controllers) c.hostDisconnected?.();
+  }
+  componentDidLoad() {
+    for (const c of this.__controllers) c.hostDidLoad?.();
+  }
+  componentDidRender() {
+    for (const c of this.__controllers) c.hostDidRender?.();
+  }
+  componentDidUpdate() {
+    for (const c of this.__controllers) c.hostDidUpdate?.();
+  }
   // componentWillLoad/Render/Update: collect promises and return Promise.all([...]).then(() => {})
 }
 ```
@@ -202,12 +242,12 @@ export class ReactiveControllerHost {
 Then register `SignalWatcherController` in your component:
 
 ```tsx
-import { Component, h } from '@stencil/core';
-import { SignalWatcherController, effect } from '@ssv/stencil-signals';
-import { ReactiveControllerHost } from './reactive-controller';
-import { count, doubled } from './store';
+import { Component, h } from "@stencil/core";
+import { SignalWatcherController, effect } from "@ssv/stencil-signals";
+import { ReactiveControllerHost } from "./reactive-controller";
+import { count, doubled } from "./store";
 
-@Component({ tag: 'my-counter', shadow: false })
+@Component({ tag: "my-counter", shadow: false })
 export class MyCounter extends ReactiveControllerHost {
   constructor() {
     super();
@@ -221,7 +261,9 @@ export class MyCounter extends ReactiveControllerHost {
   render() {
     return (
       <div>
-        <p>{count()} (doubled: {doubled()})</p>
+        <p>
+          {count()} (doubled: {doubled()})
+        </p>
         <button onClick={() => count.update(n => n + 1)}>+1</button>
       </div>
     );
@@ -235,13 +277,13 @@ Alternatively, pass `this` directly to any watcher utility (even from a class pr
 
 **Comparison with the mixin:**
 
-| | `Mixin(SignalWatcher)` | `SignalWatcherController` |
-|---|---|---|
-| Inheritance | Mixin chain | Composition |
-| API collisions | Possible | None |
-| Extra boilerplate | None | `ReactiveControllerHost` (one-time, copy/paste) |
-| Works with other controllers | Via `Mixin()` | Via `addController()` |
-| Multiple controllers | `Mixin(A, B, C)` | `addController(a); addController(b)` |
+|                              | `Mixin(SignalWatcher)` | `SignalWatcherController`                       |
+| ---------------------------- | ---------------------- | ----------------------------------------------- |
+| Inheritance                  | Mixin chain            | Composition                                     |
+| API collisions               | Possible               | None                                            |
+| Extra boilerplate            | None                   | `ReactiveControllerHost` (one-time, copy/paste) |
+| Works with other controllers | Via `Mixin()`          | Via `addController()`                           |
+| Multiple controllers         | `Mixin(A, B, C)`       | `addController(a); addController(b)`            |
 
 > [!NOTE]
 > The `SignalWatcherControllerHost` interface exported by this library describes the minimum the controller needs from any host (`requestUpdate()` and an optional `render?()`). Your `ReactiveControllerHost` already satisfies it — no extra wiring required.
@@ -251,15 +293,18 @@ Alternatively, pass `this` directly to any watcher utility (even from a class pr
 Bind a signal to a class property. Reads call `sig()`; writes call `signal.set()`.
 
 ```tsx
-const theme = signal<'light' | 'dark'>('light');
+const theme = signal<"light" | "dark">("light");
 
-@Component({ tag: 'my-comp' })
+@Component({ tag: "my-comp" })
 export class MyComp extends SignalWatcher(class {}) {
-  @useSignal(theme) theme!: 'light' | 'dark';
+  @useSignal(theme) theme!: "light" | "dark";
 
   render() {
     return (
-      <button onClick={() => (this.theme = this.theme === 'light' ? 'dark' : 'light')}>
+      <button
+        onClick={() =>
+          (this.theme = this.theme === "light" ? "dark" : "light")
+        }>
         Toggle ({this.theme})
       </button>
     );
@@ -285,9 +330,9 @@ stop(); // dispose manually
 Inside a `SignalWatcher` component, pass `this` as the last argument — the effect is auto-disposed on `disconnectedCallback` and reinited on `connectedCallback`:
 
 ```tsx
-@Component({ tag: 'my-comp', shadow: false })
+@Component({ tag: "my-comp", shadow: false })
 export class MyComp extends Mixin(SignalWatcher) {
-   readonly titleWatch = effect(() => {
+  readonly titleWatch = effect(() => {
     document.title = `Count: ${count()}`;
   }, this);
 
@@ -306,7 +351,9 @@ const stop = effect(
     const controller = new AbortController();
     onCleanup(() => controller.abort());
 
-    fetch(`/api/users/${id}?theme=${currentTheme}`, { signal: controller.signal })
+    fetch(`/api/users/${id}?theme=${currentTheme}`, {
+      signal: controller.signal,
+    })
       .then(r => r.json())
       .then(data => userStore.set(data));
   },
@@ -325,14 +372,14 @@ private readonly _stop = effect([userId, theme], ([id, t], onCleanup) => {
 }, this);
 ```
 
-Signal reads *inside* `fn` that are not in `deps` are untracked — giving you precise control over what triggers the effect.
+Signal reads _inside_ `fn` that are not in `deps` are untracked — giving you precise control over what triggers the effect.
 
-| | Auto-tracking | Explicit deps |
-|---|---|---|
-| Dep declaration | Implicit (any `sig()` call inside fn) | Explicit array |
-| Risk of unexpected re-runs | Higher | None |
-| Values passed to fn | No — call `sig()` manually | Yes, typed tuple |
-| Best for | Simple reactive side-effects | Precise control, async work |
+|                            | Auto-tracking                         | Explicit deps               |
+| -------------------------- | ------------------------------------- | --------------------------- |
+| Dep declaration            | Implicit (any `sig()` call inside fn) | Explicit array              |
+| Risk of unexpected re-runs | Higher                                | None                        |
+| Values passed to fn        | No — call `sig()` manually            | Yes, typed tuple            |
+| Best for                   | Simple reactive side-effects          | Precise control, async work |
 
 ### `computedAsync`
 
@@ -343,10 +390,10 @@ When a tracked signal changes, the previous in-flight request is automatically c
 ```tsx
 const userId = signal(1);
 
-@Component({ tag: 'user-card', shadow: false })
+@Component({ tag: "user-card", shadow: false })
 export class UserCard extends Mixin(SignalWatcher) {
   // Pass `this` — auto-disposed on disconnect, reinited on reconnect.
-  readonly user = computedAsync<User>(async (abortSignal) => {
+  readonly user = computedAsync<User>(async abortSignal => {
     const res = await fetch(`/api/users/${userId()}`, { signal: abortSignal });
     if (!res.ok) throw new Error(res.statusText);
     return res.json() as Promise<User>;
@@ -354,8 +401,8 @@ export class UserCard extends Mixin(SignalWatcher) {
 
   render() {
     const result = this.user();
-    if (isPending(result))  return <p>Loading…</p>;
-    if (isError(result))    return <p>Error: {String(result.error)}</p>;
+    if (isPending(result)) return <p>Loading…</p>;
+    if (isError(result)) return <p>Error: {String(result.error)}</p>;
     return <UserCard user={result.value} />;
   }
 }
@@ -364,10 +411,13 @@ export class UserCard extends Mixin(SignalWatcher) {
 Without a component host (e.g. for module-level state) you can still use the options form:
 
 ```ts
-const user = computedAsync(async (abortSignal) => {
-  const res = await fetch(`/api/users/${userId()}`, { signal: abortSignal });
-  return res.json() as Promise<User>;
-}, { initialValue: null });
+const user = computedAsync(
+  async abortSignal => {
+    const res = await fetch(`/api/users/${userId()}`, { signal: abortSignal });
+    return res.json() as Promise<User>;
+  },
+  { initialValue: null },
+);
 
 // call user.dispose() manually when done
 ```
@@ -376,10 +426,10 @@ const user = computedAsync(async (abortSignal) => {
 
 **Options** (when not using the host form):
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `initialValue` | `T` | `undefined` | `result.value` before the first resolution |
-| `equal` | `(a, b) => boolean` | `Object.is` | Skip update when resolved value is unchanged |
+| Option         | Type                | Default     | Description                                  |
+| -------------- | ------------------- | ----------- | -------------------------------------------- |
+| `initialValue` | `T`                 | `undefined` | `result.value` before the first resolution   |
+| `equal`        | `(a, b) => boolean` | `Object.is` | Skip update when resolved value is unchanged |
 
 ### `computedPrevious`
 
@@ -398,12 +448,12 @@ prevPage(); // 2
 Inside a `SignalWatcher` component, pass `this` to get automatic dispose-on-disconnect / reinit-on-reconnect:
 
 ```tsx
-@Component({ tag: 'slide-view', shadow: false })
+@Component({ tag: "slide-view", shadow: false })
 export class SlideView extends Mixin(SignalWatcher) {
   readonly prevPage = computedPrevious(page, this);
 
   render() {
-    const direction = page() > (this.prevPage() ?? 0) ? 'forward' : 'back';
+    const direction = page() > (this.prevPage() ?? 0) ? "forward" : "back";
     return <div class={`slide slide--${direction}`}>{page()}</div>;
   }
 }
@@ -422,31 +472,30 @@ Wrap a plain object in per-property signals exposed through a reactive Proxy. Re
 
 ```ts
 const store = createStore(
-  { count: 0, theme: 'light' as 'light' | 'dark', user: null as User | null },
-  (s) => ({
+  { count: 0, theme: "light" as "light" | "dark", user: null as User | null },
+  s => ({
     isLoggedIn: computed(() => s.user !== null),
     label: computed(() => `Count is ${s.count}`),
   }),
 );
 
-store.count++;              // calls the underlying signal's set()
-store.theme = 'dark';       // same
-store.isLoggedIn;           // reads the computed signal
-store.$signal('count');     // raw WritableSignal<number> for interop
-store.$reset();             // reset all state keys to initial values
+store.count++; // calls the underlying signal's set()
+store.theme = "dark"; // same
+store.isLoggedIn; // reads the computed signal
+store.$signal("count"); // raw WritableSignal<number> for interop
+store.$reset(); // reset all state keys to initial values
 ```
 
 ## Adapters
 
-The adapter (signal backend) is selected by the import path — no runtime configuration needed.
+The adapter (signal backend) is selected by the import path. Activate it once at app startup via a side-effect import — there is no auto-detection.
 
-| Import | Backend | Required peer dep |
-|--------|---------|-------------------|
-| `@ssv/stencil-signals` | TC39 (`signal-polyfill`) | `signal-polyfill ^0.2.0` |
-| `@ssv/stencil-signals/tc39` | TC39 (explicit) | `signal-polyfill ^0.2.0` |
-| `@ssv/stencil-signals/preact` | Preact Signals | `@preact/signals-core ^1.0.0` |
+| Import                        | Backend                  | Required peer dep             |
+| ----------------------------- | ------------------------ | ----------------------------- |
+| `@ssv/stencil-signals/tc39`   | TC39 (`signal-polyfill`) | `signal-polyfill ^0.2.0`      |
+| `@ssv/stencil-signals/preact` | Preact Signals           | `@preact/signals-core ^1.0.0` |
 
-All three paths export the same API surface — `signal`, `computed`, `batch`, `SignalWatcher`, `effect`, `createStore`, etc.
+The main entry `@ssv/stencil-signals` exports the full public API but **does not** activate any adapter. Import it for primitives (`signal`, `computed`, `effect`, etc.) in components and feature modules after the adapter is already registered.
 
 > [!IMPORTANT]
 > Pick one adapter per application. Mixing adapters in the same bundle is not supported.
@@ -455,69 +504,69 @@ All three paths export the same API surface — `signal`, `computed`, `batch`, `
 
 ### Primitives
 
-| Export | Signature | Description |
-|--------|-----------|-------------|
+| Export                    | Signature                                                        | Description                                                                       |
+| ------------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------- |
 | `signal(value, options?)` | `<T>(value: T, options?: SignalOptions<T>) => WritableSignal<T>` | Writable signal. Accepts an optional `equals` function to skip identical updates. |
 
 `Signal<T>` — base read-only interface (also returned by `computed()`):
 
-| Method | Description |
-|--------|-------------|
-| `sig()` | Read the current value (tracked). |
-| `sig.get()` | Read the current value (tracked). Alias for calling as a function. |
-| `sig.peek()` | Read the current value without tracking. |
+| Method       | Description                                                        |
+| ------------ | ------------------------------------------------------------------ |
+| `sig()`      | Read the current value (tracked).                                  |
+| `sig.get()`  | Read the current value (tracked). Alias for calling as a function. |
+| `sig.peek()` | Read the current value without tracking.                           |
 
 `WritableSignal<T> extends Signal<T>` — adds write methods:
 
-| Method | Description |
-|--------|-------------|
-| `sig.set(value)` | Write a new value directly. |
-| `sig.update(fn)` | Derive the next value from the current one — `fn` receives the current value via an untracked read and returns the new value. Prefer over `sig.set(sig() + 1)` to avoid accidental dependency tracking inside computeds/effects. |
-| `sig.asReadonly()` | Return a read-only `Signal<T>` view of this signal. |
-| `computed(fn, options?)` | `<T>(fn: () => T, options?: SignalOptions<T>) => Signal<T>` | Read-only derived signal. Lazily recomputes when dependencies change. |
-| `batch(fn)` | `<T>(fn: () => T) => T` | Batch multiple signal writes into one update cycle. |
+| Method                   | Description                                                                                                                                                                                                                      |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `sig.set(value)`         | Write a new value directly.                                                                                                                                                                                                      |
+| `sig.update(fn)`         | Derive the next value from the current one — `fn` receives the current value via an untracked read and returns the new value. Prefer over `sig.set(sig() + 1)` to avoid accidental dependency tracking inside computeds/effects. |
+| `sig.asReadonly()`       | Return a read-only `Signal<T>` view of this signal.                                                                                                                                                                              |
+| `computed(fn, options?)` | `<T>(fn: () => T, options?: SignalOptions<T>) => Signal<T>`                                                                                                                                                                      | Read-only derived signal. Lazily recomputes when dependencies change. |
+| `batch(fn)`              | `<T>(fn: () => T) => T`                                                                                                                                                                                                          | Batch multiple signal writes into one update cycle.                   |
 
 ### Component integration
 
-| Export | Description |
-|--------|-------------|
-| `SignalWatcher(Base)` | Mixin factory. Wraps `render()` for automatic dependency tracking and re-rendering. Implements `WatcherRegistrar` so `this` can be passed to watcher utilities. |
-| `SignalWatcherController` | Composition-pattern controller. Pass `this` in the constructor and register via `addController()` on a `ReactiveControllerHost`. |
-| `SignalWatcherControllerHost` | Interface describing the minimum a host must implement (`requestUpdate()`, optional `render?()`). |
-| `WatcherRegistrar` | Interface for the `host` argument accepted by watcher utilities. `SignalWatcher` components satisfy this automatically. |
-| `@useSignal(sig)` | Property decorator. Proxies reads/writes to the given signal. |
+| Export                        | Description                                                                                                                                                     |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SignalWatcher(Base)`         | Mixin factory. Wraps `render()` for automatic dependency tracking and re-rendering. Implements `WatcherRegistrar` so `this` can be passed to watcher utilities. |
+| `SignalWatcherController`     | Composition-pattern controller. Pass `this` in the constructor and register via `addController()` on a `ReactiveControllerHost`.                                |
+| `SignalWatcherControllerHost` | Interface describing the minimum a host must implement (`requestUpdate()`, optional `render?()`).                                                               |
+| `WatcherRegistrar`            | Interface for the `host` argument accepted by watcher utilities. `SignalWatcher` components satisfy this automatically.                                         |
+| `@useSignal(sig)`             | Property decorator. Proxies reads/writes to the given signal.                                                                                                   |
 
 ### Effects
 
-| Export | Description |
-|--------|-------------|
-| `effect(fn, host?)` | Auto-tracking effect. Re-runs whenever any signal accessed inside changes. Returns a dispose function. |
+| Export                              | Description                                                                                                                                                       |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `effect(fn, host?)`                 | Auto-tracking effect. Re-runs whenever any signal accessed inside changes. Returns a dispose function.                                                            |
 | `effect(deps, fn, options?, host?)` | Explicit-dep effect. `fn` receives signal values as a typed tuple. Supports `{ defer: true }` and `onCleanup`. Pass `host` to opt into auto lifecycle management. |
 
 ### Derived signals
 
-| Export | Description |
-|--------|-------------|
-| `computedAsync(fn, host)` | Async derived signal — auto lifecycle via component host. Returns `DisposableSignal<AsyncResult<T>>`. |
-| `computedAsync(fn, options?)` | Async derived signal — manual or `connectedCallback`-scope lifecycle. |
-| `computedPrevious(source, host)` | Previous-value signal — auto lifecycle via component host. |
-| `computedPrevious(source, initialValue?, host?)` | Previous-value signal — manual or `connectedCallback`-scope lifecycle. |
-| `isPending(result)` | Type guard — narrows `AsyncResult<T>` to `{ status: 'pending' }`. |
-| `isResolved(result)` | Type guard — narrows `AsyncResult<T>` to `{ status: 'resolved', value: T }`. |
-| `isError(result)` | Type guard — narrows `AsyncResult<T>` to `{ status: 'error', error: unknown }`. |
+| Export                                           | Description                                                                                           |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| `computedAsync(fn, host)`                        | Async derived signal — auto lifecycle via component host. Returns `DisposableSignal<AsyncResult<T>>`. |
+| `computedAsync(fn, options?)`                    | Async derived signal — manual or `connectedCallback`-scope lifecycle.                                 |
+| `computedPrevious(source, host)`                 | Previous-value signal — auto lifecycle via component host.                                            |
+| `computedPrevious(source, initialValue?, host?)` | Previous-value signal — manual or `connectedCallback`-scope lifecycle.                                |
+| `isPending(result)`                              | Type guard — narrows `AsyncResult<T>` to `{ status: 'pending' }`.                                     |
+| `isResolved(result)`                             | Type guard — narrows `AsyncResult<T>` to `{ status: 'resolved', value: T }`.                          |
+| `isError(result)`                                | Type guard — narrows `AsyncResult<T>` to `{ status: 'error', error: unknown }`.                       |
 
 ### Store
 
-| Export | Description |
-|--------|-------------|
+| Export                                | Description                                                                                                                     |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `createStore(init, computedFactory?)` | Reactive Proxy over a plain object. Each property is backed by a signal. Includes `$signal(key)` and `$reset()` escape hatches. |
 
 ### Low-level
 
-| Export | Description |
-|--------|-------------|
+| Export                  | Description                                                                                                           |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | `createWatcher(notify)` | Low-level watcher. `notify` fires when any watched signal changes. Returns `{ watch(sig), unwatch(sig), dispose() }`. |
-| `collectSignals(fn)` | Run `fn` in a tracking context and return the `Set` of accessed signals. Useful for debugging. |
+| `collectSignals(fn)`    | Run `fn` in a tracking context and return the `Set` of accessed signals. Useful for debugging.                        |
 
 ## Development
 

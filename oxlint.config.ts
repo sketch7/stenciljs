@@ -35,6 +35,7 @@ export default defineConfig({
 		"no-use-before-define": "off",
 		"no-duplicate-imports": ["error", { allowSeparateTypeImports: true }],
 		"init-declarations": "off",
+		"max-classes-per-file": "off",
 		"max-statements": ["warn", { max: 40 }],
 		"no-undefined": "off",
 		"no-warning-comments": "off",
@@ -273,6 +274,14 @@ export default defineConfig({
 				"import/no-default-export": "off",
 				// Page/Layout/Head components return JSX — explicit return type is noise
 				"typescript/explicit-function-return-type": "off",
+			},
+		},
+		{
+			// Stencil globalScript — requires a default export and side-effect imports
+			files: ["apps/stencil-playground/src/global.ts"],
+			rules: {
+				"import/no-default-export": "off",
+				"import/no-unassigned-import": "off",
 			},
 		},
 		{

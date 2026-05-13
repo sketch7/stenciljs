@@ -52,26 +52,26 @@ export type EffectOptions = {
 // ─── Overloads ────────────────────────────────────────────────────────────────
 
 /** Auto-tracking: re-runs whenever any signal read inside `fn` changes. */
-export function effect(fn: () => CleanupFn | undefined, host?: WatcherRegistrar): CleanupFn;
+export function effect(fn: () => CleanupFn | void, host?: WatcherRegistrar): CleanupFn;
 
 /** Explicit-deps: re-runs only when signals in `deps` change. */
 export function effect<const Deps extends readonly AnySignal[]>(
 	deps: Deps,
-	fn: (values: SignalValues<Deps>, onCleanup: (fn: CleanupFn) => void) => CleanupFn | undefined,
+	fn: (values: SignalValues<Deps>, onCleanup: (fn: CleanupFn) => void) => CleanupFn | void,
 	options: EffectOptions,
 	host?: WatcherRegistrar,
 ): CleanupFn;
 export function effect<const Deps extends readonly AnySignal[]>(
 	deps: Deps,
-	fn: (values: SignalValues<Deps>, onCleanup: (fn: CleanupFn) => void) => CleanupFn | undefined,
+	fn: (values: SignalValues<Deps>, onCleanup: (fn: CleanupFn) => void) => CleanupFn | void,
 	host?: WatcherRegistrar,
 ): CleanupFn;
 
 // ─── Implementation ───────────────────────────────────────────────────────────
 
 export function effect(
-	fnOrDeps: (() => CleanupFn | undefined) | readonly AnySignal[],
-	fnOrHost?: ((values: unknown[], onCleanup: (fn: CleanupFn) => void) => CleanupFn | undefined) | WatcherRegistrar,
+	fnOrDeps: (() => CleanupFn | void) | readonly AnySignal[],
+	fnOrHost?: ((values: unknown[], onCleanup: (fn: CleanupFn) => void) => CleanupFn | void) | WatcherRegistrar,
 	optionsOrHost: EffectOptions | WatcherRegistrar = {},
 	maybeHost?: WatcherRegistrar,
 ): CleanupFn {
@@ -90,7 +90,7 @@ export function effect(
 
 	// Explicit-deps overload: effect(deps, fn, options?, host?)
 	const deps = fnOrDeps as readonly AnySignal[];
-	const explicitFn = fnOrHost as (values: unknown[], onCleanup: (fn: CleanupFn) => void) => CleanupFn | undefined;
+	const explicitFn = fnOrHost as (values: unknown[], onCleanup: (fn: CleanupFn) => void) => CleanupFn | void;
 
 	let options: EffectOptions = {};
 	let host: WatcherRegistrar | undefined;
@@ -143,7 +143,7 @@ function _effectWithHost(factory: () => CleanupFn, host: WatcherRegistrar): Clea
 // Delegates to the adapter's createEffect() which handles dep tracking
 // internally for both TC39 (Signal.Computed + Watcher) and Preact (effect()).
 
-function autoTrackingEffect(fn: () => CleanupFn | undefined): CleanupFn {
+function autoTrackingEffect(fn: () => CleanupFn | void): CleanupFn {
 	return getAdapter().createEffect(fn as () => (() => void) | undefined);
 }
 
@@ -151,7 +151,7 @@ function autoTrackingEffect(fn: () => CleanupFn | undefined): CleanupFn {
 
 function explicitDepsEffect(
 	deps: readonly AnySignal[],
-	fn: (values: unknown[], onCleanup: (fn: CleanupFn) => void) => CleanupFn | undefined,
+	fn: (values: unknown[], onCleanup: (fn: CleanupFn) => void) => CleanupFn | void,
 	options: EffectOptions,
 ): CleanupFn {
 	let userCleanup: CleanupFn | undefined;

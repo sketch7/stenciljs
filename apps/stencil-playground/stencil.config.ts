@@ -3,6 +3,7 @@ import { reactOutputTarget } from "@stencil/react-output-target";
 
 export const config: Config = {
 	namespace: "app-playground",
+	globalScript: "src/global.ts",
 	outputTargets: [
 		reactOutputTarget({
 			outDir: "src/react",

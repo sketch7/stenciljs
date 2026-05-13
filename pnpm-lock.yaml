@@ -122,6 +122,9 @@ importers:
 
   apps/stencil-playground:
     dependencies:
+      '@ssv/stencil-signals':
+        specifier: workspace:*
+        version: link:../../libs/stencil-signals
       '@ssv/stencil.core':
         specifier: workspace:*
         version: link:../../libs/stencil.core
@@ -140,6 +143,9 @@ importers:
       react:
         specifier: '>=18.0.0'
         version: 19.2.6
+      signal-polyfill:
+        specifier: 'catalog:'
+        version: 0.2.2
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -153,6 +159,9 @@ importers:
       '@app/stencil-playground':
         specifier: workspace:*
         version: link:../stencil-playground
+      '@ssv/stencil-signals':
+        specifier: workspace:*
+        version: link:../../libs/stencil-signals
       '@ssv/vite-plugin-stencil-watch':
         specifier: workspace:^
         version: link:../../libs/vite-plugin-stencil-watch
@@ -214,6 +223,9 @@ importers:
       '@stencil/core':
         specifier: 'catalog:'
         version: 4.43.4
+      '@vitest/coverage-v8':
+        specifier: 'catalog:'
+        version: 4.1.6(vitest@4.1.6)
       oxfmt:
         specifier: 'catalog:'
         version: 0.49.0

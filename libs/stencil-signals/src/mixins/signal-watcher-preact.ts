@@ -43,24 +43,18 @@
 
 import { effect as preactEffect } from "@preact/signals-core";
 import { forceUpdate } from "@stencil/core";
-import type { MixedInCtor } from "@stencil/core";
+import type { ComponentInterface, MixedInCtor } from "@stencil/core";
 
 import { scheduler } from "../signals/core";
 
 // ─── Mixin ────────────────────────────────────────────────────────────────────
-
-type StencilLike = {
-	connectedCallback?(): void;
-	disconnectedCallback?(): void;
-	render?(): unknown;
-};
 
 /** Public surface added by SignalWatcher to any component. */
 export type SignalWatcherApi = {
 	updateEffect(fn: () => void): () => void;
 };
 
-export function SignalWatcher<TBase extends MixedInCtor<StencilLike>>(
+export function SignalWatcher<TBase extends MixedInCtor<ComponentInterface>>(
 	Base: TBase,
 ): TBase & MixedInCtor<SignalWatcherApi> {
 	class SignalWatcherMixin extends Base {

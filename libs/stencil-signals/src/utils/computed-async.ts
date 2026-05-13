@@ -1,7 +1,7 @@
 /**
  * @ssv/stencil-signals — utils/computed-async.ts
  *
- * `computedAsync(fn, options?)` is a derived signal whose value comes from an
+ * `computedAsync(fn, options?)` / `computedAsync(host, fn)` is a derived signal whose value comes from an
  * async operation (Promise or async function). It re-runs whenever any signal
  * accessed inside `fn` changes, automatically cancelling the in-flight
  * operation via AbortSignal.
@@ -117,26 +117,38 @@ export type DisposableSignal<T> = {
  * The computation re-runs whenever any signal accessed inside `fn` changes.
  * In-flight requests are cancelled via AbortSignal.
  *
- * Pass the component instance as `host` to enable automatic
- * dispose-on-disconnect / reinit-on-reconnect lifecycle management.
+ * Pass the component instance as `host` as the **first** argument to enable
+ * automatic dispose-on-disconnect / reinit-on-reconnect lifecycle management.
  */
 export function computedAsync<T>(
-	fn: (abortSignal: AbortSignal) => Promise<T> | T,
 	host: WatcherRegistrar,
+	fn: (abortSignal: AbortSignal) => Promise<T> | T,
 ): DisposableSignal<AsyncResult<T>>;
 export function computedAsync<T>(
 	fn: (abortSignal: AbortSignal) => Promise<T> | T,
 	options?: ComputedAsyncOptions<T>,
 ): DisposableSignal<AsyncResult<T>>;
 export function computedAsync<T>(
-	fn: (abortSignal: AbortSignal) => Promise<T> | T,
-	optionsOrHost: ComputedAsyncOptions<T> | WatcherRegistrar = {},
+	hostOrFn: WatcherRegistrar | ((abortSignal: AbortSignal) => Promise<T> | T),
+	fnOrOptions?: ((abortSignal: AbortSignal) => Promise<T> | T) | ComputedAsyncOptions<T>,
 ): DisposableSignal<AsyncResult<T>> {
-	// Detect host path by presence of __addWatcher.
-	if (typeof (optionsOrHost as WatcherRegistrar).__addWatcher === "function") {
-		return _computedAsyncWithHost(fn, optionsOrHost as WatcherRegistrar);
+	// Host-first overload: computedAsync(host, fn)
+	if (typeof (hostOrFn as WatcherRegistrar).__addWatcher === "function") {
+		return _computedAsyncWithHost(
+			fnOrOptions as (abortSignal: AbortSignal) => Promise<T> | T,
+			hostOrFn as WatcherRegistrar,
+		);
 	}
-	return _computedAsyncCore(fn, optionsOrHost as ComputedAsyncOptions<T>);
+	// Standard overload: computedAsync(fn, options?)
+	const options = (fnOrOptions as ComputedAsyncOptions<T>) ?? {};
+	const fn = hostOrFn as (abortSignal: AbortSignal) => Promise<T> | T;
+	const owner = getActiveOwner();
+	if (owner) {
+		const sig = _computedAsyncCore(fn, options);
+		owner.push(sig.dispose.bind(sig));
+		return sig;
+	}
+	return _computedAsyncCore(fn, options);
 }
 
 // ─── Host path ────────────────────────────────────────────────────────────────

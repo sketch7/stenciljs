@@ -61,7 +61,7 @@
  */
 
 import { forceUpdate } from "@stencil/core";
-import type { MixedInCtor } from "@stencil/core";
+import type { ComponentInterface, MixedInCtor } from "@stencil/core";
 import { Signal as TC39Signal } from "signal-polyfill";
 
 import { scheduler } from "../signals/core";
@@ -107,20 +107,13 @@ const watcherFinalizationRegistry = new FinalizationRegistry<InstanceType<typeof
  * Compatible with Stencil's `Mixin()` helper (v4.37+) and with direct
  * `extends SignalWatcher(class {})` usage — same export, both work.
  */
-// Stencil lifecycle shape expected by this mixin (all members optional so
-// plain `class {}` bases still satisfy the constraint).
-type StencilLike = {
-	connectedCallback?(): void;
-	disconnectedCallback?(): void;
-	render?(): unknown;
-};
 
 /** Public surface added by SignalWatcher to any component. */
 export type SignalWatcherApi = {
 	updateEffect(fn: () => void): () => void;
 };
 
-export function SignalWatcher<TBase extends MixedInCtor<StencilLike>>(
+export function SignalWatcher<TBase extends MixedInCtor<ComponentInterface>>(
 	Base: TBase,
 ): TBase & MixedInCtor<SignalWatcherApi> {
 	class SignalWatcherMixin extends Base {

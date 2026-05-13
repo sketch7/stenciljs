@@ -57,16 +57,16 @@ export class MyCounter extends SignalWatcher(class {}) {
 }
 ```
 
-| Feature                    | `@State()` | stencil-signals       |
-| -------------------------- | ---------- | --------------------- |
-| Triggers re-render         | ✅         | ✅                    |
-| Shared across components   | ❌         | ✅                    |
-| Computed/derived values    | ❌         | ✅ `computed()`       |
-| Auto-tracking side effects | ❌         | ✅ `effect(fn)`       |
-| Explicit-dep side effects  | ❌         | ✅ `effect(deps, fn)` |
-| Async derived state        | ❌         | ✅ `computedAsync`    |
-| Previous value tracking    | ❌         | ✅ `computedPrevious` |
-| TC39 standard              | ❌         | ✅                    |
+| Feature                    | `@State()` | stencil-signals             |
+| -------------------------- | ---------- | --------------------------- |
+| Triggers re-render         | ✅         | ✅                          |
+| Shared across components   | ❌         | ✅                          |
+| Computed/derived values    | ❌         | ✅ `computed()`             |
+| Auto-tracking side effects | ❌         | ✅ `effect(fn)`             |
+| Explicit-dep side effects  | ❌         | ✅ `effect(host, deps, fn)` |
+| Async derived state        | ❌         | ✅ `computedAsync`          |
+| Previous value tracking    | ❌         | ✅ `computedPrevious`       |
+| TC39 standard              | ❌         | ✅                          |
 
 ## Features
 
@@ -324,14 +324,14 @@ const stop = effect(() => {
 stop(); // dispose manually
 ```
 
-Inside a `SignalWatcher` component, pass `this` as the last argument — the effect is auto-disposed on `disconnectedCallback` and reinited on `connectedCallback`:
+Inside a `SignalWatcher` component, pass `this` as the **first** argument — the effect is auto-disposed on `disconnectedCallback` and reinited on `connectedCallback`:
 
 ```tsx
 @Component({ tag: "my-comp", shadow: false })
 export class MyComp extends Mixin(SignalWatcher) {
-  readonly titleWatch = effect(() => {
+  readonly titleWatch = effect(this, () => {
     document.title = `Count: ${count()}`;
-  }, this);
+  });
 
   // _stop() can still be called manually to dispose early
 }
@@ -361,12 +361,12 @@ const stop = effect(
 With `this` as host (options can be omitted when no options are needed):
 
 ```tsx
-private readonly _stop = effect([userId, theme], ([id, t], onCleanup) => {
+private readonly _stop = effect(this, [userId, theme], ([id, t], onCleanup) => {
   const ctrl = new AbortController();
   onCleanup(() => ctrl.abort());
   fetch(`/api/users/${id}?theme=${t}`, { signal: ctrl.signal })
     .then(r => r.json()).then(data => userStore.set(data));
-}, this);
+});
 ```
 
 Signal reads _inside_ `fn` that are not in `deps` are untracked — giving you precise control over what triggers the effect.
@@ -390,11 +390,11 @@ const userId = signal(1);
 @Component({ tag: "user-card", shadow: false })
 export class UserCard extends Mixin(SignalWatcher) {
   // Pass `this` — auto-disposed on disconnect, reinited on reconnect.
-  readonly user = computedAsync<User>(async abortSignal => {
+  readonly user = computedAsync<User>(this, async abortSignal => {
     const res = await fetch(`/api/users/${userId()}`, { signal: abortSignal });
     if (!res.ok) throw new Error(res.statusText);
     return res.json() as Promise<User>;
-  }, this);
+  });
 
   render() {
     const result = this.user();
@@ -447,7 +447,7 @@ Inside a `SignalWatcher` component, pass `this` to get automatic dispose-on-disc
 ```tsx
 @Component({ tag: "slide-view", shadow: false })
 export class SlideView extends Mixin(SignalWatcher) {
-  readonly prevPage = computedPrevious(page, this);
+  readonly prevPage = computedPrevious(this, page);
 
   render() {
     const direction = page() > (this.prevPage() ?? 0) ? "forward" : "back";
@@ -534,22 +534,24 @@ The main entry `@ssv/stencil-signals` exports the full public API but **does not
 
 ### Effects
 
-| Export                              | Description                                                                                                                                                       |
-| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `effect(fn, host?)`                 | Auto-tracking effect. Re-runs whenever any signal accessed inside changes. Returns a dispose function.                                                            |
-| `effect(deps, fn, options?, host?)` | Explicit-dep effect. `fn` receives signal values as a typed tuple. Supports `{ defer: true }` and `onCleanup`. Pass `host` to opt into auto lifecycle management. |
+| Export                             | Description                                                                                                    |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `effect(fn)`                       | Auto-tracking effect. Re-runs whenever any signal accessed inside changes. Returns a dispose function.         |
+| `effect(host, fn)`                 | Auto-tracking effect with lifecycle host. Auto-disposed on disconnect, reinited on reconnect.                  |
+| `effect(deps, fn, options?)`       | Explicit-dep effect. `fn` receives signal values as a typed tuple. Supports `{ defer: true }` and `onCleanup`. |
+| `effect(host, deps, fn, options?)` | Explicit-dep effect with lifecycle host. Pass `host` to opt into auto lifecycle management.                    |
 
 ### Derived signals
 
-| Export                                           | Description                                                                                           |
-| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| `computedAsync(fn, host)`                        | Async derived signal — auto lifecycle via component host. Returns `DisposableSignal<AsyncResult<T>>`. |
-| `computedAsync(fn, options?)`                    | Async derived signal — manual or `connectedCallback`-scope lifecycle.                                 |
-| `computedPrevious(source, host)`                 | Previous-value signal — auto lifecycle via component host.                                            |
-| `computedPrevious(source, initialValue?, host?)` | Previous-value signal — manual or `connectedCallback`-scope lifecycle.                                |
-| `isPending(result)`                              | Type guard — narrows `AsyncResult<T>` to `{ status: 'pending' }`.                                     |
-| `isResolved(result)`                             | Type guard — narrows `AsyncResult<T>` to `{ status: 'resolved', value: T }`.                          |
-| `isError(result)`                                | Type guard — narrows `AsyncResult<T>` to `{ status: 'error', error: unknown }`.                       |
+| Export                                    | Description                                                                                           |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `computedAsync(host, fn)`                 | Async derived signal — auto lifecycle via component host. Returns `DisposableSignal<AsyncResult<T>>`. |
+| `computedAsync(fn, options?)`             | Async derived signal — manual or `connectedCallback`-scope lifecycle.                                 |
+| `computedPrevious(host, source)`          | Previous-value signal — auto lifecycle via component host.                                            |
+| `computedPrevious(source, initialValue?)` | Previous-value signal — manual or `connectedCallback`-scope lifecycle.                                |
+| `isPending(result)`                       | Type guard — narrows `AsyncResult<T>` to `{ status: 'pending' }`.                                     |
+| `isResolved(result)`                      | Type guard — narrows `AsyncResult<T>` to `{ status: 'resolved', value: T }`.                          |
+| `isError(result)`                         | Type guard — narrows `AsyncResult<T>` to `{ status: 'error', error: unknown }`.                       |
 
 ### Store
 

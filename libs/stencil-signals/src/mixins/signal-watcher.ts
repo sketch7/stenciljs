@@ -31,18 +31,10 @@
  */
 
 import { forceUpdate } from "@stencil/core";
-import type { MixedInCtor } from "@stencil/core";
+import type { ComponentInterface, MixedInCtor } from "@stencil/core";
 
 import { getAdapter } from "../adapters/active";
 import { scheduler, setActiveOwner } from "../signals/core";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type StencilLike = {
-	connectedCallback?(): void;
-	disconnectedCallback?(): void;
-	render?(): unknown;
-};
 
 /** Public surface added by SignalWatcher to any component. */
 export type SignalWatcherApi = {
@@ -66,9 +58,9 @@ export type WatcherEntry = {
  *
  * @example
  * ```ts
- * readonly user = computedAsync(fn, this);
- * readonly prev = computedPrevious(source, this);
- * effect(fn, this);
+ * readonly user = computedAsync(this, fn);
+ * readonly prev = computedPrevious(this, source);
+ * effect(this, fn);
  * ```
  */
 export type WatcherRegistrar = {
@@ -78,7 +70,7 @@ export type WatcherRegistrar = {
 
 // ─── Mixin ────────────────────────────────────────────────────────────────────
 
-export function SignalWatcher<TBase extends MixedInCtor<StencilLike>>(
+export function SignalWatcher<TBase extends MixedInCtor<ComponentInterface>>(
 	Base: TBase,
 ): TBase & MixedInCtor<SignalWatcherApi & WatcherRegistrar> {
 	class SignalWatcherMixin extends Base {

@@ -1,8 +1,10 @@
-import { SignalWatcher, effect } from "@ssv/stencil-signals";
+import { SignalWatcher, effect, signal } from "@ssv/stencil-signals";
 /* eslint-disable react/no-array-index-key -- display-only append-only lists; stable order */
 import { Component, h, Mixin } from "@stencil/core";
 
-import { count, history, milestones } from "./effect.signals";
+const count = signal(0);
+const history = signal<number[]>([]);
+const milestones = signal<string[]>([]);
 
 @Component({
 	tag: "app-signals-effect",
@@ -12,16 +14,17 @@ import { count, history, milestones } from "./effect.signals";
 export class AppSignalsEffect extends Mixin(SignalWatcher) {
 	// Explicit-deps effect: appends count to history on every change (deferred — skips initial value)
 	readonly _historyEff = effect(
+		this,
 		[count],
 		([val]) => {
 			history.set([...history.peek(), val]);
 		},
 		{ defer: true },
-		this,
 	);
 
 	// Explicit-deps effect: records a milestone text at every multiple of 5 (deferred)
 	readonly _milestoneEff = effect(
+		this,
 		[count],
 		([val]) => {
 			if (val !== 0 && val % 5 === 0) {
@@ -29,7 +32,6 @@ export class AppSignalsEffect extends Mixin(SignalWatcher) {
 			}
 		},
 		{ defer: true },
-		this,
 	);
 
 	override render() {

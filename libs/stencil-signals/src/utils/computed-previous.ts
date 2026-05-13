@@ -50,37 +50,27 @@ import type { DisposableSignal } from "./computed-async";
 /**
  * Returns a signal that always holds the previous value of `source`.
  *
- * Pass `host` (the component `this`) to enable automatic
- * dispose-on-disconnect / reinit-on-reconnect lifecycle management.
+ * Pass `host` (the component `this`) as the **first** argument to enable
+ * automatic dispose-on-disconnect / reinit-on-reconnect lifecycle management.
  *
  * @param source       Any readable signal (State or Computed).
  * @param initialValue Value returned before the first change. Defaults to `undefined`.
- * @param host         Optional component host for lifecycle management.
  */
-export function computedPrevious<T>(source: Signal<T>, host: WatcherRegistrar): DisposableSignal<T | undefined>;
+export function computedPrevious<T>(host: WatcherRegistrar, source: Signal<T>): DisposableSignal<T | undefined>;
+export function computedPrevious<T>(source: Signal<T>, initialValue?: T): DisposableSignal<T | undefined>;
 export function computedPrevious<T>(
-	source: Signal<T>,
-	initialValue?: T,
-	host?: WatcherRegistrar,
-): DisposableSignal<T | undefined>;
-export function computedPrevious<T>(
-	source: Signal<T>,
-	initialValueOrHost?: T | WatcherRegistrar,
-	maybeHost?: WatcherRegistrar,
+	hostOrSource: WatcherRegistrar | Signal<T>,
+	sourceOrInitialValue?: Signal<T> | T,
 ): DisposableSignal<T | undefined> {
-	let initialValue: T | undefined;
-	let host: WatcherRegistrar | undefined;
-
-	if (typeof (initialValueOrHost as WatcherRegistrar)?.__addWatcher === "function") {
-		host = initialValueOrHost as WatcherRegistrar;
-	} else {
-		initialValue = initialValueOrHost as T | undefined;
-		host = maybeHost;
+	// Host-first overload: computedPrevious(host, source)
+	if (typeof (hostOrSource as WatcherRegistrar).__addWatcher === "function") {
+		const host = hostOrSource as WatcherRegistrar;
+		const source = sourceOrInitialValue as Signal<T>;
+		return _computedPreviousWithHost(source, undefined, host);
 	}
-
-	if (host) {
-		return _computedPreviousWithHost(source, initialValue, host);
-	}
+	// Standard overload: computedPrevious(source, initialValue?)
+	const source = hostOrSource as Signal<T>;
+	const initialValue = sourceOrInitialValue as T | undefined;
 	return _computedPreviousCore(source, initialValue);
 }
 

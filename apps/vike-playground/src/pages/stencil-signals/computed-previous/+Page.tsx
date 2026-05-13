@@ -17,7 +17,7 @@ export default function Page(): JSX.Element {
 			</div>
 
 			<p className="text-xs text-[var(--color-muted-fg)]">
-				<code>computedPrevious(count, this)</code> from <code>@ssv/stencil-signals</code> is declared as a class
+				<code>computedPrevious(this, count)</code> from <code>@ssv/stencil-signals</code> is declared as a class
 				property. Passing <code>this</code> as host enables automatic disposal on <code>disconnectedCallback</code> and
 				reinitialization on <code>connectedCallback</code>.
 			</p>

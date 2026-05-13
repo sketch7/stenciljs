@@ -20,8 +20,10 @@
  *
  *  Side effects
  *  ────────────
- *  effect(fn)             Auto-tracking effect; re-runs on any accessed signal change
- *  effect(deps, fn, opts) Explicit-deps effect; re-runs only when listed signals change
+ *  effect(fn)                  Auto-tracking effect; re-runs on any accessed signal change
+ *  effect(host, fn)             Auto-tracking effect with lifecycle host
+ *  effect(deps, fn, opts)       Explicit-deps effect; re-runs only when listed signals change
+ *  effect(host, deps, fn, opts) Explicit-deps effect with lifecycle host
  *
  *  Derived / async signals
  *  ───────────────────────

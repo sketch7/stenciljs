@@ -1,7 +1,7 @@
 import { SignalWatcher } from "@ssv/stencil-signals";
 import { Component, h, Mixin, State } from "@stencil/core";
 
-import { todoStore } from "./todo.signals";
+import { todoStore } from "./todo.store";
 
 @Component({
 	tag: "app-signals-todo",

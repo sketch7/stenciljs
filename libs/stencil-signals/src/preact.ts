@@ -20,8 +20,10 @@
  *
  *  Side effects
  *  ────────────
- *  watchEffect(fn)             Auto-tracking effect; re-runs on any accessed signal change
- *  watchEffect(deps, fn, opts) Explicit-deps effect; re-runs only when listed signals change
+ *  watchEffect(fn)                  Auto-tracking effect; re-runs on any accessed signal change
+ *  watchEffect(host, fn)             Auto-tracking effect with lifecycle host
+ *  watchEffect(deps, fn, opts)       Explicit-deps effect; re-runs only when listed signals change
+ *  watchEffect(host, deps, fn, opts) Explicit-deps effect with lifecycle host
  *
  *  Derived / async signals
  *  ───────────────────────

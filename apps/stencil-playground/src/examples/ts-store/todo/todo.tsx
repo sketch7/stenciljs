@@ -10,7 +10,11 @@ import { todoStore } from "./todo.store";
 	shadow: true,
 })
 export class AppTanTodo extends SsvElement {
-	readonly #todos = useSelector(this, () => todoStore, state => state.todos);
+	readonly #todos = useSelector(
+		this,
+		() => todoStore,
+		state => state.todos,
+	);
 
 	@State() inputValue = "";
 

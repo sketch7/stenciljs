@@ -6,8 +6,8 @@ import { useSelector } from "./store-selector";
 
 type AtomResult<TValue> = {
 	get value(): TValue | undefined;
-	set: Atom<TValue>['set'];
-}
+	set: Atom<TValue>["set"];
+};
 
 export function useAtom<TValue>(
 	host: ReactiveControllerHost,
@@ -15,9 +15,10 @@ export function useAtom<TValue>(
 	options?: UseSelectorOptions<TValue>,
 ): AtomResult<TValue> {
 	const value = useSelector(host, getAtom, undefined, options);
-
 	return {
-		get value() { return value(); },
+		get value() {
+			return value();
+		},
 		set(valueOrUpdater) {
 			const atom = getAtom();
 			if (!atom) {
@@ -25,5 +26,5 @@ export function useAtom<TValue>(
 			}
 			(atom.set as (v: TValue | ((prev: TValue) => TValue)) => void)(valueOrUpdater);
 		},
-	}
+	};
 }

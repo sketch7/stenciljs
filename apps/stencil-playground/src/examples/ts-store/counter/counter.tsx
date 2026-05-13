@@ -11,7 +11,6 @@ const totalAtom = createAtom(() => {
 	return count + doubledAtom.get();
 });
 
-
 @Component({
 	tag: "app-tan-counter",
 	styleUrl: "counter.css",

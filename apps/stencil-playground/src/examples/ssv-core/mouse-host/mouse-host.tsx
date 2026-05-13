@@ -1,4 +1,4 @@
-import { SsvElement } from "@ssv/stenciljs.core";
+import { SsvElement } from "@ssv/stencil.core";
 import { Component, h } from "@stencil/core";
 
 import { withMouseController } from "./mouse-controller";

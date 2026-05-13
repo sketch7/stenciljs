@@ -39,17 +39,37 @@ export default function Page(): JSX.Element {
 			</section>
 
 			<section className="flex flex-col gap-3">
-				<h2 className="text-sm font-semibold uppercase tracking-widest text-[var(--color-muted-fg)]">SSV Stencil</h2>
+				<h2 className="text-sm font-semibold uppercase tracking-widest text-[var(--color-muted-fg)]">
+					SSV Stencil / Core
+				</h2>
 				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 					<ExampleCard
-						href="/ssv-stencil/reactive-host/mouse"
+						href="/ssv-stencil/core/reactive-host/mouse"
 						title="Mouse Controller"
 						description="Tracks cursor position via a ReactiveController. No @State — controller calls requestUpdate() directly."
 					/>
 					<ExampleCard
-						href="/ssv-stencil/reactive-host/timer"
+						href="/ssv-stencil/core/reactive-host/timer"
 						title="Timer Controller"
 						description="Elapsed time ticker using setInterval inside a ReactiveController — auto-starts and cleans up with the host lifecycle."
+					/>
+				</div>
+			</section>
+
+			<section className="flex flex-col gap-3">
+				<h2 className="text-sm font-semibold uppercase tracking-widest text-[var(--color-muted-fg)]">
+					SSV Stencil / TanStack Store
+				</h2>
+				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+					<ExampleCard
+						href="/ssv-stencil/ts-store/counter"
+						title="Counter"
+						description="Increment / decrement with a multiplied additional value. State via @tanstack/store atoms and createAtomCtrl."
+					/>
+					<ExampleCard
+						href="/ssv-stencil/ts-store/todo"
+						title="Todo List"
+						description="Add, complete, and delete tasks. Store subscription via createSelectorCtrl — no @State needed."
 					/>
 				</div>
 			</section>

@@ -1,0 +1,160 @@
+import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
+import { createAtom } from "@tanstack/store";
+import { describe, expect, it, beforeEach } from "vitest";
+
+import { useAtom } from "./store-atom";
+
+class TestHost implements ReactiveControllerHost {
+	readonly controllers = new Set<ReactiveController>();
+	renderCount = 0;
+
+	addController(ctrl: ReactiveController): void {
+		this.controllers.add(ctrl);
+	}
+
+	removeController(ctrl: ReactiveController): void {
+		this.controllers.delete(ctrl);
+	}
+
+	/** Simulates Stencil calling componentWillRender → hostWillRender on each controller. */
+	render(): void {
+		for (const ctrl of this.controllers) {
+			ctrl.hostWillRender?.();
+		}
+	}
+
+	/**
+	 * Simulates Stencil scheduling and executing a re-render after forceUpdate().
+	 * Increments renderCount then runs the full render cycle.
+	 */
+	requestUpdate(): void {
+		this.renderCount++;
+		this.render();
+	}
+
+	/** Simulates Stencil calling disconnectedCallback → hostDisconnected. */
+	disconnect(): void {
+		for (const ctrl of this.controllers) {
+			ctrl.hostDisconnected?.();
+		}
+	}
+}
+
+describe("useAtom", () => {
+	let host: TestHost;
+
+	beforeEach(() => {
+		host = new TestHost();
+	});
+
+	it("reads the current atom value before first render", () => {
+		const atom = createAtom(42);
+		const ctrl = useAtom(host, () => atom);
+		expect(ctrl.value).toBe(42);
+	});
+
+	it("reads the current atom value after render", () => {
+		const atom = createAtom(42);
+		const ctrl = useAtom(host, () => atom);
+		host.render();
+		expect(ctrl.value).toBe(42);
+	});
+
+	it("set(value) updates the atom", () => {
+		const atom = createAtom(0);
+		const ctrl = useAtom(host, () => atom);
+		host.render();
+
+		ctrl.set(99);
+
+		expect(atom.get()).toBe(99);
+	});
+
+	it("set(updater) applies updater function", () => {
+		const atom = createAtom(10);
+		const ctrl = useAtom(host, () => atom);
+		host.render();
+
+		ctrl.set(prev => prev + 5);
+
+		expect(atom.get()).toBe(15);
+	});
+
+	it("triggers re-render when atom value changes via set()", () => {
+		const atom = createAtom(0);
+		const ctrl = useAtom(host, () => atom);
+		host.render();
+
+		ctrl.set(1);
+
+		expect(host.renderCount).toBe(1);
+		expect(ctrl.value).toBe(1);
+	});
+
+	it("does not trigger re-render when set() value is unchanged", () => {
+		const atom = createAtom(5);
+		useAtom(host, () => atom);
+		host.render();
+
+		// setState with same value — @tanstack/store won't notify subscribers
+		// because the store's equality check prevents notification
+		const atom2 = createAtom(5);
+		const ctrl2 = useAtom(host, () => atom2);
+		host.render();
+
+		atom2.set(5);
+
+		expect(host.renderCount).toBe(0);
+		expect(ctrl2.value).toBe(5);
+	});
+
+	it("does not trigger re-render after disconnect", () => {
+		const atom = createAtom(0);
+		useAtom(host, () => atom);
+		host.render();
+		host.disconnect();
+
+		atom.set(99);
+
+		expect(host.renderCount).toBe(0);
+	});
+
+	it("value reflects latest set() after re-render", () => {
+		const atom = createAtom(0);
+		const ctrl = useAtom(host, () => atom);
+		host.render();
+
+		ctrl.set(7);
+		ctrl.set(14);
+
+		expect(ctrl.value).toBe(14);
+		expect(host.renderCount).toBe(2);
+	});
+
+	it("respects custom compare option — no re-render when within threshold", () => {
+		const atom = createAtom(1);
+		useAtom(host, () => atom, {
+			compare: (a, b) => Math.abs((a as number) - (b as number)) < 5,
+		});
+		host.render();
+
+		// diff 2 < 5
+		atom.set(3);
+
+		expect(host.renderCount).toBe(0);
+	});
+
+	it("respects custom compare option — re-renders when outside threshold", () => {
+		const atom = createAtom(1);
+		const ctrl = useAtom(host, () => atom, {
+			compare: (a, b) => Math.abs((a as number) - (b as number)) < 5,
+		});
+		host.render();
+
+		// diff 9 >= 5
+		atom.set(10);
+
+		expect(host.renderCount).toBe(1);
+		expect(ctrl.value).toBe(10);
+	});
+});

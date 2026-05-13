@@ -55,7 +55,7 @@ export type StencilWatchOptions = {
 
 	/**
 	 * Optional command to run before the main Stencil build command.
-	 * Use this to rebuild workspace dependencies (e.g. `pnpm --filter @ssv/stenciljs.core build`)
+	 * Use this to rebuild workspace dependencies (e.g. `pnpm --filter @ssv/stencil.core build`)
 	 * so their dist is up-to-date before Stencil bundles them.
 	 * Runs in the same `cwd` as `buildCommand` (i.e. `packageDir`).
 	 */

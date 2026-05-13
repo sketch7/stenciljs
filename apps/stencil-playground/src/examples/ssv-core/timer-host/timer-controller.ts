@@ -1,4 +1,4 @@
-import type { ReactiveController, ReactiveControllerHost } from "@ssv/stenciljs.core";
+import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
 
 class TimerController implements ReactiveController {
 	private host: ReactiveControllerHost;

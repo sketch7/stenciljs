@@ -1,7 +1,7 @@
 {
-  "name": "@ssv/stenciljs.core",
-  "version": "0.1.0",
-  "description": "Core utilities for StencilJS — ReactiveController, ReactiveControllerHost, SsvElement.",
+  "name": "@ssv/tanstack.stencil-store",
+  "version": "0.0.0-PLACEHOLDER",
+  "description": "StencilJS integration for @tanstack/store — ReactiveController-based selectors and atoms.",
   "license": "MIT",
   "files": [
     "dist"
@@ -28,7 +28,9 @@
     "fmt:check": "oxfmt --check src/"
   },
   "devDependencies": {
+    "@ssv/stencil.core": "workspace:*",
     "@stencil/core": "catalog:",
+    "@tanstack/store": "catalog:",
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "oxfmt": "catalog:",
@@ -38,6 +40,8 @@
     "vitest": "catalog:"
   },
   "peerDependencies": {
-    "@stencil/core": ">=4.0.0"
+    "@ssv/stencil.core": "workspace:*",
+    "@stencil/core": ">=4.0.0",
+    "@tanstack/store": "^0.11.0"
   }
 }

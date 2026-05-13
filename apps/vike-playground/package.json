@@ -1,6 +1,6 @@
 {
   "name": "@app/vike-playground",
-  "version": "0.0.0",
+  "version": "0.0.0-PLACEHOLDER",
   "private": true,
   "description": "Vike SSR demo app showcasing StencilJS components (counter + todo) with @stencil/ssr hydration.",
   "type": "module",

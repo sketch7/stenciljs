@@ -1,6 +1,6 @@
 {
   "name": "@ssv/tanstack.stencil-store",
-  "version": "0.1.0",
+  "version": "0.0.0-PLACEHOLDER",
   "description": "StencilJS integration for @tanstack/store — ReactiveController-based selectors and atoms.",
   "license": "MIT",
   "files": [

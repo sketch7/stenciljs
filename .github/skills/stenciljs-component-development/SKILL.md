@@ -1,6 +1,6 @@
 ---
 name: stenciljs-component-development
-description: StencilJS component patterns for this workspace. Use when creating new Stencil components, adding reactive state with @stencil/store, implementing ReactiveController from @ssv/stencil.core, or working with output targets. Trigger words - component, stencil, @Component, store, reactive controller, SsvElement, output target, web component.
+description: StencilJS component patterns for this workspace. Use when creating new Stencil components, adding reactive state with @stencil/store or @ssv/tanstack.stencil-store, implementing ReactiveController from @ssv/stencil.core, or working with output targets. Trigger words - component, stencil, @Component, store, reactive controller, SsvElement, output target, web component, useSelector, useAtom, tanstack.
 ---
 
 # StencilJS Component Development
@@ -69,7 +69,7 @@ export class AppCounter {
 }
 ```
 
-See: [apps/stencil-playground/src/counter/](../../../apps/stencil-playground/src/counter/)
+See: [apps/stencil-playground/src/examples/stencil-store/counter/](../../../apps/stencil-playground/src/examples/stencil-store/counter/)
 
 ## Reactive Controllers (@ssv/stencil.core)
 
@@ -123,9 +123,9 @@ export class AppTimerHost extends Mixin(SsvElementMixin) {
 
 See:
 
-- Mouse tracking example: [apps/stencil-playground/src/mouse-host/](../../../apps/stencil-playground/src/mouse-host/)
-- Timer example: [apps/stencil-playground/src/timer-host/](../../../apps/stencil-playground/src/timer-host/)
-- Library source: [libs/stenciljs.core/src/](../../../libs/stenciljs.core/src/)
+- Mouse tracking example: [apps/stencil-playground/src/examples/ssv-core/mouse-host/](../../../apps/stencil-playground/src/examples/ssv-core/mouse-host/)
+- Timer example: [apps/stencil-playground/src/examples/ssv-core/timer-host/](../../../apps/stencil-playground/src/examples/ssv-core/timer-host/)
+- Library source: [libs/stencil.core/src/](../../../libs/stencil.core/src/)
 
 ## Output Targets (stencil.config.ts)
 
@@ -154,8 +154,9 @@ See: [apps/stencil-playground/stencil.config.ts](../../../apps/stencil-playgroun
 
 | Pattern                                     | Example Files                                                                 |
 | ------------------------------------------- | ----------------------------------------------------------------------------- |
-| Component + @stencil/store                  | [counter/](../../../apps/stencil-playground/src/counter/)                     |
-| Component + ReactiveController (SsvElement) | [mouse-host/](../../../apps/stencil-playground/src/mouse-host/)               |
-| Component + ReactiveController (Mixin)      | [timer-host/](../../../apps/stencil-playground/src/timer-host/)               |
-| Output targets config                       | [stencil.config.ts](../../../apps/stencil-playground/stencil.config.ts)       |
-| Core library API                            | [libs/stenciljs.core/src/index.ts](../../../libs/stenciljs.core/src/index.ts) |
+| Component + @stencil/store                  | [stencil-store/counter/](../../../apps/stencil-playground/src/examples/stencil-store/counter/)     |
+| Component + @ssv/tanstack.stencil-store      | [ts-store/counter/](../../../apps/stencil-playground/src/examples/ts-store/counter/)               |
+| Component + ReactiveController (SsvElement) | [ssv-core/mouse-host/](../../../apps/stencil-playground/src/examples/ssv-core/mouse-host/)         |
+| Component + ReactiveController (Mixin)      | [ssv-core/timer-host/](../../../apps/stencil-playground/src/examples/ssv-core/timer-host/)         |
+| Output targets config                       | [stencil.config.ts](../../../apps/stencil-playground/stencil.config.ts)                            |
+| Core library API                            | [libs/stencil.core/src/index.ts](../../../libs/stencil.core/src/index.ts)                          |

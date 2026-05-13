@@ -10,17 +10,17 @@ import { countAtom, additionalAtom } from "./counter.store";
 	shadow: true,
 })
 export class AppTanCounter extends SsvElement {
-	private count = useAtom(this, () => countAtom);
-	private additional = useAtom(this, () => additionalAtom);
+	readonly #count = useAtom(this, () => countAtom);
+	readonly #additional = useAtom(this, () => additionalAtom);
 
 	private handleAdditionalChange(event: Event) {
 		const value = Number.parseInt((event.target as HTMLInputElement).value, 10);
-		this.additional.set(Number.isNaN(value) ? 0 : value);
+		this.#additional.set(Number.isNaN(value) ? 0 : value);
 	}
 
 	render() {
-		const count = this.count.value ?? 0;
-		const additionalValue = this.additional.value ?? 0;
+		const count = this.#count.value ?? 0;
+		const additionalValue = this.#additional.value ?? 0;
 		const doubled = additionalValue * 2;
 		const total = count + doubled;
 
@@ -32,10 +32,10 @@ export class AppTanCounter extends SsvElement {
 				</div>
 
 				<div class="controls">
-					<button type="button" class="btn btn-outline" onClick={() => this.count.set(prev => prev - 1)}>
+					<button type="button" class="btn btn-outline" onClick={() => this.#count.set(prev => prev - 1)}>
 						−
 					</button>
-					<button type="button" class="btn btn-primary" onClick={() => this.count.set(prev => prev + 1)}>
+					<button type="button" class="btn btn-primary" onClick={() => this.#count.set(prev => prev + 1)}>
 						+
 					</button>
 				</div>

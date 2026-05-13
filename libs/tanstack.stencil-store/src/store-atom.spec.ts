@@ -157,4 +157,27 @@ describe("useAtom", () => {
 		expect(host.renderCount).toBe(1);
 		expect(ctrl.value).toBe(10);
 	});
+
+	it("value is accessible via a getter on a host subclass (component pattern)", () => {
+		const atom = createAtom(0);
+
+		// oxlint-disable-next-line max-classes-per-file
+		class ComponentLike extends TestHost {
+			readonly count = useAtom(this, () => atom);
+
+			increment() {
+				this.count.set(prev => prev + 1);
+			}
+		}
+
+		const component = new ComponentLike();
+		component.render();
+
+		expect(component.count.value).toBe(0);
+
+		component.increment();
+
+		expect(component.renderCount).toBe(1);
+		expect(component.count.value).toBe(1);
+	});
 });

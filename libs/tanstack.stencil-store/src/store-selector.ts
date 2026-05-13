@@ -89,6 +89,7 @@ export function useSelector<TSource, TSelected = TSource>(
 	getStore: () => SelectionSource<TSource> | undefined,
 	selector?: (snapshot: TSource) => TSelected,
 	options?: UseSelectorOptions<TSelected>,
-): StoreSelector<TSource, TSelected> {
-	return new StoreSelector(host, getStore, selector, options);
+): () => TSelected | undefined {
+	const ctrl = new StoreSelector(host, getStore, selector, options);
+	return () => ctrl.value;
 }

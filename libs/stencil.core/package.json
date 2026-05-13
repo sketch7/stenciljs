@@ -1,5 +1,5 @@
 {
-  "name": "@ssv/stenciljs.core",
+  "name": "@ssv/stencil.core",
   "version": "0.1.0",
   "description": "Core utilities for StencilJS — ReactiveController, ReactiveControllerHost, SsvElement.",
   "license": "MIT",

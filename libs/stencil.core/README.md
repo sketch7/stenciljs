@@ -1,11 +1,11 @@
-# @ssv/stenciljs.core
+# @ssv/stencil.core
 
 Core utilities for hosting lifecycle-aware controllers in [StencilJS](https://stenciljs.com/) components.
 
 ## Install
 
 ```bash
-pnpm add @ssv/stenciljs.core
+pnpm add @ssv/stencil.core
 ```
 
 **Peer dependency:** `@stencil/core >=4`
@@ -28,7 +28,7 @@ All lifecycle hooks are optional — implement only what you need.
 
 ```ts
 // mouse-controller.ts
-import type { ReactiveController, ReactiveControllerHost } from "@ssv/stenciljs.core";
+import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
 
 class MouseController implements ReactiveController {
   pos = { x: 0, y: 0 };
@@ -55,7 +55,7 @@ Available hooks: `hostConnected`, `hostDisconnected`, `hostWillLoad`, `hostDidLo
 ### 2. Host the controller — `SsvElement` (single inheritance)
 
 ```ts
-import { SsvElement } from "@ssv/stenciljs.core";
+import { SsvElement } from "@ssv/stencil.core";
 import { Component, h } from "@stencil/core";
 import { withMouseController } from "./mouse-controller";
 
@@ -74,7 +74,7 @@ export class SsvMouseHost extends SsvElement {
 Use this when you need to extend another base class alongside the mixin.
 
 ```ts
-import { SsvElementMixin } from "@ssv/stenciljs.core";
+import { SsvElementMixin } from "@ssv/stencil.core";
 import { Component, Mixin, h } from "@stencil/core";
 
 @Component({ tag: "ssv-timer-host", shadow: true })

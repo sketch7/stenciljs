@@ -1,6 +1,6 @@
 ---
 name: stenciljs-component-development
-description: StencilJS component patterns for this workspace. Use when creating new Stencil components, adding reactive state with @stencil/store, implementing ReactiveController from @ssv/stenciljs.core, or working with output targets. Trigger words - component, stencil, @Component, store, reactive controller, SsvElement, output target, web component.
+description: StencilJS component patterns for this workspace. Use when creating new Stencil components, adding reactive state with @stencil/store, implementing ReactiveController from @ssv/stencil.core, or working with output targets. Trigger words - component, stencil, @Component, store, reactive controller, SsvElement, output target, web component.
 ---
 
 # StencilJS Component Development
@@ -71,7 +71,7 @@ export class AppCounter {
 
 See: [apps/stencil-playground/src/counter/](../../../apps/stencil-playground/src/counter/)
 
-## Reactive Controllers (@ssv/stenciljs.core)
+## Reactive Controllers (@ssv/stencil.core)
 
 Use `ReactiveController` for lifecycle-aware, reusable behaviour (event listeners, intervals, subscriptions). The controller calls `host.requestUpdate()` to trigger re-renders.
 
@@ -79,7 +79,7 @@ Use `ReactiveController` for lifecycle-aware, reusable behaviour (event listener
 
 ```typescript
 // <feature>/<feature>-controller.ts
-import type { ReactiveController, ReactiveControllerHost } from "@ssv/stenciljs.core";
+import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
 
 class FeatureController implements ReactiveController {
   private host: ReactiveControllerHost;
@@ -105,7 +105,7 @@ Extend `SsvElement` (single inheritance) or `Mixin(SsvElementMixin)` (when exten
 
 ```typescript
 // Option A — single inheritance
-import { SsvElement } from "@ssv/stenciljs.core";
+import { SsvElement } from "@ssv/stencil.core";
 
 export class AppMouseHost extends SsvElement {
   private mouse = withMouseController(this);
@@ -113,7 +113,7 @@ export class AppMouseHost extends SsvElement {
 }
 
 // Option B — mixin (when you need to extend another base class)
-import { SsvElementMixin } from "@ssv/stenciljs.core";
+import { SsvElementMixin } from "@ssv/stencil.core";
 import { Mixin } from "@stencil/core";
 
 export class AppTimerHost extends Mixin(SsvElementMixin) {

@@ -1,5 +1,5 @@
-import type { ReactiveController } from "@ssv/stenciljs.core";
-import { SsvElement } from "@ssv/stenciljs.core";
+import type { ReactiveController } from "@ssv/stencil.core";
+import { SsvElement } from "@ssv/stencil.core";
 import { forceUpdate } from "@stencil/core";
 import { createAtom } from "@tanstack/store";
 import { describe, expect, it, vi, beforeEach } from "vitest";

@@ -1,4 +1,4 @@
-import type { ReactiveController, ReactiveControllerHost } from "@ssv/stenciljs.core";
+import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
 
 export type UseSelectorOptions<TSelected> = {
 	compare?: (a: TSelected | undefined, b: TSelected | undefined) => boolean;

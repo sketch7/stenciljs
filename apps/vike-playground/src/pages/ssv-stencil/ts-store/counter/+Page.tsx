@@ -17,7 +17,7 @@ export default function Page(): JSX.Element {
 
 			<p className="text-xs text-[var(--color-muted-fg)]">
 				State is managed with <code>@tanstack/store</code> atoms via <code>createAtomCtrl</code> from{" "}
-				<code>@ssv/tanstack.stenciljs-store</code>. Each atom triggers a re-render via{" "}
+				<code>@ssv/tanstack.stencil-store</code>. Each atom triggers a re-render via{" "}
 				<code>ReactiveControllerHost.requestUpdate()</code> — no <code>@State</code> decorators needed.
 			</p>
 		</div>

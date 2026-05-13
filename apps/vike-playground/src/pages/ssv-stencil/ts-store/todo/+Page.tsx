@@ -17,7 +17,7 @@ export default function Page(): JSX.Element {
 
 			<p className="text-xs text-[var(--color-muted-fg)]">
 				State is managed with a <code>@tanstack/store</code> <code>Store</code> via <code>createSelectorCtrl</code> from{" "}
-				<code>@ssv/tanstack.stenciljs-store</code>. The selector subscribes to the store and calls{" "}
+				<code>@ssv/tanstack.stencil-store</code>. The selector subscribes to the store and calls{" "}
 				<code>requestUpdate()</code> on changes — no <code>@State</code> decorators needed.
 			</p>
 		</div>

@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => {
 			stencilWatch({
 				packageDir: stencilPkgDir,
 				watchDirs: [path.resolve(__dirname, "../../libs/stenciljs.core/src")],
-				preBuildCommand: "pnpm --filter @ssv/stenciljs.core build",
+				preBuildCommand: "pnpm --filter @ssv/stencil.core build",
 			}),
 			stencilSSR({
 				module: import("@app/stencil-playground/react"),

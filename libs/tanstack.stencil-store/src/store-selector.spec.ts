@@ -1,5 +1,5 @@
 // oxlint-disable unicorn/empty-brace-spaces
-import { SsvElement } from "@ssv/stenciljs.core";
+import { SsvElement } from "@ssv/stencil.core";
 import { forceUpdate } from "@stencil/core";
 import { createStore } from "@tanstack/store";
 import { describe, expect, it, vi, beforeEach } from "vitest";

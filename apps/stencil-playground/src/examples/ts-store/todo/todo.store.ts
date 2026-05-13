@@ -1,4 +1,4 @@
-import { createStore } from "@ssv/tanstack.stenciljs-store";
+import { createStore } from "@ssv/tanstack.stencil-store";
 
 export type Todo = {
 	id: number;

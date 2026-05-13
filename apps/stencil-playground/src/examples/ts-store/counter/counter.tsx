@@ -1,5 +1,5 @@
-import { SsvElement } from "@ssv/stenciljs.core";
-import { createAtomCtrl } from "@ssv/tanstack.stenciljs-store";
+import { SsvElement } from "@ssv/stencil.core";
+import { createAtomCtrl } from "@ssv/tanstack.stencil-store";
 import { Component, h } from "@stencil/core";
 
 import { countAtom, additionalAtom } from "./counter.store";

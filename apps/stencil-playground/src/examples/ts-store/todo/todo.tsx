@@ -1,5 +1,5 @@
-import { SsvElement } from "@ssv/stenciljs.core";
-import { createSelectorCtrl } from "@ssv/tanstack.stenciljs-store";
+import { SsvElement } from "@ssv/stencil.core";
+import { createSelectorCtrl } from "@ssv/tanstack.stencil-store";
 import { Component, State, h } from "@stencil/core";
 
 import { todoStore } from "./todo.store";

@@ -54,8 +54,8 @@
     "fmt:check": "oxfmt --check src/"
   },
   "dependencies": {
-    "@ssv/stenciljs.core": "workspace:*",
-    "@ssv/tanstack.stenciljs-store": "workspace:*",
+    "@ssv/stencil.core": "workspace:*",
+    "@ssv/tanstack.stencil-store": "workspace:*",
     "@stencil/core": "catalog:",
     "@stencil/react-output-target": "catalog:",
     "@stencil/store": "catalog:"
@@ -65,7 +65,7 @@
     "oxlint": "catalog:"
   },
   "peerDependencies": {
-    "@ssv/stenciljs.core": "workspace:*",
+    "@ssv/stencil.core": "workspace:*",
     "react": ">=18.0.0"
   },
   "collection": "dist/collection/collection-manifest.json",

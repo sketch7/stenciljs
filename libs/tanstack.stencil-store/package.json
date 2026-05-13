@@ -1,5 +1,5 @@
 {
-  "name": "@ssv/tanstack.stenciljs-store",
+  "name": "@ssv/tanstack.stencil-store",
   "version": "0.1.0",
   "description": "StencilJS integration for @tanstack/store — ReactiveController-based selectors and atoms.",
   "license": "MIT",
@@ -28,7 +28,7 @@
     "fmt:check": "oxfmt --check src/"
   },
   "devDependencies": {
-    "@ssv/stenciljs.core": "workspace:*",
+    "@ssv/stencil.core": "workspace:*",
     "@stencil/core": "catalog:",
     "@tanstack/store": "catalog:",
     "@types/node": "catalog:",
@@ -40,7 +40,7 @@
     "vitest": "catalog:"
   },
   "peerDependencies": {
-    "@ssv/stenciljs.core": "workspace:*",
+    "@ssv/stencil.core": "workspace:*",
     "@stencil/core": ">=4.0.0",
     "@tanstack/store": "^0.11.0"
   }

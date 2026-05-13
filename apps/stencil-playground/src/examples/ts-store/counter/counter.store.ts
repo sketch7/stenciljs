@@ -1,4 +1,4 @@
-import { createAtom } from "@ssv/tanstack.stenciljs-store";
+import { createAtom } from "@ssv/tanstack.stencil-store";
 
 // standalone atoms — demonstrates createAtomCtrl usage
 export const countAtom = createAtom(0);

@@ -1,4 +1,4 @@
-import type { ReactiveController, ReactiveControllerHost } from "@ssv/stenciljs.core";
+import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
 import type { Atom } from "@tanstack/store";
 
 import type { SelectionSource, UseSelectorOptions } from "./store-selector";

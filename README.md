@@ -9,7 +9,7 @@ apps/
   stencil-playground/   # StencilJS components (counter, todo, mouse, timer) — non-published
   vike-playground/      # Vike SSR app consuming stencil-playground via @stencil/ssr
 libs/
-  stenciljs.core/              # @ssv/stenciljs.core — ReactiveController host utilities
+  stencil.core/              # @ssv/stencil.core — ReactiveController host utilities
   vite-plugin-stencil-watch/   # @ssv/vite-plugin-stencil-watch — HMR plugin for Stencil in Vite
 ```
 
@@ -17,7 +17,7 @@ libs/
 
 | Package                                                                      | Description                                                                                                  |
 | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| [`@ssv/stenciljs.core`](libs/stenciljs.core/README.md)                       | `ReactiveController` / `ReactiveControllerHost` pattern — lifecycle-aware controllers for Stencil components |
+| [`@ssv/stencil.core`](libs/stencil.core/README.md)                           | `ReactiveController` / `ReactiveControllerHost` pattern — lifecycle-aware controllers for Stencil components |
 | [`@ssv/vite-plugin-stencil-watch`](libs/vite-plugin-stencil-watch/README.md) | Vite plugin that watches Stencil sources and triggers HMR in consuming apps                                  |
 
 ## Tech stack

@@ -31,7 +31,7 @@ export type ReactiveControllerHost = {
  * Use this with Stencil's `Mixin()` helper:
  * ```ts
  * import { Mixin } from '@stencil/core';
- * import { ReactiveControllerHostMixin } from '@ssv/stenciljs.core';
+ * import { ReactiveControllerHostMixin } from '@ssv/stencil.core';
  *
  * @Component({ tag: 'my-component', shadow: true })
  * export class MyComponent extends Mixin(ReactiveControllerHostMixin) {

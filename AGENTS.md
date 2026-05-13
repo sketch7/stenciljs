@@ -62,7 +62,7 @@ pnpm nx g @nx/js:app apps/<name>
 
 | Package                                                                                                 | Purpose                                                                                                                                                         |
 | ------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`@ssv/stenciljs.core`](libs/stenciljs.core/src/index.ts)                                               | `ReactiveController`/`ReactiveControllerHost` for lifecycle-aware controllers; `SsvElement` and `SsvElementMixin` for hosting controllers in Stencil components |
+| [`@ssv/stencil.core`](libs/stenciljs.core/src/index.ts)                                                 | `ReactiveController`/`ReactiveControllerHost` for lifecycle-aware controllers; `SsvElement` and `SsvElementMixin` for hosting controllers in Stencil components |
 | [`@ssv/vite-plugin-stencil-watch`](libs/vite-plugin-stencil-watch/src/lib/vite-plugin-stencil-watch.ts) | Vite plugin that watches Stencil sources, triggers rebuilds, and invalidates the Vite module graph for HMR in consuming apps                                    |
 
 ## Dev Workflow

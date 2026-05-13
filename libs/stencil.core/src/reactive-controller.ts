@@ -5,6 +5,8 @@ import type { ComponentInterface, MixedInCtor } from "@stencil/core";
  * Lifecycle-aware controller interface for Stencil components.
  * All methods are optional — implement only what you need.
  *
+ * @see {@link https://stenciljs.com/docs/component-lifecycle | Stencil Component Lifecycle}
+ *
  * @example
  * ```ts
  * const ctrl: ReactiveController = {

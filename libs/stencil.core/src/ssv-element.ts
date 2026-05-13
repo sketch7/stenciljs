@@ -10,7 +10,7 @@ import { ReactiveControllerHostMixin } from "./reactive-controller";
  * ```ts
  * @Component({ tag: 'my-component', shadow: true })
  * export class MyComponent extends SsvElement {
- *   private mouse = withMouseController(this);
+ *   private mouse = useMouseController(this);
  * }
  * ```
  *
@@ -28,7 +28,7 @@ export class SsvElement extends Mixin(ReactiveControllerHostMixin) { }
  *
  * @Component({ tag: 'my-component', shadow: true })
  * export class MyComponent extends Mixin(SsvElementMixin) {
- *   private mouse = withMouseController(this);
+ *   private mouse = useMouseController(this);
  * }
  * ```
  */

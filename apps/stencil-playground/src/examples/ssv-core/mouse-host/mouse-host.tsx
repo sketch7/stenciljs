@@ -1,7 +1,7 @@
 import { SsvElement } from "@ssv/stencil.core";
 import { Component, h } from "@stencil/core";
 
-import { withMouseController } from "./mouse-controller";
+import { useMouseController } from "./mouse-controller";
 
 @Component({
 	tag: "app-mouse-host",
@@ -9,7 +9,7 @@ import { withMouseController } from "./mouse-controller";
 	shadow: true,
 })
 export class AppMouseHost extends SsvElement {
-	private mouse = withMouseController(this);
+	private mouse = useMouseController(this);
 
 	render() {
 		return (

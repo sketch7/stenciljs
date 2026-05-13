@@ -23,6 +23,6 @@ class MouseController implements ReactiveController {
 	}
 }
 
-export function withMouseController(host: ReactiveControllerHost): MouseController {
+export function useMouseController(host: ReactiveControllerHost): MouseController {
 	return new MouseController(host);
 }

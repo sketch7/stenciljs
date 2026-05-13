@@ -19,7 +19,7 @@ export default function Page(): JSX.Element {
 
 			<div className="flex flex-col gap-2 text-xs text-[var(--color-muted-fg)]">
 				<p>
-					Implemented with <code>withMouseController(this)</code> — a factory function that creates and registers a{" "}
+					Implemented with <code>useMouseController(this)</code> — a factory function that creates and registers a{" "}
 					<code>MouseController</code> on the <code>SsvElement</code> host.
 				</p>
 				<p>

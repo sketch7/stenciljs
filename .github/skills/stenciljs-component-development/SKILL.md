@@ -94,7 +94,7 @@ class FeatureController implements ReactiveController {
   hostDisconnected() { /* cleanup: remove listeners, clear timers */ }
 }
 
-export function withFeatureController(host: ReactiveControllerHost): FeatureController {
+export function useFeatureController(host: ReactiveControllerHost): FeatureController {
   return new FeatureController(host);
 }
 ```
@@ -108,7 +108,7 @@ Extend `SsvElement` (single inheritance) or `Mixin(SsvElementMixin)` (when exten
 import { SsvElement } from "@ssv/stencil.core";
 
 export class AppMouseHost extends SsvElement {
-  private mouse = withMouseController(this);
+  private mouse = useMouseController(this);
   render() { return <div>{this.mouse.pos.x}</div>; }
 }
 

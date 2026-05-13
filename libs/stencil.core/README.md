@@ -45,7 +45,7 @@ class MouseController implements ReactiveController {
   hostDisconnected() { window.removeEventListener("mousemove", this.onMouseMove); }
 }
 
-export function withMouseController(host: ReactiveControllerHost) {
+export function useMouseController(host: ReactiveControllerHost) {
   return new MouseController(host);
 }
 ```
@@ -57,11 +57,11 @@ Available hooks: `hostConnected`, `hostDisconnected`, `hostWillLoad`, `hostDidLo
 ```ts
 import { SsvElement } from "@ssv/stencil.core";
 import { Component, h } from "@stencil/core";
-import { withMouseController } from "./mouse-controller";
+import { useMouseController } from "./mouse-controller";
 
 @Component({ tag: "ssv-mouse-host", shadow: true })
 export class SsvMouseHost extends SsvElement {
-  private mouse = withMouseController(this);
+  private mouse = useMouseController(this);
 
   render() {
     return <div>x: {this.mouse.pos.x}, y: {this.mouse.pos.y}</div>;

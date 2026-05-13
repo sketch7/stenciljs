@@ -35,7 +35,7 @@ export type ReactiveControllerHost = {
  *
  * @Component({ tag: 'my-component', shadow: true })
  * export class MyComponent extends Mixin(ReactiveControllerHostMixin) {
- *   private mouse = withMouseController(this);
+ *   private mouse = useMouseController(this);
  * }
  * ```
  */

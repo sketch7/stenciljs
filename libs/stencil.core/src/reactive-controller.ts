@@ -22,6 +22,7 @@ export type ReactiveController = {
 export type ReactiveControllerHost = {
 	addController(controller: ReactiveController): void;
 	removeController(controller: ReactiveController): void;
+	render?(): unknown;
 	requestUpdate(): void;
 };
 

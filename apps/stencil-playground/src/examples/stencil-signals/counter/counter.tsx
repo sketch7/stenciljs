@@ -1,31 +1,33 @@
-import { SignalWatcher, useSignal } from "@ssv/stencil-signals";
+import { computed, signal, withSignalController } from "@ssv/stencil-signals";
+import { SsvElementMixin } from "@ssv/stencil.core";
 import { Component, h, Mixin } from "@stencil/core";
 
-import { additionalValue, count, doubled, total } from "./counter.signals";
+const count = signal(0);
+const additionalValue = signal(0);
+const doubled = computed(() => additionalValue() * 2);
+const total = computed(() => count() + doubled());
 
 @Component({
 	tag: "app-signals-counter",
 	styleUrl: "counter.css",
 	shadow: true,
 })
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
-export class AppSignalsCounter extends Mixin(SignalWatcher) {
-	@useSignal(count) declare count: number;
-	@useSignal(additionalValue) declare additionalValue: number;
+export class AppSignalsCounter extends Mixin(SsvElementMixin) {
+	readonly signalWatcher = withSignalController(this);
 
-	override render() {
+	render() {
 		return (
 			<div class="counter">
 				<div class="count-display">
 					<span class="count-label">Count</span>
-					<span class="count-value">{this.count}</span>
+					<span class="count-value">{count()}</span>
 				</div>
 
 				<div class="controls">
-					<button type="button" class="btn btn-outline" onClick={() => this.count--}>
+					<button type="button" class="btn btn-outline" onClick={() => count.update(c => c - 1)}>
 						−
 					</button>
-					<button type="button" class="btn btn-primary" onClick={() => this.count++}>
+					<button type="button" class="btn btn-primary" onClick={() => count.update(c => c + 1)}>
 						+
 					</button>
 				</div>
@@ -38,16 +40,18 @@ export class AppSignalsCounter extends Mixin(SignalWatcher) {
 						id="additional-input"
 						class="input"
 						type="number"
-						value={this.additionalValue}
-						onInput={e => (this.additionalValue = Number.parseInt((e.target as HTMLInputElement).value, 10) || 0)}
+						value={additionalValue()}
+						onInput={e => additionalValue.update(() => Number.parseInt((e.target as HTMLInputElement).value, 10) || 0)}
 					/>
-					<span class="formula-hint">× 2 = {doubled()}</span>
+					<span class="formula-hint">
+						{additionalValue()} × 2 = {doubled()}
+					</span>
 				</div>
 
 				<div class="total">
 					<span class="total-label">Total</span>
 					<span class="total-value">
-						{this.count} + {this.additionalValue} × 2 = <strong>{total()}</strong>
+						{count()} + {additionalValue()} × 2 = <strong>{total()}</strong>
 					</span>
 				</div>
 			</div>

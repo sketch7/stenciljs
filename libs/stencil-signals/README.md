@@ -285,9 +285,6 @@ Alternatively, pass `this` directly to any watcher utility (even from a class pr
 | Works with other controllers | Via `Mixin()`          | Via `addController()`                           |
 | Multiple controllers         | `Mixin(A, B, C)`       | `addController(a); addController(b)`            |
 
-> [!NOTE]
-> The `SignalWatcherControllerHost` interface exported by this library describes the minimum the controller needs from any host (`requestUpdate()` and an optional `render?()`). Your `ReactiveControllerHost` already satisfies it — no extra wiring required.
-
 ### `@useSignal`
 
 Bind a signal to a class property. Reads call `sig()`; writes call `signal.set()`.
@@ -528,13 +525,12 @@ The main entry `@ssv/stencil-signals` exports the full public API but **does not
 
 ### Component integration
 
-| Export                        | Description                                                                                                                                                     |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SignalWatcher(Base)`         | Mixin factory. Wraps `render()` for automatic dependency tracking and re-rendering. Implements `WatcherRegistrar` so `this` can be passed to watcher utilities. |
-| `SignalWatcherController`     | Composition-pattern controller. Pass `this` in the constructor and register via `addController()` on a `ReactiveControllerHost`.                                |
-| `SignalWatcherControllerHost` | Interface describing the minimum a host must implement (`requestUpdate()`, optional `render?()`).                                                               |
-| `WatcherRegistrar`            | Interface for the `host` argument accepted by watcher utilities. `SignalWatcher` components satisfy this automatically.                                         |
-| `@useSignal(sig)`             | Property decorator. Proxies reads/writes to the given signal.                                                                                                   |
+| Export                    | Description                                                                                                                                                     |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SignalWatcher(Base)`     | Mixin factory. Wraps `render()` for automatic dependency tracking and re-rendering. Implements `WatcherRegistrar` so `this` can be passed to watcher utilities. |
+| `SignalWatcherController` | Composition-pattern controller. Pass `this` in the constructor and register via `addController()` on a `ReactiveControllerHost`.                                |
+| `WatcherRegistrar`        | Interface for the `host` argument accepted by watcher utilities. `SignalWatcher` components satisfy this automatically.                                         |
+| `@useSignal(sig)`         | Property decorator. Proxies reads/writes to the given signal.                                                                                                   |
 
 ### Effects
 

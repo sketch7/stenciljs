@@ -21,31 +21,18 @@
  *  - First render run: collects signal subscriptions via `getAdapter().createEffect()`
  *  - Subsequent runs (a dep changed): calls `host.requestUpdate()` via scheduler
  *
- * `ReactiveControllerHost` is **not** part of this library — consumers define
- * it themselves (or copy the example in the demo). The controller only requires
- * the `SignalWatcherControllerHost` interface below.
  */
+
+import type { ReactiveControllerHost } from "@ssv/stencil.core";
 
 import { getAdapter } from "../adapters/active";
 import { scheduler, setActiveOwner } from "../signals/core";
 
-// ─── Host interface ───────────────────────────────────────────────────────────
-
-/**
- * The minimal interface `SignalWatcherController` requires from its host.
- *
- * Your `ReactiveControllerHost` base class already satisfies this — no extra
- * wiring needed. The `render` property is optional because the controller
- * patches it at runtime on first connection.
- */
-export type SignalWatcherControllerHost = {
-	requestUpdate(): void;
-	render?(): unknown;
-};
-
 // ─── Controller ───────────────────────────────────────────────────────────────
 
 export class SignalWatcherController {
+	private host: ReactiveControllerHost;
+
 	/** Cleanup for the current render-tracking effect. */
 	private __disposeEffect: (() => void) | null = null;
 	/** Guard: suppress requestUpdate calls before the element is connected. */
@@ -55,7 +42,10 @@ export class SignalWatcherController {
 	/** Dispose fns for watcher utilities created while this controller is active. */
 	private __scopeCleanups: (() => void)[] = [];
 
-	constructor(private readonly __host: SignalWatcherControllerHost) {}
+	constructor(host: ReactiveControllerHost) {
+		this.host = host;
+		host.addController(this);
+	}
 
 	hostConnected(): void {
 		this.__connected = true;
@@ -70,28 +60,50 @@ export class SignalWatcherController {
 		if (!this.__renderInstalled) {
 			this.__renderInstalled = true;
 
-			const host = this.__host;
+			// Grab the host reference locally so the closure doesn't capture `this`
+			const host = this.host;
+
+			// If the host has no render function, there's nothing to wrap — bail out
 			if (!host.render) {
 				return;
 			}
+
+			// Capture the original render fn bound to host so `this` is correct inside it
 			const jsxRender = host.render.bind(host);
 
+			// Replace host.render with our tracking wrapper — called by Stencil each render cycle
 			host.render = (): unknown => {
+				// Dispose the previous effect before creating a new one,
+				// so stale signal subscriptions from the last render don't leak
 				this.__disposeEffect?.();
 				this.__disposeEffect = null;
 
+				// Will hold the JSX tree returned by jsxRender() to pass back to Stencil
 				let renderResult: unknown;
+
+				// Guards the two distinct phases inside the effect callback (see below)
 				let firstRun = true;
 
+				// Create a new tracking effect — the adapter records every signal read
+				// that occurs synchronously inside this callback as a subscription
 				this.__disposeEffect = getAdapter().createEffect(() => {
 					if (firstRun) {
+						// FIRST run (synchronous): execute the real render inside the effect
+						// so all signal reads (e.g. count()) are tracked as subscriptions
 						firstRun = false;
 						renderResult = jsxRender();
 					} else if (this.__connected) {
+						// SUBSEQUENT runs (a subscribed signal changed): don't render here —
+						// just ask Stencil to schedule a re-render via its normal lifecycle,
+						// which will call host.render() again and repeat the whole cycle
 						scheduler.schedule(() => host.requestUpdate());
 					}
+					// If !this.__connected we're disconnected — skip to avoid phantom updates
 				});
 
+				console.warn("hello", renderResult);
+
+				// Return the JSX result captured during the first (synchronous) effect run
 				return renderResult;
 			};
 		}
@@ -115,4 +127,8 @@ export class SignalWatcherController {
 			}
 		});
 	}
+}
+
+export function withSignalController(host: ReactiveControllerHost): SignalWatcherController {
+	return new SignalWatcherController(host);
 }

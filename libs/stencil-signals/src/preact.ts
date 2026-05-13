@@ -47,7 +47,6 @@ export type { WritableSignal, Signal, SignalOptions, ComputedOptions, AdapterWat
 export { SignalWatcher } from "./mixins/signal-watcher-preact";
 export type { SignalWatcherApi } from "./mixins/signal-watcher-preact";
 export { SignalWatcherController } from "./controllers/signal-watcher-controller";
-export type { SignalWatcherControllerHost } from "./controllers/signal-watcher-controller";
 
 // ─── Decorators ───────────────────────────────────────────────────────────────
 export { useSignal } from "./directives/use-signal";

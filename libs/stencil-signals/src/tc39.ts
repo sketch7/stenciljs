@@ -53,7 +53,6 @@ export type { WritableSignal, Signal, SignalOptions, ComputedOptions, AdapterWat
 export { SignalWatcher } from "./mixins/signal-watcher-tc39";
 export type { SignalWatcherApi } from "./mixins/signal-watcher-tc39";
 export { SignalWatcherController } from "./controllers/signal-watcher-controller";
-export type { SignalWatcherControllerHost } from "./controllers/signal-watcher-controller";
 
 // ─── Decorators ───────────────────────────────────────────────────────────────
 export { useSignal } from "./directives/use-signal";

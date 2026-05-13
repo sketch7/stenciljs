@@ -102,7 +102,7 @@ export function SignalWatcher<TBase extends MixedInCtor<StencilLike>>(
 			this.__watcherRegistry.push(entry);
 		}
 
-		connectedCallback(): void {
+		override connectedCallback(): void {
 			this.__connected = true;
 
 			// Reinit any watchers that were disposed on the previous disconnect.
@@ -145,7 +145,7 @@ export function SignalWatcher<TBase extends MixedInCtor<StencilLike>>(
 			super.connectedCallback?.();
 		}
 
-		disconnectedCallback(): void {
+		override disconnectedCallback(): void {
 			this.__connected = false;
 
 			// Dispose all watcher utilities collected during connectedCallback.

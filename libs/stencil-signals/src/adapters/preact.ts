@@ -83,7 +83,7 @@ export const preactAdapter: SignalAdapter = {
 		return wrapped;
 	},
 
-	createEffect(fn: () => (() => void) | undefined): () => void {
+	createEffect(fn: () => void): () => void {
 		// Preact's effect() handles cleanup returns natively.
 		return preactEffect(fn as () => void);
 	},

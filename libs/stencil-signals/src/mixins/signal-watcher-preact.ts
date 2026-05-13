@@ -69,12 +69,12 @@ export function SignalWatcher<TBase extends MixedInCtor<StencilLike>>(
 		/** Guard: suppress forceUpdate calls before the element is connected. */
 		private __connected = false;
 
-		connectedCallback(): void {
+		override connectedCallback(): void {
 			this.__connected = true;
 			super.connectedCallback?.();
 		}
 
-		disconnectedCallback(): void {
+		override disconnectedCallback(): void {
 			this.__connected = false;
 			// Use queueMicrotask so DOM moves (remove + re-append in the same task,
 			// as `repeat()` does) don't prematurely dispose the tracking effect.
@@ -87,7 +87,7 @@ export function SignalWatcher<TBase extends MixedInCtor<StencilLike>>(
 			super.disconnectedCallback?.();
 		}
 
-		render(): unknown {
+		override render(): unknown {
 			// Tear down the previous tracking effect so deps are re-collected fresh.
 			this.__disposeRenderEffect?.();
 			this.__disposeRenderEffect = null;

@@ -69,7 +69,7 @@ export type SignalAdapter = {
 	 * `fn` may return a cleanup function that is called before each re-run.
 	 * Returns a disposal function.
 	 */
-	createEffect(fn: () => (() => void) | undefined): () => void;
+	createEffect(fn: () => void): () => void;
 
 	/** Read signals inside `fn` without creating tracking subscriptions. */
 	untrack<T>(fn: () => T): T;

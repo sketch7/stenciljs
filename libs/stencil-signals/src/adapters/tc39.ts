@@ -60,7 +60,7 @@ export const tc39Adapter: SignalAdapter = {
 		return wrapper;
 	},
 
-	createEffect(fn: () => (() => void) | undefined): () => void {
+	createEffect(fn: () => void): () => void {
 		let userCleanup: CleanupFn | undefined;
 		let disposed = false;
 		let capturedCleanup: CleanupFn | undefined;

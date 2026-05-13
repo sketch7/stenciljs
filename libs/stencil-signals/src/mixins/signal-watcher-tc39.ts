@@ -66,6 +66,10 @@ import { Signal as TC39Signal } from "signal-polyfill";
 
 import { scheduler } from "../signals/core";
 
+// Derives the exact type that TC39Signal.subtle.Watcher#unwatch / #watch accept,
+// so __watchedSignals and introspectSources() results stay type-compatible.
+type AnySignal = TC39Signal.Computed<unknown> | TC39Signal.State<unknown>;
+
 // ─── Memory management ────────────────────────────────────────────────────────
 //
 // The Watcher notify callback is a regular `function()` — `this` inside it
@@ -121,7 +125,7 @@ export function SignalWatcher<TBase extends MixedInCtor<StencilLike>>(
 ): TBase & MixedInCtor<SignalWatcherApi> {
 	class SignalWatcherMixin extends Base {
 		/** Signals watched during the most recent render pass. */
-		private __watchedSignals = new Set<object>();
+		private __watchedSignals = new Set<AnySignal>();
 		/** Active render-tracking watcher; rebuilt each render, disposed on disconnect. */
 		private __watcher: InstanceType<typeof TC39Signal.subtle.Watcher> | null = null;
 		/** Guard: suppress forceUpdate calls before the element is connected. */
@@ -129,7 +133,7 @@ export function SignalWatcher<TBase extends MixedInCtor<StencilLike>>(
 		/** Guard: tracking render wrapper installed once per instance. */
 		private __renderInstalled = false;
 
-		connectedCallback(): void {
+		override connectedCallback(): void {
 			this.__connected = true;
 
 			if (!this.__renderInstalled) {
@@ -166,7 +170,7 @@ export function SignalWatcher<TBase extends MixedInCtor<StencilLike>>(
 			super.connectedCallback?.();
 		}
 
-		disconnectedCallback(): void {
+		override disconnectedCallback(): void {
 			this.__connected = false;
 			// Keep the WeakMap entry's connected flag current so a pending notify
 			// callback doesn't schedule a forceUpdate after disconnect.
@@ -190,7 +194,7 @@ export function SignalWatcher<TBase extends MixedInCtor<StencilLike>>(
 		private __trackedRender(jsxRender: () => unknown): unknown {
 			// Tear down the previous watcher so deps are always re-collected fresh.
 			this.__disposeWatcher();
-			const newlyWatched = new Set<object>();
+			const newlyWatched = new Set<AnySignal>();
 
 			// Regular `function()` so `this` inside = the Watcher, not the component.
 			// The component is looked up via componentForWatcher (WeakMap) — no
@@ -199,8 +203,9 @@ export function SignalWatcher<TBase extends MixedInCtor<StencilLike>>(
 				function watcher(this: InstanceType<typeof TC39Signal.subtle.Watcher>) {
 					const entry = componentForWatcher.get(this);
 					if (entry === undefined) {
+						// component was GC'd
 						return;
-					} // component was GC'd
+					}
 					// NOTE: Do NOT call this.watch() here. The TC39 spec forbids
 					// calling watch() during the notification phase — it triggers
 					// producerAccessed and throws. Since __trackedRender disposes
@@ -271,7 +276,7 @@ export function SignalWatcher<TBase extends MixedInCtor<StencilLike>>(
 			});
 
 			const effectWatcher = new TC39Signal.subtle.Watcher(
-				function (this: InstanceType<typeof TC39Signal.subtle.Watcher>) {
+				function notifyEffect(this: InstanceType<typeof TC39Signal.subtle.Watcher>) {
 					if (disposed) {
 						return;
 					}

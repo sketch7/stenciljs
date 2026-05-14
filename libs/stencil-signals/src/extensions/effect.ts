@@ -79,7 +79,9 @@ export function effect(
 	}
 
 	if (!fn) {
-		return () => {};
+		return () => {
+			/* empty */
+		};
 	}
 	return explicitDepsEffect(fnOrDeps as readonly AnySignal[], fn, options ?? {});
 }
@@ -132,7 +134,9 @@ export function useSignalEffect(
 					? effect(fnOrDeps)
 					: fn
 						? effect(fnOrDeps as readonly AnySignal[], fn, options)
-						: () => {};
+						: () => {
+								/* empty */
+							};
 		},
 		hostDisconnected(): void {
 			stop?.();

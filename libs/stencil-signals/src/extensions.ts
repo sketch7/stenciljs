@@ -24,8 +24,8 @@
  */
 
 // ─── Derived signals ──────────────────────────────────────────────────────────
-export { computedPrevious } from "./utils/computed-previous";
-export { computedAsync, isPending, isResolved, isError } from "./utils/computed-async";
+export { computedPrevious } from "./extensions/computed-previous";
+export { computedAsync, isPending, isResolved, isError } from "./extensions/computed-async";
 export type {
 	DisposableSignal,
 	AsyncResult,
@@ -34,12 +34,12 @@ export type {
 	AsyncError,
 	AsyncStatus,
 	ComputedAsyncOptions,
-} from "./utils/computed-async";
+} from "./extensions/computed-async";
 
 // ─── Store helpers ────────────────────────────────────────────────────────────
-export { createStore } from "./utils/create-store";
-export type { Store } from "./utils/create-store";
+export { createStore } from "./extensions/create-store";
+export type { Store } from "./extensions/create-store";
 
 // ─── Prop / model bindings ────────────────────────────────────────────────────
-export { withSignalProps } from "./utils/signal-prop";
-export type { SignalPropOptions, SignalPropsResult } from "./utils/signal-prop";
+export { withSignalProps } from "./extensions/signal-prop";
+export type { SignalPropOptions, SignalPropsResult } from "./extensions/signal-prop";

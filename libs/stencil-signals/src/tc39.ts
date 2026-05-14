@@ -59,5 +59,5 @@ export { SignalWatcherController } from "./controllers/signal-watcher-controller
 export { useSignal } from "./directives/use-signal";
 
 // ─── Side effects ─────────────────────────────────────────────────────────────
-export { effect } from "./utils/effect";
-export type { CleanupFn, EffectOptions } from "./utils/effect";
+export { effect } from "./extensions/effect";
+export type { CleanupFn, EffectOptions } from "./extensions/effect";

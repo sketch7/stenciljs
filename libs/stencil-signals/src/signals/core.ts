@@ -1,3 +1,4 @@
+import { getAdapter } from "../adapters/active";
 /**
  * @ssv/stencil-signals — signals/core.ts
  *
@@ -8,8 +9,7 @@
  * Also owns the shared microtask scheduler — it is backend-agnostic and
  * used by all utilities for coalescing effect re-runs.
  */
-
-import { getAdapter } from "../adapters/active";
+import type { AdapterWatcher, ComputedOptions, Signal, WritableSignal } from "../adapters/types";
 export type { WritableSignal, Signal, SignalOptions, ComputedOptions, AdapterWatcher } from "../adapters/types";
 
 // ─── Scheduler ────────────────────────────────────────────────────────────────
@@ -41,18 +41,12 @@ export const scheduler = {
 // ─── Primitives ───────────────────────────────────────────────────────────────
 
 /** Create a writable signal holding `value`. */
-export function signal<T>(
-	value: T,
-	options?: import("../adapters/types").SignalOptions<T>,
-): import("../adapters/types").WritableSignal<T> {
+export function signal<T>(value: T, options?: SignalOptions<T>): WritableSignal<T> {
 	return getAdapter().createState(value, options);
 }
 
 /** Create a read-only derived signal whose value is computed by `fn`. */
-export function computed<T>(
-	fn: () => T,
-	options?: import("../adapters/types").ComputedOptions<T>,
-): import("../adapters/types").Signal<T> {
+export function computed<T>(fn: () => T, options?: ComputedOptions<T>): Signal<T> {
 	return getAdapter().createComputed(fn, options);
 }
 
@@ -92,7 +86,7 @@ export function getActiveOwner(): (() => void)[] | null {
  *
  * Returns `{ watch(sig), unwatch(sig), dispose() }`.
  */
-export function createWatcher(notify: () => void): import("../adapters/types").AdapterWatcher {
+export function createWatcher(notify: () => void): AdapterWatcher {
 	return getAdapter().createWatcher(notify);
 }
 
@@ -104,12 +98,8 @@ export function createWatcher(notify: () => void): import("../adapters/types").A
  *
  * Note: relies on the adapter's createComputed — works on both backends.
  */
-export function collectSignals(
-	fn: () => void,
-): Set<import("../adapters/types").WritableSignal<unknown> | import("../adapters/types").Signal<unknown>> {
-	const accessed = new Set<
-		import("../adapters/types").WritableSignal<unknown> | import("../adapters/types").Signal<unknown>
-	>();
+export function collectSignals(fn: () => void): Set<WritableSignal<unknown> | Signal<unknown>> {
+	const accessed = new Set<WritableSignal<unknown> | Signal<unknown>>();
 	const tracker = getAdapter().createComputed(() => {
 		fn();
 		return null;

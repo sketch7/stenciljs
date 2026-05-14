@@ -47,12 +47,12 @@ export { SignalWatcherController, withSignalController } from "./controllers/sig
 export { useSignal } from "./directives/use-signal";
 
 // ─── Side effects ─────────────────────────────────────────────────────────────
-export { effect } from "./utils/effect";
-export type { CleanupFn, EffectOptions } from "./utils/effect";
+export { effect } from "./extensions/effect";
+export type { CleanupFn, EffectOptions } from "./extensions/effect";
 
 // ─── Derived signals ──────────────────────────────────────────────────────────
-export { computedPrevious } from "./utils/computed-previous";
-export { computedAsync, isPending, isResolved, isError } from "./utils/computed-async";
+export { computedPrevious } from "./extensions/computed-previous";
+export { computedAsync, isPending, isResolved, isError } from "./extensions/computed-async";
 export type {
 	DisposableSignal,
 	AsyncResult,
@@ -61,8 +61,8 @@ export type {
 	AsyncError,
 	AsyncStatus,
 	ComputedAsyncOptions,
-} from "./utils/computed-async";
+} from "./extensions/computed-async";
 
 // ─── Store helpers ────────────────────────────────────────────────────────────
-export { createStore } from "./utils/create-store";
-export type { Store } from "./utils/create-store";
+export { createStore } from "./extensions/create-store";
+export type { Store } from "./extensions/create-store";

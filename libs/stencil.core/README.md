@@ -19,53 +19,72 @@ pnpm add @ssv/stencil.core
 | `ReactiveControllerHostMixin` | mixin fn | Adds controller support to any Stencil component class                |
 | `SsvElement`                  | class    | Convenience base class (extends `Mixin(ReactiveControllerHostMixin)`) |
 | `SsvElementMixin`             | mixin    | Same as above but composable via Stencil's `Mixin()`                  |
+| `use`                         | fn       | Registers a controller; factory form returns the hook's public value  |
 
 ## Usage
 
-### 1. Implement a controller
+### 1. Implement a hook
 
-Prefer **fn-only** (Style A) — state lives in the closure, no class needed.
+Use `use(factory)` — the factory receives `host` and returns `{ hooks: ReactiveController; value? }`. The `hooks` object is registered as the controller; `value` is returned to the caller with lifecycle methods stripped from its type. Omit `value` for side-effect-only hooks.
 
-#### Style A — fn-only ✅ preferred
+> Lifecycle method typos (e.g. `hostDisconnectedX`) on the `hooks` object are caught at compile time because `hooks` is typed as the exact `ReactiveController` interface.
+
+#### Inline (closure) — preferred
 
 ```ts
 // mouse-controller.ts
-import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
+import { use } from "@ssv/stencil.core";
 
-export function useMouseController(host: ReactiveControllerHost): { pos: { x: number; y: number } } {
-  let pos = { x: 0, y: 0 };
-  const onMouseMove = ({ clientX, clientY }: MouseEvent) => {
-    pos = { x: clientX, y: clientY };
-    host.requestUpdate();
-  };
-  const ctrl: ReactiveController = {
-    hostConnected() { globalThis.addEventListener("mousemove", onMouseMove); },
-    hostDisconnected() { globalThis.removeEventListener("mousemove", onMouseMove); },
-  };
-  host.addController(ctrl);
-  return {
-    get pos() { return pos; },
-  };
+export function useMouseController() {
+  return use(host => {
+    let pos = { x: 0, y: 0 };
+    const onMouseMove = ({ clientX, clientY }: MouseEvent) => {
+      pos = { x: clientX, y: clientY };
+      host.requestUpdate();
+    };
+    return {
+      hooks: {
+        hostConnected() {
+          globalThis.addEventListener("mousemove", onMouseMove);
+        },
+        hostDisconnected() {
+          globalThis.removeEventListener("mousemove", onMouseMove);
+        },
+      },
+      value: {
+        get pos() {
+          return pos;
+        },
+      },
+    };
+  });
 }
+// Inferred return type: { pos: { x: number; y: number } }
 ```
 
-#### Style B — class (when you need methods or private fields)
+#### Class — when you need private fields or methods
+
+The class constructor must **not** call `addController` — `use()` handles registration.
 
 ```ts
 // timer-controller.ts
-import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
+import { use } from "@ssv/stencil.core";
+import type {
+  ReactiveController,
+  ReactiveControllerHost,
+} from "@ssv/stencil.core";
 
 class TimerController implements ReactiveController {
   #elapsed = 0;
   #intervalId: ReturnType<typeof setInterval> | undefined;
-  get elapsed() { return this.#elapsed; }
+  get elapsed() {
+    return this.#elapsed;
+  }
 
   constructor(
     private readonly host: ReactiveControllerHost,
     private readonly intervalMs = 1000,
-  ) {
-    host.addController(this);
-  }
+  ) {} // ← no addController here
 
   hostConnected() {
     this.#elapsed = 0;
@@ -83,9 +102,13 @@ class TimerController implements ReactiveController {
   }
 }
 
-export function useTimerController(host: ReactiveControllerHost, intervalMs?: number): TimerController {
-  return new TimerController(host, intervalMs);
+export function useTimerController(intervalMs?: number) {
+  return use(host => {
+    const timer = new TimerController(host, intervalMs);
+    return { hooks: timer, value: timer };
+  });
 }
+// Inferred return type: { elapsed: number }  (lifecycle methods stripped)
 ```
 
 ### 2. Host the controller — `SsvElement` (single inheritance)
@@ -97,10 +120,10 @@ import { useMouseController } from "./mouse-controller";
 
 @Component({ tag: "ssv-mouse-host", shadow: true })
 export class SsvMouseHost extends SsvElement {
-  private mouse = useMouseController(this);
+  #mouse = useMouseController();
 
   render() {
-    return <div>x: {this.mouse.pos.x}, y: {this.mouse.pos.y}</div>;
+    return <div>x: {this.#mouse.pos.x}, y: {this.#mouse.pos.y}</div>;
   }
 }
 ```
@@ -116,10 +139,10 @@ import { useTimerController } from "./timer-controller";
 
 @Component({ tag: "ssv-timer-host", shadow: true })
 export class SsvTimerHost extends Mixin(SsvElementMixin) {
-  private timer = useTimerController(this, 1000);
+  #timer = useTimerController(1000);
 
   render() {
-    return <div>{this.timer.elapsed}ms</div>;
+    return <div>{this.#timer.elapsed}ms</div>;
   }
 }
 ```

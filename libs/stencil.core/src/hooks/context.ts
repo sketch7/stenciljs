@@ -20,13 +20,15 @@ export function clearCurrentHost(): void {
  * Returns the host currently being constructed.
  * Throws if called outside a component constructor context.
  *
+ * Low-level primitive. Prefer `use()` for authoring hooks.
+ * Use `getCurrentHost()` directly only when you need the host reference outside a `use()` factory
+ * (e.g. in tests or custom host implementations).
+ *
  * @example
  * ```ts
- * export function useMyController(): () => number {
- *   const host = getCurrentHost();
- *   host.addController(ctrl);
- *   return () => value;
- * }
+ * // In tests: set the host manually before invoking hooks
+ * setCurrentHost(mockHost);
+ * const result = useMyController();
  * ```
  */
 export function getCurrentHost(): ReactiveControllerHost {

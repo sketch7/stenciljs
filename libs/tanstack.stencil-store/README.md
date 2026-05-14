@@ -44,7 +44,7 @@ export const counterStore = createStore({ count: 0, step: 1 });
 // counter.tsx
 @Component({ tag: "app-counter", shadow: true })
 export class AppCounter extends SsvElement {
-  readonly #count = useSelector(this, () => counterStore, (s) => s.count);
+  readonly #count = useSelector(() => counterStore, (s) => s.count);
 
   render() {
     return <span>{this.#count()}</span>;
@@ -64,8 +64,8 @@ export const doubledAtom = createAtom(() => countAtom.get() * 2);
 // counter.tsx
 @Component({ tag: "app-counter", shadow: true })
 export class AppCounter extends SsvElement {
-  readonly #count = useSelector(this, () => countAtom);
-  readonly #doubled = useSelector(this, () => doubledAtom);
+  readonly #count = useSelector(() => countAtom);
+  readonly #doubled = useSelector(() => doubledAtom);
 }
 ```
 
@@ -80,7 +80,7 @@ export const countAtom = createAtom(0);
 // counter.tsx
 @Component({ tag: "app-counter", shadow: true })
 export class AppCounter extends SsvElement {
-  readonly #count = useAtom(this, () => countAtom);
+  readonly #count = useAtom(() => countAtom);
 
   render() {
     return (
@@ -97,15 +97,15 @@ export class AppCounter extends SsvElement {
 ### Custom equality
 
 ```ts
-readonly #items = useSelector(this, () => listStore, (s) => s.items, {
+readonly #items = useSelector(() => listStore, (s) => s.items, {
   compare: (a, b) => a?.length === b?.length,
 });
 ```
 
 ## Differences from React
 
-| React (`@tanstack/react-store`)  | Stencil (`@ssv/tanstack.stencil-store`)     |
-| -------------------------------- | ------------------------------------------- |
-| `useSelector(source, selector?)` | `useSelector(host, getSource, selector?)`   |
-| `useAtom(atom)` → `[value, set]` | `useAtom(host, getAtom)` → `{ value, set }` |
-| Source passed directly           | Source returned by a factory (`getSource`)  |
+| React (`@tanstack/react-store`)  | Stencil (`@ssv/tanstack.stencil-store`)    |
+| -------------------------------- | ------------------------------------------ |
+| `useSelector(source, selector?)` | `useSelector(getSource, selector?)`        |
+| `useAtom(atom)` → `[value, set]` | `useAtom(getAtom)` → `{ value, set }`      |
+| Source passed directly           | Source returned by a factory (`getSource`) |

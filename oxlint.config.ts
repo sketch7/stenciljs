@@ -99,6 +99,7 @@ export default defineConfig({
 		"typescript/no-floating-promises": "error",
 		"typescript/await-thenable": "error",
 		"typescript/no-misused-promises": "error",
+		"typescript/no-invalid-void-type": "off",
 		"typescript/restrict-template-expressions": "warn",
 		"typescript/no-unnecessary-type-assertion": "error",
 		"typescript/no-wrapper-object-types": "error",

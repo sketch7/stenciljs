@@ -12,11 +12,8 @@ function useTracker(): ReactiveController {
 
 @Component({ tag: "test-counter", shadow: true })
 export class TestCounter extends SsvElement {
-	// Intentionally unused — hook calls register controllers as a side effect.
-	// eslint-disable-next-line no-unused-private-class-members
-	readonly #a = useTracker();
-	// eslint-disable-next-line no-unused-private-class-members
-	readonly #b = useTracker();
+	readonly _a = useTracker();
+	readonly _b = useTracker();
 
 	render() {
 		return <span>counter</span>;

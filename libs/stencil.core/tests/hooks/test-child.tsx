@@ -12,8 +12,7 @@ function useTracker(): ReactiveController {
 
 @Component({ tag: "test-child", shadow: true })
 export class TestChild extends SsvElement {
-	// eslint-disable-next-line no-unused-private-class-members
-	readonly #tracker = useTracker();
+	readonly _tracker = useTracker();
 
 	render() {
 		return <span class="child">child</span>;

@@ -162,9 +162,6 @@ importers:
       '@app/stencil-playground':
         specifier: workspace:*
         version: link:../stencil-playground
-      '@ssv/stencil-signals':
-        specifier: workspace:*
-        version: link:../../libs/stencil-signals
       '@ssv/vite-plugin-stencil-watch':
         specifier: workspace:^
         version: link:../../libs/vite-plugin-stencil-watch

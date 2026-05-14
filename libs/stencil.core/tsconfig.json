@@ -12,5 +12,5 @@
     "jsxFragmentFactory": "h.Fragment",
     "types": ["@stencil/vitest/globals"]
   },
-  "include": ["src", "tests", "stencil.config.ts", "vitest.config.ts", "vitest-setup.ts"]
+  "include": ["src", "tests", "vitest*.config.ts", "vitest-setup.ts"]
 }

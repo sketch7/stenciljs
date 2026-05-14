@@ -268,9 +268,9 @@ export default defineConfig({
 				"jest/no-hooks": "off", // beforeEach/afterEach are standard vitest setup patterns
 			},
 		},
-		// vitest config files
+		// config files - vitest/tsdown and co
 		{
-			files: ["vitest.config.ts", "vitest.*.config.ts"],
+			files: ["vitest.config.ts", "vitest.*.config.ts", "tsdown.config.ts"],
 			rules: {
 				"import/no-default-export": "off",
 			},

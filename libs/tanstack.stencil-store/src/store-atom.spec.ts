@@ -1,49 +1,8 @@
-import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
-import { clearCurrentHost, setCurrentHost } from "@ssv/stencil.core";
+import { clearCurrentHost, TestHost } from "@ssv/stencil.core/testing";
 import { createAtom } from "@tanstack/store";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { useAtom } from "./store-atom";
-
-class TestHost implements ReactiveControllerHost {
-	readonly controllers = new Set<ReactiveController>();
-	renderCount = 0;
-
-	constructor() {
-		setCurrentHost(this);
-	}
-
-	addController(ctrl: ReactiveController): void {
-		this.controllers.add(ctrl);
-	}
-
-	removeController(ctrl: ReactiveController): void {
-		this.controllers.delete(ctrl);
-	}
-
-	/** Simulates Stencil calling componentWillRender → hostWillRender on each controller. */
-	render(): void {
-		for (const ctrl of this.controllers) {
-			ctrl.hostWillRender?.();
-		}
-	}
-
-	/**
-	 * Simulates Stencil scheduling and executing a re-render after forceUpdate().
-	 * Increments renderCount then runs the full render cycle.
-	 */
-	requestUpdate(): void {
-		this.renderCount++;
-		this.render();
-	}
-
-	/** Simulates Stencil calling disconnectedCallback → hostDisconnected. */
-	disconnect(): void {
-		for (const ctrl of this.controllers) {
-			ctrl.hostDisconnected?.();
-		}
-	}
-}
 
 describe("useAtom", () => {
 	let host: TestHost;
@@ -164,7 +123,6 @@ describe("useAtom", () => {
 	it("value is accessible via a getter on a host subclass (component pattern)", () => {
 		const atom = createAtom(0);
 
-		// oxlint-disable-next-line max-classes-per-file
 		class ComponentLike extends TestHost {
 			readonly count = useAtom(() => atom);
 

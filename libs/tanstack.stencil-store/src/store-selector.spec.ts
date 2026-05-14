@@ -1,49 +1,8 @@
-import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
-import { clearCurrentHost, setCurrentHost } from "@ssv/stencil.core";
+import { clearCurrentHost, TestHost } from "@ssv/stencil.core/testing";
 import { createStore } from "@tanstack/store";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { useSelector } from "./store-selector";
-
-class TestHost implements ReactiveControllerHost {
-	readonly controllers = new Set<ReactiveController>();
-	renderCount = 0;
-
-	constructor() {
-		setCurrentHost(this);
-	}
-
-	addController(ctrl: ReactiveController): void {
-		this.controllers.add(ctrl);
-	}
-
-	removeController(ctrl: ReactiveController): void {
-		this.controllers.delete(ctrl);
-	}
-
-	/** Simulates Stencil calling componentWillRender → hostWillRender on each controller. */
-	render(): void {
-		for (const ctrl of this.controllers) {
-			ctrl.hostWillRender?.();
-		}
-	}
-
-	/**
-	 * Simulates Stencil scheduling and executing a re-render after forceUpdate().
-	 * Increments renderCount then runs the full render cycle.
-	 */
-	requestUpdate(): void {
-		this.renderCount++;
-		this.render();
-	}
-
-	/** Simulates Stencil calling disconnectedCallback → hostDisconnected. */
-	disconnect(): void {
-		for (const ctrl of this.controllers) {
-			ctrl.hostDisconnected?.();
-		}
-	}
-}
 
 describe("useSelector", () => {
 	let host: TestHost;
@@ -189,7 +148,6 @@ describe("useSelector", () => {
 	it("value is accessible directly in a component subclass (component pattern)", () => {
 		const store = createStore({ count: 0, ignored: 0 });
 
-		// oxlint-disable-next-line max-classes-per-file
 		class ComponentLike extends TestHost {
 			readonly count = useSelector(
 				() => store,
@@ -211,7 +169,6 @@ describe("useSelector", () => {
 	it("returns undefined before first render, value after (component pattern)", () => {
 		const store = createStore(42);
 
-		// oxlint-disable-next-line max-classes-per-file
 		class ComponentLike extends TestHost {
 			readonly count = useSelector(() => store);
 		}

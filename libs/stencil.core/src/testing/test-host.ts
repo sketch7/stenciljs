@@ -1,0 +1,51 @@
+import { clearCurrentHost, setCurrentHost } from "../hooks/host-context";
+import type { ReactiveController, ReactiveControllerHost } from "../hooks/reactive-controller";
+
+/**
+ * Minimal host for unit-testing hooks and controllers without the Stencil runtime.
+ *
+ * @example
+ * ```ts
+ * let host: TestHost;
+ * beforeEach(() => { host = new TestHost(); });
+ * afterEach(() => { clearCurrentHost(); });
+ * ```
+ */
+export class TestHost implements ReactiveControllerHost {
+	readonly controllers = new Set<ReactiveController>();
+	renderCount = 0;
+
+	constructor() {
+		setCurrentHost(this);
+	}
+
+	addController(ctrl: ReactiveController): void {
+		this.controllers.add(ctrl);
+	}
+
+	removeController(ctrl: ReactiveController): void {
+		this.controllers.delete(ctrl);
+	}
+
+	/** Simulates `componentWillRender` → `hostWillRender` on each controller. */
+	render(): void {
+		for (const ctrl of this.controllers) {
+			ctrl.hostWillRender?.();
+		}
+	}
+
+	/** Simulates a re-render triggered by `requestUpdate`. Increments `renderCount` then runs the render cycle. */
+	requestUpdate(): void {
+		this.renderCount++;
+		this.render();
+	}
+
+	/** Simulates `disconnectedCallback` → `hostDisconnected` on each controller. */
+	disconnect(): void {
+		for (const ctrl of this.controllers) {
+			ctrl.hostDisconnected?.();
+		}
+	}
+}
+
+export { clearCurrentHost, setCurrentHost };

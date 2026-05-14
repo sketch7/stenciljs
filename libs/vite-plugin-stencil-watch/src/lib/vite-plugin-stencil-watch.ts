@@ -86,6 +86,25 @@ export type StencilWatchOptions = {
 	 * Defaults to `100`.
 	 */
 	debounceMs?: number;
+
+	/**
+	 * Optional async callback invoked after a successful Stencil rebuild, once
+	 * all Vite module graphs have been invalidated but **before** the browser
+	 * full-reload is sent.
+	 *
+	 * Use this to refresh in-process module references that bypass the Vite
+	 * module graph. The primary use-case is refreshing a `hydrateModule` proxy
+	 * used by `@stencil/ssr` so that server-side rendering picks up the rebuilt
+	 * artefacts on the next request.
+	 *
+	 * @example
+	 * ```ts
+	 * onRebuildDone: async server => {
+	 *   hydrateRef = await server.ssrLoadModule("@my-pkg/hydrate");
+	 * },
+	 * ```
+	 */
+	onRebuildDone?: (server: ViteDevServer) => void | Promise<void>;
 };
 
 /**
@@ -119,6 +138,7 @@ export function stencilWatch(options: StencilWatchOptions): Plugin {
 		preBuildCommand,
 		preBuildCommandCwd,
 		debounceMs = 100,
+		onRebuildDone,
 	} = options;
 
 	const srcDir = path.normalize(srcDirOption ?? path.join(packageDir, "src"));
@@ -147,6 +167,15 @@ export function stencilWatch(options: StencilWatchOptions): Plugin {
 	};
 
 	let building = false;
+	/**
+	 * SSR module IDs whose source (pre-transform) contains an import from the
+	 * stencil package. Populated by the transform hook and used in build() to
+	 * invalidate these modules even when @stencil/ssr or similar plugins remove
+	 * the import from the transformed code, breaking the importer chain in
+	 * Vite's SSR module graph.
+	 */
+	const stencilImporterIds = new Set<string>();
+
 	/** Whether a build is queued to run after the current one finishes. */
 	let pending = false;
 	/**
@@ -191,14 +220,55 @@ export function stencilWatch(options: StencilWatchOptions): Plugin {
 			}
 			await execAsync(buildCommand, { cwd: packageDir });
 			server.config.logger.info("[stencil] rebuild done", { timestamp: true });
-			// Invalidate every cached module — both client and SSR environments —
-			// so Vite fetches fresh artefacts on the next request.
-			for (const env of Object.values(server.environments)) {
-				for (const mod of env.moduleGraph.idToModuleMap.values()) {
-					if (mod.id?.includes(resolvedPackageId)) {
-						env.moduleGraph.invalidateModule(mod);
+			// Invalidate every cached module that belongs to the Stencil package.
+			// For the SSR environment we also walk up the importer chain (BFS) so
+			// that page-level modules (e.g. Vike's +Page.tsx) which transitively
+			// import rebuilt artefacts are also re-evaluated on the next request —
+			// without this the cached page module continues to serve stale SSR HTML.
+			// For the client environment a direct invalidation is sufficient because
+			// the subsequent full-reload causes the browser to re-fetch everything.
+			for (const [envName, env] of Object.entries(server.environments)) {
+				const seen = new Set<string>();
+				const queue = [...env.moduleGraph.idToModuleMap.values()].filter(m => m.id?.includes(resolvedPackageId));
+				let qi = 0;
+				while (qi < queue.length) {
+					const mod = queue[qi++];
+					const key = mod.id ?? mod.url;
+					if (!key || seen.has(key)) {
+						continue;
+					}
+					seen.add(key);
+					env.moduleGraph.invalidateModule(mod);
+					// SSR only: walk up the importer chain so page-level modules
+					// (e.g. +Page.tsx) are also invalidated and re-evaluated on the
+					// next request. Client full-reload makes this unnecessary there.
+					if (envName !== "ssr") {
+						continue;
+					}
+					for (const importer of mod.importers) {
+						queue.push(importer);
 					}
 				}
+			}
+			// Additionally invalidate SSR modules tracked by the transform hook.
+			// @stencil/ssr and similar plugins remove the stencil import from the
+			// transformed output, breaking the BFS importer chain above so that
+			// page modules (e.g. +Page.tsx) are never reached. The transform hook
+			// records these modules before the import is stripped.
+			const ssrEnv = server.environments["ssr"];
+			if (ssrEnv) {
+				for (const trackedId of stencilImporterIds) {
+					const trackedMod = ssrEnv.moduleGraph.idToModuleMap.get(trackedId);
+					if (trackedMod) {
+						ssrEnv.moduleGraph.invalidateModule(trackedMod);
+					}
+				}
+			}
+			// Run the rebuild-done callback before triggering the browser reload so
+			// any in-process module references (e.g. the @stencil/ssr hydrateModule)
+			// are refreshed before the first SSR request arrives.
+			if (onRebuildDone) {
+				await onRebuildDone(server);
 			}
 			server.hot.send({ type: "full-reload" });
 		} catch (error) {
@@ -217,6 +287,22 @@ export function stencilWatch(options: StencilWatchOptions): Plugin {
 	return {
 		name: "stencil-watch",
 		apply: "serve",
+		// Track SSR modules whose source code imports from the stencil package.
+		// These modules cannot be found via the BFS importer walk because
+		// @stencil/ssr removes the import from the transformed output, breaking
+		// Vite's SSR module graph edges. We capture them here (on the source,
+		// before any transform strips the import) so build() can invalidate them.
+		transform(code, id, transformOptions) {
+			if (
+				transformOptions?.ssr &&
+				!id.includes("node_modules") &&
+				!id.includes(resolvedPackageId) &&
+				code.includes(resolvedPackageId)
+			) {
+				stencilImporterIds.add(id);
+			}
+			return null;
+		},
 		configureServer(server) {
 			server.watcher.add(srcDir);
 			for (const d of resolvedWatchDirs) {

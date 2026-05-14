@@ -12,6 +12,7 @@
  *  signal(value)              Create a writable SignalState
  *  computed(fn)               Create a read-only SignalComputed
  *  batch(fn)                  Batch signal writes (no-op on TC39)
+ *  untracked(fn)              Run fn without tracking signal reads inside it
  *
  *  Component integration
  *  ─────────────────────
@@ -37,7 +38,7 @@
  */
 
 // ─── Primitives ───────────────────────────────────────────────────────────────
-export { signal, computed, batch, scheduler, createWatcher, collectSignals } from "./signals/core";
+export { signal, computed, batch, untracked, scheduler, createWatcher, collectSignals } from "./signals/core";
 
 export type { WritableSignal, Signal, SignalOptions, ComputedOptions, AdapterWatcher } from "./adapters/types";
 

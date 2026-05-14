@@ -12,6 +12,7 @@
  *  signal(value)              Create a writable SignalState
  *  computed(fn)               Create a read-only SignalComputed
  *  batch(fn)                  Batch multiple signal writes (native Preact feature)
+ *  untracked(fn)              Run fn without tracking (Preact `untracked`)
  *
  *  Component integration
  *  ─────────────────────
@@ -41,7 +42,7 @@ import { preactAdapter } from "./adapters/preact";
 _setAdapter(preactAdapter);
 
 // ─── Primitives ───────────────────────────────────────────────────────────────
-export { signal, computed, batch, scheduler, createWatcher, collectSignals } from "./signals/core";
+export { signal, computed, batch, untracked, scheduler, createWatcher, collectSignals } from "./signals/core";
 
 export type { WritableSignal, Signal, SignalOptions, ComputedOptions, AdapterWatcher } from "./adapters/types";
 

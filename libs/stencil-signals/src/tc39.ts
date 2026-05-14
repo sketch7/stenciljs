@@ -14,6 +14,7 @@
  *  signal(value)              Create a writable SignalState
  *  computed(fn)               Create a read-only SignalComputed
  *  batch(fn)                  No-op on TC39 (microtask scheduler coalesces)
+ *  untracked(fn)              Run fn without tracking (`Signal.subtle.untrack`)
  *  Signal                     The raw TC39 Signal namespace (for advanced use)
  *
  *  Component integration
@@ -47,7 +48,7 @@ _setAdapter(tc39Adapter);
 export { Signal as TC39Signal } from "signal-polyfill";
 
 // ─── Primitives ───────────────────────────────────────────────────────────────
-export { signal, computed, batch, scheduler, createWatcher, collectSignals } from "./signals/core";
+export { signal, computed, batch, untracked, scheduler, createWatcher, collectSignals } from "./signals/core";
 
 export type { WritableSignal, Signal, SignalOptions, ComputedOptions, AdapterWatcher } from "./adapters/types";
 

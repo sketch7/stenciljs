@@ -15,7 +15,7 @@ import { createStore } from "../src/extensions/create-store";
 import { effect } from "../src/extensions/effect";
 // Import the Preact entry point first — this sets the Preact adapter so all
 // utilities that call getAdapter() work correctly in this test file.
-import { signal, computed, createWatcher } from "../src/preact";
+import { signal, computed, createWatcher, untracked } from "../src/preact";
 
 // Helper: flush all pending microtasks
 const flush = () => new Promise<void>(r => setTimeout(r, 0));
@@ -107,6 +107,26 @@ describe("computed() [preact]", () => {
 		expectTypeOf(c.peek).toBeFunction();
 		expect(c()).toBe(42);
 		expect(c.peek()).toBe(42);
+	});
+});
+
+// ─── untracked() [preact] ─────────────────────────────────────────────────────
+
+describe("untracked() [preact]", () => {
+	it("reads inside untracked do not subscribe a surrounding computed", () => {
+		const a = signal(0);
+		const b = signal(100);
+		const compute = vi.fn(() => a() + untracked(() => b()));
+		const c = computed(compute);
+		expect(c()).toBe(100);
+		expect(compute).toHaveBeenCalledOnce();
+		compute.mockClear();
+		b.set(200);
+		expect(c()).toBe(100);
+		expect(compute).not.toHaveBeenCalled();
+		a.set(1);
+		expect(c()).toBe(201);
+		expect(compute).toHaveBeenCalledOnce();
 	});
 });
 

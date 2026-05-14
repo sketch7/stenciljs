@@ -62,6 +62,7 @@ export class MyCounter extends SignalWatcher(class {}) {
 | Triggers re-render         | ✅         | ✅                                            |
 | Shared across components   | ❌         | ✅                                            |
 | Computed/derived values    | ❌         | ✅ `computed()`                               |
+| Non-tracking reads         | ❌         | ✅ `untracked()` / `sig.peek()`               |
 | Auto-tracking side effects | ❌         | ✅ `effect(fn)`                               |
 | Explicit-dep side effects  | ❌         | ✅ `effect(deps, fn)`                         |
 | Lifecycle-bound effects    | ❌         | ✅ `useSignalEffect(fn/deps, fn)`             |
@@ -82,6 +83,7 @@ export class MyCounter extends SignalWatcher(class {}) {
 - **`computedPrevious`** — standalone derived signal that holds the previous value of another signal
 - **`useComputedPrevious`** — lifecycle-bound variant of `computedPrevious`
 - **`createStore`** — wrap a plain object in per-property signals via a reactive Proxy
+- **`untracked`** — run a callback without subscribing to signal reads inside it (same idea as Angular `untracked()` and Preact `untracked()`)
 - **Dual-backend** — TC39 (`signal-polyfill`) or Preact Signals; same API, swap by changing the import path
 - **Stencil `Mixin()` compatible** — composes with other Stencil controller mixins (v4.37+)
 
@@ -392,6 +394,22 @@ stop(); // dispose manually
 
 Signal reads _inside_ `fn` that are not in `deps` are untracked.
 
+### `untracked`
+
+Run a function so that **signal reads inside it do not create reactive dependencies** for the surrounding computed or effect. Matches the behaviour of [`untracked`](https://angular.dev/api/core/untracked) in Angular and [`untracked`](https://preactjs.com/guide/v10/signals/#untracked) in Preact Signals.
+
+```ts
+import { signal, computed, untracked } from "@ssv/stencil-signals/tc39";
+
+const a = signal(0);
+const b = signal(100);
+
+// Only `a` is a dependency of this computed — changes to `b` do not invalidate it
+const sum = computed(() => a() + untracked(() => b()));
+```
+
+Prefer `sig.peek()` for a single untracked read on one signal; use `untracked(() => { ... })` when you need several reads or non-trivial logic without subscribing.
+
 ### `useSignalEffect`
 
 Lifecycle-bound wrapper over `effect`. Must be called in a class-field initializer (where `use()` resolves the host automatically). The effect starts on `hostConnected` and is disposed on `hostDisconnected`.
@@ -552,7 +570,7 @@ The adapter (signal backend) is selected by the import path. Activate it once at
 | `@ssv/stencil-signals/tc39`   | TC39 (`signal-polyfill`) | `signal-polyfill ^0.2.0`      |
 | `@ssv/stencil-signals/preact` | Preact Signals           | `@preact/signals-core ^1.0.0` |
 
-The main entry `@ssv/stencil-signals` exports the full public API but **does not** activate any adapter. Import it for primitives (`signal`, `computed`, `effect`, etc.) in components and feature modules after the adapter is already registered.
+The main entry `@ssv/stencil-signals` exports the full public API but **does not** activate any adapter. Import it for primitives (`signal`, `computed`, `untracked`, `batch`, `effect`, etc.) in components and feature modules after the adapter is already registered.
 
 > [!IMPORTANT]
 > Pick one adapter per application. Mixing adapters in the same bundle is not supported.
@@ -576,12 +594,13 @@ The main entry `@ssv/stencil-signals` exports the full public API but **does not
 `WritableSignal<T> extends Signal<T>` — adds write methods:
 
 | Method                   | Description                                                                                                                                                                                                                      |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | `sig.set(value)`         | Write a new value directly.                                                                                                                                                                                                      |
 | `sig.update(fn)`         | Derive the next value from the current one — `fn` receives the current value via an untracked read and returns the new value. Prefer over `sig.set(sig() + 1)` to avoid accidental dependency tracking inside computeds/effects. |
 | `sig.asReadonly()`       | Return a read-only `Signal<T>` view of this signal.                                                                                                                                                                              |
-| `computed(fn, options?)` | `<T>(fn: () => T, options?: SignalOptions<T>) => Signal<T>`                                                                                                                                                                      | Read-only derived signal. Lazily recomputes when dependencies change. |
-| `batch(fn)`              | `<T>(fn: () => T) => T`                                                                                                                                                                                                          | Batch multiple signal writes into one update cycle.                   |
+| `computed(fn, options?)` | `<T>(fn: () => T, options?: SignalOptions<T>) => Signal<T>`                                                                                                                                                                      | Read-only derived signal. Lazily recomputes when dependencies change.                    |
+| `batch(fn)`              | `<T>(fn: () => T) => T`                                                                                                                                                                                                          | Batch multiple signal writes into one update cycle.                                      |
+| `untracked(fn)`          | `<T>(fn: () => T) => T`                                                                                                                                                                                                          | Run `fn` without tracking reads inside it — same role as Angular / Preact `untracked()`. |
 
 ### Component integration
 

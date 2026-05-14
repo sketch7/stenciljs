@@ -13,7 +13,7 @@ import { createStore } from "../src/extensions/create-store";
 import { effect, useSignalEffect } from "../src/extensions/effect";
 // Import the TC39 entry point first — this sets the TC39 adapter so all
 // utilities that call getAdapter() work correctly in this test file.
-import { signal, computed, createWatcher } from "../src/tc39";
+import { signal, computed, createWatcher, untracked } from "../src/tc39";
 
 // ─── Mock host ────────────────────────────────────────────────────────────────
 
@@ -147,6 +147,26 @@ describe("computed()", () => {
 		expect(fn).not.toHaveBeenCalled();
 		c();
 		expect(fn).toHaveBeenCalledOnce();
+	});
+});
+
+// ─── untracked() ───────────────────────────────────────────────────────────────
+
+describe("untracked()", () => {
+	it("reads inside untracked do not subscribe a surrounding computed", () => {
+		const a = signal(0);
+		const b = signal(100);
+		const compute = vi.fn(() => a() + untracked(() => b()));
+		const c = computed(compute);
+		expect(c()).toBe(100);
+		expect(compute).toHaveBeenCalledOnce();
+		compute.mockClear();
+		b.set(200);
+		expect(c()).toBe(100);
+		expect(compute).not.toHaveBeenCalled();
+		a.set(1);
+		expect(c()).toBe(201);
+		expect(compute).toHaveBeenCalledOnce();
 	});
 });
 

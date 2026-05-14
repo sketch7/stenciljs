@@ -3,7 +3,7 @@ import { getAdapter } from "../adapters/active";
  * @ssv/stencil-signals — signals/core.ts
  *
  * Thin facade over the active SignalAdapter. All public primitives
- * (signal, computed, batch, createWatcher, collectSignals) delegate to
+ * (signal, computed, batch, untracked, createWatcher, collectSignals) delegate to
  * whichever adapter was registered by the entry point (TC39 or Preact).
  *
  * Also owns the shared microtask scheduler — it is backend-agnostic and
@@ -57,6 +57,14 @@ export function computed<T>(fn: () => T, options?: ComputedOptions<T>): Signal<T
  */
 export function batch<T>(fn: () => T): T {
 	return getAdapter().batch(fn);
+}
+
+/**
+ * Run `fn` without establishing reactive dependencies on signal reads inside `fn`.
+ * Aligns with `untracked()` in Angular and `@preact/signals-core`.
+ */
+export function untracked<T>(fn: () => T): T {
+	return getAdapter().untrack(fn);
 }
 
 // ─── Active owner (effect scope) ────────────────────────────────────────────

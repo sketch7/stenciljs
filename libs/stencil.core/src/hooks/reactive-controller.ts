@@ -1,7 +1,7 @@
 import { forceUpdate } from "@stencil/core";
 import type { ComponentInterface, MixedInCtor } from "@stencil/core";
 
-import { clearCurrentHost, setCurrentHost } from "./context";
+import { clearCurrentHost, setCurrentHost } from "./host-context";
 
 /**
  * Lifecycle-aware controller interface for Stencil components.

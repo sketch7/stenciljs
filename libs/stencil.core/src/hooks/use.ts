@@ -1,4 +1,4 @@
-import { getCurrentHost } from "./context";
+import { getCurrentHost } from "./host-context";
 import type { ReactiveController, ReactiveControllerHost } from "./reactive-controller";
 
 /**

@@ -1,5 +1,5 @@
-import type { ReactiveController } from "../../src/hooks/reactive-controller";
-import { use } from "../../src/hooks/use";
+import { use } from "#lib";
+import type { ReactiveController } from "#lib";
 
 export function useTracker(): ReactiveController {
 	const ctrl: ReactiveController = {};

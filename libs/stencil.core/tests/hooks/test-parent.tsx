@@ -1,6 +1,6 @@
+import { SsvElement } from "#lib";
 import { Component, h } from "@stencil/core";
 
-import { SsvElement } from "../../src/ssv-element";
 import { useTracker } from "./utils";
 
 @Component({ tag: "test-parent", shadow: true })

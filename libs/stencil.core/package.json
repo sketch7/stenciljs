@@ -10,6 +10,9 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "imports": {
+    "#lib": "./src/index.ts"
+  },
   "exports": {
     ".": {
       "@ssv/source": "./src/index.ts",

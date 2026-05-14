@@ -3,8 +3,10 @@
 // Pre-set it here to avoid an unhandled SyntaxError in the test environment.
 performance.mark("st:app:start");
 
-// Import test components compiled by stencil-test.
-// test-parent.js auto-registers test-child as a nested dependency.
+// dist/components/index.js is generated from src/index.ts (the public API) and
+// does not include test-only components. Import each component file directly so
+// auto-define-custom-elements triggers self-registration for each.
+// test-parent.js also registers test-child as a nested dependency.
 await import("./dist/components/test-counter.js");
 await import("./dist/components/test-parent.js");
 

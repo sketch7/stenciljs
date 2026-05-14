@@ -1,5 +1,6 @@
 import { use } from "../hooks/use";
-import { CONTEXT_EVENT, type ContextEventDetail, type ContextKey, type ContextRef } from "./context";
+import { CONTEXT_EVENT } from "./context";
+import type { ContextEventDetail, ContextKey, ContextRef } from "./context";
 
 /**
  * Consumes the nearest ancestor provider for the given context.
@@ -36,7 +37,8 @@ export function useContext<T>(key: ContextKey<T>): ContextRef<T> {
 
 			const event = new CustomEvent<ContextEventDetail<T>>(CONTEXT_EVENT, {
 				bubbles: true,
-				composed: true, // crosses shadow-DOM boundaries for deeply nested components
+				// crosses shadow-DOM boundaries for deeply nested components
+				composed: true,
 				detail: {
 					contextId: key.id,
 					callback(value: T) {

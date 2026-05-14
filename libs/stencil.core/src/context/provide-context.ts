@@ -1,5 +1,6 @@
 import { use } from "../hooks/use";
-import { CONTEXT_EVENT, type ContextEventDetail, type ContextKey } from "./context";
+import { CONTEXT_EVENT } from "./context";
+import type { ContextEventDetail, ContextKey } from "./context";
 
 /**
  * Registers the current component as a provider for the given context.
@@ -28,9 +29,9 @@ export function provideContext<T>(key: ContextKey<T>, valueOrFactory?: T | (() =
 	const value =
 		typeof valueOrFactory === "function"
 			? (valueOrFactory as () => T)()
-			: valueOrFactory !== undefined
-				? valueOrFactory
-				: key.createInstance();
+			: valueOrFactory === undefined
+				? key.createInstance()
+				: valueOrFactory;
 
 	const handleRequest = (event: Event): void => {
 		const e = event as CustomEvent<ContextEventDetail<T>>;

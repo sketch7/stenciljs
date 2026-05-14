@@ -4,11 +4,10 @@
 performance.mark("st:app:start");
 
 // dist/components/index.js is generated from src/index.ts (the public API) and
-// does not include test-only components. Import each component file directly so
-// auto-define-custom-elements triggers self-registration for each.
-// test-parent.js also registers test-child as a nested dependency.
-await import("./dist/components/test-counter.js");
-await import("./dist/components/test-parent.js");
+// does not include test-only components. Glob all test-* component files so
+// new components are picked up automatically; import concurrently for speed.
+const testComponents = import.meta.glob("./dist/components/test-*.js");
+await Promise.all(Object.values(testComponents).map(load => load()));
 
 // oxlint-disable-next-line unicorn/require-module-specifiers
 export {};

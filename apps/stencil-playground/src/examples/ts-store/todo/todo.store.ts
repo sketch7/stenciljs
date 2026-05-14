@@ -11,8 +11,10 @@ export type TanTodoState = {
 	nextId: number;
 };
 
-export const todoStore = createStore(
-	{ todos: [] as Todo[], nextId: 1 } satisfies TanTodoState,
+export const todoStore = createStore({
+	todos: [] as Todo[],
+	nextId: 1
+} satisfies TanTodoState,
 	({ setState }) => ({
 		add(text: string) {
 			const trimmed = text.trim();
@@ -36,8 +38,7 @@ export const todoStore = createStore(
 				todos: prev.todos.filter(t => t.id !== id),
 			}));
 		},
-	}),
-);
+	}));
 
 /** Derived store — recomputes whenever `todoStore` state changes. */
 export const todoStatsStore = createStore(() => {

@@ -1,4 +1,3 @@
-import type { ReactiveControllerHost } from "@ssv/stencil.core";
 import type { Atom } from "@tanstack/store";
 
 import type { UseSelectorOptions } from "./store-selector";
@@ -17,7 +16,7 @@ type AtomResult<TValue> = {
  *
  * @example
  * ```ts
- * readonly #count = useAtom(this, () => countAtom);
+ * readonly #count = useAtom(() => countAtom);
  *
  * render() {
  *   return <button onClick={() => this.#count.set((p) => p + 1)}>{this.#count.value}</button>;
@@ -25,11 +24,10 @@ type AtomResult<TValue> = {
  * ```
  */
 export function useAtom<TValue>(
-	host: ReactiveControllerHost,
 	getAtom: () => Atom<TValue> | undefined,
 	options?: UseSelectorOptions<TValue>,
 ): AtomResult<TValue> {
-	const value = useSelector(host, getAtom, undefined, options);
+	const value = useSelector(getAtom, undefined, options);
 	return {
 		get value() {
 			return value();

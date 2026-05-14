@@ -1,4 +1,5 @@
-import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
+import type { ReactiveController } from "@ssv/stencil.core";
+import { getCurrentHost } from "@ssv/stencil.core";
 
 /** Options for {@link useSelector}. */
 export type UseSelectorOptions<TSelected> = {
@@ -29,21 +30,21 @@ function defaultSelector<TSource, TSelected>(snapshot: TSource): TSelected {
  *
  * @example
  * ```ts
- * readonly #count = useSelector(this, () => counterStore, (s) => s.count);
+ * readonly #count = useSelector(() => counterStore, (s) => s.count);
  * ```
  *
  * @example
  * ```ts
- * readonly #todos = useSelector(this, () => todoStore);
+ * readonly #todos = useSelector(() => todoStore);
  * ```
  */
 // eslint-disable-next-line max-params
 export function useSelector<TSource, TSelected = TSource>(
-	host: ReactiveControllerHost,
 	getStore: () => SelectionSource<TSource> | undefined,
 	selector?: (snapshot: TSource) => TSelected,
 	options?: UseSelectorOptions<TSelected>,
 ): () => TSelected | undefined {
+	const host = getCurrentHost();
 	const compare = options?.compare ?? defaultCompare;
 	const select = selector ?? defaultSelector;
 	let unsubscribe: (() => void) | undefined;

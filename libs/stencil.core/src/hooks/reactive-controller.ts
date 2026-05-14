@@ -1,6 +1,8 @@
 import { forceUpdate } from "@stencil/core";
 import type { ComponentInterface, MixedInCtor } from "@stencil/core";
 
+import { clearCurrentHost, setCurrentHost } from "./context";
+
 /**
  * Lifecycle-aware controller interface for Stencil components.
  * All methods are optional — implement only what you need.
@@ -59,7 +61,7 @@ export type ReactiveControllerHost = {
  * ```ts
  * @Component({ tag: 'my-component', shadow: true })
  * export class MyComponent extends Mixin(ReactiveControllerHostMixin) {
- *   private mouse = useMouseController(this);
+ *   private mouse = useMouseController();
  * }
  * ```
  */
@@ -67,6 +69,11 @@ export function ReactiveControllerHostMixin<B extends MixedInCtor>(Base: B) {
 	class ReactiveControllerHostClass extends Base implements ComponentInterface, ReactiveControllerHost {
 		readonly controllers = new Set<ReactiveController>();
 
+		constructor(...args: any[]) {
+			super(...args);
+			setCurrentHost(this as unknown as ReactiveControllerHost);
+			queueMicrotask(clearCurrentHost);
+		}
 		addController(controller: ReactiveController): void {
 			this.controllers.add(controller);
 		}

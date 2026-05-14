@@ -10,8 +10,11 @@ import { todoStore, todoStatsStore } from "./todo.store";
 	shadow: true,
 })
 export class AppTanTodo extends SsvElement {
-	readonly #todos = useSelector(this, () => todoStore, s => s.todos);
-	readonly #stats = useSelector(this, () => todoStatsStore);
+	readonly #todos = useSelector(
+		() => todoStore,
+		s => s.todos,
+	);
+	readonly #stats = useSelector(() => todoStatsStore);
 	// readonly #completed = useSelector(this, () => todoStore, s => s.todos.filter(t => t.completed).length);
 	// readonly #total = useSelector(this, () => todoStore, s => s.todos.length);
 

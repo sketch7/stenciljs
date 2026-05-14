@@ -1,4 +1,4 @@
-import { AppSignalsTimer } from "@app/stencil-playground/react";
+import { AppTimer } from "@app/stencil-playground/react";
 import type { JSX } from "react";
 
 export default function Page(): JSX.Element {
@@ -13,17 +13,35 @@ export default function Page(): JSX.Element {
 			</div>
 
 			<div className="rounded-xl border border-[var(--color-card-border)] bg-[var(--color-card)] p-6">
-				<AppSignalsTimer />
+				<AppTimer duration={60} />
 			</div>
 
-			<p className="text-xs text-[var(--color-muted-fg)]">
-				<code>minutes</code>, <code>seconds</code>, <code>isCompleted</code>, and <code>buttonLabel</code> are all{" "}
-				<code>computed()</code> — derived automatically, no manual sync needed. A single{" "}
-				<code>effect(this, [isCompleted], fn, &#123; defer: true &#125;)</code> stops the interval the moment the timer
-				reaches zero — it fires only when that one computed flips, not on every tick. Passing <code>this</code> as host
-				auto-disposes the effect on disconnect and reinitialises it on reconnect, with no <code>DestroyRef</code> or
-				manual cleanup required.
-			</p>
+			<div className="flex flex-col gap-2 text-xs text-[var(--color-muted-fg)]">
+				<p>
+					<code>
+						withSignalProps(this, AppTimer)(&#123; duration: &#123; transform &#125;, isRunning: &#123; twoWay: true
+						&#125; &#125;)
+					</code>{" "}
+					bridges Stencil <code>@Prop()</code> fields into signals — <code>$props.duration</code> is a read-only{" "}
+					<code>Signal&lt;number&gt;</code> with a <code>Math.max(0, v)</code> transform applied on every change;
+					<code>$props.isRunning</code> is a <code>WritableSignal</code> that emits <code>isRunningChange</code> on
+					every write so the React wrapper picks it up via <code>onIsRunningChange</code>.
+				</p>
+				<p>
+					<code>app-timer-counter</code> receives <code>timeRemaining</code> as a plain <code>@Prop</code> and uses{" "}
+					<code>withSignalProps(this, AppTimerCounter)(&#123; timeRemaining: &#123;&#125; &#125;)</code> to expose it as
+					a signal internally, so <code>$mins</code> and <code>$secs</code> are <code>computed()</code> values — no
+					manual math in
+					<code>render()</code>.
+				</p>
+				<p>
+					<code>batch()</code> in <code>#stop()</code>, <code>#reset()</code>, and <code>#setTime()</code> coalesces
+					multiple signal writes into a single render — <code>isRunning</code> and <code>timeRemaining</code> never flip
+					in separate frames. Two explicit-dep <code>effect(this, [dep], fn, &#123; defer: true &#125;)</code> calls
+					handle side-effectful reactions — one resets the clock when <code>duration</code> changes, one stops the
+					interval the moment <code>isCompleted</code> flips.
+				</p>
+			</div>
 		</div>
 	);
 }

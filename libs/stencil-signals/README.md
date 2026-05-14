@@ -73,6 +73,7 @@ export class MyCounter extends SignalWatcher(class {}) {
 - **`SignalWatcherMixin` mixin** — wraps `render()` to auto-track signal dependencies and re-render when they change
 - **`SignalWatcherController`** — composition-pattern alternative to the mixin; extend `SsvElement` from `@ssv/stencil.core` and call `withSignalController(this)` as a class-property initializer
 - **`@useSignal` decorator** — bind a signal directly to a class property for ergonomic reads and writes
+- **`withSignalProps`** — bridge multiple `@Prop()` fields to signals with full type inference; one-way or two-way bindings; `transform` typed from the prop type automatically
 - **`effect`** — side effects with auto-tracking or explicit dependencies, with cleanup support
 - **`computedAsync`** — async derived signals with `pending`/`resolved`/`error` status and automatic `AbortSignal` cancellation
 - **`computedPrevious`** — derived signal that holds the previous value of another signal
@@ -267,6 +268,87 @@ export class MyComp extends Mixin(SignalWatcherMixin, SsvElementMixin) {
 
 > [!NOTE]
 > Writing to a property bound to a `computed` signal throws at runtime. Use `@useSignal` only with writable signals.
+
+### `withSignalProps`
+
+Bridge multiple `@Prop()` fields to signals in one call. Each signal stays in sync with its prop across every render — no `@Watch` needed.
+
+Import from the `/extensions` sub-path:
+
+```tsx
+import { withSignalProps } from "@ssv/stencil-signals/extensions";
+```
+
+Use it as a class-property initializer, passing the class constructor as the second argument so TypeScript resolves the host type concretely — `transform`'s `v` parameter is then automatically typed from the `@Prop` field:
+
+```tsx
+@Component({ tag: "app-timer", shadow: true })
+export class AppTimer extends SsvElement {
+  @Prop() duration = 60;
+  @Prop({ reflect: true }) isRunning = false;
+
+  @Event() isRunningChange!: EventEmitter<boolean>;
+
+  readonly signalWatcher = withSignalController(this);
+  readonly $props = withSignalProps(
+    this,
+    AppTimer,
+  )({
+    duration: { transform: v => Math.max(0, v) }, // v: number — Signal<number>
+    isRunning: { twoWay: true }, // WritableSignal<boolean>
+  });
+
+  render() {
+    return (
+      <div>
+        <p>Remaining: {this.$props.duration()}s</p>
+        <button onClick={() => this.$props.isRunning.set(true)}>Start</button>
+      </div>
+    );
+  }
+}
+```
+
+**One-way (read-only)** — omit `twoWay`; the result is a read-only `Signal<T>` that mirrors the prop:
+
+```ts
+readonly $props = withSignalProps(this, AppTimerCounter)({
+  timeRemaining: {},   // Signal<number> — auto-syncs on every render
+});
+
+// Usage in render:
+const mins = Math.floor(this.$props.timeRemaining() / 60);
+```
+
+**Two-way (writable + event)** — set `twoWay: true`; the result is a `WritableSignal<T>`. Every `.set()` / `.update()` also dispatches a `${propName}Change` `CustomEvent` so parent components and framework wrappers can reflect the new value back:
+
+```ts
+readonly $props = withSignalProps(this, AppTimer)({
+  isRunning: { twoWay: true }, // WritableSignal<boolean>
+});
+
+// Inside a method — fires isRunningChange CustomEvent automatically:
+this.$props.isRunning.set(true);
+```
+
+Pair each two-way prop with a Stencil `@Event()` declaration so output targets (React, Vue, Angular) generate the correct event binding:
+
+```ts
+@Prop({ reflect: true }) isRunning = false;
+@Event() isRunningChange!: EventEmitter<boolean>;
+```
+
+> [!NOTE]
+> Typos in the config key are caught at compile time. A key that does not exist on the component class is typed `never` — the TypeScript compiler will flag it immediately.
+
+**Options per prop:**
+
+| Option      | Type                 | Description                                                        |
+| ----------- | -------------------- | ------------------------------------------------------------------ |
+| `transform` | `(rawValue: T) => T` | Sanitise the incoming prop value before storing in the signal.     |
+| `twoWay`    | `boolean`            | Emit `${propName}Change` on every signal write (two-way binding).  |
+| `default`   | `T`                  | Fallback used when the prop value is `null` or `undefined`.        |
+| `required`  | `boolean`            | Log a console error when the prop is `null` / `undefined` on load. |
 
 ### `effect`
 
@@ -487,6 +569,14 @@ The main entry `@ssv/stencil-signals` exports the full public API but **does not
 | `withSignalController(host)` | Installs a `SignalWatcherController` on a `ReactiveControllerHost` and returns it. Preferred as a class-property initializer.                                         |
 | `SignalWatcherController`    | Low-level controller registered by `withSignalController` or `SignalWatcher`. Manages the render-tracking watcher lifecycle.                                          |
 | `@useSignal(sig)`            | Property decorator. Proxies reads/writes to the given signal.                                                                                                         |
+
+### Prop bindings (`@ssv/stencil-signals/extensions`)
+
+| Export                                     | Description                                                                                                                    |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| `withSignalProps(host, HostClass)(config)` | Curried builder. Creates one signal per `@Prop` entry in `config`. Non-`twoWay` → `Signal<T>`; `twoWay` → `WritableSignal<T>`. |
+| `SignalPropOptions<T>`                     | Options type for each prop entry (`transform`, `twoWay`, `default`, `required`).                                               |
+| `SignalPropsResult<H, C>`                  | Mapped return type — `Signal<T>` or `WritableSignal<T>` per key, inferred from options.                                        |
 
 ### Effects
 

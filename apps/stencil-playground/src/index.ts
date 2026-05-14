@@ -9,6 +9,7 @@ export type { Todo as TanTodo } from "./examples/ts-store/todo/todo.store";
 export { AppSignalsCounter } from "./examples/stencil-signals/counter/counter";
 export { AppSignalsTodo } from "./examples/stencil-signals/todo/todo";
 export type { Todo as SignalsTodo } from "./examples/stencil-signals/todo/todo.store";
-export { AppSignalsTimer } from "./examples/stencil-signals/timer/timer";
+export { AppTimer } from "./examples/stencil-signals/timer/timer";
+export { AppTimerCounter } from "./examples/stencil-signals/timer/timer-counter";
 export { AppSignalsComputedAsync } from "./examples/stencil-signals/computed-async/computed-async";
 export { AppSignalsComputedPrevious } from "./examples/stencil-signals/computed-previous/computed-previous";

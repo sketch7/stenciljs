@@ -39,3 +39,7 @@ export type {
 // ─── Store helpers ────────────────────────────────────────────────────────────
 export { createStore } from "./utils/create-store";
 export type { Store } from "./utils/create-store";
+
+// ─── Prop / model bindings ────────────────────────────────────────────────────
+export { withSignalProps } from "./utils/signal-prop";
+export type { SignalPropOptions, SignalPropsResult } from "./utils/signal-prop";

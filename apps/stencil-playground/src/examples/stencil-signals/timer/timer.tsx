@@ -1,56 +1,63 @@
 import { computed, effect, signal, withSignalController } from "@ssv/stencil-signals";
+import { withSignalProps } from "@ssv/stencil-signals/extensions";
 import { SsvElement } from "@ssv/stencil.core";
-import { Component, h } from "@stencil/core";
-
-function pad(n: number): string {
-	return String(n).padStart(2, "0");
-}
+import { Component, Event, EventEmitter, Prop, h } from "@stencil/core";
 
 const PRESETS = [10, 30, 60, 120, 300] as const;
 
-const timeRemaining = signal(60);
-const isRunning = signal(false);
-const initialTime = signal(60);
-
-const minutes = computed(() => Math.floor(timeRemaining() / 60));
-const seconds = computed(() => timeRemaining() % 60);
-const isCompleted = computed(() => timeRemaining() === 0);
-const buttonLabel = computed(() => (isRunning() ? "Pause" : "Start"));
-
 @Component({
-	tag: "app-signals-timer",
+	tag: "app-timer",
 	styleUrl: "timer.css",
 	shadow: true,
 })
-export class AppSignalsTimer extends SsvElement {
-	#intervalId: ReturnType<typeof setInterval> | undefined;
+export class AppTimer extends SsvElement {
+	@Prop() duration = 60;
+	@Prop({ reflect: true }) isRunning = false;
+
+	@Event() isRunningChange!: EventEmitter<boolean>;
 
 	readonly signalWatcher = withSignalController(this);
-
-	readonly _completionEffect = effect(
+	readonly $props = withSignalProps(
 		this,
-		[isCompleted],
-		([done]) => {
-			if (done) {
-				this.#stop();
-			}
+		AppTimer,
+	)({
+		duration: { transform: v => Math.max(0, v) },
+		isRunning: { twoWay: true },
+	});
+
+	readonly $timeRemaining = signal(60);
+	readonly $isCompleted = computed(() => this.$timeRemaining() === 0);
+
+	#intervalId: ReturnType<typeof setInterval> | undefined;
+
+	readonly _durationEffect = effect(
+		this,
+		[this.$props.duration],
+		([d]) => {
+			this.#stop();
+			this.$timeRemaining.set(d);
 		},
 		{ defer: true },
 	);
 
+	readonly _completionEffect = effect(this, () => {
+		if (this.$isCompleted()) {
+			this.#stop();
+		}
+	});
+
 	#start() {
-		if (isRunning()) {
+		if (this.$props.isRunning()) {
 			return;
 		}
-		isRunning.set(true);
-
+		this.$props.isRunning.set(true);
 		this.#intervalId = setInterval(() => {
-			timeRemaining.update(t => Math.max(0, t - 1));
+			this.$timeRemaining.update(t => Math.max(0, t - 1));
 		}, 1000);
 	}
 
 	#stop() {
-		isRunning.set(false);
+		this.$props.isRunning.set(false);
 		if (this.#intervalId !== undefined) {
 			clearInterval(this.#intervalId);
 			this.#intervalId = undefined;
@@ -59,17 +66,16 @@ export class AppSignalsTimer extends SsvElement {
 
 	#reset() {
 		this.#stop();
-		timeRemaining.set(initialTime());
+		this.$timeRemaining.set(this.$props.duration());
 	}
 
 	#setTime(secs: number) {
 		this.#stop();
-		initialTime.set(secs);
-		timeRemaining.set(secs);
+		this.$timeRemaining.set(secs);
 	}
 
 	#toggle() {
-		if (isRunning()) {
+		if (this.$props.isRunning()) {
 			this.#stop();
 		} else {
 			this.#start();
@@ -82,29 +88,18 @@ export class AppSignalsTimer extends SsvElement {
 	}
 
 	render() {
-		const mins = minutes();
-		const secs = seconds();
-		const done = isCompleted();
+		const done = this.$isCompleted();
+		const running = this.$props.isRunning();
 
 		return (
 			<div class="timer">
-				<div class="time-display">
-					<div class="time-item">
-						<span class="time-label">Minutes</span>
-						<span class="time-value">{pad(mins)}</span>
-					</div>
-					<div class="time-sep">:</div>
-					<div class="time-item">
-						<span class="time-label">Seconds</span>
-						<span class="time-value">{pad(secs)}</span>
-					</div>
-				</div>
+				<app-timer-counter time-remaining={this.$timeRemaining()} />
 
 				{done && <p class="badge-done">Done!</p>}
 
 				<div class="controls">
 					<button type="button" class="btn btn-primary" disabled={done} onClick={() => this.#toggle()}>
-						{buttonLabel()}
+						{running ? "Pause" : "Start"}
 					</button>
 					<button type="button" class="btn btn-outline" onClick={() => this.#reset()}>
 						Reset

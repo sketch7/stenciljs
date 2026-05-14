@@ -52,8 +52,7 @@ export { signal, computed, batch, scheduler, createWatcher, collectSignals } fro
 export type { WritableSignal, Signal, SignalOptions, ComputedOptions, AdapterWatcher } from "./adapters/types";
 
 // ─── Component integration ────────────────────────────────────────────────────
-export { SignalWatcher } from "./mixins/signal-watcher-tc39";
-export type { SignalWatcherApi } from "./mixins/signal-watcher-tc39";
+export { SignalWatcherMixin } from "./mixins/signal-watcher";
 export { SignalWatcherController } from "./controllers/signal-watcher-controller";
 
 // ─── Decorators ───────────────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 import { computed, signal, withSignalController } from "@ssv/stencil-signals";
-import { SsvElementMixin } from "@ssv/stencil.core";
-import { Component, h, Mixin } from "@stencil/core";
+import { SsvElement } from "@ssv/stencil.core";
+import { Component, h } from "@stencil/core";
 
 const count = signal(0);
 const additionalValue = signal(0);
@@ -12,7 +12,7 @@ const total = computed(() => count() + doubled());
 	styleUrl: "counter.css",
 	shadow: true,
 })
-export class AppSignalsCounter extends Mixin(SsvElementMixin) {
+export class AppSignalsCounter extends SsvElement {
 	readonly signalWatcher = withSignalController(this);
 
 	render() {

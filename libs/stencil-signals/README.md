@@ -70,8 +70,8 @@ export class MyCounter extends SignalWatcher(class {}) {
 
 ## Features
 
-- **`SignalWatcher` mixin** — wraps `render()` to auto-track signal dependencies and re-render when they change
-- **`SignalWatcherController`** — composition-pattern alternative to the mixin; extend your own `ReactiveControllerHost` and register the controller in the constructor
+- **`SignalWatcherMixin` mixin** — wraps `render()` to auto-track signal dependencies and re-render when they change
+- **`SignalWatcherController`** — composition-pattern alternative to the mixin; extend `SsvElement` from `@ssv/stencil.core` and call `withSignalController(this)` as a class-property initializer
 - **`@useSignal` decorator** — bind a signal directly to a class property for ergonomic reads and writes
 - **`effect`** — side effects with auto-tracking or explicit dependencies, with cleanup support
 - **`computedAsync`** — async derived signals with `pending`/`resolved`/`error` status and automatic `AbortSignal` cancellation
@@ -116,16 +116,17 @@ The side-effect import registers the adapter synchronously, so it is always read
 
 ```ts
 // store.ts — define shared state once, outside any component
+import { SsvElementMixin } from "@ssv/stencil.core";
 import { signal, computed } from '@ssv/stencil-signals';
 
 export const count = signal(0);
 export const doubled = computed(() => count() * 2);
 import { Component } from '@stencil/core';
-import { SignalWatcher, useSignal } from '@ssv/stencil-signals';
+import { SignalWatcherMixin, useSignal } from '@ssv/stencil-signals';
 import { count, doubled } from './store';
 
 @Component({ tag: 'my-counter', shadow: true })
-export class MyCounter extends SignalWatcher(class {}) {
+export class MyCounter extends Mixin(SignalWatcherMixin, SsvElementMixin) {
   @useSignal(count) count!: number;
 
   render() {
@@ -162,11 +163,16 @@ export class MyComp extends SignalWatcher(class {}) {
 
 ```tsx
 import { Component, Mixin } from "@stencil/core";
-import { SignalWatcher } from "@ssv/stencil-signals";
+import { SignalWatcherMixin } from "@ssv/stencil-signals";
+import { SsvElementMixin } from "@ssv/stencil.core";
 import { LoggingMixin } from "./mixins/logging-mixin";
 
 @Component({ tag: "my-comp", shadow: true })
-export class MyComp extends Mixin(SignalWatcher, LoggingMixin) {
+export class MyComp extends Mixin(
+  SignalWatcherMixin,
+  LoggingMixin,
+  SsvElementMixin,
+) {
   componentDidLoad() {
     super.componentDidLoad?.();
   }
@@ -181,82 +187,26 @@ Put `SignalWatcher` first in `Mixin()` so it wraps the outermost `render()`.
 
 **How re-rendering works:**
 
-- `connectedCallback` — marks the component as active
-- `render()` — wraps `super.render()` in a `Signal.Computed` to collect deps, then arms a `Signal.subtle.Watcher` on those deps; rebuilt fresh each render so conditional branches are always tracked correctly
-- When any dep changes — `forceUpdate(this)` is queued via a shared microtask scheduler
-- `disconnectedCallback` — disposes the watcher
+`SignalWatcher` installs a `SignalWatcherController` (via `withSignalController`) in the constructor, which:
+
+- Wraps `render()` once in a persistent `Signal.Computed` that tracks all signal reads as dependencies
+- Arms a `Signal.subtle.Watcher` that calls `requestUpdate()` whenever any tracked signal changes
+- Bumps a version signal before each render so prop/state-triggered renders also execute correctly
+- Disposes the watcher on `disconnectedCallback`
 
 ### `SignalWatcherController`
 
-An alternative to `SignalWatcher` for components that prefer **composition over inheritance**. Instead of mixing in behaviour, you extend your own `ReactiveControllerHost` base class and register the controller in the constructor.
-
-Stencil does not ship `ReactiveControllerHost` or `ReactiveController` — you define them yourself. Copy the boilerplate below or adapt it to your project:
-
-```ts
-// reactive-controller.ts — consumer-owned boilerplate
-import { forceUpdate } from "@stencil/core";
-
-export interface ReactiveController {
-  hostConnected?(): void;
-  hostDisconnected?(): void;
-  hostWillLoad?(): Promise<void> | void;
-  hostDidLoad?(): void;
-  hostWillRender?(): Promise<void> | void;
-  hostDidRender?(): void;
-  hostWillUpdate?(): Promise<void> | void;
-  hostDidUpdate?(): void;
-}
-
-export class ReactiveControllerHost {
-  private __controllers = new Set<ReactiveController>();
-
-  addController(c: ReactiveController) {
-    this.__controllers.add(c);
-  }
-  removeController(c: ReactiveController) {
-    this.__controllers.delete(c);
-  }
-  requestUpdate() {
-    forceUpdate(this as any);
-  }
-
-  connectedCallback() {
-    for (const c of this.__controllers) c.hostConnected?.();
-  }
-  disconnectedCallback() {
-    for (const c of this.__controllers) c.hostDisconnected?.();
-  }
-  componentDidLoad() {
-    for (const c of this.__controllers) c.hostDidLoad?.();
-  }
-  componentDidRender() {
-    for (const c of this.__controllers) c.hostDidRender?.();
-  }
-  componentDidUpdate() {
-    for (const c of this.__controllers) c.hostDidUpdate?.();
-  }
-  // componentWillLoad/Render/Update: collect promises and return Promise.all([...]).then(() => {})
-}
-```
-
-Then register `SignalWatcherController` in your component:
+An alternative to `SignalWatcherMixin` for components that prefer **composition over inheritance**. Extend `SsvElement` (from `@ssv/stencil.core`) and call `withSignalController(this)` in a class-property initializer:
 
 ```tsx
 import { Component, h } from "@stencil/core";
-import { SignalWatcherController, effect } from "@ssv/stencil-signals";
-import { ReactiveControllerHost } from "./reactive-controller";
+import { withSignalController } from "@ssv/stencil-signals";
+import { SsvElement } from "@ssv/stencil.core";
 import { count, doubled } from "./store";
 
 @Component({ tag: "my-counter", shadow: false })
-export class MyCounter extends ReactiveControllerHost {
-  constructor() {
-    super();
-    this.addController(new SignalWatcherController(this));
-  }
-
-  connectedCallback() {
-    super.connectedCallback();
-  }
+export class MyCounter extends SsvElement {
+  readonly signalWatcher = withSignalController(this);
 
   render() {
     return (
@@ -271,19 +221,25 @@ export class MyCounter extends ReactiveControllerHost {
 }
 ```
 
-**Owner scope and auto-disposal:** `SignalWatcherController.hostConnected()` activates a shared owner scope for one microtask. Any `effect`, `computedAsync`, or `computedPrevious` created during that window — including in your `connectedCallback` after `super.connectedCallback()` — registers its dispose function automatically. On unmount, `hostDisconnected()` flushes all registered cleanups in one pass.
+**Owner scope and auto-disposal:** When the component connects, `SignalWatcherController` activates a shared owner scope for one microtask. Any `effect`, `computedAsync`, or `computedPrevious` created during that window — including in your `connectedCallback` after `super.connectedCallback()` — registers its dispose function automatically. On disconnect, all registered cleanups are flushed in one pass.
 
-Alternatively, pass `this` directly to any watcher utility (even from a class property initializer) — they register with the component's `__watcherRegistry` and are auto-disposed on `disconnectedCallback`, then reinited on `connectedCallback`.
+Pass `this` to any watcher utility from a class-property initializer and the utility registers its lifecycle via `addController`, auto-disposing on disconnect and reiniting on the next connect:
+
+```tsx
+readonly _titleEff = effect(this, () => {
+  document.title = `Count: ${count()}`;
+});
+```
 
 **Comparison with the mixin:**
 
-|                              | `Mixin(SignalWatcher)` | `SignalWatcherController`                       |
-| ---------------------------- | ---------------------- | ----------------------------------------------- |
-| Inheritance                  | Mixin chain            | Composition                                     |
-| API collisions               | Possible               | None                                            |
-| Extra boilerplate            | None                   | `ReactiveControllerHost` (one-time, copy/paste) |
-| Works with other controllers | Via `Mixin()`          | Via `addController()`                           |
-| Multiple controllers         | `Mixin(A, B, C)`       | `addController(a); addController(b)`            |
+|                              | `Mixin(SignalWatcherMixin, SsvElementMixin)` | `SsvElement` + `withSignalController` |
+| ---------------------------- | -------------------------------------------- | ------------------------------------- |
+| Inheritance                  | Mixin chain                                  | Single base class                     |
+| API collisions               | Possible                                     | None                                  |
+| Extra boilerplate            | None                                         | None (`SsvElement` already provided)  |
+| Works with other controllers | Via `Mixin()`                                | Via `addController()`                 |
+| Multiple controllers         | `Mixin(A, B, C)`                             | `addController(a); addController(b)`  |
 
 ### `@useSignal`
 
@@ -293,7 +249,7 @@ Bind a signal to a class property. Reads call `sig()`; writes call `signal.set()
 const theme = signal<"light" | "dark">("light");
 
 @Component({ tag: "my-comp" })
-export class MyComp extends SignalWatcher(class {}) {
+export class MyComp extends Mixin(SignalWatcherMixin, SsvElementMixin) {
   @useSignal(theme) theme!: "light" | "dark";
 
   render() {
@@ -328,12 +284,12 @@ Inside a `SignalWatcher` component, pass `this` as the **first** argument — th
 
 ```tsx
 @Component({ tag: "my-comp", shadow: false })
-export class MyComp extends Mixin(SignalWatcher) {
+export class MyComp extends Mixin(SignalWatcherMixin, SsvElementMixin) {
   readonly titleWatch = effect(this, () => {
     document.title = `Count: ${count()}`;
   });
 
-  // _stop() can still be called manually to dispose early
+  // titleWatch() can still be called manually to dispose early
 }
 ```
 
@@ -388,7 +344,7 @@ When a tracked signal changes, the previous in-flight request is automatically c
 const userId = signal(1);
 
 @Component({ tag: "user-card", shadow: false })
-export class UserCard extends Mixin(SignalWatcher) {
+export class UserCard extends Mixin(SignalWatcherMixin, SsvElementMixin) {
   // Pass `this` — auto-disposed on disconnect, reinited on reconnect.
   readonly user = computedAsync<User>(this, async abortSignal => {
     const res = await fetch(`/api/users/${userId()}`, { signal: abortSignal });
@@ -446,7 +402,7 @@ Inside a `SignalWatcher` component, pass `this` to get automatic dispose-on-disc
 
 ```tsx
 @Component({ tag: "slide-view", shadow: false })
-export class SlideView extends Mixin(SignalWatcher) {
+export class SlideView extends Mixin(SignalWatcherMixin, SsvElementMixin) {
   readonly prevPage = computedPrevious(this, page);
 
   render() {
@@ -525,12 +481,12 @@ The main entry `@ssv/stencil-signals` exports the full public API but **does not
 
 ### Component integration
 
-| Export                    | Description                                                                                                                                                     |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SignalWatcher(Base)`     | Mixin factory. Wraps `render()` for automatic dependency tracking and re-rendering. Implements `WatcherRegistrar` so `this` can be passed to watcher utilities. |
-| `SignalWatcherController` | Composition-pattern controller. Pass `this` in the constructor and register via `addController()` on a `ReactiveControllerHost`.                                |
-| `WatcherRegistrar`        | Interface for the `host` argument accepted by watcher utilities. `SignalWatcher` components satisfy this automatically.                                         |
-| `@useSignal(sig)`         | Property decorator. Proxies reads/writes to the given signal.                                                                                                   |
+| Export                       | Description                                                                                                                                                           |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SignalWatcherMixin(Base)`   | Mixin factory. Wraps `render()` for automatic dependency tracking and re-rendering. Implements `ReactiveControllerHost` so `this` can be passed to watcher utilities. |
+| `withSignalController(host)` | Installs a `SignalWatcherController` on a `ReactiveControllerHost` and returns it. Preferred as a class-property initializer.                                         |
+| `SignalWatcherController`    | Low-level controller registered by `withSignalController` or `SignalWatcher`. Manages the render-tracking watcher lifecycle.                                          |
+| `@useSignal(sig)`            | Property decorator. Proxies reads/writes to the given signal.                                                                                                         |
 
 ### Effects
 

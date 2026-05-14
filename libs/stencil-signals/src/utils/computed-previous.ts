@@ -41,9 +41,10 @@
  * ```
  */
 
+import type { ReactiveControllerHost } from "@ssv/stencil.core";
+
 import { getAdapter } from "../adapters/active";
 import type { Signal } from "../adapters/types";
-import type { WatcherRegistrar } from "../mixins/signal-watcher";
 import { scheduler, getActiveOwner } from "../signals/core";
 import type { DisposableSignal } from "./computed-async";
 
@@ -56,17 +57,17 @@ import type { DisposableSignal } from "./computed-async";
  * @param source       Any readable signal (State or Computed).
  * @param initialValue Value returned before the first change. Defaults to `undefined`.
  */
-export function computedPrevious<T>(host: WatcherRegistrar, source: Signal<T>): DisposableSignal<T | undefined>;
+export function computedPrevious<T>(host: ReactiveControllerHost, source: Signal<T>): DisposableSignal<T | undefined>;
 export function computedPrevious<T>(source: Signal<T>, initialValue?: T): DisposableSignal<T | undefined>;
 export function computedPrevious<T>(
-	hostOrSource: WatcherRegistrar | Signal<T>,
+	hostOrSource: ReactiveControllerHost | Signal<T>,
 	sourceOrInitialValue?: Signal<T> | T,
 ): DisposableSignal<T | undefined> {
-	// Host-first overload: computedPrevious(host, source)
-	if (typeof (hostOrSource as WatcherRegistrar).__addWatcher === "function") {
-		const host = hostOrSource as WatcherRegistrar;
+	// ReactiveControllerHost: computedPrevious(host, source)
+	if (typeof (hostOrSource as ReactiveControllerHost).addController === "function") {
+		const host = hostOrSource as ReactiveControllerHost;
 		const source = sourceOrInitialValue as Signal<T>;
-		return _computedPreviousWithHost(source, undefined, host);
+		return _computedPreviousWithControllerHost(source, undefined, host);
 	}
 	// Standard overload: computedPrevious(source, initialValue?)
 	const source = hostOrSource as Signal<T>;
@@ -74,38 +75,50 @@ export function computedPrevious<T>(
 	return _computedPreviousCore(source, initialValue);
 }
 
-// ─── Host path ────────────────────────────────────────────────────────────────
+// ─── ReactiveControllerHost path ──────────────────────────────────────────────
 
-function _computedPreviousWithHost<T>(
+function _computedPreviousWithControllerHost<T>(
 	source: Signal<T>,
 	initialValue: T | undefined,
-	host: WatcherRegistrar,
+	host: ReactiveControllerHost,
 ): DisposableSignal<T | undefined> {
-	let inner = _computedPreviousCore<T>(source, initialValue);
-	let isDisposed = false;
+	let inner: DisposableSignal<T | undefined> | null = null;
+	// Snapshot the last tracked value so it survives disconnect/reconnect cycles.
+	let lastValue: T | undefined = initialValue;
+	let manuallyDisposed = false;
 
-	const wrapper = Object.assign(() => inner(), {
+	// Stable wrapper — the class property reference never changes.
+	// Falls back to `lastValue` (last snapshot before disconnect) when inner is null.
+	const wrapper = Object.assign((): T | undefined => inner?.() ?? lastValue, {
 		peek(): T | undefined {
-			return inner.peek();
+			return inner?.peek() ?? lastValue;
 		},
 		dispose(): void {
-			if (isDisposed) {
+			if (manuallyDisposed) {
 				return;
 			}
-			isDisposed = true;
-			inner.dispose();
+			manuallyDisposed = true;
+			lastValue = inner?.peek() ?? lastValue;
+			inner?.dispose();
+			inner = null;
 		},
 	}) as DisposableSignal<T | undefined>;
 
-	function reinit(): void {
-		if (!isDisposed) {
-			return;
-		}
-		inner = _computedPreviousCore<T>(source, initialValue);
-		isDisposed = false;
-	}
-
-	host.__addWatcher({ dispose: wrapper.dispose.bind(wrapper), reinit });
+	host.addController({
+		hostConnected(): void {
+			if (manuallyDisposed || inner !== null) {
+				return;
+			}
+			// Re-initialize from lastValue so the source's current value becomes the
+			// new "lastSeen" and the first dep change after reconnect produces prev = source@reconnect.
+			inner = _computedPreviousCore(source, lastValue);
+		},
+		hostDisconnected(): void {
+			lastValue = inner?.peek() ?? lastValue;
+			inner?.dispose();
+			inner = null;
+		},
+	});
 
 	return wrapper;
 }

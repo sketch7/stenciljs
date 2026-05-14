@@ -1,6 +1,7 @@
-import { signal, SignalWatcher } from "@ssv/stencil-signals";
+import { signal, withSignalController } from "@ssv/stencil-signals";
 import { computedAsync, isError, isPending } from "@ssv/stencil-signals/extensions";
-import { Component, h, Mixin } from "@stencil/core";
+import { SsvElement } from "@ssv/stencil.core";
+import { Component, h } from "@stencil/core";
 
 export type ApiUser = {
 	id: number;
@@ -22,7 +23,8 @@ const USER_COUNT = 10;
 	shadow: true,
 })
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
-export class AppSignalsComputedAsync extends Mixin(SignalWatcher) {
+export class AppSignalsComputedAsync extends SsvElement {
+	readonly signalWatcher = withSignalController(this);
 	readonly user = computedAsync<ApiUser>(this, async (abortSig: AbortSignal) => {
 		const res = await fetch(`https://jsonplaceholder.typicode.com/users/${userId()}`, { signal: abortSig });
 		if (!res.ok) {
@@ -31,7 +33,7 @@ export class AppSignalsComputedAsync extends Mixin(SignalWatcher) {
 		return res.json() as Promise<ApiUser>;
 	});
 
-	override render() {
+	render() {
 		const result = this.user();
 		const id = userId();
 

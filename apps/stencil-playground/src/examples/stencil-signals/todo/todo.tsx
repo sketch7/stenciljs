@@ -1,5 +1,6 @@
-import { SignalWatcher } from "@ssv/stencil-signals";
-import { Component, h, Mixin, State } from "@stencil/core";
+import { withSignalController } from "@ssv/stencil-signals";
+import { SsvElement } from "@ssv/stencil.core";
+import { Component, h, State } from "@stencil/core";
 
 import { todoStore } from "./todo.store";
 
@@ -8,7 +9,8 @@ import { todoStore } from "./todo.store";
 	styleUrl: "todo.css",
 	shadow: true,
 })
-export class AppSignalsTodo extends Mixin(SignalWatcher) {
+export class AppSignalsTodo extends SsvElement {
+	readonly signalWatcher = withSignalController(this);
 	@State() inputValue = "";
 
 	private handleInput(event: Event) {
@@ -40,7 +42,7 @@ export class AppSignalsTodo extends Mixin(SignalWatcher) {
 		todoStore.todos = todoStore.todos.filter(t => t.id !== id);
 	}
 
-	override render() {
+	render() {
 		const todos = todoStore.todos;
 		const completed = todoStore.completedCount;
 		const total = todos.length;

@@ -26,13 +26,15 @@
  * In both modes `fn` may return a cleanup function called before each re-run
  * and on final disposal.
  *
- * Pass `host` (a `WatcherRegistrar`) as the first argument to opt into automatic
- * dispose-on-disconnect / reinit-on-reconnect lifecycle management.
+ * Pass `host` (a `ReactiveControllerHost`) as the first argument to opt into
+ * automatic lifecycle management: effect starts on `hostConnected`, disposes on
+ * `hostDisconnected`, and restarts on the next `hostConnected`.
  */
+
+import type { ReactiveControllerHost } from "@ssv/stencil.core";
 
 import { getAdapter } from "../adapters/active";
 import type { WritableSignal, Signal } from "../adapters/types";
-import type { WatcherRegistrar } from "../mixins/signal-watcher";
 import { scheduler, getActiveOwner } from "../signals/core";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -58,7 +60,7 @@ export type EffectOptions = {
 
 /** Auto-tracking: re-runs whenever any signal read inside `fn` changes. */
 export function effect(fn: () => CleanupFn | void): CleanupFn;
-export function effect(host: WatcherRegistrar, fn: () => CleanupFn | void): CleanupFn;
+export function effect(host: ReactiveControllerHost, fn: () => CleanupFn | void): CleanupFn;
 
 /** Explicit-deps: re-runs only when signals in `deps` change. */
 export function effect<const Deps extends readonly AnySignal[]>(
@@ -67,7 +69,7 @@ export function effect<const Deps extends readonly AnySignal[]>(
 	options?: EffectOptions,
 ): CleanupFn;
 export function effect<const Deps extends readonly AnySignal[]>(
-	host: WatcherRegistrar,
+	host: ReactiveControllerHost,
 	deps: Deps,
 	fn: (values: SignalValues<Deps>, onCleanup: (fn: CleanupFn) => void) => CleanupFn | void,
 	options?: EffectOptions,
@@ -76,7 +78,7 @@ export function effect<const Deps extends readonly AnySignal[]>(
 // ─── Implementation ───────────────────────────────────────────────────────────
 
 export function effect(
-	hostOrFnOrDeps: WatcherRegistrar | (() => CleanupFn | void) | readonly AnySignal[],
+	hostOrFnOrDeps: ReactiveControllerHost | (() => CleanupFn | void) | readonly AnySignal[],
 	fnOrDeps?:
 		| (() => CleanupFn | void)
 		| readonly AnySignal[]
@@ -84,18 +86,18 @@ export function effect(
 	fnOrOptions?: ((values: unknown[], onCleanup: (fn: CleanupFn) => void) => CleanupFn | void) | EffectOptions,
 	maybeOptions?: EffectOptions,
 ): CleanupFn {
-	// Host-first overloads: effect(host, fn) or effect(host, deps, fn, options?)
-	if (typeof (hostOrFnOrDeps as WatcherRegistrar)?.__addWatcher === "function") {
-		const host = hostOrFnOrDeps as WatcherRegistrar;
+	// ReactiveControllerHost: effect(host, fn) or effect(host, deps, fn, options?)
+	if (typeof (hostOrFnOrDeps as ReactiveControllerHost)?.addController === "function") {
+		const host = hostOrFnOrDeps as ReactiveControllerHost;
 		if (typeof fnOrDeps === "function") {
 			// effect(host, fn)
-			return _effectWithHost(() => autoTrackingEffect(fnOrDeps as () => CleanupFn | void), host);
+			return _effectWithControllerHost(() => autoTrackingEffect(fnOrDeps as () => CleanupFn | void), host);
 		}
 		// effect(host, deps, fn, options?)
 		const deps = fnOrDeps as readonly AnySignal[];
 		const explicitFn = fnOrOptions as (values: unknown[], onCleanup: (fn: CleanupFn) => void) => CleanupFn | void;
 		const options = maybeOptions ?? {};
-		return _effectWithHost(() => explicitDepsEffect(deps, explicitFn, options), host);
+		return _effectWithControllerHost(() => explicitDepsEffect(deps, explicitFn, options), host);
 	}
 
 	if (typeof hostOrFnOrDeps === "function") {
@@ -115,32 +117,32 @@ export function effect(
 	return stop;
 }
 
-// ─── Host path ────────────────────────────────────────────────────────────────
+// ─── ReactiveControllerHost path ──────────────────────────────────────────────
+// Effect starts on first hostConnected; disposes on hostDisconnected; restarts on next hostConnected.
 
-function _effectWithHost(factory: () => CleanupFn, host: WatcherRegistrar): CleanupFn {
-	let stop = factory();
-	let isDisposed = false;
+function _effectWithControllerHost(factory: () => CleanupFn, host: ReactiveControllerHost): CleanupFn {
+	let stop: CleanupFn | null = null;
+	let manuallyDisposed = false;
 
-	function dispose(): void {
-		if (isDisposed) {
-			return;
-		}
-		isDisposed = true;
-		stop();
-	}
+	host.addController({
+		hostConnected(): void {
+			if (manuallyDisposed || stop !== null) {
+				return;
+			}
+			stop = factory();
+		},
+		hostDisconnected(): void {
+			stop?.();
+			stop = null;
+		},
+	});
 
-	function reinit(): void {
-		if (!isDisposed) {
-			return;
-		}
-		stop = factory();
-		isDisposed = false;
-	}
-
-	host.__addWatcher({ dispose, reinit });
-
-	// Return the stable dispose — callers can also manually stop the effect.
-	return dispose;
+	// Return a stable dispose for manual teardown.
+	return () => {
+		manuallyDisposed = true;
+		stop?.();
+		stop = null;
+	};
 }
 
 // ─── Auto-tracking implementation ─────────────────────────────────────────────
@@ -149,84 +151,88 @@ function _effectWithHost(factory: () => CleanupFn, host: WatcherRegistrar): Clea
 // internally for both TC39 (Signal.Computed + Watcher) and Preact (effect()).
 
 function autoTrackingEffect(fn: () => CleanupFn | void): CleanupFn {
-	return getAdapter().createEffect(fn as () => (() => void) | undefined);
+	return getAdapter().createEffect(fn);
 }
 
 // ─── Explicit-deps implementation ─────────────────────────────────────────────
+//
+// Uses a single depTracker computed to unify all listed deps into one Signal
+// that the Watcher can watch — same pattern as _computedAsyncCore. Returns {}
+// each evaluation so both TC39 (staleness-based) and Preact (equality-based)
+// adapters always see the signal as changed.
 
 function explicitDepsEffect(
 	deps: readonly AnySignal[],
 	fn: (values: unknown[], onCleanup: (fn: CleanupFn) => void) => CleanupFn | void,
 	options: EffectOptions,
 ): CleanupFn {
-	let userCleanup: CleanupFn | undefined;
-	let registeredCleanup: CleanupFn | undefined;
+	const adapter = getAdapter();
+	let pendingCleanup: CleanupFn | null = null;
+	let userCleanup: CleanupFn | void = undefined;
 	let disposed = false;
 
-	function onCleanup(cb: CleanupFn) {
-		registeredCleanup = cb;
-	}
-
-	function readDeps(): unknown[] {
-		// Read dep values without creating tracking subscriptions.
-		return getAdapter().untrack(() => deps.map(d => d()));
-	}
-
-	function runCleanups() {
+	function runEffect(): void {
+		pendingCleanup?.();
+		pendingCleanup = null;
 		if (typeof userCleanup === "function") {
 			userCleanup();
 			userCleanup = undefined;
 		}
-		if (typeof registeredCleanup === "function") {
-			registeredCleanup();
-			registeredCleanup = undefined;
+
+		const values = deps.map(s => adapter.untrack(() => s()));
+		let onCleanupFn: CleanupFn | null = null;
+
+		userCleanup = fn(values, cb => {
+			onCleanupFn = cb;
+		});
+		if (onCleanupFn) {
+			pendingCleanup = onCleanupFn;
 		}
 	}
 
-	// Watcher is created before run() so the closure captures it.
-	// Do NOT call watcher.watch() inside the notify callback.
-	const watcher = getAdapter().createWatcher(() => {
-		if (disposed) {
-			return;
+	// A computed that reads all deps in one place. Never exposes a meaningful
+	// value — returns a new object reference each time so Preact always
+	// propagates the change to the watcher.
+	const depTracker = adapter.createComputed<object>(() => {
+		try {
+			const dummy = Object.create(null);
+			for (const dep of deps) {
+				dep();
+			}
+			return dummy;
+		} catch {
+			return Object.create(null);
 		}
-		scheduler.schedule(run);
 	});
 
-	function run() {
+	const watcher = adapter.createWatcher(() => {
 		if (disposed) {
 			return;
 		}
-		runCleanups();
-		const values = readDeps();
-		userCleanup = fn(values, onCleanup) as CleanupFn | undefined;
-		// Re-arm all dep watchers — we are in a microtask, not in notify).
-		// Unwatch first to avoid duplicate entries in TC39's liveConsumerNode array
-		// (calling watch() multiple times on the same signal without unwatching grows
-		// the array unboundedly, causing the memory leak).
-		for (const dep of deps) {
-			try {
-				watcher.unwatch(dep);
-				watcher.watch(dep);
-			} catch {
-				/* ok */
+		scheduler.schedule(() => {
+			if (disposed) {
+				return;
 			}
-		}
-	}
+			watcher.unwatch(depTracker);
+			depTracker();
+			watcher.watch(depTracker);
+			runEffect();
+		});
+	});
 
-	// Arm watcher on each dep.
-	for (const dep of deps) {
-		watcher.watch(dep);
-	}
-
-	// Initial run (unless deferred).
+	// Initial arm: evaluate depTracker to collect deps, then watch it.
+	depTracker();
+	watcher.watch(depTracker);
 	if (!options.defer) {
-		const values = readDeps();
-		userCleanup = fn(values, onCleanup) as CleanupFn | undefined;
+		runEffect();
 	}
 
 	return () => {
 		disposed = true;
-		runCleanups();
 		watcher.dispose();
+		pendingCleanup?.();
+		if (typeof userCleanup === "function") {
+			userCleanup();
+		}
 	};
 }

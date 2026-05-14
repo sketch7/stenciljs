@@ -37,7 +37,7 @@ export default defineConfig({
 		"init-declarations": "off",
 		"max-classes-per-file": "off",
 		"max-statements": ["warn", { max: 40 }],
-		"max-parameters": ["warn", { max: 4 }],
+		"max-params": ["warn", { max: 4 }],
 		"no-undefined": "off",
 		"no-warning-comments": "off",
 		"func-style": "off",

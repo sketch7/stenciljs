@@ -64,9 +64,10 @@
  * | `equal` | `(a,b) => boolean` | `Object.is` | Skip update if resolved value is the same |
  */
 
+import type { ReactiveControllerHost } from "@ssv/stencil.core";
+
 import { getAdapter } from "../adapters/active";
 import type { Signal } from "../adapters/types";
-import type { WatcherRegistrar } from "../mixins/signal-watcher";
 import { scheduler, getActiveOwner } from "../signals/core";
 
 // ─── Public types ─────────────────────────────────────────────────────────────
@@ -121,7 +122,7 @@ export type DisposableSignal<T> = {
  * automatic dispose-on-disconnect / reinit-on-reconnect lifecycle management.
  */
 export function computedAsync<T>(
-	host: WatcherRegistrar,
+	host: ReactiveControllerHost,
 	fn: (abortSignal: AbortSignal) => Promise<T> | T,
 ): DisposableSignal<AsyncResult<T>>;
 export function computedAsync<T>(
@@ -129,14 +130,14 @@ export function computedAsync<T>(
 	options?: ComputedAsyncOptions<T>,
 ): DisposableSignal<AsyncResult<T>>;
 export function computedAsync<T>(
-	hostOrFn: WatcherRegistrar | ((abortSignal: AbortSignal) => Promise<T> | T),
+	hostOrFn: ReactiveControllerHost | ((abortSignal: AbortSignal) => Promise<T> | T),
 	fnOrOptions?: ((abortSignal: AbortSignal) => Promise<T> | T) | ComputedAsyncOptions<T>,
 ): DisposableSignal<AsyncResult<T>> {
-	// Host-first overload: computedAsync(host, fn)
-	if (typeof (hostOrFn as WatcherRegistrar).__addWatcher === "function") {
-		return _computedAsyncWithHost(
+	// ReactiveControllerHost: computedAsync(host, fn)
+	if (typeof (hostOrFn as ReactiveControllerHost).addController === "function") {
+		return _computedAsyncWithControllerHost(
 			fnOrOptions as (abortSignal: AbortSignal) => Promise<T> | T,
-			hostOrFn as WatcherRegistrar,
+			hostOrFn as ReactiveControllerHost,
 		);
 	}
 	// Standard overload: computedAsync(fn, options?)
@@ -151,39 +152,46 @@ export function computedAsync<T>(
 	return _computedAsyncCore(fn, options);
 }
 
-// ─── Host path ────────────────────────────────────────────────────────────────
+// ─── ReactiveControllerHost path ──────────────────────────────────────────────
 
-function _computedAsyncWithHost<T>(
+function _computedAsyncWithControllerHost<T>(
 	fn: (abortSignal: AbortSignal) => Promise<T> | T,
-	host: WatcherRegistrar,
+	host: ReactiveControllerHost,
 ): DisposableSignal<AsyncResult<T>> {
-	let inner = _computedAsyncCore<T>(fn, {});
-	let isDisposed = false;
+	let inner: DisposableSignal<AsyncResult<T>> | null = null;
+	let lastResult: AsyncResult<T> = { status: "pending", value: undefined };
+	let manuallyDisposed = false;
 
 	// Stable wrapper — the class property reference never changes.
-	// call/peek always delegate to the current inner signal.
-	const wrapper = Object.assign(() => inner(), {
+	// Falls back to `lastResult` (last snapshot before disconnect) when inner is null.
+	const wrapper = Object.assign((): AsyncResult<T> => inner?.() ?? lastResult, {
 		peek(): AsyncResult<T> {
-			return inner.peek();
+			return inner?.peek() ?? lastResult;
 		},
 		dispose(): void {
-			if (isDisposed) {
+			if (manuallyDisposed) {
 				return;
 			}
-			isDisposed = true;
-			inner.dispose();
+			manuallyDisposed = true;
+			lastResult = inner?.peek() ?? lastResult;
+			inner?.dispose();
+			inner = null;
 		},
 	}) as DisposableSignal<AsyncResult<T>>;
 
-	function reinit(): void {
-		if (!isDisposed) {
-			return;
-		}
-		inner = _computedAsyncCore<T>(fn, {});
-		isDisposed = false;
-	}
-
-	host.__addWatcher({ dispose: wrapper.dispose.bind(wrapper), reinit });
+	host.addController({
+		hostConnected(): void {
+			if (manuallyDisposed || inner !== null) {
+				return;
+			}
+			inner = _computedAsyncCore<T>(fn, { initialValue: lastResult.value });
+		},
+		hostDisconnected(): void {
+			lastResult = inner?.peek() ?? lastResult;
+			inner?.dispose();
+			inner = null;
+		},
+	});
 
 	return wrapper;
 }

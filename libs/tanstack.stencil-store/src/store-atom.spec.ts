@@ -1,4 +1,4 @@
-import { clearCurrentHost, TestHost } from "@ssv/stencil.core/testing";
+import { TestHost } from "@ssv/stencil.core/testing";
 import { createAtom } from "@tanstack/store";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
@@ -12,7 +12,7 @@ describe("useAtom", () => {
 	});
 
 	afterEach(() => {
-		clearCurrentHost();
+		host.dispose();
 	});
 
 	it("reads the current atom value after render", () => {

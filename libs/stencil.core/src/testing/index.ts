@@ -1,1 +1,1 @@
-export { TestHost, clearCurrentHost, setCurrentHost } from "./test-host";
+export { TestHost } from "./test-host";

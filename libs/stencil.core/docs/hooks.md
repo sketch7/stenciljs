@@ -10,8 +10,6 @@
 | `ReactiveController`          | type     | Controller interface with optional lifecycle hooks                                               |
 | `ReactiveControllerHost`      | type     | Host API — `addController`, `requestUpdate`                                                      |
 | `ReactiveControllerHostMixin` | mixin fn | Adds controller support to any Stencil component class                                           |
-| `setCurrentHost`              | fn       | _(low-level)_ Sets the active host context; called by `SsvElement` constructors automatically    |
-| `clearCurrentHost`            | fn       | _(low-level)_ Clears the active host context; queued as a microtask after construction           |
 | `getCurrentHost`              | fn       | _(low-level)_ Returns the host currently being constructed; throws outside a constructor context |
 
 ## Forms
@@ -170,25 +168,17 @@ export class SsvTimerHost extends Mixin(SsvElementMixin) {
 }
 ```
 
-## Host context (`setCurrentHost` / `clearCurrentHost` / `getCurrentHost`)
+## Host context (`getCurrentHost`)
 
-These are low-level primitives used internally by `SsvElement` and `SsvElementMixin`. You only need them when implementing a custom host class.
+`getCurrentHost()` is a low-level primitive used internally by `use()`. You only need it when building a hook primitive that requires the host reference outside a `use()` factory.
 
-`SsvElement` constructors call `setCurrentHost(this)` at the top of construction and queue `clearCurrentHost()` as a microtask. Any `use()` call during field initialization reads the current host via `getCurrentHost()`.
+`ReactiveControllerHostMixin` constructors call `setCurrentHost(this)` and queue `clearCurrentHost()` as a microtask. Both are internal — not part of the public API. Any `use()` call during field initialization reads the active host via `getCurrentHost()`.
 
 ```ts
-import {
-  ReactiveControllerHostMixin,
-  setCurrentHost,
-  clearCurrentHost,
-} from "@ssv/stencil.core";
+import { getCurrentHost } from "@ssv/stencil.core";
 
-class MyHost extends Mixin(ReactiveControllerHostMixin) {
-  constructor() {
-    super();
-    setCurrentHost(this);
-    queueMicrotask(() => clearCurrentHost());
-    // field initializers run here — use() calls are safe
-  }
+export function useMyHook() {
+  const host = getCurrentHost(); // host available during field initialization
+  // ... register directly, no use() wrapper needed
 }
 ```

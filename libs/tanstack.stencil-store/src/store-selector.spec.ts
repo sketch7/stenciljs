@@ -1,4 +1,4 @@
-import { clearCurrentHost, TestHost } from "@ssv/stencil.core/testing";
+import { TestHost } from "@ssv/stencil.core/testing";
 import { createStore } from "@tanstack/store";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
@@ -12,7 +12,7 @@ describe("useSelector", () => {
 	});
 
 	afterEach(() => {
-		clearCurrentHost();
+		host.dispose();
 	});
 
 	it("registers itself with the host on construction", () => {

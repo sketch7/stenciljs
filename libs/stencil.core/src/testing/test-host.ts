@@ -8,7 +8,7 @@ import type { ReactiveController, ReactiveControllerHost } from "../hooks/reacti
  * ```ts
  * let host: TestHost;
  * beforeEach(() => { host = new TestHost(); });
- * afterEach(() => { clearCurrentHost(); });
+ * afterEach(() => { host.dispose(); });
  * ```
  */
 export class TestHost implements ReactiveControllerHost {
@@ -46,6 +46,9 @@ export class TestHost implements ReactiveControllerHost {
 			ctrl.hostDisconnected?.();
 		}
 	}
-}
 
-export { clearCurrentHost, setCurrentHost };
+	/** Clears the host context. Call in `afterEach` to clean up between tests. */
+	dispose(): void {
+		clearCurrentHost();
+	}
+}

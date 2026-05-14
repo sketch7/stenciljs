@@ -47,18 +47,18 @@ Use the shared `TestHost` from `@ssv/stencil.core/testing` — do **not** redefi
 It simulates the Stencil component lifecycle (render, requestUpdate, disconnect) without the runtime.
 
 ```ts
-import { clearCurrentHost, TestHost } from "@ssv/stencil.core/testing";
+import { TestHost } from "@ssv/stencil.core/testing";
 
 let host: TestHost;
 beforeEach(() => {
   host = new TestHost();
 });
 afterEach(() => {
-  clearCurrentHost();
+  host.dispose();
 });
 ```
 
-`TestHost` exposes: `controllers`, `renderCount`, `render()`, `requestUpdate()`, `disconnect()`.
+`TestHost` exposes: `controllers`, `renderCount`, `render()`, `requestUpdate()`, `disconnect()`, `dispose()`.
 
 ### Feature-specific utilities
 
@@ -80,7 +80,7 @@ describe("FeatureName", () => {
     host = new TestHost();
   });
   afterEach(() => {
-    clearCurrentHost();
+    host.dispose();
   });
 
   describe("method or scenario", () => {

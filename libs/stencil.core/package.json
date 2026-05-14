@@ -24,8 +24,9 @@
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",
-    "test": "stencil-test",
-    "test:watch": "stencil-test --watch",
+    "build:stencil": "stencil build",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "oxlint src/",
     "fmt": "oxfmt src/",
     "fmt:check": "oxfmt --check src/"

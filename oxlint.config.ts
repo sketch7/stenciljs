@@ -270,7 +270,7 @@ export default defineConfig({
 		},
 		// vitest config files
 		{
-			files: ["vitest.config.ts"],
+			files: ["vitest.config.ts", "vitest.*.config.ts"],
 			rules: {
 				"import/no-default-export": "off",
 			},

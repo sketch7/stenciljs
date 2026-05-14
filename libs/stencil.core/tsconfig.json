@@ -5,7 +5,12 @@
     "module": "preserve",
     "moduleResolution": "bundler",
     "verbatimModuleSyntax": true,
-    "noEmit": true
+    "noEmit": true,
+    "experimentalDecorators": true,
+    "jsx": "react",
+    "jsxFactory": "h",
+    "jsxFragmentFactory": "h.Fragment",
+    "types": ["@stencil/vitest/globals"]
   },
-  "include": ["src"]
+  "include": ["src", "tests", "stencil.config.ts", "vitest.config.ts", "vitest-setup.ts"]
 }

@@ -160,7 +160,7 @@ export default defineConfig({
 	overrides: [
 		{
 			// StencilJS components — class-based, uses h() not React, HTML attrs not React attrs
-			files: ["libs/*/src/**/*.tsx", "libs/*/src/**/*.ts"],
+			files: ["libs/*/src/**/*.tsx", "libs/*/src/**/*.ts", "libs/*/tests/**/*.tsx", "libs/*/tests/**/*.ts"],
 			rules: {
 				"react/rules-of-hooks": "off",
 				"react/prefer-function-component": "off",

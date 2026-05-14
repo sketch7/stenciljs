@@ -18,6 +18,9 @@ catalogs:
     '@stencil/store':
       specifier: ^2.2.2
       version: 2.2.2
+    '@stencil/vitest':
+      specifier: ^1.11.6
+      version: 1.11.6
     '@tailwindcss/vite':
       specifier: ^4.3.0
       version: 4.3.0
@@ -135,12 +138,18 @@ importers:
         specifier: '>=18.0.0'
         version: 19.2.6
     devDependencies:
+      '@stencil/vitest':
+        specifier: 'catalog:'
+        version: 1.11.6(@stencil/core@4.43.4)(vitest@4.1.6)
       '@types/node':
         specifier: 'catalog:'
         version: 25.7.0
       oxlint:
         specifier: 'catalog:'
         version: 1.62.0
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.6(@types/node@25.7.0)(@vitest/coverage-v8@4.1.6)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.47.1)(yaml@2.8.0))
 
   apps/vike-playground:
     dependencies:
@@ -202,6 +211,9 @@ importers:
       '@stencil/core':
         specifier: 'catalog:'
         version: 4.43.4
+      '@stencil/vitest':
+        specifier: 'catalog:'
+        version: 1.11.6(@stencil/core@4.43.4)(vitest@4.1.6)
       '@types/node':
         specifier: 'catalog:'
         version: 25.7.0
@@ -1984,6 +1996,42 @@ packages:
     peerDependencies:
       '@stencil/core': '>=2.0.0 || >=3.0.0 || >= 4.0.0-beta.0 || >= 4.0.0'
 
+  '@stencil/vitest@1.11.6':
+    resolution: {integrity: sha512-8aqZzN2O0bppsGJSqLetgzyATufRRSybKLctKuW93KtHED/WwJyS0U+8D9OqKEjxnopvSNO4QrvLWqntaqhvSw==}
+    engines: {node: ^20.0.0 || ^22.0.0 || >=24.0.0}
+    hasBin: true
+    peerDependencies:
+      '@playwright/test': '*'
+      '@stencil/core': ^4.0.0 || ^5.0.0-0
+      '@stencil/mock-doc': '*'
+      '@vitest/browser-playwright': '*'
+      '@vitest/browser-preview': '*'
+      '@vitest/browser-webdriverio': '*'
+      '@wdio/globals': '*'
+      happy-dom: '*'
+      jsdom: '*'
+      playwright: '*'
+      vitest: ^4.0.0 || ^3.0.0 || ^2.0.0
+    peerDependenciesMeta:
+      '@playwright/test':
+        optional: true
+      '@stencil/mock-doc':
+        optional: true
+      '@vitest/browser-playwright':
+        optional: true
+      '@vitest/browser-preview':
+        optional: true
+      '@vitest/browser-webdriverio':
+        optional: true
+      '@wdio/globals':
+        optional: true
+      happy-dom:
+        optional: true
+      jsdom:
+        optional: true
+      playwright:
+        optional: true
+
   '@swc-node/core@1.14.1':
     resolution: {integrity: sha512-jrt5GUaZUU6cmMS+WTJEvGvaB6j1YNKPHPzC2PUi2BjaFbtxURHj6641Az6xN7b665hNniAIdvjxWcRml5yCnw==}
     engines: {node: '>= 10'}
@@ -2630,6 +2678,9 @@ packages:
   confbox@0.1.8:
     resolution: {integrity: sha512-RMtmw0iFkeR4YV+fUOSucriAQNb9g8zFR52MWCtl+cCZOFRNL6zeB395vPzFhEjjn4fMxXudmELnl/KF/WrK6w==}
 
+  confbox@0.2.4:
+    resolution: {integrity: sha512-ysOGlgTFbN2/Y6Cg3Iye8YKulHw+R2fNXHrgSmXISQdMnomY6eNDprVdW9R5xBguEqI954+S6709UyiO7B+6OQ==}
+
   convert-route@1.1.1:
     resolution: {integrity: sha512-FENJ90K52uyE/qpbjy0i0gbglgKaL50BweqXx2OPaSG/pby2woRrnAdSVcGCdFFVvb/u/UTGqKybohiqcFWCMQ==}
 
@@ -2832,6 +2883,9 @@ packages:
   expect-type@1.3.0:
     resolution: {integrity: sha512-knvyeauYhqjOYvQ66MznSMs83wmHrCycNEN6Ao+2AeYEfxUIkuiVxdEa1qlGEPK+We3n0THiDciYSsCcgW/DoA==}
     engines: {node: '>=12.0.0'}
+
+  exsolve@1.0.8:
+    resolution: {integrity: sha512-LmDxfWXwcTArk8fUEnOfSZpHOJ6zOMUJKOtFLFqJLoKJetuQG874Uc7/Kki7zFLzYybmZhp1M7+98pfMqeX8yA==}
 
   fast-deep-equal@3.1.3:
     resolution: {integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==}
@@ -3167,6 +3221,10 @@ packages:
     resolution: {integrity: sha512-DFEqQ3ihfS9blba08cLfYf1NRAIEm+dDjic073DRDc3/JspI/8wYmtDsHwd3+4hwvdxSK7PGaElfTmm0awWJ4w==}
     engines: {node: '>=6.11.5'}
 
+  local-pkg@1.1.2:
+    resolution: {integrity: sha512-arhlxbFRmoQHl33a0Zkle/YWlmNwoyt6QNZEIJcqNbdrsix5Lvc4HyyI3EnwxTYlZYc32EbYrQ8SzEZ7dqgg9A==}
+    engines: {node: '>=14'}
+
   lodash.debounce@4.0.8:
     resolution: {integrity: sha512-FT1yDzDYEoYWhnSGnpE/4Kj1fLZkDFyqRb7fNt6FdYOSxlUWAtp42Eh6Wb0rGIv/m9Bgo7x4GhQbm5Ys4SG5ow==}
 
@@ -3376,6 +3434,9 @@ packages:
   pkg-types@1.3.1:
     resolution: {integrity: sha512-/Jm5M4RvtBFVkKWRu2BLUTNP8/M2a+UwuAX+ae4770q1qVGtfjG+WTCupoZixokjmHiry8uI+dlY8KXYV5HVVQ==}
 
+  pkg-types@2.3.1:
+    resolution: {integrity: sha512-y+ichcgc2LrADuhLNAx8DFjVfgz91pRxfZdI3UDhxHvcVEZsenLO+7XaU5vOp0u/7V/wZ+plyuQxtrDlZJ+yeg==}
+
   postcss@8.4.31:
     resolution: {integrity: sha512-PS08Iboia9mts/2ygV3eLpY5ghnUcfLV/EXTOW1E2qYxJKGGBUtNjN76FYHnMs36RmARn41bC0AZmn+rR0OVpQ==}
     engines: {node: ^10 || ^12 || >=14}
@@ -3387,6 +3448,9 @@ packages:
   proxy-from-env@2.1.0:
     resolution: {integrity: sha512-cJ+oHTW1VAEa8cJslgmUZrc+sjRKgAKl3Zyse6+PV38hZe/V6Z14TbCuXcan9F9ghlz4QrFr2c92TNF82UkYHA==}
     engines: {node: '>=10'}
+
+  quansync@0.2.11:
+    resolution: {integrity: sha512-AifT7QEbW9Nri4tAwR5M/uzpBuqfZf+zwaEM/QkzEjj7NBuFD2rBuy0K3dE+8wltbezDV7JMA0WfnCPYRSYbXA==}
 
   quansync@1.0.0:
     resolution: {integrity: sha512-5xZacEEufv3HSTPQuchrvV6soaiACMFnq1H8wkVioctoH3TRha9Sz66lOxRwPK/qZj7HPiSveih9yAyh98gvqA==}
@@ -3886,6 +3950,11 @@ packages:
         optional: true
       yaml:
         optional: true
+
+  vitest-environment-stencil@1.11.6:
+    resolution: {integrity: sha512-HQzfsZ9WWqvlK3k/5PMUXYmiN2H29dLlM7oKg75/nMoZv0u5DeU5Xs6vTMxqePzXbCRvG/HW0SLUMQNRWnC4EQ==}
+    peerDependencies:
+      '@stencil/core': ^4.0.0 || ^5.0.0-0
 
   vitest@4.1.6:
     resolution: {integrity: sha512-6lvjbS3p9b4CrdCmguzbh2/4uoXhGE2q71R4OX5sqF9R1bo9Xd6fGrMAfvp5wnCzlBnFVdCOp6onuTQVbo8iUQ==}
@@ -5506,6 +5575,14 @@ snapshots:
     dependencies:
       '@stencil/core': 4.43.4
 
+  '@stencil/vitest@1.11.6(@stencil/core@4.43.4)(vitest@4.1.6)':
+    dependencies:
+      '@stencil/core': 4.43.4
+      jiti: 2.7.0
+      local-pkg: 1.1.2
+      vitest: 4.1.6(@types/node@25.7.0)(@vitest/coverage-v8@4.1.6)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.47.1)(yaml@2.8.0))
+      vitest-environment-stencil: 1.11.6(@stencil/core@4.43.4)(vitest@4.1.6)
+
   '@swc-node/core@1.14.1(@swc/core@1.15.8(@swc/helpers@0.5.18))(@swc/types@0.1.26)':
     dependencies:
       '@swc/core': 1.15.8(@swc/helpers@0.5.18)
@@ -6179,6 +6256,8 @@ snapshots:
 
   confbox@0.1.8: {}
 
+  confbox@0.2.4: {}
+
   convert-route@1.1.1: {}
 
   convert-source-map@2.0.0: {}
@@ -6392,6 +6471,8 @@ snapshots:
   events@3.3.0: {}
 
   expect-type@1.3.0: {}
+
+  exsolve@1.0.8: {}
 
   fast-deep-equal@3.1.3: {}
 
@@ -6658,6 +6739,12 @@ snapshots:
   lines-and-columns@2.0.3: {}
 
   loader-runner@4.3.2: {}
+
+  local-pkg@1.1.2:
+    dependencies:
+      mlly: 1.8.2
+      pkg-types: 2.3.1
+      quansync: 0.2.11
 
   lodash.debounce@4.0.8: {}
 
@@ -7023,6 +7110,12 @@ snapshots:
       mlly: 1.8.2
       pathe: 2.0.3
 
+  pkg-types@2.3.1:
+    dependencies:
+      confbox: 0.2.4
+      exsolve: 1.0.8
+      pathe: 2.0.3
+
   postcss@8.4.31:
     dependencies:
       nanoid: 3.3.12
@@ -7036,6 +7129,8 @@ snapshots:
       source-map-js: 1.2.1
 
   proxy-from-env@2.1.0: {}
+
+  quansync@0.2.11: {}
 
   quansync@1.0.0: {}
 
@@ -7505,6 +7600,22 @@ snapshots:
       jiti: 2.7.0
       terser: 5.47.1
       yaml: 2.8.0
+
+  vitest-environment-stencil@1.11.6(@stencil/core@4.43.4)(vitest@4.1.6):
+    dependencies:
+      '@stencil/core': 4.43.4
+      '@stencil/vitest': 1.11.6(@stencil/core@4.43.4)(vitest@4.1.6)
+    transitivePeerDependencies:
+      - '@playwright/test'
+      - '@stencil/mock-doc'
+      - '@vitest/browser-playwright'
+      - '@vitest/browser-preview'
+      - '@vitest/browser-webdriverio'
+      - '@wdio/globals'
+      - happy-dom
+      - jsdom
+      - playwright
+      - vitest
 
   vitest@4.1.6(@types/node@20.19.9)(@vitest/coverage-v8@4.1.6)(vite@8.0.12(@types/node@20.19.9)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.47.1)(yaml@2.8.0)):
     dependencies:

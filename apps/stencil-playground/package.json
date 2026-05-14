@@ -61,8 +61,10 @@
     "@stencil/store": "catalog:"
   },
   "devDependencies": {
+    "@stencil/vitest": "catalog:",
     "@types/node": "catalog:",
-    "oxlint": "catalog:"
+    "oxlint": "catalog:",
+    "vitest": "catalog:"
   },
   "peerDependencies": {
     "@ssv/stencil.core": "workspace:*",

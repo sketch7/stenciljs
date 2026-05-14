@@ -69,6 +69,7 @@ export function ReactiveControllerHostMixin<B extends MixedInCtor>(Base: B) {
 	class ReactiveControllerHostClass extends Base implements ComponentInterface, ReactiveControllerHost {
 		readonly controllers = new Set<ReactiveController>();
 
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TypeScript mixin spec requires `any[]`
 		constructor(...args: any[]) {
 			super(...args);
 			setCurrentHost(this as unknown as ReactiveControllerHost);

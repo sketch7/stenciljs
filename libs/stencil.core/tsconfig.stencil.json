@@ -7,20 +7,14 @@
     "moduleResolution": "bundler",
     "module": "esnext",
     "target": "es2022",
-    "customConditions": ["@ssv/source"],
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
     "noImplicitReturns": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "resolveJsonModule": true,
     "skipLibCheck": true,
     "strict": true,
     "jsx": "react",
     "jsxFactory": "h",
-    "jsxFragmentFactory": "h.Fragment",
-    "types": ["@stencil/vitest/globals"]
+    "jsxFragmentFactory": "h.Fragment"
   },
-  "include": ["src", "vitest.config.ts", "vitest-setup.ts"],
-  "exclude": ["node_modules", "dist", "loader", "hydrate", "www", "src/react"]
+  "include": ["tests", "src", "stencil.config.ts"]
 }

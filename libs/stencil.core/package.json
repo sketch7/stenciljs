@@ -21,14 +21,15 @@
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "stencil-test",
+    "test:watch": "stencil-test --watch",
     "lint": "oxlint src/",
     "fmt": "oxfmt src/",
     "fmt:check": "oxfmt --check src/"
   },
   "devDependencies": {
     "@stencil/core": "catalog:",
+    "@stencil/vitest": "catalog:",
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "oxfmt": "catalog:",

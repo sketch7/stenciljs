@@ -33,7 +33,7 @@ export function getCurrentHost(): ReactiveControllerHost {
 	if (!currentHost) {
 		throw new Error(
 			"Hooks must be called in class field initializers of an SsvElement component. " +
-			"If you are writing tests, call setCurrentHost(host) before invoking hooks.",
+				"If you are writing tests, call setCurrentHost(host) before invoking hooks.",
 		);
 	}
 	return currentHost;

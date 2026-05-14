@@ -1,3 +1,4 @@
+// oxlint-disable max-statements
 import { exec } from "node:child_process";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -223,7 +224,7 @@ export function stencilWatch(options: StencilWatchOptions): Plugin {
 			// Invalidate every cached module that belongs to the Stencil package.
 			// For the SSR environment we also walk up the importer chain (BFS) so
 			// that page-level modules (e.g. Vike's +Page.tsx) which transitively
-			// import rebuilt artefacts are also re-evaluated on the next request —
+			// import rebuilt artifacts are also re-evaluated on the next request —
 			// without this the cached page module continues to serve stale SSR HTML.
 			// For the client environment a direct invalidation is sufficient because
 			// the subsequent full-reload causes the browser to re-fetch everything.

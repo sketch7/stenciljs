@@ -69,8 +69,6 @@ export function ReactiveControllerHostMixin<B extends MixedInCtor>(Base: B) {
 
 		addController(controller: ReactiveController): void {
 			this.controllers.add(controller);
-			// TODO: remove — dev verification log to confirm stencil.core rebuild is picked up
-			console.log("[stencil.core] addController x5:", controller.constructor?.name ?? controller);
 		}
 
 		removeController(controller: ReactiveController): void {

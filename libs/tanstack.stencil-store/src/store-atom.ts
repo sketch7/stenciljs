@@ -1,6 +1,6 @@
 import type { Atom } from "@tanstack/store";
 
-import type { UseSelectorOptions } from "./store-selector";
+import type { UseSelectorOptions } from "./selection-types";
 import { useSelector } from "./store-selector";
 
 /** Return type of {@link useAtom}. */

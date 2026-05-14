@@ -6,6 +6,6 @@ export default defineConfig({
 	hash: false,
 	tsconfig: "tsconfig.lib.json",
 	deps: {
-		neverBundle: ["@stencil/core", "@ssv/stencil.core", "@tanstack/store"],
+		neverBundle: ["@stencil/core", "@ssv/stencil.core", "@ssv/stencil-signals", "@tanstack/store"],
 	},
 });

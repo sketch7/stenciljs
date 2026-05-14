@@ -26,6 +26,7 @@
     "fmt:check": "oxfmt --check src/"
   },
   "devDependencies": {
+    "@ssv/stencil-signals": "workspace:*",
     "@ssv/stencil.core": "workspace:*",
     "@stencil/core": "catalog:",
     "@tanstack/store": "catalog:",
@@ -39,7 +40,13 @@
   },
   "peerDependencies": {
     "@ssv/stencil.core": "workspace:*",
+    "@ssv/stencil-signals": "workspace:*",
     "@stencil/core": ">=4.0.0",
     "@tanstack/store": "^0.11.0"
+  },
+  "peerDependenciesMeta": {
+    "@ssv/stencil-signals": {
+      "optional": true
+    }
   }
 }

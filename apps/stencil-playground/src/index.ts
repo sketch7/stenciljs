@@ -6,3 +6,5 @@ export { AppTimerHost } from "./examples/ssv-core/timer-host/timer-host";
 export { AppTanCounter } from "./examples/ts-store/counter/counter";
 export { AppTanTodo } from "./examples/ts-store/todo/todo";
 export type { Todo as TanTodo } from "./examples/ts-store/todo/todo.store";
+export { AppCtxCounterGroup } from "./examples/context/counter/counter-group";
+export { AppCtxCounter } from "./examples/context/counter/counter";

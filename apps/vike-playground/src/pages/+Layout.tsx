@@ -22,6 +22,10 @@ const navSections: NavSection[] = [
 		],
 	},
 	{
+		title: "SSV Stencil / Context",
+		items: [{ href: "/ssv-stencil/context/counter", label: "Context Counter" }],
+	},
+	{
 		title: "SSV Stencil / TanStack Store",
 		items: [
 			{ href: "/ssv-stencil/ts-store/counter", label: "Counter" },

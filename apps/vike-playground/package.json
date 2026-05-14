@@ -14,7 +14,6 @@
   },
   "dependencies": {
     "@app/stencil-playground": "workspace:*",
-    "@ssv/stencil-signals": "workspace:*",
     "@ssv/vite-plugin-stencil-watch": "workspace:^",
     "dotenv": "catalog:",
     "react": "catalog:",

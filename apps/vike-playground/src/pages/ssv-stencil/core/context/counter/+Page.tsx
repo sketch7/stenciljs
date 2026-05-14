@@ -38,9 +38,12 @@ export default function Page(): JSX.Element {
 							A separate group with its own store, independent of Context A.
 						</p>
 					</div>
-					<div className="rounded-xl border border-[var(--color-card-border)] bg-[var(--color-card)] p-6 flex justify-center">
+					<div className="rounded-xl border border-[var(--color-card-border)] bg-[var(--color-card)] p-6">
 						<AppCtxCounterGroup>
-							<AppCtxCounter />
+							<div className="flex gap-8 justify-center">
+								<AppCtxCounter />
+								<AppCtxCounter />
+							</div>
 						</AppCtxCounterGroup>
 					</div>
 				</section>

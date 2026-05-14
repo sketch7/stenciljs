@@ -7,7 +7,6 @@
     "dist"
   ],
   "type": "module",
-  "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "imports": {
@@ -17,14 +16,12 @@
     ".": {
       "@ssv/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.js"
     },
     "./testing": {
       "@ssv/source": "./src/testing/index.ts",
       "types": "./dist/testing/index.d.ts",
-      "import": "./dist/testing/index.js",
-      "require": "./dist/testing/index.cjs"
+      "import": "./dist/testing/index.js"
     }
   },
   "scripts": {

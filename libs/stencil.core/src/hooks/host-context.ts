@@ -4,7 +4,7 @@ let currentHost: ReactiveControllerHost | null = null;
 
 /**
  * Sets the current host for implicit hook registration.
- * Called automatically by `SsvElement` / `SsvElementMixin` constructors.
+ * Called automatically by `ReactiveControllerHostMixin` constructors.
  * Exported for use in tests and custom host implementations.
  */
 export function setCurrentHost(host: ReactiveControllerHost): void {
@@ -34,7 +34,7 @@ export function clearCurrentHost(): void {
 export function getCurrentHost(): ReactiveControllerHost {
 	if (!currentHost) {
 		throw new Error(
-			"Hooks must be called in class field initializers of an SsvElement component. " +
+			"Hooks must be called in class field initializers of a ReactiveControllerHost component. " +
 				"If you are writing tests, call setCurrentHost(host) before invoking hooks.",
 		);
 	}

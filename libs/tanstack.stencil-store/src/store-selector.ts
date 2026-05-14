@@ -1,5 +1,4 @@
-import type { ReactiveController } from "@ssv/stencil.core";
-import { getCurrentHost } from "@ssv/stencil.core";
+import { use } from "@ssv/stencil.core";
 
 /** Options for {@link useSelector}. */
 export type UseSelectorOptions<TSelected> = {
@@ -30,7 +29,7 @@ function defaultSelector<TSource, TSelected>(snapshot: TSource): TSelected {
  *
  * @example
  * ```ts
- * readonly #count = useSelector(() => counterStore, (s) => s.count);
+ * readonly #count = useSelector(() => counterStore, s => s.count);
  * ```
  *
  * @example
@@ -38,53 +37,52 @@ function defaultSelector<TSource, TSelected>(snapshot: TSource): TSelected {
  * readonly #todos = useSelector(() => todoStore);
  * ```
  */
-// eslint-disable-next-line max-params
 export function useSelector<TSource, TSelected = TSource>(
 	getStore: () => SelectionSource<TSource> | undefined,
 	selector?: (snapshot: TSource) => TSelected,
 	options?: UseSelectorOptions<TSelected>,
 ): () => TSelected | undefined {
-	const host = getCurrentHost();
 	const compare = options?.compare ?? defaultCompare;
 	const select = selector ?? defaultSelector;
 	let unsubscribe: (() => void) | undefined;
 	let subscribedStore: SelectionSource<TSource> | undefined;
 	let lastSelected: TSelected | undefined;
 
-	const ctrl: ReactiveController = {
-		hostWillRender(): void {
-			const store = getStore();
-			if (store === subscribedStore) {
-				return;
-			}
-
-			unsubscribe?.();
-			subscribedStore = store;
-
-			if (!store) {
-				unsubscribe = undefined;
-				lastSelected = undefined;
-				return;
-			}
-
-			lastSelected = select(store.get());
-			unsubscribe = store.subscribe(value => {
-				const next = select(value);
-				if (compare(lastSelected, next)) {
+	use(host => ({
+		hooks: {
+			hostWillRender(): void {
+				const store = getStore();
+				if (store === subscribedStore) {
 					return;
 				}
-				lastSelected = next;
-				host.requestUpdate();
-			}).unsubscribe;
-		},
-		hostDisconnected(): void {
-			unsubscribe?.();
-			unsubscribe = undefined;
-			subscribedStore = undefined;
-			lastSelected = undefined;
-		},
-	};
 
-	host.addController(ctrl);
+				unsubscribe?.();
+				subscribedStore = store;
+
+				if (!store) {
+					unsubscribe = undefined;
+					lastSelected = undefined;
+					return;
+				}
+
+				lastSelected = select(store.get());
+				unsubscribe = store.subscribe(value => {
+					const next = select(value);
+					if (compare(lastSelected, next)) {
+						return;
+					}
+					lastSelected = next;
+					host.requestUpdate();
+				}).unsubscribe;
+			},
+			hostDisconnected(): void {
+				unsubscribe?.();
+				unsubscribe = undefined;
+				subscribedStore = undefined;
+				lastSelected = undefined;
+			},
+		},
+	}));
+
 	return () => lastSelected;
 }

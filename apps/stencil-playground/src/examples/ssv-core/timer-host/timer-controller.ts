@@ -1,3 +1,4 @@
+import { use } from "@ssv/stencil.core";
 import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
 
 class TimerController implements ReactiveController {
@@ -10,9 +11,7 @@ class TimerController implements ReactiveController {
 	constructor(
 		private readonly host: ReactiveControllerHost,
 		private readonly intervalMs = 1000,
-	) {
-		host.addController(this);
-	}
+	) {}
 
 	hostConnected() {
 		this.#elapsed = 0;
@@ -30,6 +29,9 @@ class TimerController implements ReactiveController {
 	}
 }
 
-export function useTimerController(host: ReactiveControllerHost, intervalMs?: number): TimerController {
-	return new TimerController(host, intervalMs);
+export function useTimerController(intervalMs?: number) {
+	return use(host => {
+		const timer = new TimerController(host, intervalMs);
+		return { hooks: timer, value: timer };
+	});
 }

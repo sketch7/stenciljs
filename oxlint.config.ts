@@ -268,6 +268,13 @@ export default defineConfig({
 				"jest/no-hooks": "off", // beforeEach/afterEach are standard vitest setup patterns
 			},
 		},
+		// vitest config files
+		{
+			files: ["vitest.config.ts"],
+			rules: {
+				"import/no-default-export": "off",
+			},
+		},
 		{
 			// Vike convention files — require default exports for pages, layouts, config
 			files: ["**/pages/+*.ts", "**/pages/+*.tsx", "**/pages/**/+*.ts", "**/pages/**/+*.tsx"],

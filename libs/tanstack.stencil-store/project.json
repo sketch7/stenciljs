@@ -22,7 +22,7 @@
         "cwd": "libs/tanstack.stencil-store"
       },
       "cache": true,
-      "dependsOn": []
+      "dependsOn": ["^build"]
     },
     "lint": {
       "executor": "nx:run-commands",

@@ -17,10 +17,10 @@ const totalAtom = createAtom(() => {
 	shadow: true,
 })
 export class AppTanCounter extends SsvElement {
-	readonly #count = useAtom(this, () => countAtom);
-	readonly #additional = useAtom(this, () => additionalAtom);
-	readonly #doubled = useSelector(this, () => doubledAtom);
-	readonly #total = useSelector(this, () => totalAtom);
+	readonly #count = useAtom(() => countAtom);
+	readonly #additional = useAtom(() => additionalAtom);
+	readonly #doubled = useSelector(() => doubledAtom);
+	readonly #total = useSelector(() => totalAtom);
 
 	private handleAdditionalChange(event: Event) {
 		const value = Number.parseInt((event.target as HTMLInputElement).value, 10);

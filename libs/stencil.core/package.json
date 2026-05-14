@@ -7,20 +7,27 @@
     "dist"
   ],
   "type": "module",
-  "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "imports": {
+    "#lib": "./src/index.ts"
+  },
   "exports": {
     ".": {
       "@ssv/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.js"
+    },
+    "./testing": {
+      "@ssv/source": "./src/testing/index.ts",
+      "types": "./dist/testing/index.d.ts",
+      "import": "./dist/testing/index.js"
     }
   },
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",
+    "build:stencil": "stencil build",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "oxlint src/",
@@ -29,6 +36,7 @@
   },
   "devDependencies": {
     "@stencil/core": "catalog:",
+    "@stencil/vitest": "catalog:",
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "oxfmt": "catalog:",

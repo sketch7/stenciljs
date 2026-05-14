@@ -9,12 +9,12 @@ applyTo: "**/*.ts,**/*.md"
 
 - **Short and direct.** One sentence per concept. No filler ("This function...", "Note that...").
 - **Examples first.** Lead with a code block; explain only what the example cannot show.
-- **No implementation detail.** Document *what* and *why*, never *how* internals work.
+- **No implementation detail.** Document _what_ and _why_, never _how_ internals work.
 - **One concern per doc block.** Split multiple scenarios into separate `@example` tags.
 
 ## TSDoc / JSDoc
 
-```ts
+````ts
 // ✅ Good — concise summary, example-first
 /**
  * Selects a slice of state and schedules a re-render when it changes.
@@ -32,7 +32,7 @@ export function useSelector(...) {}
  * It subscribes to the store returned by getStore on each render cycle and
  * calls host.requestUpdate() when the selected value changes...
  */
-```
+````
 
 - Summary line: one sentence, no trailing period required.
 - `@param` / `@returns`: one line each. Skip when the example makes it obvious.
@@ -44,3 +44,10 @@ export function useSelector(...) {}
 - API tables: name | kind | one-line purpose. No sentences.
 - Examples: show the call site only; omit surrounding boilerplate unless critical.
 - Avoid headers like "Overview", "Introduction", "Background".
+
+### README structure
+
+- Keep the README focused on the package entry point: install, API surface, and a link to examples.
+- When a feature or sub-system grows beyond a short section, extract it into `docs/<feature>.md` and replace the section with a one-line link.
+- Each `docs/<feature>.md` covers exactly one concern (e.g. `hooks.md`, `host-context.md`). No mixed topics in one file.
+- API tables in feature docs list only the exports relevant to that feature. Shared or host-level exports stay in the README.

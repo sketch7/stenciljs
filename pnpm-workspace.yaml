@@ -18,6 +18,7 @@ catalog:
   "@stencil/react-output-target": ^1.5.2
   "@stencil/store": ^2.2.2
   "@stencil/ssr": ^0.3.1
+  "@stencil/vitest": ^1.11.6
 
   # ── Framework ────────────────────────────────────────────────────────────────
   react: ^19.2.6

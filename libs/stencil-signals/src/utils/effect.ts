@@ -59,31 +59,31 @@ export type EffectOptions = {
 // ─── Overloads ────────────────────────────────────────────────────────────────
 
 /** Auto-tracking: re-runs whenever any signal read inside `fn` changes. */
-export function effect(fn: () => CleanupFn | void): CleanupFn;
-export function effect(host: ReactiveControllerHost, fn: () => CleanupFn | void): CleanupFn;
+export function effect(fn: () => CleanupFn | undefined): CleanupFn;
+export function effect(host: ReactiveControllerHost, fn: () => CleanupFn | undefined): CleanupFn;
 
 /** Explicit-deps: re-runs only when signals in `deps` change. */
 export function effect<const Deps extends readonly AnySignal[]>(
 	deps: Deps,
-	fn: (values: SignalValues<Deps>, onCleanup: (fn: CleanupFn) => void) => CleanupFn | void,
+	fn: (values: SignalValues<Deps>, onCleanup: (fn: CleanupFn) => void) => CleanupFn | undefined,
 	options?: EffectOptions,
 ): CleanupFn;
 export function effect<const Deps extends readonly AnySignal[]>(
 	host: ReactiveControllerHost,
 	deps: Deps,
-	fn: (values: SignalValues<Deps>, onCleanup: (fn: CleanupFn) => void) => CleanupFn | void,
+	fn: (values: SignalValues<Deps>, onCleanup: (fn: CleanupFn) => void) => CleanupFn | undefined,
 	options?: EffectOptions,
 ): CleanupFn;
 
 // ─── Implementation ───────────────────────────────────────────────────────────
 
 export function effect(
-	hostOrFnOrDeps: ReactiveControllerHost | (() => CleanupFn | void) | readonly AnySignal[],
+	hostOrFnOrDeps: ReactiveControllerHost | (() => CleanupFn | undefined) | readonly AnySignal[],
 	fnOrDeps?:
-		| (() => CleanupFn | void)
+		| (() => CleanupFn | undefined)
 		| readonly AnySignal[]
-		| ((values: unknown[], onCleanup: (fn: CleanupFn) => void) => CleanupFn | void),
-	fnOrOptions?: ((values: unknown[], onCleanup: (fn: CleanupFn) => void) => CleanupFn | void) | EffectOptions,
+		| ((values: unknown[], onCleanup: (fn: CleanupFn) => void) => CleanupFn | undefined),
+	fnOrOptions?: ((values: unknown[], onCleanup: (fn: CleanupFn) => void) => CleanupFn | undefined) | EffectOptions,
 	maybeOptions?: EffectOptions,
 ): CleanupFn {
 	// ReactiveControllerHost: effect(host, fn) or effect(host, deps, fn, options?)
@@ -91,11 +91,11 @@ export function effect(
 		const host = hostOrFnOrDeps as ReactiveControllerHost;
 		if (typeof fnOrDeps === "function") {
 			// effect(host, fn)
-			return _effectWithControllerHost(() => autoTrackingEffect(fnOrDeps as () => CleanupFn | void), host);
+			return _effectWithControllerHost(() => autoTrackingEffect(fnOrDeps as () => CleanupFn | undefined), host);
 		}
 		// effect(host, deps, fn, options?)
 		const deps = fnOrDeps as readonly AnySignal[];
-		const explicitFn = fnOrOptions as (values: unknown[], onCleanup: (fn: CleanupFn) => void) => CleanupFn | void;
+		const explicitFn = fnOrOptions as (values: unknown[], onCleanup: (fn: CleanupFn) => void) => CleanupFn | undefined;
 		const options = maybeOptions ?? {};
 		return _effectWithControllerHost(() => explicitDepsEffect(deps, explicitFn, options), host);
 	}
@@ -110,7 +110,7 @@ export function effect(
 
 	// Explicit-deps overload: effect(deps, fn, options?)
 	const deps = hostOrFnOrDeps as readonly AnySignal[];
-	const explicitFn = fnOrDeps as (values: unknown[], onCleanup: (fn: CleanupFn) => void) => CleanupFn | void;
+	const explicitFn = fnOrDeps as (values: unknown[], onCleanup: (fn: CleanupFn) => void) => CleanupFn | undefined;
 	const options = (fnOrOptions as EffectOptions) ?? {};
 	const stop = explicitDepsEffect(deps, explicitFn, options);
 	getActiveOwner()?.push(stop);
@@ -150,7 +150,7 @@ function _effectWithControllerHost(factory: () => CleanupFn, host: ReactiveContr
 // Delegates to the adapter's createEffect() which handles dep tracking
 // internally for both TC39 (Signal.Computed + Watcher) and Preact (effect()).
 
-function autoTrackingEffect(fn: () => CleanupFn | void): CleanupFn {
+function autoTrackingEffect(fn: () => CleanupFn | undefined): CleanupFn {
 	return getAdapter().createEffect(fn);
 }
 
@@ -163,12 +163,12 @@ function autoTrackingEffect(fn: () => CleanupFn | void): CleanupFn {
 
 function explicitDepsEffect(
 	deps: readonly AnySignal[],
-	fn: (values: unknown[], onCleanup: (fn: CleanupFn) => void) => CleanupFn | void,
+	fn: (values: unknown[], onCleanup: (fn: CleanupFn) => void) => CleanupFn | undefined,
 	options: EffectOptions,
 ): CleanupFn {
 	const adapter = getAdapter();
 	let pendingCleanup: CleanupFn | null = null;
-	let userCleanup: CleanupFn | void = undefined;
+	let userCleanup: CleanupFn | undefined = undefined;
 	let disposed = false;
 
 	function runEffect(): void {

@@ -42,7 +42,7 @@ export type SignalPropOptions<T = unknown> = {
  *  3. `unknown`   — fallback when neither is available
  */
 type PropValue<H, K extends string, Opts extends SignalPropOptions<unknown>> = Opts extends {
-	transform: (v: infer _In) => infer R;
+	transform: (v: unknown) => infer R;
 }
 	? R
 	: (H & Record<K, unknown>)[K];

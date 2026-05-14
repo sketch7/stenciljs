@@ -20,8 +20,9 @@ export default defineConfig(({ mode }) => {
 			tailwindcss(),
 			stencilWatch({
 				packageDir: stencilPkgDir,
-				watchDirs: [path.resolve(__dirname, "../../libs/stenciljs.core/src")],
-				preBuildCommand: "pnpm --filter @ssv/stencil.core build",
+				watchDirs: [path.resolve(__dirname, "../../libs/stencil.core/src")],
+				preBuildCommand: "pnpm nx run stencil-core:build",
+				preBuildCommandCwd: path.resolve(__dirname, "../.."),
 			}),
 			stencilSSR({
 				module: import("@app/stencil-playground/react"),

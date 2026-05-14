@@ -47,19 +47,45 @@ export type StencilWatchOptions = {
 
 	/**
 	 * Additional source directories to watch. Changes in these directories also
-	 * trigger a Stencil rebuild. Use this to watch workspace peer-dependency
-	 * sources (e.g. `libs/stenciljs.core/src`) so HMR works when those packages
-	 * change without a separate build step.
+	 * trigger a Stencil rebuild AND the `preBuildCommand`. Use this to watch
+	 * workspace peer-dependency sources (e.g. `libs/stencil.core/src`) so the
+	 * dependency is rebuilt before Stencil bundles it.
+	 *
+	 * Changes in `srcDir` (the main Stencil source) do NOT run `preBuildCommand` —
+	 * only changes in these extra watch directories do, avoiding redundant work.
 	 */
 	watchDirs?: string[];
 
 	/**
 	 * Optional command to run before the main Stencil build command.
-	 * Use this to rebuild workspace dependencies (e.g. `pnpm --filter @ssv/stencil.core build`)
-	 * so their dist is up-to-date before Stencil bundles them.
-	 * Runs in the same `cwd` as `buildCommand` (i.e. `packageDir`).
+	 * Only executed when the triggering file came from `watchDirs` (not from
+	 * `srcDir`), so peer dependencies are only rebuilt when their own sources change.
+	 *
+	 * Prefer an Nx-based command (e.g. `"pnpm nx run stencil-core:build"`) so
+	 * Nx's output cache makes it nearly instant on a cache hit.
 	 */
 	preBuildCommand?: string;
+
+	/**
+	 * Working directory for `preBuildCommand`.
+	 * Defaults to `packageDir`. Set this to the monorepo workspace root when
+	 * using Nx commands so that `nx.json` can be resolved.
+	 *
+	 * @example
+	 * ```ts
+	 * preBuildCommandCwd: path.resolve(__dirname, "../.."), // workspace root
+	 * ```
+	 */
+	preBuildCommandCwd?: string;
+
+	/**
+	 * Milliseconds to wait after the last file-change event before starting a
+	 * build. Batches rapid saves (e.g. format-on-save touching multiple files)
+	 * into a single rebuild.
+	 *
+	 * Defaults to `100`.
+	 */
+	debounceMs?: number;
 };
 
 /**
@@ -91,6 +117,8 @@ export function stencilWatch(options: StencilWatchOptions): Plugin {
 		packageId,
 		watchDirs = [],
 		preBuildCommand,
+		preBuildCommandCwd,
+		debounceMs = 100,
 	} = options;
 
 	const srcDir = path.normalize(srcDirOption ?? path.join(packageDir, "src"));
@@ -112,37 +140,76 @@ export function stencilWatch(options: StencilWatchOptions): Plugin {
 		return resolvedWatchDirs.some(d => f.startsWith(d));
 	};
 
-	let building = false;
-	let pending = false;
+	/** Returns true when the file lives inside one of the extra `watchDirs`. */
+	const isWatchDirFile = (file: string): boolean => {
+		const f = path.normalize(file);
+		return resolvedWatchDirs.some(d => f.startsWith(d));
+	};
 
-	async function build(server: ViteDevServer): Promise<void> {
+	let building = false;
+	/** Whether a build is queued to run after the current one finishes. */
+	let pending = false;
+	/**
+	 * Accumulated flag across the debounce window (and any queued pending build)
+	 * tracking whether the next build needs to run `preBuildCommand`.
+	 * Set when a changed file originates from `watchDirs`; cleared after each build starts.
+	 */
+	let pendingNeedsPreBuild = false;
+	let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+	/** Schedule a build with debounce, accumulating the preBuild need. */
+	function trigger(server: ViteDevServer, needsPreBuild: boolean): void {
+		if (needsPreBuild) {
+			pendingNeedsPreBuild = true;
+		}
+		if (debounceTimer !== null) {
+			clearTimeout(debounceTimer);
+		}
+		debounceTimer = setTimeout(() => {
+			debounceTimer = null;
+			const withPreBuild = pendingNeedsPreBuild;
+			pendingNeedsPreBuild = false;
+			build(server, withPreBuild);
+		}, debounceMs);
+	}
+
+	async function build(server: ViteDevServer, needsPreBuild: boolean): Promise<void> {
 		if (building) {
+			// Accumulate preBuild need for the queued run.
+			if (needsPreBuild) {
+				pendingNeedsPreBuild = true;
+			}
 			pending = true;
 			return;
 		}
 		building = true;
-		server.config.logger.info("[stencil] rebuilding…", { timestamp: true });
+		const label = needsPreBuild ? "[stencil] rebuilding (with pre-build)…" : "[stencil] rebuilding…";
+		server.config.logger.info(label, { timestamp: true });
 		try {
-			if (preBuildCommand) {
-				await execAsync(preBuildCommand, { cwd: packageDir });
+			if (preBuildCommand && needsPreBuild) {
+				await execAsync(preBuildCommand, { cwd: preBuildCommandCwd ?? packageDir });
 			}
 			await execAsync(buildCommand, { cwd: packageDir });
 			server.config.logger.info("[stencil] rebuild done", { timestamp: true });
-			// Invalidate every cached module from the Stencil package so Vite
-			// fetches the fresh build artefacts on the next request.
-			for (const mod of server.moduleGraph.idToModuleMap.values()) {
-				if (mod.id?.includes(resolvedPackageId)) {
-					server.moduleGraph.invalidateModule(mod);
+			// Invalidate every cached module — both client and SSR environments —
+			// so Vite fetches fresh artefacts on the next request.
+			for (const env of Object.values(server.environments)) {
+				for (const mod of env.moduleGraph.idToModuleMap.values()) {
+					if (mod.id?.includes(resolvedPackageId)) {
+						env.moduleGraph.invalidateModule(mod);
+					}
 				}
 			}
-			server.ws.send({ type: "full-reload" });
+			server.hot.send({ type: "full-reload" });
 		} catch (error) {
 			server.config.logger.error(`[stencil] rebuild failed:\n${(error as Error).message}`);
 		} finally {
 			building = false;
 			if (pending) {
+				const wasNeededPreBuild = pendingNeedsPreBuild;
 				pending = false;
-				await build(server);
+				pendingNeedsPreBuild = false;
+				await build(server, wasNeededPreBuild);
 			}
 		}
 	}
@@ -157,17 +224,17 @@ export function stencilWatch(options: StencilWatchOptions): Plugin {
 			}
 			server.watcher.on("change", file => {
 				if (isUserFile(file)) {
-					build(server);
+					trigger(server, isWatchDirFile(file));
 				}
 			});
 			server.watcher.on("add", file => {
 				if (isUserFile(file)) {
-					build(server);
+					trigger(server, isWatchDirFile(file));
 				}
 			});
 			server.watcher.on("unlink", file => {
 				if (isUserFile(file)) {
-					build(server);
+					trigger(server, isWatchDirFile(file));
 				}
 			});
 		},

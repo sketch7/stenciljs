@@ -65,6 +65,8 @@ type PropEntry = {
 	exposed: WritableSignal<unknown> | Signal<unknown>;
 	isSyncing: { value: boolean };
 	options: SignalPropOptions<unknown>;
+	/** Last value received from the external @Prop — used by twoWay to detect genuine external changes. */
+	lastExternalPropValue: unknown;
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -127,11 +129,22 @@ function buildEntry(host: AnyHost, propName: string, options: SignalPropOptions<
 	const inner = createSignal(initial);
 	const isSyncing = { value: false };
 	const exposed = options.twoWay ? makeTwoWaySignal(inner, isSyncing, host, propName) : inner.asReadonly();
-	return { propName, inner, exposed, isSyncing, options };
+	return { propName, inner, exposed, isSyncing, options, lastExternalPropValue: initial };
 }
 
 function syncEntry(host: AnyHost, entry: PropEntry): void {
 	const value = applyTransform(host[entry.propName], entry.options);
+
+	if (entry.options.twoWay) {
+		// For twoWay props, only sync when the external prop actually changes.
+		// This preserves internal set() calls until the parent explicitly responds.
+		const propChanged = !Object.is(value, entry.lastExternalPropValue);
+		if (!propChanged) {
+			return;
+		}
+		entry.lastExternalPropValue = value;
+	}
+
 	if (!Object.is(value, entry.inner.peek())) {
 		entry.isSyncing.value = true;
 		entry.inner.set(value);

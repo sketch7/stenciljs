@@ -94,9 +94,7 @@ export class AppTimer extends SsvElement {
 		return (
 			<div class="timer">
 				<app-timer-counter time-remaining={this.$timeRemaining()} />
-
 				{done && <p class="badge-done">Done!</p>}
-
 				<div class="controls">
 					<button type="button" class="btn btn-primary" disabled={done} onClick={() => this.#toggle()}>
 						{running ? "Pause" : "Start"}
@@ -105,7 +103,6 @@ export class AppTimer extends SsvElement {
 						Reset
 					</button>
 				</div>
-
 				<div class="presets">
 					{PRESETS.map(s => (
 						<button type="button" class="btn btn-preset" key={s} onClick={() => this.#setTime(s)}>

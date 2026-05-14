@@ -9,7 +9,6 @@ export const config: Config = {
 	namespace: "stencil-core-test",
 	srcDir: "tests",
 	tsconfig: "tsconfig.stencil.json",
-	buildDist: true,
 	outputTargets: [
 		{
 			type: "dist-custom-elements",

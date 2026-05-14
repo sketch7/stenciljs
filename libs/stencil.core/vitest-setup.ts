@@ -10,4 +10,5 @@ performance.mark("st:app:start");
 await import("./dist/components/test-counter.js");
 await import("./dist/components/test-parent.js");
 
+// oxlint-disable-next-line unicorn/require-module-specifiers
 export {};

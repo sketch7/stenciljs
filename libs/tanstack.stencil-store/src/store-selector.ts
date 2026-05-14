@@ -49,38 +49,36 @@ export function useSelector<TSource, TSelected = TSource>(
 	let lastSelected: TSelected | undefined;
 
 	use(host => ({
-		hooks: {
-			hostWillRender(): void {
-				const store = getStore();
-				if (store === subscribedStore) {
-					return;
-				}
+		hostWillRender(): void {
+			const store = getStore();
+			if (store === subscribedStore) {
+				return;
+			}
 
-				unsubscribe?.();
-				subscribedStore = store;
+			unsubscribe?.();
+			subscribedStore = store;
 
-				if (!store) {
-					unsubscribe = undefined;
-					lastSelected = undefined;
-					return;
-				}
-
-				lastSelected = select(store.get());
-				unsubscribe = store.subscribe(value => {
-					const next = select(value);
-					if (compare(lastSelected, next)) {
-						return;
-					}
-					lastSelected = next;
-					host.requestUpdate();
-				}).unsubscribe;
-			},
-			hostDisconnected(): void {
-				unsubscribe?.();
+			if (!store) {
 				unsubscribe = undefined;
-				subscribedStore = undefined;
 				lastSelected = undefined;
-			},
+				return;
+			}
+
+			lastSelected = select(store.get());
+			unsubscribe = store.subscribe(value => {
+				const next = select(value);
+				if (compare(lastSelected, next)) {
+					return;
+				}
+				lastSelected = next;
+				host.requestUpdate();
+			}).unsubscribe;
+		},
+		hostDisconnected(): void {
+			unsubscribe?.();
+			unsubscribe = undefined;
+			subscribedStore = undefined;
+			lastSelected = undefined;
 		},
 	}));
 

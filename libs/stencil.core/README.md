@@ -25,11 +25,17 @@ pnpm add @ssv/stencil.core
 
 ### 1. Implement a hook
 
-Use `use(factory)` — the factory receives `host` and returns `{ hooks: ReactiveController; value? }`. The `hooks` object is registered as the controller; `value` is returned to the caller with lifecycle methods stripped from its type. Omit `value` for side-effect-only hooks.
+`use(factory)` is the core primitive. Three factory forms are supported:
 
-> Lifecycle method typos (e.g. `hostDisconnectedX`) on the `hooks` object are caught at compile time because `hooks` is typed as the exact `ReactiveController` interface.
+| Form                                      | Returns                                 | When to use                              |
+| ----------------------------------------- | --------------------------------------- | ---------------------------------------- |
+| `use((host) => ({ hooks, value }))`       | `Omit<value, keyof ReactiveController>` | Hook exposes state — typo-safe lifecycle |
+| `use((host) => ({ hostConnected, ... }))` | `void`                                  | Side-effects only, simpler syntax        |
+| `use(controller)`                         | `void`                                  | Pre-built controller object              |
 
-#### Inline (closure) — preferred
+> When using the `hooks` key, TypeScript's excess-property check catches lifecycle typos (e.g. `hostDisconnectedX`) at compile time.
+
+#### Inline (closure) — preferred when exposing state
 
 ```ts
 // mouse-controller.ts
@@ -60,6 +66,33 @@ export function useMouseController() {
   });
 }
 // Inferred return type: { pos: { x: number; y: number } }
+```
+
+#### Side-effects only — return `ReactiveController` directly
+
+When the hook manages its own return value (e.g. returns a selector function), return a plain
+`ReactiveController` from the factory instead of the `{ hooks, value }` wrapper.
+
+```ts
+export function useResizeObserver(
+  onResize: (entry: ResizeObserverEntry) => void,
+) {
+  let observer: ResizeObserver | undefined;
+
+  use(host => ({
+    hostConnected() {
+      observer = new ResizeObserver(([entry]) => {
+        onResize(entry);
+        host.requestUpdate();
+      });
+      observer.observe(host as unknown as Element);
+    },
+    hostDisconnected() {
+      observer?.disconnect();
+      observer = undefined;
+    },
+  }));
+}
 ```
 
 #### Class — when you need private fields or methods

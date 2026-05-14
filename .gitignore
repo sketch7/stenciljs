@@ -5,6 +5,14 @@ dist
 tmp
 out-tsc
 
+*~
+*.sw[mnpcod]
+*.log
+*.lock
+*.tmp
+*.tmp.*
+log.txt
+
 # dependencies
 node_modules
 
@@ -47,3 +55,7 @@ Thumbs.db
 .claude/settings.local.json
 .nx/polygraph
 .nx/self-healing
+
+# stencil
+.stencil/
+**/components.d.ts

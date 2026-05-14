@@ -15,6 +15,16 @@
       "cache": true,
       "dependsOn": ["^build"]
     },
+    "build:stencil": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm build:stencil",
+        "cwd": "libs/stencil.core"
+      },
+      "outputs": ["{projectRoot}/dist/components"],
+      "cache": true,
+      "dependsOn": []
+    },
     "test": {
       "executor": "nx:run-commands",
       "options": {
@@ -22,7 +32,7 @@
         "cwd": "libs/stencil.core"
       },
       "cache": true,
-      "dependsOn": []
+      "dependsOn": ["build:stencil"]
     },
     "lint": {
       "executor": "nx:run-commands",

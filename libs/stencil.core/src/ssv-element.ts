@@ -1,7 +1,7 @@
 import type { MixedInCtor } from "@stencil/core";
 import { Mixin } from "@stencil/core";
 
-import { ReactiveControllerHostMixin } from "./reactive-controller";
+import { ReactiveControllerHostMixin } from "./hooks/reactive-controller";
 
 /**
  * Base class for Stencil components that host `ReactiveController`s.
@@ -10,7 +10,7 @@ import { ReactiveControllerHostMixin } from "./reactive-controller";
  * ```ts
  * @Component({ tag: 'my-component', shadow: true })
  * export class MyComponent extends SsvElement {
- *   private mouse = useMouseController(this);
+ *   private mouse = useMouseController();
  * }
  * ```
  *
@@ -25,7 +25,7 @@ export class SsvElement extends Mixin(ReactiveControllerHostMixin) {}
  * ```ts
  * @Component({ tag: 'my-component', shadow: true })
  * export class MyComponent extends Mixin(SsvElementMixin) {
- *   private mouse = useMouseController(this);
+ *   private mouse = useMouseController();
  * }
  * ```
  */

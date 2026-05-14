@@ -1,44 +1,8 @@
-import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
+import { TestHost } from "@ssv/stencil.core/testing";
 import { createAtom } from "@tanstack/store";
-import { describe, expect, it, beforeEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { useAtom } from "./store-atom";
-
-class TestHost implements ReactiveControllerHost {
-	readonly controllers = new Set<ReactiveController>();
-	renderCount = 0;
-
-	addController(ctrl: ReactiveController): void {
-		this.controllers.add(ctrl);
-	}
-
-	removeController(ctrl: ReactiveController): void {
-		this.controllers.delete(ctrl);
-	}
-
-	/** Simulates Stencil calling componentWillRender → hostWillRender on each controller. */
-	render(): void {
-		for (const ctrl of this.controllers) {
-			ctrl.hostWillRender?.();
-		}
-	}
-
-	/**
-	 * Simulates Stencil scheduling and executing a re-render after forceUpdate().
-	 * Increments renderCount then runs the full render cycle.
-	 */
-	requestUpdate(): void {
-		this.renderCount++;
-		this.render();
-	}
-
-	/** Simulates Stencil calling disconnectedCallback → hostDisconnected. */
-	disconnect(): void {
-		for (const ctrl of this.controllers) {
-			ctrl.hostDisconnected?.();
-		}
-	}
-}
 
 describe("useAtom", () => {
 	let host: TestHost;
@@ -47,16 +11,20 @@ describe("useAtom", () => {
 		host = new TestHost();
 	});
 
+	afterEach(() => {
+		host.dispose();
+	});
+
 	it("reads the current atom value after render", () => {
 		const atom = createAtom(42);
-		const state = useAtom(host, () => atom);
+		const state = useAtom(() => atom);
 		host.render();
 		expect(state.value).toBe(42);
 	});
 
 	it("set(value) updates the atom", () => {
 		const atom = createAtom(0);
-		const state = useAtom(host, () => atom);
+		const state = useAtom(() => atom);
 		host.render();
 
 		state.set(99);
@@ -66,7 +34,7 @@ describe("useAtom", () => {
 
 	it("set(updater) applies updater function", () => {
 		const atom = createAtom(10);
-		const state = useAtom(host, () => atom);
+		const state = useAtom(() => atom);
 		host.render();
 
 		state.set(prev => prev + 5);
@@ -76,7 +44,7 @@ describe("useAtom", () => {
 
 	it("triggers re-render when atom value changes via set()", () => {
 		const atom = createAtom(0);
-		const state = useAtom(host, () => atom);
+		const state = useAtom(() => atom);
 		host.render();
 
 		state.set(1);
@@ -87,13 +55,13 @@ describe("useAtom", () => {
 
 	it("does not trigger re-render when set() value is unchanged", () => {
 		const atom = createAtom(5);
-		useAtom(host, () => atom);
+		useAtom(() => atom);
 		host.render();
 
 		// setState with same value — @tanstack/store won't notify subscribers
 		// because the store's equality check prevents notification
 		const atom2 = createAtom(5);
-		const state2 = useAtom(host, () => atom2);
+		const state2 = useAtom(() => atom2);
 		host.render();
 
 		atom2.set(5);
@@ -104,7 +72,7 @@ describe("useAtom", () => {
 
 	it("does not trigger re-render after disconnect", () => {
 		const atom = createAtom(0);
-		useAtom(host, () => atom);
+		useAtom(() => atom);
 		host.render();
 		host.disconnect();
 
@@ -115,7 +83,7 @@ describe("useAtom", () => {
 
 	it("value reflects latest set() after re-render", () => {
 		const atom = createAtom(0);
-		const state = useAtom(host, () => atom);
+		const state = useAtom(() => atom);
 		host.render();
 
 		state.set(7);
@@ -127,7 +95,7 @@ describe("useAtom", () => {
 
 	it("respects custom compare option — no re-render when within threshold", () => {
 		const atom = createAtom(1);
-		useAtom(host, () => atom, {
+		useAtom(() => atom, {
 			compare: (a, b) => Math.abs((a as number) - (b as number)) < 5,
 		});
 		host.render();
@@ -140,7 +108,7 @@ describe("useAtom", () => {
 
 	it("respects custom compare option — re-renders when outside threshold", () => {
 		const atom = createAtom(1);
-		const state = useAtom(host, () => atom, {
+		const state = useAtom(() => atom, {
 			compare: (a, b) => Math.abs((a as number) - (b as number)) < 5,
 		});
 		host.render();
@@ -155,9 +123,8 @@ describe("useAtom", () => {
 	it("value is accessible via a getter on a host subclass (component pattern)", () => {
 		const atom = createAtom(0);
 
-		// oxlint-disable-next-line max-classes-per-file
 		class ComponentLike extends TestHost {
-			readonly count = useAtom(this, () => atom);
+			readonly count = useAtom(() => atom);
 
 			increment() {
 				this.count.set(prev => prev + 1);

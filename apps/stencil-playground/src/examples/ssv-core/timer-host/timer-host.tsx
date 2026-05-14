@@ -13,7 +13,7 @@ function pad(n: number): string {
 	shadow: true,
 })
 export class AppTimerHost extends Mixin(SsvElementMixin) {
-	private timer = useTimerController(this, 1000);
+	private timer = useTimerController(1000);
 
 	render() {
 		const totalSeconds = Math.floor(this.timer.elapsed / 1000);

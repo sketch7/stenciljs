@@ -12,7 +12,10 @@ export type TanTodoState = {
 };
 
 export const todoStore = createStore(
-	{ todos: [] as Todo[], nextId: 1 } satisfies TanTodoState,
+	{
+		todos: [] as Todo[],
+		nextId: 1,
+	} satisfies TanTodoState,
 	({ setState }) => ({
 		add(text: string) {
 			const trimmed = text.trim();

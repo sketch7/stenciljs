@@ -50,7 +50,6 @@ export type ReactiveControllerHost = {
 	removeController(controller: ReactiveController): void;
 	/** Schedules a re-render of the host component. */
 	requestUpdate(): void;
-	render?(): unknown;
 };
 
 /**

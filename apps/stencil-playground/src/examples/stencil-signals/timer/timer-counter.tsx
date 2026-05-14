@@ -1,5 +1,5 @@
-import { computed, withSignalController } from "@ssv/stencil-signals";
-import { withSignalProps } from "@ssv/stencil-signals/extensions";
+import { computed, useSignalController } from "@ssv/stencil-signals";
+import { useSignalProps } from "@ssv/stencil-signals/extensions";
 import { SsvElement } from "@ssv/stencil.core";
 import { Component, Prop, h } from "@stencil/core";
 
@@ -15,11 +15,8 @@ function pad(n: number): string {
 export class AppTimerCounter extends SsvElement {
 	@Prop() timeRemaining = 0;
 
-	readonly signalWatcher = withSignalController(this);
-	readonly $props = withSignalProps(
-		this,
-		AppTimerCounter,
-	)({
+	readonly signalWatcher = useSignalController();
+	readonly $props = useSignalProps(AppTimerCounter)({
 		timeRemaining: {},
 	});
 	readonly $mins = computed(() => Math.floor(this.$props.timeRemaining() / 60));

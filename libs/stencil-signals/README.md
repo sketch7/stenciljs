@@ -57,16 +57,17 @@ export class MyCounter extends SignalWatcher(class {}) {
 }
 ```
 
-| Feature                    | `@State()` | stencil-signals             |
-| -------------------------- | ---------- | --------------------------- |
-| Triggers re-render         | ✅         | ✅                          |
-| Shared across components   | ❌         | ✅                          |
-| Computed/derived values    | ❌         | ✅ `computed()`             |
-| Auto-tracking side effects | ❌         | ✅ `effect(fn)`             |
-| Explicit-dep side effects  | ❌         | ✅ `effect(host, deps, fn)` |
-| Async derived state        | ❌         | ✅ `computedAsync`          |
-| Previous value tracking    | ❌         | ✅ `computedPrevious`       |
-| TC39 standard              | ❌         | ✅                          |
+| Feature                    | `@State()` | stencil-signals                               |
+| -------------------------- | ---------- | --------------------------------------------- |
+| Triggers re-render         | ✅         | ✅                                            |
+| Shared across components   | ❌         | ✅                                            |
+| Computed/derived values    | ❌         | ✅ `computed()`                               |
+| Auto-tracking side effects | ❌         | ✅ `effect(fn)`                               |
+| Explicit-dep side effects  | ❌         | ✅ `effect(deps, fn)`                         |
+| Lifecycle-bound effects    | ❌         | ✅ `useSignalEffect(fn/deps, fn)`             |
+| Async derived state        | ❌         | ✅ `computedAsync` / `useComputedAsync`       |
+| Previous value tracking    | ❌         | ✅ `computedPrevious` / `useComputedPrevious` |
+| TC39 standard              | ❌         | ✅                                            |
 
 ## Features
 
@@ -74,9 +75,12 @@ export class MyCounter extends SignalWatcher(class {}) {
 - **`SignalWatcherController`** — composition-pattern alternative to the mixin; extend `SsvElement` from `@ssv/stencil.core` and call `withSignalController(this)` as a class-property initializer
 - **`@useSignal` decorator** — bind a signal directly to a class property for ergonomic reads and writes
 - **`withSignalProps`** — bridge multiple `@Prop()` fields to signals with full type inference; one-way or two-way bindings; `transform` typed from the prop type automatically
-- **`effect`** — side effects with auto-tracking or explicit dependencies, with cleanup support
-- **`computedAsync`** — async derived signals with `pending`/`resolved`/`error` status and automatic `AbortSignal` cancellation
-- **`computedPrevious`** — derived signal that holds the previous value of another signal
+- **`effect`** — standalone side effects (auto-tracking or explicit deps); returns a dispose function
+- **`useSignalEffect`** — lifecycle-bound variant of `effect`; auto-starts on connect, auto-disposes on disconnect
+- **`computedAsync`** — standalone async derived signal with `pending`/`resolved`/`error` status and `AbortSignal` cancellation
+- **`useComputedAsync`** — lifecycle-bound variant of `computedAsync`
+- **`computedPrevious`** — standalone derived signal that holds the previous value of another signal
+- **`useComputedPrevious`** — lifecycle-bound variant of `computedPrevious`
 - **`createStore`** — wrap a plain object in per-property signals via a reactive Proxy
 - **Dual-backend** — TC39 (`signal-polyfill`) or Preact Signals; same API, swap by changing the import path
 - **Stencil `Mixin()` compatible** — composes with other Stencil controller mixins (v4.37+)
@@ -227,7 +231,7 @@ export class MyCounter extends SsvElement {
 Pass `this` to any watcher utility from a class-property initializer and the utility registers its lifecycle via `addController`, auto-disposing on disconnect and reiniting on the next connect:
 
 ```tsx
-readonly _titleEff = effect(this, () => {
+readonly _titleEff = useSignalEffect(() => {
   document.title = `Count: ${count()}`;
 });
 ```
@@ -352,6 +356,8 @@ Pair each two-way prop with a Stencil `@Event()` declaration so output targets (
 
 ### `effect`
 
+Standalone, framework-agnostic. Runs immediately and returns a dispose function.
+
 **Auto-tracking** — any signal read inside the callback is tracked automatically:
 
 ```ts
@@ -362,22 +368,9 @@ const stop = effect(() => {
 stop(); // dispose manually
 ```
 
-Inside a `SignalWatcher` component, pass `this` as the **first** argument — the effect is auto-disposed on `disconnectedCallback` and reinited on `connectedCallback`:
-
-```tsx
-@Component({ tag: "my-comp", shadow: false })
-export class MyComp extends Mixin(SignalWatcherMixin, SsvElementMixin) {
-  readonly titleWatch = effect(this, () => {
-    document.title = `Count: ${count()}`;
-  });
-
-  // titleWatch() can still be called manually to dispose early
-}
-```
-
 If the callback returns a function, it is called as cleanup before the next re-run.
 
-**Explicit dependencies** — list the signals you care about; values are passed as a typed tuple (no `()` call needed inside `fn`):
+**Explicit dependencies** — list the signals you care about; values are passed as a typed tuple:
 
 ```ts
 const stop = effect(
@@ -385,7 +378,6 @@ const stop = effect(
   ([id, currentTheme], onCleanup) => {
     const controller = new AbortController();
     onCleanup(() => controller.abort());
-
     fetch(`/api/users/${id}?theme=${currentTheme}`, {
       signal: controller.signal,
     })
@@ -394,20 +386,39 @@ const stop = effect(
   },
   { defer: true }, // skip the initial run, fire only on first change
 );
+
+stop(); // dispose manually
 ```
 
-With `this` as host (options can be omitted when no options are needed):
+Signal reads _inside_ `fn` that are not in `deps` are untracked.
+
+### `useSignalEffect`
+
+Lifecycle-bound wrapper over `effect`. Must be called in a class-field initializer (where `use()` resolves the host automatically). The effect starts on `hostConnected` and is disposed on `hostDisconnected`.
+
+**Auto-tracking:**
 
 ```tsx
-private readonly _stop = effect(this, [userId, theme], ([id, t], onCleanup) => {
+@Component({ tag: "my-comp", shadow: false })
+export class MyComp extends SsvElement {
+  readonly signalWatcher = useSignalController();
+
+  readonly _titleEff = useSignalEffect(() => {
+    document.title = `Count: ${count()}`;
+  });
+}
+```
+
+**Explicit dependencies:**
+
+```tsx
+private readonly _userEff = useSignalEffect([userId, theme], ([id, t], onCleanup) => {
   const ctrl = new AbortController();
   onCleanup(() => ctrl.abort());
   fetch(`/api/users/${id}?theme=${t}`, { signal: ctrl.signal })
     .then(r => r.json()).then(data => userStore.set(data));
-});
+}, { defer: true });
 ```
-
-Signal reads _inside_ `fn` that are not in `deps` are untracked — giving you precise control over what triggers the effect.
 
 |                            | Auto-tracking                         | Explicit deps               |
 | -------------------------- | ------------------------------------- | --------------------------- |
@@ -418,17 +429,46 @@ Signal reads _inside_ `fn` that are not in `deps` are untracked — giving you p
 
 ### `computedAsync`
 
-An async derived signal. `fn` receives an `AbortSignal` and returns `Promise<T>`. The result is a `Signal.Computed` holding a discriminated union with `status`, `value`, and optional `error`.
+Standalone async derived signal. `fn` receives an `AbortSignal` and returns `Promise<T>`. The result holds a discriminated union with `status`, `value`, and optional `error`.
 
-When a tracked signal changes, the previous in-flight request is automatically cancelled before the new one starts — no stale responses, no race conditions.
+When a tracked signal changes, the previous in-flight request is automatically cancelled — no stale responses, no race conditions.
+
+```ts
+const userId = signal(1);
+
+const user = computedAsync(
+  async abortSignal => {
+    const res = await fetch(`/api/users/${userId()}`, { signal: abortSignal });
+    if (!res.ok) throw new Error(res.statusText);
+    return res.json() as Promise<User>;
+  },
+  { initialValue: null },
+);
+
+// call user.dispose() manually when done
+```
+
+`value` is always present so templates can show stale data while a reload is in progress.
+
+**Options:**
+
+| Option         | Type                | Default     | Description                                  |
+| -------------- | ------------------- | ----------- | -------------------------------------------- |
+| `initialValue` | `T`                 | `undefined` | `result.value` before the first resolution   |
+| `equal`        | `(a, b) => boolean` | `Object.is` | Skip update when resolved value is unchanged |
+
+### `useComputedAsync`
+
+Lifecycle-bound variant. Starts on `hostConnected`, disposes on `hostDisconnected`. Must be called in a class-field initializer.
 
 ```tsx
 const userId = signal(1);
 
 @Component({ tag: "user-card", shadow: false })
-export class UserCard extends Mixin(SignalWatcherMixin, SsvElementMixin) {
-  // Pass `this` — auto-disposed on disconnect, reinited on reconnect.
-  readonly user = computedAsync<User>(this, async abortSignal => {
+export class UserCard extends SsvElement {
+  readonly signalWatcher = withSignalController(this);
+
+  readonly user = useComputedAsync<User>(async abortSignal => {
     const res = await fetch(`/api/users/${userId()}`, { signal: abortSignal });
     if (!res.ok) throw new Error(res.statusText);
     return res.json() as Promise<User>;
@@ -443,32 +483,9 @@ export class UserCard extends Mixin(SignalWatcherMixin, SsvElementMixin) {
 }
 ```
 
-Without a component host (e.g. for module-level state) you can still use the options form:
-
-```ts
-const user = computedAsync(
-  async abortSignal => {
-    const res = await fetch(`/api/users/${userId()}`, { signal: abortSignal });
-    return res.json() as Promise<User>;
-  },
-  { initialValue: null },
-);
-
-// call user.dispose() manually when done
-```
-
-`value` is always present so templates can show stale data while a reload is in progress.
-
-**Options** (when not using the host form):
-
-| Option         | Type                | Default     | Description                                  |
-| -------------- | ------------------- | ----------- | -------------------------------------------- |
-| `initialValue` | `T`                 | `undefined` | `result.value` before the first resolution   |
-| `equal`        | `(a, b) => boolean` | `Object.is` | Skip update when resolved value is unchanged |
-
 ### `computedPrevious`
 
-A derived signal that holds the value a signal had before its most recent change.
+Standalone derived signal holding the value a signal had before its most recent change.
 
 ```ts
 const page = signal(1);
@@ -478,27 +495,32 @@ page.set(2);
 prevPage(); // 1
 page.set(3);
 prevPage(); // 2
+
+// call prevPage.dispose() manually when done
 ```
 
-Inside a `SignalWatcher` component, pass `this` to get automatic dispose-on-disconnect / reinit-on-reconnect:
+Optional second argument sets the initial value (default: `undefined`):
+
+```ts
+const prevPage = computedPrevious(page, 0); // 0 before first change
+```
+
+### `useComputedPrevious`
+
+Lifecycle-bound variant. Starts on `hostConnected`, disposes on `hostDisconnected`. Must be called in a class-field initializer.
 
 ```tsx
 @Component({ tag: "slide-view", shadow: false })
-export class SlideView extends Mixin(SignalWatcherMixin, SsvElementMixin) {
-  readonly prevPage = computedPrevious(this, page);
+export class SlideView extends SsvElement {
+  readonly signalWatcher = withSignalController(this);
+
+  readonly prevPage = useComputedPrevious(page);
 
   render() {
     const direction = page() > (this.prevPage() ?? 0) ? "forward" : "back";
     return <div class={`slide slide--${direction}`}>{page()}</div>;
   }
 }
-```
-
-Outside a component, pass an optional `initialValue` as the second argument:
-
-```ts
-const prevPage = computedPrevious(page, 0); // 0 instead of undefined
-// call prevPage.dispose() manually when done
 ```
 
 ### `createStore`
@@ -580,24 +602,24 @@ The main entry `@ssv/stencil-signals` exports the full public API but **does not
 
 ### Effects
 
-| Export                             | Description                                                                                                    |
-| ---------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `effect(fn)`                       | Auto-tracking effect. Re-runs whenever any signal accessed inside changes. Returns a dispose function.         |
-| `effect(host, fn)`                 | Auto-tracking effect with lifecycle host. Auto-disposed on disconnect, reinited on reconnect.                  |
-| `effect(deps, fn, options?)`       | Explicit-dep effect. `fn` receives signal values as a typed tuple. Supports `{ defer: true }` and `onCleanup`. |
-| `effect(host, deps, fn, options?)` | Explicit-dep effect with lifecycle host. Pass `host` to opt into auto lifecycle management.                    |
+| Export                                | Description                                                                                                                                |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `effect(fn)`                          | Auto-tracking effect. Re-runs whenever any signal accessed inside changes. Returns a dispose function.                                     |
+| `effect(deps, fn, options?)`          | Explicit-dep effect. `fn` receives signal values as a typed tuple. Supports `{ defer: true }` and `onCleanup`. Returns a dispose function. |
+| `useSignalEffect(fn)`                 | Lifecycle-bound auto-tracking effect. Starts on `hostConnected`, disposes on `hostDisconnected`.                                           |
+| `useSignalEffect(deps, fn, options?)` | Lifecycle-bound explicit-dep effect. Same as above with explicit dep list.                                                                 |
 
 ### Derived signals
 
-| Export                                    | Description                                                                                           |
-| ----------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `computedAsync(host, fn)`                 | Async derived signal — auto lifecycle via component host. Returns `DisposableSignal<AsyncResult<T>>`. |
-| `computedAsync(fn, options?)`             | Async derived signal — manual or `connectedCallback`-scope lifecycle.                                 |
-| `computedPrevious(host, source)`          | Previous-value signal — auto lifecycle via component host.                                            |
-| `computedPrevious(source, initialValue?)` | Previous-value signal — manual or `connectedCallback`-scope lifecycle.                                |
-| `isPending(result)`                       | Type guard — narrows `AsyncResult<T>` to `{ status: 'pending' }`.                                     |
-| `isResolved(result)`                      | Type guard — narrows `AsyncResult<T>` to `{ status: 'resolved', value: T }`.                          |
-| `isError(result)`                         | Type guard — narrows `AsyncResult<T>` to `{ status: 'error', error: unknown }`.                       |
+| Export                               | Description                                                                                                       |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `computedAsync(fn, options?)`        | Standalone async derived signal. Re-runs when tracked signals change. Returns `DisposableSignal<AsyncResult<T>>`. |
+| `useComputedAsync(fn, options?)`     | Lifecycle-bound variant of `computedAsync`. Auto lifecycle via host.                                              |
+| `computedPrevious(source, init?)`    | Standalone previous-value signal. Returns `DisposableSignal<T \| undefined>`.                                     |
+| `useComputedPrevious(source, init?)` | Lifecycle-bound variant of `computedPrevious`. Auto lifecycle via host.                                           |
+| `isPending(result)`                  | Type guard — narrows `AsyncResult<T>` to `{ status: 'pending' }`.                                                 |
+| `isResolved(result)`                 | Type guard — narrows `AsyncResult<T>` to `{ status: 'resolved', value: T }`.                                      |
+| `isError(result)`                    | Type guard — narrows `AsyncResult<T>` to `{ status: 'error', error: unknown }`.                                   |
 
 ### Store
 

@@ -12,11 +12,13 @@
  *
  *  Derived / async signals
  *  ───────────────────────
- *  computedPrevious(sig)       Signal holding the previous value of another signal
- *  computedAsync(fn, opts)     Async derived signal with status tracking + AbortSignal
- *  isPending(result)           Type-guard: AsyncResult is pending
- *  isResolved(result)          Type-guard: AsyncResult is resolved
- *  isError(result)             Type-guard: AsyncResult is an error
+ *  computedPrevious(sig, init?)        Standalone previous-value signal
+ *  useComputedPrevious(sig, init?)     Lifecycle-bound previous-value signal
+ *  computedAsync(fn, opts)             Standalone async derived signal with status + AbortSignal
+ *  useComputedAsync(fn, opts)          Lifecycle-bound async derived signal
+ *  isPending(result)                   Type-guard: AsyncResult is pending
+ *  isResolved(result)                  Type-guard: AsyncResult is resolved
+ *  isError(result)                     Type-guard: AsyncResult is an error
  *
  *  Store helpers
  *  ─────────────
@@ -24,8 +26,8 @@
  */
 
 // ─── Derived signals ──────────────────────────────────────────────────────────
-export { computedPrevious } from "./extensions/computed-previous";
-export { computedAsync, isPending, isResolved, isError } from "./extensions/computed-async";
+export { computedPrevious, useComputedPrevious } from "./extensions/computed-previous";
+export { computedAsync, useComputedAsync, isPending, isResolved, isError } from "./extensions/computed-async";
 export type {
 	DisposableSignal,
 	AsyncResult,
@@ -41,5 +43,5 @@ export { createStore } from "./extensions/create-store";
 export type { Store } from "./extensions/create-store";
 
 // ─── Prop / model bindings ────────────────────────────────────────────────────
-export { withSignalProps } from "./extensions/signal-prop";
+export { useSignalProps } from "./extensions/signal-prop";
 export type { SignalPropOptions, SignalPropsResult } from "./extensions/signal-prop";

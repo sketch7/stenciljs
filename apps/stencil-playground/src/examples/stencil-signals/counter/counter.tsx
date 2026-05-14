@@ -1,4 +1,4 @@
-import { computed, signal, withSignalController } from "@ssv/stencil-signals";
+import { computed, signal, useSignalController } from "@ssv/stencil-signals";
 import { SsvElement } from "@ssv/stencil.core";
 import { Component, h } from "@stencil/core";
 
@@ -13,7 +13,7 @@ const total = computed(() => count() + doubled());
 	shadow: true,
 })
 export class AppSignalsCounter extends SsvElement {
-	readonly signalWatcher = withSignalController(this);
+	readonly signalWatcher = useSignalController();
 
 	render() {
 		return (

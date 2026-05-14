@@ -1,3 +1,4 @@
+import { TestHost } from "@ssv/stencil.core/testing";
 /**
  * tests/core.test.ts
  *
@@ -6,13 +7,13 @@
  */
 import { describe, it, expect, vi, expectTypeOf } from "vitest";
 
+import { computedAsync, useComputedAsync, isPending, isResolved, isError } from "../src/extensions/computed-async";
+import { computedPrevious, useComputedPrevious } from "../src/extensions/computed-previous";
+import { createStore } from "../src/extensions/create-store";
+import { effect, useSignalEffect } from "../src/extensions/effect";
 // Import the TC39 entry point first — this sets the TC39 adapter so all
 // utilities that call getAdapter() work correctly in this test file.
 import { signal, computed, createWatcher } from "../src/tc39";
-import { computedAsync, isPending, isResolved, isError } from "../src/utils/computed-async";
-import { computedPrevious } from "../src/utils/computed-previous";
-import { createStore } from "../src/utils/create-store";
-import { effect } from "../src/utils/effect";
 
 // ─── Mock host ────────────────────────────────────────────────────────────────
 
@@ -650,11 +651,11 @@ describe("computedAsync()", () => {
 
 describe("host lifecycle — computedAsync", () => {
 	it("disposes on disconnect and reinits on reconnect", async () => {
-		const host = makeMockHost();
+		const host = new TestHost();
 		const id = signal(1);
 		const calls: number[] = [];
 
-		const result = computedAsync<number>(host, async () => {
+		const result = useComputedAsync<number>(async () => {
 			const v = id();
 			calls.push(v);
 			return v * 10;
@@ -682,8 +683,8 @@ describe("host lifecycle — computedAsync", () => {
 	});
 
 	it("reinit is a no-op when watcher is still live", async () => {
-		const host = makeMockHost();
-		const result = computedAsync(host, async () => 42);
+		const host = new TestHost();
+		const result = useComputedAsync(async () => 42);
 
 		host.connect(); // start computation
 		await flush();
@@ -698,9 +699,9 @@ describe("host lifecycle — computedAsync", () => {
 
 describe("host lifecycle — computedPrevious", () => {
 	it("disposes on disconnect and reinits on reconnect", async () => {
-		const host = makeMockHost();
+		const host = new TestHost();
 		const src = signal(1);
-		const prev = computedPrevious(host, src);
+		const prev = useComputedPrevious(src);
 
 		host.connect(); // hostConnected → starts tracking
 		expect(prev()).toBeUndefined();
@@ -722,9 +723,9 @@ describe("host lifecycle — computedPrevious", () => {
 	});
 
 	it("reinit is a no-op when watcher is still live", async () => {
-		const host = makeMockHost();
+		const host = new TestHost();
 		const src = signal(10);
-		const prev = computedPrevious(host, src);
+		const prev = useComputedPrevious(src);
 
 		host.connect(); // start tracking
 		src.set(20);
@@ -738,13 +739,13 @@ describe("host lifecycle — computedPrevious", () => {
 	});
 });
 
-describe("host lifecycle — watchEffect (auto-tracking)", () => {
+describe("host lifecycle — useSignalEffect (auto-tracking)", () => {
 	it("disposes on disconnect and reinits on reconnect", async () => {
-		const host = makeMockHost();
+		const host = new TestHost();
 		const count = signal(0);
 		const log: number[] = [];
 
-		effect(host, () => {
+		useSignalEffect(() => {
 			log.push(count());
 		});
 		host.connect(); // hostConnected → starts effect, fn runs synchronously
@@ -770,13 +771,13 @@ describe("host lifecycle — watchEffect (auto-tracking)", () => {
 	});
 });
 
-describe("host lifecycle — watchEffect (explicit deps)", () => {
+describe("host lifecycle — useSignalEffect (explicit deps)", () => {
 	it("disposes on disconnect and reinits on reconnect", async () => {
-		const host = makeMockHost();
+		const host = new TestHost();
 		const a = signal(1);
 		const log: number[] = [];
 
-		effect(host, [a], ([v]) => {
+		useSignalEffect([a], ([v]) => {
 			log.push(v as number);
 		});
 		host.connect(); // hostConnected → starts effect, fn runs synchronously

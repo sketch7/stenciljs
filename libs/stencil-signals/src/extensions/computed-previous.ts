@@ -41,7 +41,7 @@
  * ```
  */
 
-import type { ReactiveControllerHost } from "@ssv/stencil.core";
+import { use } from "@ssv/stencil.core";
 
 import { getAdapter } from "../adapters/active";
 import type { Signal } from "../adapters/types";
@@ -49,39 +49,27 @@ import { scheduler, getActiveOwner } from "../signals/core";
 import type { DisposableSignal } from "./computed-async";
 
 /**
- * Returns a signal that always holds the previous value of `source`.
- *
- * Pass `host` (the component `this`) as the **first** argument to enable
- * automatic dispose-on-disconnect / reinit-on-reconnect lifecycle management.
+ * Standalone — returns a signal holding the previous value of `source`.
+ * Call `.dispose()` manually when done.
  *
  * @param source       Any readable signal (State or Computed).
  * @param initialValue Value returned before the first change. Defaults to `undefined`.
  */
-export function computedPrevious<T>(host: ReactiveControllerHost, source: Signal<T>): DisposableSignal<T | undefined>;
-export function computedPrevious<T>(source: Signal<T>, initialValue?: T): DisposableSignal<T | undefined>;
-export function computedPrevious<T>(
-	hostOrSource: ReactiveControllerHost | Signal<T>,
-	sourceOrInitialValue?: Signal<T> | T,
-): DisposableSignal<T | undefined> {
-	// ReactiveControllerHost: computedPrevious(host, source)
-	if (typeof (hostOrSource as ReactiveControllerHost).addController === "function") {
-		const host = hostOrSource as ReactiveControllerHost;
-		const source = sourceOrInitialValue as Signal<T>;
-		return _computedPreviousWithControllerHost(source, undefined, host);
-	}
-	// Standard overload: computedPrevious(source, initialValue?)
-	const source = hostOrSource as Signal<T>;
-	const initialValue = sourceOrInitialValue as T | undefined;
+export function computedPrevious<T>(source: Signal<T>, initialValue?: T): DisposableSignal<T | undefined> {
 	return _computedPreviousCore(source, initialValue);
 }
 
-// ─── ReactiveControllerHost path ──────────────────────────────────────────────
+/**
+ * Lifecycle-bound variant. Starts on `hostConnected`, disposes on `hostDisconnected`.
+ * Must be called in a component class-field initializer.
+ */
+export function useComputedPrevious<T>(source: Signal<T>, initialValue?: T): DisposableSignal<T | undefined> {
+	return _computedPreviousWithUse(source, initialValue);
+}
 
-function _computedPreviousWithControllerHost<T>(
-	source: Signal<T>,
-	initialValue: T | undefined,
-	host: ReactiveControllerHost,
-): DisposableSignal<T | undefined> {
+// ─── Lifecycle-bound factory ──────────────────────────────────────────────────
+
+function _computedPreviousWithUse<T>(source: Signal<T>, initialValue: T | undefined): DisposableSignal<T | undefined> {
 	let inner: DisposableSignal<T | undefined> | null = null;
 	// Snapshot the last tracked value so it survives disconnect/reconnect cycles.
 	let lastValue: T | undefined = initialValue;
@@ -104,7 +92,7 @@ function _computedPreviousWithControllerHost<T>(
 		},
 	}) as DisposableSignal<T | undefined>;
 
-	host.addController({
+	use({
 		hostConnected(): void {
 			if (manuallyDisposed || inner !== null) {
 				return;

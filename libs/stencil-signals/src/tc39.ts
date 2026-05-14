@@ -59,5 +59,9 @@ export { SignalWatcherController } from "./controllers/signal-watcher-controller
 export { useSignal } from "./directives/use-signal";
 
 // ─── Side effects ─────────────────────────────────────────────────────────────
-export { effect } from "./extensions/effect";
+export { effect, useSignalEffect } from "./extensions/effect";
 export type { CleanupFn, EffectOptions } from "./extensions/effect";
+
+// ─── Derived signals ──────────────────────────────────────────────────────────
+export { computedPrevious, useComputedPrevious } from "./extensions/computed-previous";
+export { computedAsync, useComputedAsync, isPending, isResolved, isError } from "./extensions/computed-async";

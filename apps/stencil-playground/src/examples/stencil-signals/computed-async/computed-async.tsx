@@ -1,5 +1,5 @@
-import { signal, withSignalController } from "@ssv/stencil-signals";
-import { computedAsync, isError, isPending } from "@ssv/stencil-signals/extensions";
+import { signal, useSignalController } from "@ssv/stencil-signals";
+import { useComputedAsync, isError, isPending } from "@ssv/stencil-signals/extensions";
 import { SsvElement } from "@ssv/stencil.core";
 import { Component, h } from "@stencil/core";
 
@@ -24,8 +24,8 @@ const USER_COUNT = 10;
 })
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class AppSignalsComputedAsync extends SsvElement {
-	readonly signalWatcher = withSignalController(this);
-	readonly user = computedAsync<ApiUser>(this, async (abortSig: AbortSignal) => {
+	readonly signalWatcher = useSignalController();
+	readonly user = useComputedAsync<ApiUser>(async (abortSig: AbortSignal) => {
 		const res = await fetch(`https://jsonplaceholder.typicode.com/users/${userId()}`, { signal: abortSig });
 		if (!res.ok) {
 			throw new Error(`HTTP ${res.status}`);

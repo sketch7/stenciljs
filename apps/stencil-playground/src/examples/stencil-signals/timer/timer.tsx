@@ -1,5 +1,5 @@
-import { computed, effect, signal, withSignalController } from "@ssv/stencil-signals";
-import { withSignalProps } from "@ssv/stencil-signals/extensions";
+import { computed, signal, useSignalController, useSignalEffect } from "@ssv/stencil-signals";
+import { useSignalProps } from "@ssv/stencil-signals/extensions";
 import { SsvElement } from "@ssv/stencil.core";
 import { Component, Event, EventEmitter, Prop, h } from "@stencil/core";
 
@@ -16,11 +16,8 @@ export class AppTimer extends SsvElement {
 
 	@Event() isRunningChange!: EventEmitter<boolean>;
 
-	readonly signalWatcher = withSignalController(this);
-	readonly $props = withSignalProps(
-		this,
-		AppTimer,
-	)({
+	readonly signalWatcher = useSignalController();
+	readonly $props = useSignalProps(AppTimer)({
 		duration: { transform: v => Math.max(0, v) },
 		isRunning: { twoWay: true },
 	});
@@ -30,8 +27,7 @@ export class AppTimer extends SsvElement {
 
 	#intervalId: ReturnType<typeof setInterval> | undefined;
 
-	readonly _durationEffect = effect(
-		this,
+	readonly _durationEffect = useSignalEffect(
 		[this.$props.duration],
 		([d]) => {
 			this.#stop();
@@ -40,7 +36,7 @@ export class AppTimer extends SsvElement {
 		{ defer: true },
 	);
 
-	readonly _completionEffect = effect(this, () => {
+	readonly _completionEffect = useSignalEffect(() => {
 		if (this.$isCompleted()) {
 			this.#stop();
 		}

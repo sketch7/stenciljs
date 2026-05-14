@@ -1,4 +1,4 @@
-import { withSignalController } from "@ssv/stencil-signals";
+import { useSignalController } from "@ssv/stencil-signals";
 import { SsvElement } from "@ssv/stencil.core";
 import { Component, h, State } from "@stencil/core";
 
@@ -10,7 +10,7 @@ import { todoStore } from "./todo.store";
 	shadow: true,
 })
 export class AppSignalsTodo extends SsvElement {
-	readonly signalWatcher = withSignalController(this);
+	readonly signalWatcher = useSignalController();
 	@State() inputValue = "";
 
 	private handleInput(event: Event) {

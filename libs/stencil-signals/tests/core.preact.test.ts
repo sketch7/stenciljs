@@ -16,10 +16,10 @@ import {
 	computed,
 	createWatcher,
 } from '../src/preact';
-import { createStore } from '../src/utils/create-store';
-import { effect } from '../src/utils/effect';
-import { computedPrevious } from '../src/utils/computed-previous';
-import { computedAsync, isPending, isResolved, isError } from '../src/utils/computed-async';
+import { createStore } from '../src/extensions/create-store';
+import { effect } from '../src/extensions/effect';
+import { computedPrevious } from '../src/extensions/computed-previous';
+import { computedAsync, isPending, isResolved, isError } from '../src/extensions/computed-async';
 
 // Helper: flush all pending microtasks
 const flush = () => new Promise<void>(r => setTimeout(r, 0));

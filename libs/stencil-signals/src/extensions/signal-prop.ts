@@ -14,6 +14,7 @@
  * create one signal per entry. Non-twoWay keys → Signal<T>. twoWay keys → WritableSignal<T>.
  */
 
+import { getCurrentHost } from "@ssv/stencil.core";
 import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
 import { getElement } from "@stencil/core";
 
@@ -198,23 +199,20 @@ function registerBulkController(host: ReactiveControllerHost, entries: PropEntry
  * evaluating the config. This lets `transform`'s `v` parameter be
  * automatically typed from the `@Prop` type — no annotations needed:
  * ```ts
- * readonly $props = withSignalProps(this, AppTimer)({
+ * readonly $props = useSignalProps(AppTimer)({
  *   duration:  { transform: v => Math.max(0, v) }, // v: number
  *   isRunning: { twoWay: true },                   // WritableSignal<boolean>
  * });
  * ```
  */
-export function withSignalProps<H extends ReactiveControllerHost>(
-	host: ReactiveControllerHost,
+export function useSignalProps<H extends ReactiveControllerHost>(
 	hostClass: abstract new (...args: unknown[]) => H,
 ): <const C extends { [K in keyof H & string]?: SignalPropOptions<H[K]> }>(
 	config: C & Record<Exclude<keyof C & string, keyof H & string>, never>,
 ) => SignalPropsResult<H, C>;
 
-export function withSignalProps(
-	host: ReactiveControllerHost,
-	_hostClass: abstract new (...args: unknown[]) => unknown,
-): unknown {
+export function useSignalProps(_hostClass: abstract new (...args: unknown[]) => unknown): unknown {
+	const host = getCurrentHost();
 	return <C extends Record<string, SignalPropOptions<unknown>>>(config: C) => {
 		const entries = Object.entries(config).map(([key, opts]) => buildEntry(host as AnyHost, key, opts ?? {}));
 		registerBulkController(host, entries);

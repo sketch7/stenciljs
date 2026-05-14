@@ -64,7 +64,7 @@
  * | `equal` | `(a,b) => boolean` | `Object.is` | Skip update if resolved value is the same |
  */
 
-import type { ReactiveControllerHost } from "@ssv/stencil.core";
+import { use } from "@ssv/stencil.core";
 
 import { getAdapter } from "../adapters/active";
 import type { Signal } from "../adapters/types";
@@ -115,51 +115,34 @@ export type DisposableSignal<T> = {
 
 /**
  * Create a signal whose value is derived from an async computation.
- * The computation re-runs whenever any signal accessed inside `fn` changes.
- * In-flight requests are cancelled via AbortSignal.
- *
- * Pass the component instance as `host` as the **first** argument to enable
- * automatic dispose-on-disconnect / reinit-on-reconnect lifecycle management.
+ * Standalone — runs immediately and returns a `DisposableSignal`. Call `.dispose()` manually.
  */
-export function computedAsync<T>(
-	host: ReactiveControllerHost,
-	fn: (abortSignal: AbortSignal) => Promise<T> | T,
-): DisposableSignal<AsyncResult<T>>;
 export function computedAsync<T>(
 	fn: (abortSignal: AbortSignal) => Promise<T> | T,
 	options?: ComputedAsyncOptions<T>,
-): DisposableSignal<AsyncResult<T>>;
-export function computedAsync<T>(
-	hostOrFn: ReactiveControllerHost | ((abortSignal: AbortSignal) => Promise<T> | T),
-	fnOrOptions?: ((abortSignal: AbortSignal) => Promise<T> | T) | ComputedAsyncOptions<T>,
 ): DisposableSignal<AsyncResult<T>> {
-	// ReactiveControllerHost: computedAsync(host, fn)
-	if (typeof (hostOrFn as ReactiveControllerHost).addController === "function") {
-		return _computedAsyncWithControllerHost(
-			fnOrOptions as (abortSignal: AbortSignal) => Promise<T> | T,
-			hostOrFn as ReactiveControllerHost,
-		);
-	}
-	// Standard overload: computedAsync(fn, options?)
-	const options = (fnOrOptions as ComputedAsyncOptions<T>) ?? {};
-	const fn = hostOrFn as (abortSignal: AbortSignal) => Promise<T> | T;
-	const owner = getActiveOwner();
-	if (owner) {
-		const sig = _computedAsyncCore(fn, options);
-		owner.push(sig.dispose.bind(sig));
-		return sig;
-	}
-	return _computedAsyncCore(fn, options);
+	return _computedAsyncCore(fn, options ?? {});
 }
 
-// ─── ReactiveControllerHost path ──────────────────────────────────────────────
-
-function _computedAsyncWithControllerHost<T>(
+/**
+ * Lifecycle-bound variant. Starts on `hostConnected`, disposes on `hostDisconnected`.
+ * Must be called in a component class-field initializer.
+ */
+export function useComputedAsync<T>(
 	fn: (abortSignal: AbortSignal) => Promise<T> | T,
-	host: ReactiveControllerHost,
+	options?: ComputedAsyncOptions<T>,
+): DisposableSignal<AsyncResult<T>> {
+	return _computedAsyncWithUse(fn, options ?? {});
+}
+
+// ─── use() lifecycle path ──────────────────────────────────────────────────────
+
+function _computedAsyncWithUse<T>(
+	fn: (abortSignal: AbortSignal) => Promise<T> | T,
+	options: ComputedAsyncOptions<T>,
 ): DisposableSignal<AsyncResult<T>> {
 	let inner: DisposableSignal<AsyncResult<T>> | null = null;
-	let lastResult: AsyncResult<T> = { status: "pending", value: undefined };
+	let lastResult: AsyncResult<T> = { status: "pending", value: options.initialValue };
 	let manuallyDisposed = false;
 
 	// Stable wrapper — the class property reference never changes.
@@ -179,12 +162,12 @@ function _computedAsyncWithControllerHost<T>(
 		},
 	}) as DisposableSignal<AsyncResult<T>>;
 
-	host.addController({
+	use({
 		hostConnected(): void {
 			if (manuallyDisposed || inner !== null) {
 				return;
 			}
-			inner = _computedAsyncCore<T>(fn, { initialValue: lastResult.value });
+			inner = _computedAsyncCore<T>(fn, { ...options, initialValue: lastResult.value });
 		},
 		hostDisconnected(): void {
 			lastResult = inner?.peek() ?? lastResult;

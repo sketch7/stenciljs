@@ -26,6 +26,7 @@
  *
  */
 
+import { getCurrentHost } from "@ssv/stencil.core";
 import type { ReactiveControllerHost } from "@ssv/stencil.core";
 
 import { getAdapter } from "../adapters/active";
@@ -156,6 +157,6 @@ export class SignalWatcherController {
 	}
 }
 
-export function withSignalController(host: ReactiveControllerHost): SignalWatcherController {
-	return new SignalWatcherController(host);
+export function useSignalController(): SignalWatcherController {
+	return new SignalWatcherController(getCurrentHost());
 }

@@ -1,47 +1,46 @@
 /**
- * @ssv/stencil-signals — utils/effect.ts
+ * @ssv/stencil-signals — extensions/effect.ts
  *
- * Two signatures, one function:
- *
- * ─── Auto-tracking ────────────────────────────────────────────────────────────
+ * ─── Standalone (framework-agnostic) ─────────────────────────────────────────
  *
  *   effect(fn)
- *   effect(host, fn)
  *
- * Runs `fn` immediately, tracks every signal `.get()` called inside it, and
- * re-runs `fn` whenever any of those signals change.
- *
- * ─── Explicit deps ────────────────────────────────────────────────────────────
+ * Runs immediately, auto-tracks every signal read inside `fn`, and re-runs
+ * whenever any of those signals change. Returns a dispose function.
  *
  *   effect(deps, fn, options?)
- *   effect(host, deps, fn, options?)
  *
- * Only re-runs when the signals listed in `deps` change. The callback receives
- * their current values as typed arguments. Signal reads *inside* `fn` that
- * are NOT in `deps` are untracked.
+ * Only re-runs when the signals in `deps` change. The callback receives their
+ * current values as typed arguments. Signal reads inside `fn` that are NOT in
+ * `deps` are untracked.
  *
  * Options:
- *   `defer: true` — skip the initial synchronous run; only fire on first change.
+ *   `defer: true` — skip the initial run; only fire on first dep change.
+ *
+ * ─── Lifecycle-bound (Stencil / ReactiveControllerHost) ──────────────────────
+ *
+ *   useSignalEffect(fn)
+ *   useSignalEffect(deps, fn, options?)
+ *
+ * Same signatures, but wraps the effect in the host's lifecycle. The effect
+ * starts on `hostConnected` and is disposed on `hostDisconnected`. Must be
+ * called in a component class-field initializer (where `use()` resolves the
+ * host automatically).
  *
  * In both modes `fn` may return a cleanup function called before each re-run
  * and on final disposal.
- *
- * Pass `host` (a `ReactiveControllerHost`) as the first argument to opt into
- * automatic lifecycle management: effect starts on `hostConnected`, disposes on
- * `hostDisconnected`, and restarts on the next `hostConnected`.
  */
 
-import type { ReactiveControllerHost } from "@ssv/stencil.core";
+import { use } from "@ssv/stencil.core";
 
 import { getAdapter } from "../adapters/active";
 import type { WritableSignal, Signal } from "../adapters/types";
-import { scheduler, getActiveOwner } from "../signals/core";
+import { scheduler } from "../signals/core";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type CleanupFn = () => void;
 
-// TODO: Remove usage
 type AnySignal<T = unknown> = WritableSignal<T> | Signal<T>;
 
 type SignalValues<T extends readonly AnySignal[]> = {
@@ -56,93 +55,90 @@ export type EffectOptions = {
 	defer?: boolean;
 };
 
-// ─── Overloads ────────────────────────────────────────────────────────────────
+// ─── effect overloads ─────────────────────────────────────────────────────────
 
-/** Auto-tracking: re-runs whenever any signal read inside `fn` changes. */
+/** Auto-tracking: re-runs whenever any signal read inside `fn` changes. Returns a dispose function. */
 export function effect(fn: () => CleanupFn | void): CleanupFn;
-export function effect(host: ReactiveControllerHost, fn: () => CleanupFn | void): CleanupFn;
 
-/** Explicit-deps: re-runs only when signals in `deps` change. */
+/** Explicit-deps: re-runs only when signals in `deps` change. Returns a dispose function. */
 export function effect<const Deps extends readonly AnySignal[]>(
 	deps: Deps,
 	fn: (values: SignalValues<Deps>, onCleanup: (fn: CleanupFn) => void) => CleanupFn | void,
 	options?: EffectOptions,
 ): CleanupFn;
-export function effect<const Deps extends readonly AnySignal[]>(
-	host: ReactiveControllerHost,
-	deps: Deps,
-	fn: (values: SignalValues<Deps>, onCleanup: (fn: CleanupFn) => void) => CleanupFn | void,
-	options?: EffectOptions,
-): CleanupFn;
 
-// ─── Implementation ───────────────────────────────────────────────────────────
+// ─── effect implementation ────────────────────────────────────────────────────
 
 export function effect(
-	hostOrFnOrDeps: ReactiveControllerHost | (() => CleanupFn | void) | readonly AnySignal[],
-	fnOrDeps?:
-		| (() => CleanupFn | void)
-		| readonly AnySignal[]
-		| ((values: unknown[], onCleanup: (fn: CleanupFn) => void) => CleanupFn | void),
-	fnOrOptions?: ((values: unknown[], onCleanup: (fn: CleanupFn) => void) => CleanupFn | void) | EffectOptions,
-	maybeOptions?: EffectOptions,
+	fnOrDeps: (() => CleanupFn | void) | readonly AnySignal[],
+	fn?: (values: unknown[], onCleanup: (fn: CleanupFn) => void) => CleanupFn | void,
+	options?: EffectOptions,
 ): CleanupFn {
-	// ReactiveControllerHost: effect(host, fn) or effect(host, deps, fn, options?)
-	if (typeof (hostOrFnOrDeps as ReactiveControllerHost)?.addController === "function") {
-		const host = hostOrFnOrDeps as ReactiveControllerHost;
-		if (typeof fnOrDeps === "function") {
-			// effect(host, fn)
-			return _effectWithControllerHost(() => autoTrackingEffect(fnOrDeps as () => CleanupFn | void), host);
-		}
-		// effect(host, deps, fn, options?)
-		const deps = fnOrDeps as readonly AnySignal[];
-		const explicitFn = fnOrOptions as (values: unknown[], onCleanup: (fn: CleanupFn) => void) => CleanupFn | void;
-		const options = maybeOptions ?? {};
-		return _effectWithControllerHost(() => explicitDepsEffect(deps, explicitFn, options), host);
+	if (typeof fnOrDeps === "function") {
+		return autoTrackingEffect(fnOrDeps);
 	}
 
-	if (typeof hostOrFnOrDeps === "function") {
-		// Auto-tracking overload: effect(fn)
-		const fn = hostOrFnOrDeps;
-		const stop = autoTrackingEffect(fn);
-		getActiveOwner()?.push(stop);
-		return stop;
+	if (!fn) {
+		return () => {};
 	}
-
-	// Explicit-deps overload: effect(deps, fn, options?)
-	const deps = hostOrFnOrDeps as readonly AnySignal[];
-	const explicitFn = fnOrDeps as (values: unknown[], onCleanup: (fn: CleanupFn) => void) => CleanupFn | void;
-	const options = (fnOrOptions as EffectOptions) ?? {};
-	const stop = explicitDepsEffect(deps, explicitFn, options);
-	getActiveOwner()?.push(stop);
-	return stop;
+	return explicitDepsEffect(fnOrDeps as readonly AnySignal[], fn, options ?? {});
 }
 
-// ─── ReactiveControllerHost path ──────────────────────────────────────────────
-// Effect starts on first hostConnected; disposes on hostDisconnected; restarts on next hostConnected.
+// ─── useSignalEffect overloads ────────────────────────────────────────────────
 
-function _effectWithControllerHost(factory: () => CleanupFn, host: ReactiveControllerHost): CleanupFn {
+/**
+ * Auto-tracking lifecycle effect. Starts on `hostConnected`, disposes on `hostDisconnected`.
+ *
+ * @example
+ * ```ts
+ * readonly _eff = useSignalEffect(() => {
+ *   document.title = `Count: ${count()}`;
+ * });
+ * ```
+ */
+export function useSignalEffect(fn: () => CleanupFn | void): void;
+
+/**
+ * Explicit-deps lifecycle effect. Starts on `hostConnected`, disposes on `hostDisconnected`.
+ *
+ * @example
+ * ```ts
+ * readonly _eff = useSignalEffect([userId], ([id]) => {
+ *   fetchUser(id);
+ * }, { defer: true });
+ * ```
+ */
+export function useSignalEffect<const Deps extends readonly AnySignal[]>(
+	deps: Deps,
+	fn: (values: SignalValues<Deps>, onCleanup: (fn: CleanupFn) => void) => CleanupFn | void,
+	options?: EffectOptions,
+): void;
+
+// ─── useSignalEffect implementation ──────────────────────────────────────────
+
+export function useSignalEffect(
+	fnOrDeps: (() => CleanupFn | void) | readonly AnySignal[],
+	fn?: (values: unknown[], onCleanup: (fn: CleanupFn) => void) => CleanupFn | void,
+	options?: EffectOptions,
+): void {
 	let stop: CleanupFn | null = null;
-	let manuallyDisposed = false;
-
-	host.addController({
+	use({
 		hostConnected(): void {
-			if (manuallyDisposed || stop !== null) {
+			if (stop !== null) {
 				return;
 			}
-			stop = factory();
+			stop =
+				typeof fnOrDeps === "function"
+					? effect(fnOrDeps)
+					: fn
+						? effect(fnOrDeps as readonly AnySignal[], fn, options)
+						: () => {};
 		},
 		hostDisconnected(): void {
 			stop?.();
 			stop = null;
 		},
 	});
-
-	// Return a stable dispose for manual teardown.
-	return () => {
-		manuallyDisposed = true;
-		stop?.();
-		stop = null;
-	};
 }
 
 // ─── Auto-tracking implementation ─────────────────────────────────────────────
@@ -184,7 +180,7 @@ function explicitDepsEffect(
 
 		userCleanup = fn(values, cb => {
 			onCleanupFn = cb;
-		});
+		}) as CleanupFn | undefined;
 		if (onCleanupFn) {
 			pendingCleanup = onCleanupFn;
 		}

@@ -23,7 +23,7 @@
 import type { ReactiveControllerHost } from "@ssv/stencil.core";
 import type { ComponentInterface, MixedInCtor } from "@stencil/core";
 
-import { withSignalController } from "../controllers/signal-watcher-controller";
+import { useSignalController } from "../controllers/signal-watcher-controller";
 
 export function SignalWatcherMixin<TBase extends MixedInCtor<ComponentInterface>>(
 	Base: TBase,
@@ -31,7 +31,7 @@ export function SignalWatcherMixin<TBase extends MixedInCtor<ComponentInterface>
 	class SignalWatcher extends Base {
 		constructor(...args: unknown[]) {
 			super(...args);
-			withSignalController(this as unknown as ReactiveControllerHost);
+			useSignalController();
 		}
 	}
 

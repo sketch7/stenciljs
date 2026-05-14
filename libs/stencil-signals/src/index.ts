@@ -20,16 +20,18 @@
  *
  *  Side effects
  *  ────────────
- *  effect(fn)                  Auto-tracking effect; re-runs on any accessed signal change
- *  effect(host, fn)             Auto-tracking effect with lifecycle host
- *  effect(deps, fn, opts)       Explicit-deps effect; re-runs only when listed signals change
- *  effect(host, deps, fn, opts) Explicit-deps effect with lifecycle host
+ *  effect(fn)                      Standalone auto-tracking effect; returns a dispose function
+ *  effect(deps, fn, opts)           Standalone explicit-deps effect; returns a dispose function
+ *  useSignalEffect(fn)              Lifecycle auto-tracking effect; starts/stops with host lifecycle
+ *  useSignalEffect(deps, fn, opts)  Lifecycle explicit-deps effect; starts/stops with host lifecycle
  *
  *  Derived / async signals
  *  ───────────────────────
- *  computedPrevious(sig)       Signal holding the previous value of another signal (→ /extensions)
- *  computedAsync(fn, opts)     Async derived signal with status tracking (→ /extensions)
- *  createStore(init)           Reactive Proxy over a plain object (→ /extensions)
+ *  computedPrevious(sig, init?)        Previous-value signal; standalone (→ /extensions)
+ *  useComputedPrevious(sig, init?)     Previous-value signal; lifecycle-bound (→ /extensions)
+ *  computedAsync(fn, opts?)            Async derived signal with status tracking (→ /extensions)
+ *  useComputedAsync(fn, opts?)         Async derived signal; lifecycle-bound (→ /extensions)
+ *  createStore(init)                   Reactive Proxy over a plain object (→ /extensions)
  *
  * For these utilities, import from "@ssv/stencil-signals/extensions".
  */
@@ -41,18 +43,18 @@ export type { WritableSignal, Signal, SignalOptions, ComputedOptions, AdapterWat
 
 // ─── Component integration ────────────────────────────────────────────────────
 export { SignalWatcherMixin } from "./mixins/signal-watcher";
-export { SignalWatcherController, withSignalController } from "./controllers/signal-watcher-controller";
+export { SignalWatcherController, useSignalController } from "./controllers/signal-watcher-controller";
 
 // ─── Decorators ───────────────────────────────────────────────────────────────
 export { useSignal } from "./directives/use-signal";
 
 // ─── Side effects ─────────────────────────────────────────────────────────────
-export { effect } from "./extensions/effect";
+export { effect, useSignalEffect } from "./extensions/effect";
 export type { CleanupFn, EffectOptions } from "./extensions/effect";
 
 // ─── Derived signals ──────────────────────────────────────────────────────────
-export { computedPrevious } from "./extensions/computed-previous";
-export { computedAsync, isPending, isResolved, isError } from "./extensions/computed-async";
+export { computedPrevious, useComputedPrevious } from "./extensions/computed-previous";
+export { computedAsync, useComputedAsync, isPending, isResolved, isError } from "./extensions/computed-async";
 export type {
 	DisposableSignal,
 	AsyncResult,

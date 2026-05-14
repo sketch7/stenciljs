@@ -10,16 +10,19 @@ apps/
   vike-playground/      # Vike SSR app consuming stencil-playground via @stencil/ssr
 libs/
   stencil.core/              # @ssv/stencil.core — ReactiveController host utilities
+  stencil-signals/           # @ssv/stencil-signals — TC39 & Preact Signals integration for StencilJS
+  tanstack.stencil-store/    # @ssv/tanstack.stencil-store — TanStack Store bindings for Stencil
   vite-plugin-stencil-watch/   # @ssv/vite-plugin-stencil-watch — HMR plugin for Stencil in Vite
 ```
 
 ## Libraries
 
-| Package                                                                      | Description                                                                                                  |
-| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| [`@ssv/stencil.core`](libs/stencil.core/README.md)                           | `ReactiveController` / `ReactiveControllerHost` pattern — lifecycle-aware controllers for Stencil components |
-| [`@ssv/tanstack.stencil-store`](libs/tanstack.stencil-store/README.md)       | TanStack Store bindings for Stencil — `useSelector` and `useAtom` hooks with lifecycle-aware subscriptions   |
-| [`@ssv/vite-plugin-stencil-watch`](libs/vite-plugin-stencil-watch/README.md) | Vite plugin that watches Stencil sources and triggers HMR in consuming apps                                  |
+| Package                                                                      | Description                                                                                                                |
+| ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| [`@ssv/stencil.core`](libs/stencil.core/README.md)                           | `ReactiveController` / `ReactiveControllerHost` pattern — lifecycle-aware controllers for Stencil components               |
+| [`@ssv/stencil-signals`](libs/stencil-signals/README.md)                     | TC39 & Preact Signals integration — auto-reactive components with `SignalWatcherMixin`, `effect`, `computedAsync` and more |
+| [`@ssv/tanstack.stencil-store`](libs/tanstack.stencil-store/README.md)       | TanStack Store bindings for Stencil — `useSelector` and `useAtom` hooks with lifecycle-aware subscriptions                 |
+| [`@ssv/vite-plugin-stencil-watch`](libs/vite-plugin-stencil-watch/README.md) | Vite plugin that watches Stencil sources and triggers HMR in consuming apps                                                |
 
 ## Tech stack
 

@@ -2,8 +2,6 @@
   "name": "@ssv/stencil-signals",
   "version": "0.0.0-PLACEHOLDER",
   "description": "TC39 and Preact Signals integration for StencilJS",
-  "homepage": "https://github.com/sketch7/stenciljs/tree/main/libs/stencil-signals#readme",
-  "bugs": "https://github.com/sketch7/stenciljs/issues",
   "license": "MIT",
   "repository": {
     "type": "git",

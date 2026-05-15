@@ -55,7 +55,7 @@ export { useSignal } from "./directives/use-signal";
 
 // ─── Side effects ─────────────────────────────────────────────────────────────
 export { effect, useSignalEffect } from "./extensions/effect";
-export type { CleanupFn, EffectOptions } from "./extensions/effect";
+export type { CleanupFn, EffectOptions, WatcherRef, RegisterCleanup } from "./extensions/effect";
 
 // ─── Derived signals ──────────────────────────────────────────────────────────
 export { computedPrevious, useComputedPrevious } from "./extensions/computed-previous";

@@ -60,15 +60,43 @@ export const tc39Adapter: SignalAdapter = {
 		return wrapper;
 	},
 
-	createEffect(fn: () => void): () => void {
-		let userCleanup: CleanupFn | undefined;
+	createEffect(fn: (onCleanup: (cb: CleanupFn) => void) => CleanupFn | void): { dispose(): void } {
+		const cleanupState: {
+			pendingCleanup: CleanupFn | null;
+			userCleanup: CleanupFn | undefined;
+		} = { pendingCleanup: null, userCleanup: undefined };
 		let disposed = false;
-		let capturedCleanup: CleanupFn | undefined;
+
+		function flushCleanups(): void {
+			cleanupState.pendingCleanup?.();
+			cleanupState.pendingCleanup = null;
+			if (typeof cleanupState.userCleanup === "function") {
+				cleanupState.userCleanup();
+				cleanupState.userCleanup = undefined;
+			}
+		}
+
+		function flushAllCleanups(): void {
+			cleanupState.pendingCleanup?.();
+			if (typeof cleanupState.userCleanup === "function") {
+				cleanupState.userCleanup();
+			}
+		}
+
+		function runTracked(): void {
+			flushCleanups();
+			let onCleanupFn: CleanupFn | null = null;
+			cleanupState.userCleanup = fn(cb => {
+				onCleanupFn = cb;
+			}) as CleanupFn | undefined;
+			if (onCleanupFn) {
+				cleanupState.pendingCleanup = onCleanupFn;
+			}
+		}
 
 		// Wrap fn in a Computed so every signal.get() inside fn is tracked.
 		const tracker = new TC39Signal.Computed<null>(() => {
-			const ret = fn();
-			capturedCleanup = typeof ret === "function" ? ret : undefined;
+			runTracked();
 			return null;
 		});
 
@@ -83,28 +111,24 @@ export const tc39Adapter: SignalAdapter = {
 			if (disposed) {
 				return;
 			}
-			userCleanup?.();
-			userCleanup = undefined;
 			watcher.unwatch(tracker);
-			capturedCleanup = undefined;
 			tracker.get();
-			userCleanup = capturedCleanup;
 			watcher.watch(tracker);
 		}
 
-		capturedCleanup = undefined;
 		tracker.get();
-		userCleanup = capturedCleanup;
 		watcher.watch(tracker);
 
-		return () => {
-			disposed = true;
-			userCleanup?.();
-			try {
-				watcher.unwatch(tracker);
-			} catch {
-				/* ok */
-			}
+		return {
+			dispose() {
+				disposed = true;
+				flushAllCleanups();
+				try {
+					watcher.unwatch(tracker);
+				} catch {
+					/* ok */
+				}
+			},
 		};
 	},
 

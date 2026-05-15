@@ -83,9 +83,26 @@ export const preactAdapter: SignalAdapter = {
 		return wrapped;
 	},
 
-	createEffect(fn: () => void): () => void {
-		// Preact's effect() handles cleanup returns natively.
-		return preactEffect(fn as () => void);
+	createEffect(fn: (onCleanup: (cb: () => void) => void) => (() => void) | void): { dispose(): void } {
+		let stop: (() => void) | undefined;
+		stop = preactEffect(() => {
+			let onCleanupFn: (() => void) | null = null;
+			const ret = fn(cb => {
+				onCleanupFn = cb;
+			});
+			return () => {
+				onCleanupFn?.();
+				if (typeof ret === "function") {
+					ret();
+				}
+			};
+		});
+		return {
+			dispose() {
+				stop?.();
+				stop = undefined;
+			},
+		};
 	},
 
 	untrack<T>(fn: () => T): T {

@@ -6,7 +6,7 @@
  *   effect(fn)
  *
  * Runs immediately, auto-tracks every signal read inside `fn`, and re-runs
- * whenever any of those signals change. Returns a dispose function.
+ * whenever any of those signals change. Returns a `WatcherRef`.
  *
  *   effect(deps, fn, options?)
  *
@@ -27,8 +27,8 @@
  * `useSignalController()` active-owner scope on disconnect. Must be called in
  * a component class-field initializer (where `use()` resolves the host).
  *
- * In both modes `fn` may return a cleanup function called before each re-run
- * and on final disposal.
+ * Both modes support `onCleanup(fn)` and an optional return-value cleanup.
+ * On each re-run and on dispose: previous `onCleanup` runs first, then return cleanup.
  */
 
 import { getAdapter } from "../adapters/active";
@@ -38,7 +38,13 @@ import { bindToHostEffect } from "./host-bind";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export type WatcherRef = {
+	dispose(): void;
+};
+
 export type CleanupFn = () => void;
+
+export type RegisterCleanup = (fn: CleanupFn) => void;
 
 type AnySignal<T = unknown> = WritableSignal<T> | Signal<T>;
 
@@ -54,33 +60,79 @@ export type EffectOptions = {
 	defer?: boolean;
 };
 
+type EffectCleanupState = {
+	pendingCleanup: CleanupFn | null;
+	userCleanup: CleanupFn | undefined;
+};
+
+// ─── Shared cleanup runner ────────────────────────────────────────────────────
+
+function flushCleanups(state: EffectCleanupState): void {
+	state.pendingCleanup?.();
+	state.pendingCleanup = null;
+	if (typeof state.userCleanup === "function") {
+		state.userCleanup();
+		state.userCleanup = undefined;
+	}
+}
+
+function flushAllCleanups(state: EffectCleanupState): void {
+	state.pendingCleanup?.();
+	if (typeof state.userCleanup === "function") {
+		state.userCleanup();
+	}
+}
+
+/** @internal — runs user fn after flushing prior cleanups; captures onCleanup + return. */
+export function runEffectWithCleanup(
+	state: EffectCleanupState,
+	fn: (onCleanup: RegisterCleanup) => CleanupFn | void,
+): void {
+	flushCleanups(state);
+	let onCleanupFn: CleanupFn | null = null;
+	state.userCleanup = fn(cb => {
+		onCleanupFn = cb;
+	}) as CleanupFn | undefined;
+	if (onCleanupFn) {
+		state.pendingCleanup = onCleanupFn;
+	}
+}
+
+function toWatcherRef(dispose: CleanupFn): WatcherRef {
+	return { dispose };
+}
+
+const noopWatcherRef: WatcherRef = {
+	dispose: () => {
+		/* no-op */
+	},
+};
+
 // ─── effect overloads ─────────────────────────────────────────────────────────
 
-/** Auto-tracking: re-runs whenever any signal read inside `fn` changes. Returns a dispose function. */
-export function effect(fn: () => CleanupFn | void): CleanupFn;
+/** Auto-tracking: re-runs whenever any signal read inside `fn` changes. */
+export function effect(fn: (onCleanup: RegisterCleanup) => CleanupFn | void): WatcherRef;
 
-/** Explicit-deps: re-runs only when signals in `deps` change. Returns a dispose function. */
+/** Explicit-deps: re-runs only when signals in `deps` change. */
 export function effect<const Deps extends readonly AnySignal[]>(
 	deps: Deps,
-	fn: (values: SignalValues<Deps>, onCleanup: (fn: CleanupFn) => void) => CleanupFn | void,
+	fn: (values: SignalValues<Deps>, onCleanup: RegisterCleanup) => CleanupFn | void,
 	options?: EffectOptions,
-): CleanupFn;
+): WatcherRef;
 
 // ─── effect implementation ────────────────────────────────────────────────────
 
 export function effect(
-	fnOrDeps: (() => CleanupFn | void) | readonly AnySignal[],
-	fn?: (values: unknown[], onCleanup: (fn: CleanupFn) => void) => CleanupFn | void,
+	fnOrDeps: ((onCleanup: RegisterCleanup) => CleanupFn | void) | readonly AnySignal[],
+	fn?: (values: unknown[], onCleanup: RegisterCleanup) => CleanupFn | void,
 	options?: EffectOptions,
-): CleanupFn {
+): WatcherRef {
 	if (typeof fnOrDeps === "function") {
 		return autoTrackingEffect(fnOrDeps);
 	}
 
 	if (!fn) {
-		return () => {
-			/* empty */
-		};
+		return noopWatcherRef;
 	}
 	return explicitDepsEffect(fnOrDeps as readonly AnySignal[], fn, options ?? {});
 }
@@ -89,49 +141,33 @@ export function effect(
 
 /**
  * Auto-tracking lifecycle effect. Starts on `hostConnected`, disposes on `hostDisconnected`.
- *
- * @example
- * ```ts
- * readonly _eff = useSignalEffect(() => {
- *   document.title = `Count: ${count()}`;
- * });
- * ```
  */
-export function useSignalEffect(fn: () => CleanupFn | void): void;
+export function useSignalEffect(fn: (onCleanup: RegisterCleanup) => CleanupFn | void): WatcherRef;
 
 /**
  * Explicit-deps lifecycle effect. Starts on `hostConnected`, disposes on `hostDisconnected`.
- *
- * @example
- * ```ts
- * readonly _eff = useSignalEffect([userId], ([id]) => {
- *   fetchUser(id);
- * }, { defer: true });
- * ```
  */
 export function useSignalEffect<const Deps extends readonly AnySignal[]>(
 	deps: Deps,
-	fn: (values: SignalValues<Deps>, onCleanup: (fn: CleanupFn) => void) => CleanupFn | void,
+	fn: (values: SignalValues<Deps>, onCleanup: RegisterCleanup) => CleanupFn | void,
 	options?: EffectOptions,
-): void;
+): WatcherRef;
 
 // ─── useSignalEffect implementation ──────────────────────────────────────────
 
 export function useSignalEffect(
-	fnOrDeps: (() => CleanupFn | void) | readonly AnySignal[],
-	fn?: (values: unknown[], onCleanup: (fn: CleanupFn) => void) => CleanupFn | void,
+	fnOrDeps: ((onCleanup: RegisterCleanup) => CleanupFn | void) | readonly AnySignal[],
+	fn?: (values: unknown[], onCleanup: RegisterCleanup) => CleanupFn | void,
 	options?: EffectOptions,
-): void {
-	bindToHostEffect({
+): WatcherRef {
+	return bindToHostEffect({
 		utilityName: "useSignalEffect",
 		create: () =>
 			typeof fnOrDeps === "function"
 				? effect(fnOrDeps)
 				: fn
 					? effect(fnOrDeps as readonly AnySignal[], fn, options)
-					: () => {
-							/* empty */
-						},
+					: noopWatcherRef,
 	});
 }
 
@@ -140,10 +176,10 @@ export function useSignalEffect(
 // Delegates to the adapter's createEffect() which handles dep tracking
 // internally for both TC39 (Signal.Computed + Watcher) and Preact (effect()).
 
-function autoTrackingEffect(fn: () => CleanupFn | void): CleanupFn {
-	const stop = getAdapter().createEffect(fn);
-	getActiveOwner()?.push(stop);
-	return stop;
+function autoTrackingEffect(fn: (onCleanup: RegisterCleanup) => CleanupFn | void): WatcherRef {
+	const ref = getAdapter().createEffect(fn);
+	getActiveOwner()?.push(() => ref.dispose());
+	return ref;
 }
 
 // ─── Explicit-deps implementation ─────────────────────────────────────────────
@@ -155,31 +191,16 @@ function autoTrackingEffect(fn: () => CleanupFn | void): CleanupFn {
 
 function explicitDepsEffect(
 	deps: readonly AnySignal[],
-	fn: (values: unknown[], onCleanup: (fn: CleanupFn) => void) => CleanupFn | void,
+	fn: (values: unknown[], onCleanup: RegisterCleanup) => CleanupFn | void,
 	options: EffectOptions,
-): CleanupFn {
+): WatcherRef {
 	const adapter = getAdapter();
-	let pendingCleanup: CleanupFn | null = null;
-	let userCleanup: CleanupFn | undefined = undefined;
+	const cleanupState: EffectCleanupState = { pendingCleanup: null, userCleanup: undefined };
 	let disposed = false;
 
 	function runEffect(): void {
-		pendingCleanup?.();
-		pendingCleanup = null;
-		if (typeof userCleanup === "function") {
-			userCleanup();
-			userCleanup = undefined;
-		}
-
 		const values = deps.map(s => adapter.untrack(() => s()));
-		let onCleanupFn: CleanupFn | null = null;
-
-		userCleanup = fn(values, cb => {
-			onCleanupFn = cb;
-		}) as CleanupFn | undefined;
-		if (onCleanupFn) {
-			pendingCleanup = onCleanupFn;
-		}
+		runEffectWithCleanup(cleanupState, onCleanup => fn(values, onCleanup));
 	}
 
 	// A computed that reads all deps in one place. Never exposes a meaningful
@@ -219,15 +240,11 @@ function explicitDepsEffect(
 		runEffect();
 	}
 
-	const stop = (): void => {
-		console.warn(">>>> stop effect");
+	const ref = toWatcherRef(() => {
 		disposed = true;
 		watcher.dispose();
-		pendingCleanup?.();
-		if (typeof userCleanup === "function") {
-			userCleanup();
-		}
-	};
-	getActiveOwner()?.push(stop);
-	return stop;
+		flushAllCleanups(cleanupState);
+	});
+	getActiveOwner()?.push(() => ref.dispose());
+	return ref;
 }

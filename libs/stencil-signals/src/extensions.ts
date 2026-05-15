@@ -25,6 +25,10 @@
  *  createStore(init)           Wraps a plain object in signals; returns a reactive Proxy
  */
 
+// ─── Side effects ─────────────────────────────────────────────────────────────
+export { effect, useSignalEffect } from "./extensions/effect";
+export type { CleanupFn, EffectOptions, WatcherRef, RegisterCleanup } from "./extensions/effect";
+
 // ─── Derived signals ──────────────────────────────────────────────────────────
 export { computedPrevious, useComputedPrevious } from "./extensions/computed-previous";
 export { computedAsync, useComputedAsync, isPending, isResolved, isError } from "./extensions/computed-async";

@@ -66,10 +66,10 @@ export type SignalAdapter = {
 	/**
 	 * Run `fn` as a reactive effect. `fn` is called immediately and re-runs
 	 * whenever any signal accessed inside it changes.
-	 * `fn` may return a cleanup function that is called before each re-run.
-	 * Returns a disposal function.
+	 * `fn` receives `onCleanup` and may return a cleanup function; on each re-run
+	 * and dispose, prior `onCleanup` runs first, then return cleanup.
 	 */
-	createEffect(fn: () => void): () => void;
+	createEffect(fn: (onCleanup: (fn: () => void) => void) => (() => void) | void): { dispose(): void };
 
 	/** Read signals inside `fn` without creating tracking subscriptions. */
 	untrack<T>(fn: () => T): T;

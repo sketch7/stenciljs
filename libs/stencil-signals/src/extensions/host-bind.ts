@@ -9,7 +9,7 @@
 import { use } from "@ssv/stencil.core";
 
 import { getActiveOwner } from "../signals/core";
-import type { CleanupFn } from "./effect";
+import type { WatcherRef } from "./effect";
 
 // ─── Active-owner guard ───────────────────────────────────────────────────────
 
@@ -97,22 +97,36 @@ export function bindToHostDisposable<TSnapshot, TInner>(config: {
 
 // ─── bindToHostEffect ─────────────────────────────────────────────────────────
 
-export function bindToHostEffect(config: { utilityName: string; create: () => CleanupFn }): void {
-	let stop: CleanupFn | null = null;
+export function bindToHostEffect(config: { utilityName: string; create: () => WatcherRef }): WatcherRef {
+	let inner: WatcherRef | null = null;
+	let manuallyDisposed = false;
+
+	const ref: WatcherRef = {
+		dispose(): void {
+			if (manuallyDisposed) {
+				return;
+			}
+			manuallyDisposed = true;
+			inner?.dispose();
+			inner = null;
+		},
+	};
 
 	registerHostLifecycle({
 		onConnect(): void {
-			if (stop !== null) {
+			if (manuallyDisposed || inner !== null) {
 				return;
 			}
 			const cleanupsBefore = getActiveOwner()?.length ?? 0;
-			stop = config.create();
+			inner = config.create();
 			assertRegisteredWithActiveOwner(config.utilityName, cleanupsBefore);
 		},
 		onDisconnect(): void {
-			stop = null;
+			inner = null;
 		},
 	});
+
+	return ref;
 }
 
 // ─── bindToHostProps ──────────────────────────────────────────────────────────

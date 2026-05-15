@@ -266,7 +266,7 @@ describe("watchEffect() — auto-tracking", () => {
 		const fn = vi.fn();
 		const cleanup = effect(fn);
 		expect(fn).toHaveBeenCalledOnce();
-		cleanup();
+		cleanup.dispose();
 	});
 
 	it("re-runs when accessed signal changes", async () => {
@@ -279,21 +279,21 @@ describe("watchEffect() — auto-tracking", () => {
 		s.set("b");
 		await tick();
 		await tick();
-		cleanup();
+		cleanup.dispose();
 		expect(fn.mock.calls.length).toBeGreaterThanOrEqual(2);
 	});
 
 	it("calls returned cleanup before re-run", async () => {
 		const s = signal(0);
 		const innerCleanup = vi.fn();
-		const cleanup = effect(() => {
+		const cleanup = effect(_onCleanup => {
 			s();
 			return innerCleanup;
 		});
 		s.set(1);
 		await tick();
 		await tick();
-		cleanup();
+		cleanup.dispose();
 		expect(innerCleanup).toHaveBeenCalledWith();
 	});
 
@@ -303,7 +303,7 @@ describe("watchEffect() — auto-tracking", () => {
 			s();
 		});
 		const cleanup = effect(fn);
-		cleanup();
+		cleanup.dispose();
 		const callsBefore = fn.mock.calls.length;
 		s.set(99);
 		await tick();
@@ -336,7 +336,36 @@ describe("watchEffect() — auto-tracking", () => {
 		await tick();
 		await tick();
 		expect(fn.mock.calls.length).toBeGreaterThan(callsAfterA + 1);
-		cleanup();
+		cleanup.dispose();
+	});
+
+	it("calls onCleanup() registered inside fn", async () => {
+		const s = signal(0);
+		const registered = vi.fn();
+		const cleanup = effect(onCleanup => {
+			s();
+			onCleanup(registered);
+		});
+		s.set(1);
+		await tick();
+		await tick();
+		cleanup.dispose();
+		expect(registered).toHaveBeenCalledWith();
+	});
+
+	it("calls onCleanup before return-value cleanup on re-run", async () => {
+		const s = signal(0);
+		const order: string[] = [];
+		const cleanup = effect(onCleanup => {
+			s();
+			onCleanup(() => order.push("onCleanup"));
+			return () => order.push("return");
+		});
+		s.set(1);
+		await tick();
+		await tick();
+		cleanup.dispose();
+		expect(order).toStrictEqual(["onCleanup", "return", "onCleanup", "return"]);
 	});
 });
 
@@ -350,7 +379,7 @@ describe("watchEffect() — explicit deps", () => {
 		const cleanup = effect([a, b], fn);
 		expect(fn).toHaveBeenCalledOnce();
 		expect(fn.mock.calls[0][0]).toStrictEqual([1, "hello"]);
-		cleanup();
+		cleanup.dispose();
 	});
 
 	it("re-runs when a listed dep changes", async () => {
@@ -360,7 +389,7 @@ describe("watchEffect() — explicit deps", () => {
 		s.set(5);
 		await tick();
 		await tick();
-		cleanup();
+		cleanup.dispose();
 		expect(fn.mock.calls.length).toBeGreaterThanOrEqual(2);
 		expect(fn.mock.calls[1][0]).toStrictEqual([5]);
 	});
@@ -384,7 +413,7 @@ describe("watchEffect() — explicit deps", () => {
 		await tick();
 		await tick();
 		expect(fn.mock.calls.length).toBeGreaterThan(callsBefore);
-		cleanup();
+		cleanup.dispose();
 	});
 
 	it("defers initial run when defer:true", async () => {
@@ -396,7 +425,7 @@ describe("watchEffect() — explicit deps", () => {
 		await tick();
 		await tick();
 		expect(fn).toHaveBeenCalledOnce();
-		cleanup();
+		cleanup.dispose();
 	});
 
 	it("calls return-value cleanup before re-run", async () => {
@@ -406,7 +435,7 @@ describe("watchEffect() — explicit deps", () => {
 		s.set(1);
 		await tick();
 		await tick();
-		cleanup();
+		cleanup.dispose();
 		expect(innerCleanup).toHaveBeenCalledWith();
 	});
 
@@ -419,15 +448,29 @@ describe("watchEffect() — explicit deps", () => {
 		s.set(1);
 		await tick();
 		await tick();
-		cleanup();
+		cleanup.dispose();
 		expect(registered).toHaveBeenCalledWith();
+	});
+
+	it("calls onCleanup before return-value cleanup on re-run", async () => {
+		const s = signal(0);
+		const order: string[] = [];
+		const cleanup = effect([s], (_vals, onCleanup) => {
+			onCleanup(() => order.push("onCleanup"));
+			return () => order.push("return");
+		});
+		s.set(1);
+		await tick();
+		await tick();
+		cleanup.dispose();
+		expect(order).toStrictEqual(["onCleanup", "return", "onCleanup", "return"]);
 	});
 
 	it("does not re-run after disposal", async () => {
 		const s = signal(0);
 		const fn = vi.fn();
 		const cleanup = effect([s], fn);
-		cleanup();
+		cleanup.dispose();
 		const countBefore = fn.mock.calls.length;
 		s.set(99);
 		await tick();
@@ -445,7 +488,7 @@ describe("watchEffect() — explicit deps", () => {
 		await tick();
 		await tick();
 		expect(fn.mock.calls.at(-1)[0]).toStrictEqual([1, 20, 3]);
-		cleanup();
+		cleanup.dispose();
 	});
 });
 
@@ -779,7 +822,7 @@ describe("host lifecycle — useSignalEffect (auto-tracking)", () => {
 		const count = signal(0);
 		const log: number[] = [];
 
-		useSignalEffect(() => {
+		useSignalEffect(_onCleanup => {
 			log.push(count());
 		});
 		host.connect(); // hostConnected → starts effect, fn runs synchronously
@@ -802,6 +845,29 @@ describe("host lifecycle — useSignalEffect (auto-tracking)", () => {
 		count.set(3);
 		await tick();
 		expect(log).toContain(3);
+	});
+
+	it("manual dispose stops the effect before disconnect", async () => {
+		const host = new TestHost();
+		useSignalController();
+		const count = signal(0);
+		const log: number[] = [];
+
+		const ref = useSignalEffect(_onCleanup => {
+			log.push(count());
+		});
+		host.connect();
+		expect(log).toStrictEqual([0]);
+
+		ref.dispose();
+		const lenAfterDispose = log.length;
+		count.set(1);
+		await tick();
+		expect(log).toHaveLength(lenAfterDispose);
+
+		host.disconnect();
+		host.connect();
+		expect(log).toStrictEqual([0]);
 	});
 });
 

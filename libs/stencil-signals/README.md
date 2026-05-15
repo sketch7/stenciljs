@@ -76,7 +76,7 @@ export class MyCounter extends SignalWatcher(class {}) {
 - **`SignalWatcherController`** — composition-pattern alternative to the mixin; extend `SsvElement` from `@ssv/stencil.core` and call `withSignalController(this)` as a class-property initializer
 - **`@useSignal` decorator** — bind a signal directly to a class property for ergonomic reads and writes
 - **`useSignalProps`** — bridge multiple `@Prop()` fields to signals with full type inference; one-way or two-way bindings; `transform` typed from the prop type automatically
-- **`effect`** — standalone side effects (auto-tracking or explicit deps); returns a dispose function
+- **`effect`** — standalone side effects (auto-tracking or explicit deps); returns a `WatcherRef` with `.dispose()`
 - **`useSignalEffect`** — lifecycle-bound variant of `effect`; starts on connect; disposal via `useSignalController()` active-owner scope
 - **`computedAsync`** — standalone async derived signal with `pending`/`resolved`/`error` status and `AbortSignal` cancellation
 - **`useComputedAsync`** — lifecycle-bound variant of `computedAsync`
@@ -361,24 +361,25 @@ Pair each two-way prop with a Stencil `@Event()` declaration so output targets (
 
 ### `effect`
 
-Standalone, framework-agnostic. Runs immediately and returns a dispose function.
+Standalone, framework-agnostic. Runs immediately and returns a `WatcherRef` (`{ dispose() }`).
 
 **Auto-tracking** — any signal read inside the callback is tracked automatically:
 
 ```ts
-const stop = effect(() => {
+const ref = effect(onCleanup => {
   document.title = `Count: ${count()}`;
+  onCleanup(() => {
+    /* teardown */
+  });
 });
 
-stop(); // dispose manually
+ref.dispose(); // stop manually
 ```
-
-If the callback returns a function, it is called as cleanup before the next re-run.
 
 **Explicit dependencies** — list the signals you care about; values are passed as a typed tuple:
 
 ```ts
-const stop = effect(
+const ref = effect(
   [userId, theme],
   ([id, currentTheme], onCleanup) => {
     const controller = new AbortController();
@@ -392,8 +393,10 @@ const stop = effect(
   { defer: true }, // skip the initial run, fire only on first change
 );
 
-stop(); // dispose manually
+ref.dispose(); // stop manually
 ```
+
+In both modes, register teardown with `onCleanup(fn)` and/or return a cleanup function. On each re-run and on `dispose()`, prior `onCleanup` runs first, then return cleanup.
 
 Signal reads _inside_ `fn` that are not in `deps` are untracked.
 
@@ -424,7 +427,7 @@ Lifecycle-bound wrapper over `effect`. Must be called in a class-field initializ
 export class MyComp extends SsvElement {
   readonly signalWatcher = useSignalController();
 
-  readonly _titleEff = useSignalEffect(() => {
+  readonly _titleEff = useSignalEffect(_onCleanup => {
     document.title = `Count: ${count()}`;
   });
 }
@@ -626,10 +629,11 @@ The main entry `@ssv/stencil-signals` exports the full public API but **does not
 
 | Export                                | Description                                                                                                                                |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `effect(fn)`                          | Auto-tracking effect. Re-runs whenever any signal accessed inside changes. Returns a dispose function; auto-registers with active owner when created during connect. |
-| `effect(deps, fn, options?)`          | Explicit-dep effect. `fn` receives signal values as a typed tuple. Supports `{ defer: true }` and `onCleanup`. Returns a dispose function. |
-| `useSignalEffect(fn)`                 | Lifecycle-bound auto-tracking effect. Requires `useSignalController()` first; disposal via active-owner scope.                             |
-| `useSignalEffect(deps, fn, options?)` | Lifecycle-bound explicit-dep effect. Same as above with explicit dep list.                                                                 |
+| `WatcherRef`                          | `{ dispose(): void }` — returned by `effect` / `useSignalEffect`; also implemented by `DisposableSignal`.                                  |
+| `effect(fn)`                          | Auto-tracking effect. `fn(onCleanup)`; supports `onCleanup` + return cleanup. Returns `WatcherRef`; auto-registers on connect.               |
+| `effect(deps, fn, options?)`          | Explicit-dep effect. `fn(values, onCleanup)`; supports `{ defer: true }`. Returns `WatcherRef`.                                            |
+| `useSignalEffect(fn)`                 | Lifecycle-bound auto-tracking effect. Returns `WatcherRef` (call `.dispose()` to stop early). Requires `useSignalController()` first.      |
+| `useSignalEffect(deps, fn, options?)` | Lifecycle-bound explicit-dep effect. Returns `WatcherRef`. Same as above with explicit dep list.                                            |
 
 ### Derived signals
 

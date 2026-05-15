@@ -67,6 +67,7 @@
 import { getAdapter } from "../adapters/active";
 import type { Signal } from "../adapters/types";
 import { scheduler, getActiveOwner } from "../signals/core";
+import type { WatcherRef } from "./effect";
 import { bindToHostDisposable } from "./host-bind";
 
 // ─── Public types ─────────────────────────────────────────────────────────────
@@ -105,10 +106,7 @@ export type ComputedAsyncOptions<T> = {
 /**
  * A `SignalComputed` that owns an internal watcher and can be manually stopped.
  */
-export type DisposableSignal<T> = {
-	/** Stop all internal watchers and cancel any in-flight async operations. */
-	dispose(): void;
-} & Signal<T>;
+export type DisposableSignal<T> = WatcherRef & Signal<T>;
 
 // ─── Implementation ───────────────────────────────────────────────────────────
 

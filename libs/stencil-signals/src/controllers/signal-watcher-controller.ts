@@ -1,31 +1,3 @@
-/**
- * @ssv/stencil-signals — controllers/signal-watcher-controller.ts
- *
- * `SignalWatcherController` is the composition-pattern counterpart to the
- * `SignalWatcher` mixin. Instead of extending `Mixin(SignalWatcher)`, a
- * component extends its own `ReactiveControllerHost` base class and registers
- * this controller in the constructor:
- *
- * ```ts
- * @Component({ tag: 'my-counter', shadow: false })
- * export class MyCounter extends SsvElement {
- *   readonly signalWatcher = withSignalController(this);
- *   render() { return <p>{count()}</p>; }
- * }
- * ```
- *
- * Tracking strategy (persistent watcher + computed):
- *  - A single `createComputed` wraps `jsxRender()` so every signal read inside
- *    render is tracked as a dependency.
- *  - A single `createWatcher` watches that Computed and fires `requestUpdate()`
- *    when any dependency changes — no per-render allocations.
- *  - `hostWillRender` re-evaluates the Computed before each render and stores the
- *    JSX result; the `render` override simply returns that cached result.
- *  - A version signal is bumped each `hostWillRender` to force-dirty the Computed
- *    for prop/state-triggered renders (where no signal changed).
- *
- */
-
 import { use } from "@ssv/stencil.core";
 import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
 
@@ -39,6 +11,7 @@ type RenderReactiveControllerHost = ReactiveControllerHost & {
 
 // ─── Controller ───────────────────────────────────────────────────────────────
 
+/** Tracks signal reads during `render()` via a persistent Computed + Watcher; schedules `requestUpdate()` on change. */
 export class SignalWatcherController implements ReactiveController {
 	/** Guard: suppress requestUpdate calls before the element is connected. */
 	private __connected = false;
@@ -159,6 +132,7 @@ export class SignalWatcherController implements ReactiveController {
 	}
 }
 
+/** Install a `SignalWatcherController` on the current host; use as a class-property initializer. */
 export function useSignalWatcher() {
 	return use(host => new SignalWatcherController(host));
 }

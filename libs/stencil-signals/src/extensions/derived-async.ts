@@ -1,58 +1,3 @@
-/**
- * @ssv/stencil-signals — extensions/derived-async.ts
- *
- * `derivedAsync(fn, options?)` is a derived signal whose value comes from a
- * promise (or synchronous `T`). It re-runs whenever any signal accessed inside
- * `fn` changes (via `adapter.createEffect`); prior in-flight work is cancelled
- * with `AbortSignal` (switch semantics).
- *
- * In a **host field initializer** (`peekCurrentHost() !== null`), the same
- * function is bound with `bindToHostDisposable` — starts on connect, snapshots
- * on disconnect — so behavior matches the former `useDerivedAsync` helper.
- *
- * The returned **`DisposableSignal<T>`** reads **`undefined`** until the first
- * successful resolution when `initialValue` is omitted
- *
- * If the computation rejects or throws, **`get()`/`()`** **rethrows** that error.
- * **`peek()`** does not throw — in an error state it returns **`undefined`**
- * (used for host disconnect snapshots). Prefer **`catch`** inside the callback
- * or guard **`get()`/`()`** reads with try/catch in UI code.
- *
- * ## Basic usage — data fetching
- *
- * ```ts
- * const userId = signal(1);
- *
- * const user = derivedAsync(async (abortSignal, _previous) => {
- *   const res = await fetch(`/api/users/${userId.get()}`, { signal: abortSignal });
- *   return res.json();
- * });
- *
- * render() {
- *   const row = user();
- *   if (row === undefined) return <Spinner />;
- *   return <UserCard user={row} />;
- * }
- * ```
- *
- * ## With initial value
- *
- * ```ts
- * const posts = derivedAsync(
- *   async (signal) => fetchPosts(signal),
- *   { initialValue: [] },
- * );
- * // posts.get() is [] before the first resolve; last value while refetching
- * ```
- *
- * ## Options
- *
- * | Option | Type | Default | Description |
- * |---|---|---|---|
- * | `initialValue` | `T` | `undefined` | Value before first resolution / while refetching |
- * | `equal` | `(a,b) => boolean` | `Object.is` | Skip update if resolved value is unchanged |
- */
-
 import { peekCurrentHost } from "@ssv/stencil.core";
 
 import { getAdapter } from "../adapters/active";
@@ -87,14 +32,7 @@ function isThenable(x: unknown): x is PromiseLike<unknown> {
 
 // ─── Implementation ───────────────────────────────────────────────────────────
 
-/**
- * Create a signal whose value is derived from an async computation.
- *
- * **Standalone** (no host during init): runs immediately; call `.dispose()` when there is no active owner.
- *
- * **Stencil class field**: when constructed during `ReactiveControllerHost` setup, binds like other host utilities —
- * starts on `hostConnected`, snapshots on disconnect. **Declare `useSignalWatcher()` before this field.**
- */
+/** Derived signal whose value comes from an async computation; re-runs on tracked signal change with AbortSignal switch semantics. */
 export function derivedAsync<T>(fn: DerivedAsyncFn<T>, options?: DerivedAsyncOptions<T>): DisposableSignal<T> {
 	const opts = options ?? {};
 	if (peekCurrentHost() !== null) {

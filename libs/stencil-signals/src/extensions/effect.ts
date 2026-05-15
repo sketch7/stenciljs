@@ -1,37 +1,3 @@
-/**
- * @ssv/stencil-signals — extensions/effect.ts
- *
- *   effect(fn)
- *
- * Auto-tracks every signal read inside `fn`, and re-runs whenever any of
- * those signals change. Returns a `WatcherRef`.
- *
- *   effect(deps, fn, options?)
- *
- * Only re-runs when the signals in `deps` change. The callback receives their
- * current values as typed arguments. Signal reads inside `fn` that are NOT in
- * `deps` are untracked.
- *
- * Options:
- *   `defer: true` — skip the initial run; only fire on first dep change.
- *
- * **Host vs standalone**
- *
- * - **Standalone** (no `ReactiveControllerHost` construction context): runs
- *   immediately; cleanup is registered on `getActiveOwner()` when set, otherwise
- *   call `.dispose()` manually. Uses Vue/Solid-style teardown: before each
- *   dependency-driven re-run, the previous run’s `onCleanup` callbacks (if any)
- *   run first, then the previous return-value cleanup.
- * - **Stencil class field** (during host construction): defers to
- *   `bindToHostEffect` — starts on `hostConnected`, stops when the host
- *   disconnects or you call the returned `.dispose()`, via `useSignalWatcher()`
- *   scope. **Declare `useSignalWatcher()` before this field.** Teardown behaves
- *   like an Angular `destroy` callback: `onCleanup` and return cleanups from
- *   the latest effect run run **once** on dispose, not between reactive re-runs.
- *
- * Both modes support `onCleanup(fn)` and an optional return-value cleanup.
- */
-
 import { peekCurrentHost } from "@ssv/stencil.core";
 
 import { getAdapter } from "../adapters/active";

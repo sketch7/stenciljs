@@ -1,37 +1,3 @@
-/**
- * @ssv/stencil-signals — entry point
- *
- * Automatically activates TC39 (signal-polyfill) if it is installed, otherwise
- * falls back to Preact (@preact/signals-core). Install exactly one as a peer
- * dependency; having both installed makes TC39 win.
- *
- * Public API surface:
- *
- *  Primitives
- *  ──────────
- *  signal(value)              Create a writable SignalState
- *  computed(fn)               Create a read-only SignalComputed
- *  batch(fn)                  Batch signal writes (no-op on TC39)
- *  untracked(fn)              Run fn without tracking signal reads inside it
- *
- *  Component integration
- *  ─────────────────────
- *  SignalWatcher(Base)         Class mixin — auto-rerenders on signal change
- *
- *  Side effects
- *  ────────────
- *  effect(fn)                       Auto-tracking side effect; host fields defer to connect (→ use `useSignalWatcher` first)
- *  effect(deps, fn, opts)           Explicit-deps effect; same host vs standalone split
- *
- *  Derived / async signals
- *  ───────────────────────
- *  computedPrevious(sig, init?)        Previous-value signal (→ /extensions)
- *  derivedAsync(fn, opts?)            Async derived signal → Signal<T> (→ /extensions)
- *  createStore(init)                   Reactive Proxy over a plain object (→ /extensions)
- *
- * For these utilities, import from "@ssv/stencil-signals/extensions".
- */
-
 // ─── Primitives ───────────────────────────────────────────────────────────────
 export { signal, computed, batch, untracked, scheduler, createWatcher, collectSignals } from "./signals/core";
 

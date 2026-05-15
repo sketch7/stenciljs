@@ -40,6 +40,13 @@ export class TestHost implements ReactiveControllerHost {
 		this.render();
 	}
 
+	/** Simulates `connectedCallback` → `hostConnected` on each controller. */
+	connect(): void {
+		for (const ctrl of this.controllers) {
+			ctrl.hostConnected?.();
+		}
+	}
+
 	/** Simulates `disconnectedCallback` → `hostDisconnected` on each controller. */
 	disconnect(): void {
 		for (const ctrl of this.controllers) {

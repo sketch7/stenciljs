@@ -30,11 +30,13 @@ export default defineConfig({
 		"no-nested-ternary": "off",
 		"no-continue": "off",
 		"no-plusplus": "off",
+		"no-underscore-dangle": "off",
 		"no-magic-numbers": "off",
 		"no-use-before-define": "off",
 		"no-duplicate-imports": ["error", { allowSeparateTypeImports: true }],
 		"init-declarations": "off",
 		"max-statements": ["warn", { max: 40 }],
+		"max-params": ["warn", { max: 4 }],
 		"max-classes-per-file": "off",
 		"no-undefined": "off",
 		"no-warning-comments": "off",
@@ -97,6 +99,7 @@ export default defineConfig({
 		"typescript/no-floating-promises": "error",
 		"typescript/await-thenable": "error",
 		"typescript/no-misused-promises": "error",
+		"typescript/no-invalid-void-type": "off",
 		"typescript/restrict-template-expressions": "warn",
 		"typescript/no-unnecessary-type-assertion": "error",
 		"typescript/no-wrapper-object-types": "error",
@@ -282,6 +285,14 @@ export default defineConfig({
 				"import/no-default-export": "off",
 				// Page/Layout/Head components return JSX — explicit return type is noise
 				"typescript/explicit-function-return-type": "off",
+			},
+		},
+		{
+			// Stencil globalScript — requires a default export and side-effect imports
+			files: ["apps/stencil-playground/src/global.ts"],
+			rules: {
+				"import/no-default-export": "off",
+				"import/no-unassigned-import": "off",
 			},
 		},
 		{

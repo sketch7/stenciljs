@@ -44,7 +44,7 @@ export function provideContext<T>(key: ContextKey<T>, valueOrFactory?: T | (() =
 	// host is ReactiveControllerHost; at runtime it is also the HTMLElement (Stencil component),
 	// which is required to attach the DOM event listener.
 	use(host => {
-		const hostEl = host as unknown as HTMLElement;
+		const hostEl = host as unknown as HTMLElement & typeof host;
 		return {
 			hostConnected() {
 				hostEl.addEventListener(CONTEXT_EVENT, handleRequest);

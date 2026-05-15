@@ -2,7 +2,7 @@ import { TestHost } from "@ssv/stencil.core/testing";
 import { createStore } from "@tanstack/store";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { useSelector } from "./store-selector";
+import { useSelector } from "./use-selector";
 
 describe("useSelector", () => {
 	let host: TestHost;

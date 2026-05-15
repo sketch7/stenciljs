@@ -2,7 +2,7 @@ import { TestHost } from "@ssv/stencil.core/testing";
 import { createAtom } from "@tanstack/store";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { useAtom } from "./store-atom";
+import { useAtom } from "./use-atom";
 
 describe("useAtom", () => {
 	let host: TestHost;

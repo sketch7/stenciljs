@@ -57,18 +57,18 @@ export class MyCounter extends SignalWatcher(class {}) {
 }
 ```
 
-| Feature                    | `@State()` | stencil-signals                               |
-| -------------------------- | ---------- | --------------------------------------------- |
-| Triggers re-render         | ✅         | ✅                                            |
-| Shared across components   | ❌         | ✅                                            |
-| Computed/derived values    | ❌         | ✅ `computed()`                               |
-| Non-tracking reads         | ❌         | ✅ `untracked()` / `sig.peek()`               |
-| Auto-tracking side effects | ❌         | ✅ `effect(fn)`                               |
-| Explicit-dep side effects  | ❌         | ✅ `effect(deps, fn)`                         |
-| Lifecycle-bound effects    | ❌         | ✅ `useSignalEffect(fn/deps, fn)`             |
-| Async derived state        | ❌         | ✅ `derivedAsync` / `useDerivedAsync`       |
-| Previous value tracking    | ❌         | ✅ `computedPrevious`                         |
-| TC39 standard              | ❌         | ✅                                            |
+| Feature                    | `@State()` | stencil-signals                       |
+| -------------------------- | ---------- | ------------------------------------- |
+| Triggers re-render         | ✅         | ✅                                    |
+| Shared across components   | ❌         | ✅                                    |
+| Computed/derived values    | ❌         | ✅ `computed()`                       |
+| Non-tracking reads         | ❌         | ✅ `untracked()` / `sig.peek()`       |
+| Auto-tracking side effects | ❌         | ✅ `effect(fn)`                       |
+| Explicit-dep side effects  | ❌         | ✅ `effect(deps, fn)`                 |
+| Lifecycle-bound effects    | ❌         | ✅ `useSignalEffect(fn/deps, fn)`     |
+| Async derived state        | ❌         | ✅ `derivedAsync` / `useDerivedAsync` |
+| Previous value tracking    | ❌         | ✅ `computedPrevious`                 |
+| TC39 standard              | ❌         | ✅                                    |
 
 ## Features
 
@@ -77,7 +77,7 @@ export class MyCounter extends SignalWatcher(class {}) {
 - **`useSignalProps`** — bridge multiple `@Prop()` fields to signals with full type inference; one-way or two-way bindings; `transform` typed from the prop type automatically
 - **`effect`** — standalone side effects (auto-tracking or explicit deps); returns a `WatcherRef` with `.dispose()`
 - **`useSignalEffect`** — lifecycle-bound variant of `effect`; starts on connect; disposal via `useSignalWatcher()` active-owner scope
-- **`derivedAsync`** — standalone async derived signal with `pending`/`resolved`/`error` status and `AbortSignal` cancellation
+- **`derivedAsync`** — async derived signal; returns `DisposableSignal<T>` with `AbortSignal` switch-cancellation
 - **`useDerivedAsync`** — lifecycle-bound variant of `derivedAsync`
 - **`computedPrevious`** — derived signal that holds the previous value of another signal (single computed, no watcher)
 - **`createStore`** — wrap a plain object in per-property signals via a reactive Proxy
@@ -121,24 +121,26 @@ The side-effect import registers the adapter synchronously, so it is always read
 
 ```ts
 // store.ts — define shared state once, outside any component
-import { signal, computed } from '@ssv/stencil-signals';
+import { signal, computed } from "@ssv/stencil-signals";
 
 export const count = signal(0);
 export const doubled = computed(() => count() * 2);
 ```
 
 ```tsx
-import { Component, Mixin } from '@stencil/core';
-import { SignalWatcherMixin } from '@ssv/stencil-signals';
-import { SsvElementMixin } from '@ssv/stencil.core';
-import { count, doubled } from './store';
+import { Component, Mixin } from "@stencil/core";
+import { SignalWatcherMixin } from "@ssv/stencil-signals";
+import { SsvElementMixin } from "@ssv/stencil.core";
+import { count, doubled } from "./store";
 
-@Component({ tag: 'my-counter', shadow: true })
+@Component({ tag: "my-counter", shadow: true })
 export class MyCounter extends Mixin(SignalWatcherMixin, SsvElementMixin) {
   render() {
     return (
       <div>
-        <p>Count: {count()} — doubled: {doubled()}</p>
+        <p>
+          Count: {count()} — doubled: {doubled()}
+        </p>
         <button onClick={() => count.update(n => n + 1)}>+1</button>
       </div>
     );
@@ -425,9 +427,15 @@ private readonly _userEff = useSignalEffect([userId, theme], ([id, t], onCleanup
 
 ### `derivedAsync`
 
-Standalone async derived signal. `fn` receives an `AbortSignal` and returns `Promise<T>`. The result holds a discriminated union with `status`, `value`, and optional `error`.
+Standalone async derived signal. Implemented with **`adapter.createEffect`**: any signal reads inside **`fn`** are tracked like a normal effect. **`fn`** takes **`(abortSignal, previousValue?)`** (second argument is optional) and returns **`Promise<T>`** or synchronous **`T`**. **`switch`** semantics via **`AbortSignal`** — each effect re-run aborts the previous in-flight promise.
 
-When a tracked signal changes, the previous in-flight request is automatically cancelled — no stale responses, no race conditions.
+Returns **`DisposableSignal<T>`** (read-only **`Signal<T>`** + **`dispose()`**):
+
+- **`undefined`** until the first successful resolve when **`initialValue`** is omitted.
+
+- **`initialValue`** fills that gap otherwise; latest resolved value stays visible while the next promise runs (**stale-while-revalidate**).
+
+- Throws from **`fn`** or promise rejections surface as **`get()`/`()` throwing; **`peek()`** does **not** throw — error state yields **`undefined`** (used safely for **`useDerivedAsync`\*\* disconnect snapshots).
 
 ```ts
 const userId = signal(1);
@@ -444,18 +452,16 @@ const user = derivedAsync(
 // call user.dispose() manually when done
 ```
 
-`value` is always present so templates can show stale data while a reload is in progress.
-
 **Options:**
 
-| Option         | Type                | Default     | Description                                  |
-| -------------- | ------------------- | ----------- | -------------------------------------------- |
-| `initialValue` | `T`                 | `undefined` | `result.value` before the first resolution   |
-| `equal`        | `(a, b) => boolean` | `Object.is` | Skip update when resolved value is unchanged |
+| Option         | Type                | Default     | Description                                           |
+| -------------- | ------------------- | ----------- | ----------------------------------------------------- |
+| `initialValue` | `T`                 | `undefined` | value before first resolution / stable during refetch |
+| `equal`        | `(a, b) => boolean` | `Object.is` | skip update when resolved value is unchanged          |
 
 ### `useDerivedAsync`
 
-Lifecycle-bound variant. Starts on `hostConnected`; disposal via `useSignalWatcher()` active-owner scope. Declare `useSignalWatcher()` before this field.
+Lifecycle-bound variant. Starts on **`hostConnected`**; disposal via **`useSignalWatcher()`**. Declare **`useSignalWatcher()`** before this field.
 
 ```tsx
 const userId = signal(1);
@@ -471,10 +477,16 @@ export class UserCard extends SsvElement {
   });
 
   render() {
-    const result = this.user();
-    if (isPending(result)) return <p>Loading…</p>;
-    if (isError(result)) return <p>Error: {String(result.error)}</p>;
-    return <UserCard user={result.value} />;
+    let row: User | undefined;
+    let err: unknown;
+    try {
+      row = this.user();
+    } catch (e) {
+      err = e;
+    }
+    if (err !== undefined) return <p>Error: {String(err)}</p>;
+    if (row === undefined) return <p>Loading…</p>;
+    return <UserSummary user={row} />;
   }
 }
 ```
@@ -603,14 +615,14 @@ The main entry `@ssv/stencil-signals` exports the full public API but **does not
 
 ### Derived signals
 
-| Export                               | Description                                                                                                          |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| `derivedAsync(fn, options?)`        | Standalone async derived signal. Re-runs when tracked signals change. Returns `DisposableSignal<AsyncResult<T>>`.    |
-| `useDerivedAsync(fn, options?)`     | Lifecycle-bound variant of `derivedAsync`. Requires `useSignalWatcher()` first; disposal via active-owner scope.    |
-| `computedPrevious(source, init?)` | Previous-value derived signal. Returns `Signal<T \| undefined>`. |
-| `isPending(result)`                  | Type guard — narrows `AsyncResult<T>` to `{ status: 'pending' }`.                                                    |
-| `isResolved(result)`                 | Type guard — narrows `AsyncResult<T>` to `{ status: 'resolved', value: T }`.                                         |
-| `isError(result)`                    | Type guard — narrows `AsyncResult<T>` to `{ status: 'error', error: unknown }`.                                      |
+| Export                            | Description                                                                       |
+| --------------------------------- | --------------------------------------------------------------------------------- |
+| `derivedAsync(fn, options?)`      | Standalone promise-backed derived signal. Returns `DisposableSignal<T>`.          |
+| `useDerivedAsync(fn, options?)`   | Lifecycle-bound `derivedAsync`. Requires `useSignalWatcher()` first.              |
+| `computedPrevious(source, init?)` | Previous-value derived signal. Returns `Signal<T \| undefined>`.                  |
+| `DisposableSignal<T>`             | Read-only signal + `.dispose()` — returned by `derivedAsync` / `useDerivedAsync`. |
+| `DerivedAsyncFn<T>`               | `(abortSignal, previous?) => Promise<T> \| T`.                                    |
+| `DerivedAsyncOptions<T>`          | `{ initialValue?, equal? }`.                                                      |
 
 ### Store
 

@@ -1,36 +1,33 @@
 /**
  * @ssv/stencil-signals — utils/derived-async.ts
  *
- * `derivedAsync(fn, options?)` / `derivedAsync(host, fn)` is a derived signal whose value comes from an
- * async operation (Promise or async function). It re-runs whenever any signal
- * accessed inside `fn` changes, automatically cancelling the in-flight
- * operation via AbortSignal.
+ * `derivedAsync(fn, options?)` is a derived signal whose value comes from a
+ * promise (or synchronous `T`). It re-runs whenever any signal accessed inside
+ * `fn` changes (via `adapter.createEffect`); prior in-flight work is cancelled
+ * with `AbortSignal` (switch semantics).
  *
- * The returned signal holds an `AsyncResult<T>` discriminated union:
+ * The returned **`DisposableSignal<T>`** reads **`undefined`** until the first
+ * successful resolution when `initialValue` is omitted
  *
- *   { status: 'pending', value: T | undefined }
- *   { status: 'resolved', value: T }
- *   { status: 'error', error: unknown, value: T | undefined }
- *
- * `value` is always present so templates can safely render the last known
- * good value while a new fetch is in-flight.
+ * If the computation rejects or throws, **`get()`/`()`** **rethrows** that error.
+ * **`peek()`** does not throw — in an error state it returns **`undefined`**
+ * (used for host disconnect snapshots). Prefer **`catch`** inside the callback
+ * or guard **`get()`/`()`** reads with try/catch in UI code.
  *
  * ## Basic usage — data fetching
  *
  * ```ts
  * const userId = signal(1);
  *
- * const user = derivedAsync(async (signal) => {
- *   const res = await fetch(`/api/users/${userId.get()}`, { signal });
+ * const user = derivedAsync(async (abortSignal, _previous) => {
+ *   const res = await fetch(`/api/users/${userId.get()}`, { signal: abortSignal });
  *   return res.json();
  * });
  *
- * // In render():
  * render() {
- *   const { status, value, error } = user.get();
- *   if (status === 'pending') return <Spinner />;
- *   if (status === 'error')   return <Error message={error.message} />;
- *   return <UserCard user={value} />;
+ *   const row = user();
+ *   if (row === undefined) return <Spinner />;
+ *   return <UserCard user={row} />;
  * }
  * ```
  *
@@ -41,72 +38,46 @@
  *   async (signal) => fetchPosts(signal),
  *   { initialValue: [] },
  * );
- * // posts.get().value is [] before the first resolve
- * ```
- *
- * ## Returning a plain value (sync fallback)
- *
- * The callback may also return a plain value synchronously — useful for
- * conditional branching where you sometimes have the answer immediately.
- *
- * ```ts
- * const result = derivedAsync(() => {
- *   if (cache.has(id.get())) return cache.get(id.get());
- *   return fetch(`/api/${id.get()}`).then(r => r.json());
- * });
+ * // posts.get() is [] before the first resolve; last value while refetching
  * ```
  *
  * ## Options
  *
  * | Option | Type | Default | Description |
  * |---|---|---|---|
- * | `initialValue` | `T` | `undefined` | Value before first resolution |
- * | `equal` | `(a,b) => boolean` | `Object.is` | Skip update if resolved value is the same |
+ * | `initialValue` | `T` | `undefined` | Value before first resolution / while refetching |
+ * | `equal` | `(a,b) => boolean` | `Object.is` | Skip update if resolved value is unchanged |
  */
 
 import { getAdapter } from "../adapters/active";
 import type { Signal } from "../adapters/types";
-import { scheduler, getActiveOwner } from "../signals/core";
+import { getActiveOwner } from "../signals/core";
 import type { WatcherRef } from "./effect";
 import { bindToHostDisposable } from "./host-bind";
 
 // ─── Public types ─────────────────────────────────────────────────────────────
 
-export type AsyncStatus = "pending" | "resolved" | "error";
-
-export type AsyncPending<T> = {
-	status: "pending";
-	/** Last resolved value, or `initialValue` if never resolved. */
-	value: T | undefined;
-	error?: undefined;
-};
-
-export type AsyncResolved<T> = {
-	status: "resolved";
-	value: T;
-	error?: undefined;
-};
-
-export type AsyncError<T> = {
-	status: "error";
-	error: unknown;
-	/** Last resolved value so templates can show stale data. */
-	value: T | undefined;
-};
-
-export type AsyncResult<T> = AsyncPending<T> | AsyncResolved<T> | AsyncError<T>;
-
 export type DerivedAsyncOptions<T> = {
-	/** Value of `result.value` while the first fetch is pending. Default: `undefined`. */
+	/** Value before first resolution and while a new fetch is in flight. Default: `undefined`. */
 	initialValue?: T;
-	/** Custom equality for resolved values. If equal, the result signal is not updated. */
+	/** Custom equality for resolved values. If equal, the internal state is not updated. */
 	equal?: (a: T, b: T) => boolean;
 };
 
+export type DerivedAsyncFn<T> = (abortSignal: AbortSignal, previousValue?: T | undefined) => Promise<T> | T;
+
 /**
- * A `SignalComputed` that owns an internal watcher and can be manually stopped.
+ * A read-only derived signal that owns an internal effect and can be stopped with `dispose()`.
  */
 export type DisposableSignal<T> = WatcherRef & Signal<T>;
+
+// ─── Internal state ───────────────────────────────────────────────────────────
+
+type InternalState<T> = { kind: "value"; value: T | undefined } | { kind: "error"; error: unknown };
+
+function isThenable(x: unknown): x is PromiseLike<unknown> {
+	return x !== null && typeof x === "object" && typeof (x as PromiseLike<unknown>).then === "function";
+}
 
 // ─── Implementation ───────────────────────────────────────────────────────────
 
@@ -114,10 +85,7 @@ export type DisposableSignal<T> = WatcherRef & Signal<T>;
  * Create a signal whose value is derived from an async computation.
  * Standalone — runs immediately and returns a `DisposableSignal`. Call `.dispose()` manually.
  */
-export function derivedAsync<T>(
-	fn: (abortSignal: AbortSignal) => Promise<T> | T,
-	options?: DerivedAsyncOptions<T>,
-): DisposableSignal<AsyncResult<T>> {
+export function derivedAsync<T>(fn: DerivedAsyncFn<T>, options?: DerivedAsyncOptions<T>): DisposableSignal<T> {
 	return _derivedAsyncCore(fn, options ?? {});
 }
 
@@ -126,173 +94,109 @@ export function derivedAsync<T>(
  * `useSignalWatcher()` active-owner scope. Must be called in a component
  * class-field initializer with `useSignalWatcher()` declared first.
  */
-export function useDerivedAsync<T>(
-	fn: (abortSignal: AbortSignal) => Promise<T> | T,
-	options?: DerivedAsyncOptions<T>,
-): DisposableSignal<AsyncResult<T>> {
+export function useDerivedAsync<T>(fn: DerivedAsyncFn<T>, options?: DerivedAsyncOptions<T>): DisposableSignal<T> {
 	const opts = options ?? {};
-	const initialSnapshot: AsyncResult<T> = { status: "pending", value: opts.initialValue };
+	const initialSnapshot = opts.initialValue as T | undefined;
 	return bindToHostDisposable({
 		utilityName: "useDerivedAsync",
 		initialSnapshot,
 		create: snapshot =>
 			_derivedAsyncCore<T>(fn, {
 				...opts,
-				initialValue: snapshot.value,
+				initialValue: snapshot,
 			}),
 		read: inner => inner(),
 		peek: inner => inner.peek(),
 		disposeInner: inner => inner.dispose(),
-	}) as DisposableSignal<AsyncResult<T>>;
+	}) as DisposableSignal<T>;
 }
 
-// ─── Core factory (no host) ───────────────────────────────────────────────────
-
-function _derivedAsyncCore<T>(
-	fn: (abortSignal: AbortSignal) => Promise<T> | T,
-	options: DerivedAsyncOptions<T> = {},
-): DisposableSignal<AsyncResult<T>> {
+function _derivedAsyncCore<T>(fn: DerivedAsyncFn<T>, options: DerivedAsyncOptions<T> = {}): DisposableSignal<T> {
 	const { initialValue, equal = Object.is } = options;
 	const adapter = getAdapter();
 
-	// Internal state signal — holds the current AsyncResult.
-	const result = adapter.createState<AsyncResult<T>>({
-		status: "pending",
+	const source = adapter.createState<InternalState<T>>({
+		kind: "value",
 		value: initialValue,
 	});
 
-	// Track the currently active abort controller so we can cancel stale requests.
-	let currentController: AbortController | null = null;
-	// Track last resolved value for stale-while-revalidate behaviour.
-	let lastResolved: T | undefined = initialValue;
 	let disposed = false;
 
-	// A computed that tracks signal deps inside `fn`. We never expose this
-	// directly — it's only used to collect dependencies.
-	//
-	// Returns a new `{}` object on every evaluation so that Preact's equality
-	// check (`Object.is`) always sees a "changed" value and propagates to the
-	// watcher effect. TC39's Watcher fires on staleness (before equality checks),
-	// so the unique-reference trick is harmless there too.
-	const depTracker = adapter.createComputed<object>(() => {
-		// Calling fn inside a computed records all signal.get() calls as deps.
-		// We discard the return value here; actual execution happens in `run()`.
-		try {
-			// Abort the controller BEFORE calling fn so that fetch() receives an
-			// already-aborted signal and rejects immediately without making a real
-			// network request. Signal reads (e.g. userId.get()) still happen
-			// synchronously before fetch() and are tracked as normal.
-			const dummy = new AbortController();
-			dummy.abort();
-			const maybePromise = fn(dummy.signal);
-			// Suppress unhandled rejection from the aborted dummy.
-			if (maybePromise instanceof Promise) {
-				maybePromise.catch(() => {
-					// Swallow unhandled rejection — dummy was already aborted.
-				});
-			}
-		} catch {
-			// Ignore errors during dep-tracking pass.
+	const innerComputed = adapter.createComputed<T>(() => {
+		const st = source();
+		if (st.kind === "error") {
+			throw st.error;
 		}
-		// New object reference each call — forces Preact to propagate the change.
-		return {};
+		return st.value as T;
 	});
 
-	// Do NOT call watcher.watch() inside notify — in TC39 that throws during
-	// inNotificationPhase. Re-arm is done inside the scheduled task instead.
-	const watcher = adapter.createWatcher(() => {
-		if (disposed) {
-			return;
-		}
-		scheduler.schedule(() => {
-			if (disposed) {
-				return;
-			}
-			// Re-arm: unwatch → re-evaluate depTracker (fresh dep tracking) → re-watch.
-			watcher.unwatch(depTracker);
-			depTracker();
-			watcher.watch(depTracker);
-			run();
+	const effectRef = adapter.createEffect(onCleanup => {
+		const previous = adapter.untrack((): T | undefined => {
+			const st = source.peek();
+			return st.kind === "value" ? (st.value as T | undefined) : undefined;
 		});
-	});
 
-	async function run() {
-		if (disposed) {
-			return;
-		}
-
-		// Cancel any in-flight request.
-		currentController?.abort();
 		const controller = new AbortController();
-		currentController = controller;
+		onCleanup(() => {
+			controller.abort();
+		});
 
-		// Mark as pending, keeping the last resolved value.
-		adapter.untrack(() => result.set({ status: "pending", value: lastResolved }));
+		const settleValue = (value: T): void => {
+			if (controller.signal.aborted || disposed) {
+				return;
+			}
+			const cur = source.peek();
+			if (cur.kind === "value" && equal(cur.value as T, value)) {
+				return;
+			}
+			adapter.untrack(() => source.set({ kind: "value", value }));
+		};
+
+		const settleError = (error: unknown): void => {
+			if (controller.signal.aborted || disposed) {
+				return;
+			}
+			adapter.untrack(() => source.set({ kind: "error", error }));
+		};
 
 		try {
-			const value = await fn(controller.signal);
-
-			// If aborted while awaiting, ignore the result.
-			if (controller.signal.aborted || disposed) {
-				return;
+			const out = fn(controller.signal, previous);
+			if (isThenable(out)) {
+				Promise.resolve(out).then(
+					value => {
+						settleValue(value as T);
+					},
+					error => {
+						settleError(error);
+					},
+				);
+			} else {
+				settleValue(out as T);
 			}
-
-			// Skip update if the resolved value is unchanged.
-			const cur = result.peek();
-			if (cur.status === "resolved" && equal(cur.value as T, value)) {
-				return;
-			}
-
-			lastResolved = value;
-			adapter.untrack(() => result.set({ status: "resolved", value }));
 		} catch (error) {
-			if (controller.signal.aborted || disposed) {
-				return;
-			}
-			adapter.untrack(() => result.set({ status: "error", error, value: lastResolved }));
+			settleError(error);
 		}
-	}
+	});
 
-	// Arm watcher — initial dep collection.
-	depTracker();
-	watcher.watch(depTracker);
-
-	// Kick off the first run.
-	run();
-
-	// Return a computed that reads the internal result state.
-	// We also attach a `dispose` method so long-lived uses can clean up.
-	const output = Object.assign(
-		adapter.createComputed<AsyncResult<T>>(() => result()),
-		{
-			dispose(): void {
-				disposed = true;
-				currentController?.abort();
-				watcher.dispose();
-			},
+	const output = Object.assign((): T => innerComputed(), {
+		get(): T {
+			return innerComputed.get();
 		},
-	) as unknown as DisposableSignal<AsyncResult<T>>;
+		/** Does not throw on error state (returns `undefined`); safe for host snapshot on disconnect. */
+		peek(): T {
+			const st = adapter.untrack(() => source.peek());
+			if (st.kind === "error") {
+				return undefined as T;
+			}
+			return st.value as T;
+		},
+		dispose(): void {
+			disposed = true;
+			effectRef.dispose();
+		},
+	}) as unknown as DisposableSignal<T>;
 
-	// Auto-register with the active owner scope so this derivedAsync is
-	// automatically disposed when the component disconnects from the DOM.
 	getActiveOwner()?.push(output.dispose.bind(output));
 
 	return output;
-}
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-/** Type-guard: result is pending. */
-export function isPending<T>(r: AsyncResult<T>): r is AsyncPending<T> {
-	return r.status === "pending";
-}
-
-/** Type-guard: result is resolved. */
-export function isResolved<T>(r: AsyncResult<T>): r is AsyncResolved<T> {
-	return r.status === "resolved";
-}
-
-/** Type-guard: result has errored. */
-export function isError<T>(r: AsyncResult<T>): r is AsyncError<T> {
-	return r.status === "error";
 }

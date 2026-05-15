@@ -11,7 +11,7 @@ import { describe, it, expect, vi, expectTypeOf } from "vitest";
 
 import { computedPrevious } from "../src/extensions/computed-previous";
 import { createStore } from "../src/extensions/create-store";
-import { derivedAsync, isPending, isResolved, isError } from "../src/extensions/derived-async";
+import { derivedAsync } from "../src/extensions/derived-async";
 import { effect } from "../src/extensions/effect";
 // Import the Preact entry point first — this sets the Preact adapter so all
 // utilities that call getAdapter() work correctly in this test file.
@@ -521,30 +521,30 @@ describe("computedPrevious() [preact]", () => {
 // ─── derivedAsync() ─────────────────────────────────────────────────────────
 
 describe("derivedAsync() [preact]", () => {
-	it("starts in pending state", () => {
+	it("is undefined before first resolution", () => {
 		const result = derivedAsync(async () => 42);
-		expect(result().status).toBe("pending");
-		(result as any).dispose?.();
+		expect(result()).toBeUndefined();
+		result.dispose();
 	});
 
 	it("resolves to the returned value", async () => {
 		const result = derivedAsync(async () => "hello");
 		await flush();
-		expect(result()).toStrictEqual({ status: "resolved", value: "hello" });
-		(result as any).dispose?.();
+		expect(result()).toBe("hello");
+		result.dispose();
 	});
 
-	it("carries initialValue in pending state", () => {
+	it("uses initialValue before first resolution", () => {
 		const result = derivedAsync(async () => 99, { initialValue: 0 });
-		expect(result()).toMatchObject({ status: "pending", value: 0 });
-		(result as any).dispose?.();
+		expect(result()).toBe(0);
+		result.dispose();
 	});
 
-	it("keeps last resolved value while pending on re-run", async () => {
+	it("keeps last resolved value while a new promise is in flight", async () => {
 		const id = signal(1);
 		let resolveNext!: (v: number) => void;
 
-		const result = derivedAsync(async abortSignal => {
+		const result = derivedAsync(async () => {
 			const current = id();
 			if (current === 1) {
 				return 100;
@@ -555,32 +555,27 @@ describe("derivedAsync() [preact]", () => {
 		});
 
 		await flush();
-		expect(result()).toMatchObject({ status: "resolved", value: 100 });
+		expect(result()).toBe(100);
 
-		id.set(2); // triggers re-run; will stay pending until resolveNext called
+		id.set(2);
 		await tick();
-		// Still shows last resolved value in pending
-		const pending = result();
-		expect(pending.status).toBe("pending");
-		expect(pending.value).toBe(100);
+		// stale value preserved while pending
+		expect(result()).toBe(100);
 
 		resolveNext(200);
 		await flush();
-		expect(result()).toMatchObject({ status: "resolved", value: 200 });
-		(result as any).dispose?.();
+		expect(result()).toBe(200);
+		result.dispose();
 	});
 
-	it("transitions to error state on rejection", async () => {
+	it("throws on read after rejection", async () => {
 		const result = derivedAsync(async () => {
 			throw new Error("boom");
 		});
 		await flush();
-		const r = result();
-		expect(r.status).toBe("error");
-		if (isError(r)) {
-			expect(r.error).toBeInstanceOf(Error);
-		}
-		(result as any).dispose?.();
+		expect(() => result()).toThrow("boom");
+		expect(result.peek()).toBeUndefined();
+		result.dispose();
 	});
 
 	it("re-runs when a tracked signal changes", async () => {
@@ -594,13 +589,13 @@ describe("derivedAsync() [preact]", () => {
 		});
 
 		await flush();
-		expect(result()).toMatchObject({ status: "resolved", value: 10 });
+		expect(result()).toBe(10);
 
 		id.set(2);
 		await flush();
-		expect(result()).toMatchObject({ status: "resolved", value: 20 });
+		expect(result()).toBe(20);
 		expect(calls).toContain(2);
-		(result as any).dispose?.();
+		result.dispose();
 	});
 
 	it("cancels in-flight request via AbortSignal on dep change", async () => {
@@ -608,7 +603,8 @@ describe("derivedAsync() [preact]", () => {
 		const aborts: boolean[] = [];
 
 		const result = derivedAsync(async abortSignal => {
-			id(); // track dep
+			// track dep
+			id();
 			await new Promise<void>((_, reject) => {
 				abortSignal.addEventListener("abort", () => {
 					aborts.push(true);
@@ -623,44 +619,24 @@ describe("derivedAsync() [preact]", () => {
 			return 0;
 		});
 
-		// Change dep while first request is in-flight
 		await tick();
 		id.set(2);
 		await flush();
 
 		expect(aborts.length).toBeGreaterThan(0);
-		(result as any).dispose?.();
+		result.dispose();
 	});
 
 	it("returns sync value when fn returns non-Promise", async () => {
 		const flag = signal(true);
 		const result = derivedAsync(_abortSig => {
 			if (flag()) {
-				return "sync-value" as any;
+				return "sync-value";
 			}
 			return Promise.resolve("async-value");
 		});
 		await flush();
-		expect(result()).toMatchObject({ status: "resolved", value: "sync-value" });
-		(result as any).dispose?.();
-	});
-
-	// ── Type guards ────────────────────────────────────────────────────────────
-
-	describe("type guards", () => {
-		it("isPending()", () => {
-			expect(isPending({ status: "pending", value: undefined })).toBeTruthy();
-			expect(isPending({ status: "resolved", value: 1 })).toBeFalsy();
-		});
-
-		it("isResolved()", () => {
-			expect(isResolved({ status: "resolved", value: 1 })).toBeTruthy();
-			expect(isResolved({ status: "pending", value: undefined })).toBeFalsy();
-		});
-
-		it("isError()", () => {
-			expect(isError({ status: "error", error: new Error(), value: undefined })).toBeTruthy();
-			expect(isError({ status: "resolved", value: 1 })).toBeFalsy();
-		});
+		expect(result()).toBe("sync-value");
+		result.dispose();
 	});
 });

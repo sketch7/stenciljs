@@ -1,5 +1,5 @@
 import { signal, useSignalWatcher } from "@ssv/stencil-signals";
-import { useDerivedAsync, isError, isPending } from "@ssv/stencil-signals/extensions";
+import { useDerivedAsync } from "@ssv/stencil-signals/extensions";
 import { SsvElement } from "@ssv/stencil.core";
 import { Component, h } from "@stencil/core";
 
@@ -34,8 +34,15 @@ export class AppSignalsDerivedAsync extends SsvElement {
 	});
 
 	render() {
-		const result = this.user();
 		const id = userId();
+
+		let row: ApiUser | undefined;
+		let readError: unknown;
+		try {
+			row = this.user();
+		} catch (error) {
+			readError = error;
+		}
 
 		return (
 			<div class="async">
@@ -55,42 +62,42 @@ export class AppSignalsDerivedAsync extends SsvElement {
 					</button>
 				</div>
 
-				{isPending(result) && (
+				{readError === undefined && row === undefined && (
 					<div class="state state-pending">
 						<span class="spinner" aria-hidden="true" />
 						<span>Loading user {id}…</span>
 					</div>
 				)}
 
-				{isError(result) && (
+				{readError !== undefined && (
 					<div class="state state-error">
 						<span class="state-icon">✕</span>
-						<span>{String(result.error)}</span>
+						<span>{String(readError)}</span>
 					</div>
 				)}
 
-				{result.value && (
+				{row !== undefined && readError === undefined && (
 					<div class="user-card">
 						<div class="user-header">
 							<span class="user-avatar" aria-hidden="true">
-								{result.value.name[0]}
+								{row.name[0]}
 							</span>
 							<div>
-								<p class="user-name">{result.value.name}</p>
-								<p class="user-handle">@{result.value.username}</p>
+								<p class="user-name">{row.name}</p>
+								<p class="user-handle">@{row.username}</p>
 							</div>
 						</div>
 						<dl class="user-details">
 							<dt>Email</dt>
-							<dd>{result.value.email}</dd>
+							<dd>{row.email}</dd>
 							<dt>Phone</dt>
-							<dd>{result.value.phone}</dd>
+							<dd>{row.phone}</dd>
 							<dt>Website</dt>
-							<dd>{result.value.website}</dd>
+							<dd>{row.website}</dd>
 							<dt>City</dt>
-							<dd>{result.value.address.city}</dd>
+							<dd>{row.address.city}</dd>
 							<dt>Company</dt>
-							<dd>{result.value.company.name}</dd>
+							<dd>{row.company.name}</dd>
 						</dl>
 					</div>
 				)}

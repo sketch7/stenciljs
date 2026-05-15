@@ -13,11 +13,8 @@
  *  Derived / async signals
  *  ───────────────────────
  *  computedPrevious(sig, init?)        Previous-value signal
- *  derivedAsync(fn, opts)             Standalone async derived signal with status + AbortSignal
+ *  derivedAsync(fn, opts)             Async derived signal (promise / sync T) + AbortSignal
  *  useDerivedAsync(fn, opts)          Lifecycle-bound async derived signal
- *  isPending(result)                   Type-guard: AsyncResult is pending
- *  isResolved(result)                  Type-guard: AsyncResult is resolved
- *  isError(result)                     Type-guard: AsyncResult is an error
  *
  *  Store helpers
  *  ─────────────
@@ -30,16 +27,8 @@ export type { CleanupFn, EffectOptions, WatcherRef, RegisterCleanup } from "./ex
 
 // ─── Derived signals ──────────────────────────────────────────────────────────
 export { computedPrevious } from "./extensions/computed-previous";
-export { derivedAsync, useDerivedAsync, isPending, isResolved, isError } from "./extensions/derived-async";
-export type {
-	DisposableSignal,
-	AsyncResult,
-	AsyncPending,
-	AsyncResolved,
-	AsyncError,
-	AsyncStatus,
-	DerivedAsyncOptions,
-} from "./extensions/derived-async";
+export { derivedAsync, useDerivedAsync } from "./extensions/derived-async";
+export type { DisposableSignal, DerivedAsyncFn, DerivedAsyncOptions } from "./extensions/derived-async";
 
 // ─── Store helpers ────────────────────────────────────────────────────────────
 export { createStore } from "./extensions/create-store";

@@ -40,7 +40,7 @@ export type ComputedOptions<T> = SignalOptions<T>;
 
 /**
  * Low-level watcher returned by `createWatcher()` and used internally by
- * effect, computedPrevious, and derivedAsync.
+ * effect, and explicit-deps `effect(deps, …)`.
  *
  * TC39 backend: wraps Signal.subtle.Watcher.
  * Preact backend: emulated via a combined computed() + effect().

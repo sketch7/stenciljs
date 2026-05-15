@@ -185,7 +185,8 @@ function autoTrackingEffect(fn: (onCleanup: RegisterCleanup) => CleanupFn | void
 // ─── Explicit-deps implementation ─────────────────────────────────────────────
 //
 // Uses a single depTracker computed to unify all listed deps into one Signal
-// that the Watcher can watch — same pattern as _derivedAsyncCore. Returns {}
+// that the Watcher can watch.
+// it moved to createEffect. Returns {}
 // each evaluation so both TC39 (staleness-based) and Preact (equality-based)
 // adapters always see the signal as changed.
 

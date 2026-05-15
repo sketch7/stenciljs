@@ -11,5 +11,5 @@ export { AppSignalsTodo } from "./examples/stencil-signals/todo/todo";
 export type { Todo as SignalsTodo } from "./examples/stencil-signals/todo/todo.store";
 export { AppTimer } from "./examples/stencil-signals/timer/timer";
 export { AppTimerCounter } from "./examples/stencil-signals/timer/timer-counter";
-export { AppSignalsComputedAsync } from "./examples/stencil-signals/computed-async/computed-async";
+export { AppSignalsDerivedAsync } from "./examples/stencil-signals/derived-async/derived-async";
 export { AppSignalsComputedPrevious } from "./examples/stencil-signals/computed-previous/computed-previous";

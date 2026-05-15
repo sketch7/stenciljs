@@ -28,7 +28,7 @@
  *  Derived / async signals
  *  ───────────────────────
  *  computedPrevious(sig)       Signal holding the previous value of another signal (→ /extensions)
- *  computedAsync(fn, opts)     Async derived signal with status tracking (→ /extensions)
+ *  derivedAsync(fn, opts)     Async derived signal with status tracking (→ /extensions)
  *  createStore(init)           Reactive Proxy over a plain object (→ /extensions)
  *
  * For these utilities, import from "@ssv/stencil-signals/extensions".
@@ -55,4 +55,4 @@ export type { CleanupFn, EffectOptions, WatcherRef, RegisterCleanup } from "./ex
 
 // ─── Derived signals ──────────────────────────────────────────────────────────
 export { computedPrevious } from "./extensions/computed-previous";
-export { computedAsync, useComputedAsync, isPending, isResolved, isError } from "./extensions/computed-async";
+export { derivedAsync, useDerivedAsync, isPending, isResolved, isError } from "./extensions/derived-async";

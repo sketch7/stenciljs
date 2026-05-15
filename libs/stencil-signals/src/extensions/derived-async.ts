@@ -1,7 +1,7 @@
 /**
- * @ssv/stencil-signals — utils/computed-async.ts
+ * @ssv/stencil-signals — utils/derived-async.ts
  *
- * `computedAsync(fn, options?)` / `computedAsync(host, fn)` is a derived signal whose value comes from an
+ * `derivedAsync(fn, options?)` / `derivedAsync(host, fn)` is a derived signal whose value comes from an
  * async operation (Promise or async function). It re-runs whenever any signal
  * accessed inside `fn` changes, automatically cancelling the in-flight
  * operation via AbortSignal.
@@ -20,7 +20,7 @@
  * ```ts
  * const userId = signal(1);
  *
- * const user = computedAsync(async (signal) => {
+ * const user = derivedAsync(async (signal) => {
  *   const res = await fetch(`/api/users/${userId.get()}`, { signal });
  *   return res.json();
  * });
@@ -37,7 +37,7 @@
  * ## With initial value
  *
  * ```ts
- * const posts = computedAsync(
+ * const posts = derivedAsync(
  *   async (signal) => fetchPosts(signal),
  *   { initialValue: [] },
  * );
@@ -50,7 +50,7 @@
  * conditional branching where you sometimes have the answer immediately.
  *
  * ```ts
- * const result = computedAsync(() => {
+ * const result = derivedAsync(() => {
  *   if (cache.has(id.get())) return cache.get(id.get());
  *   return fetch(`/api/${id.get()}`).then(r => r.json());
  * });
@@ -96,7 +96,7 @@ export type AsyncError<T> = {
 
 export type AsyncResult<T> = AsyncPending<T> | AsyncResolved<T> | AsyncError<T>;
 
-export type ComputedAsyncOptions<T> = {
+export type DerivedAsyncOptions<T> = {
 	/** Value of `result.value` while the first fetch is pending. Default: `undefined`. */
 	initialValue?: T;
 	/** Custom equality for resolved values. If equal, the result signal is not updated. */
@@ -114,11 +114,11 @@ export type DisposableSignal<T> = WatcherRef & Signal<T>;
  * Create a signal whose value is derived from an async computation.
  * Standalone — runs immediately and returns a `DisposableSignal`. Call `.dispose()` manually.
  */
-export function computedAsync<T>(
+export function derivedAsync<T>(
 	fn: (abortSignal: AbortSignal) => Promise<T> | T,
-	options?: ComputedAsyncOptions<T>,
+	options?: DerivedAsyncOptions<T>,
 ): DisposableSignal<AsyncResult<T>> {
-	return _computedAsyncCore(fn, options ?? {});
+	return _derivedAsyncCore(fn, options ?? {});
 }
 
 /**
@@ -126,17 +126,17 @@ export function computedAsync<T>(
  * `useSignalWatcher()` active-owner scope. Must be called in a component
  * class-field initializer with `useSignalWatcher()` declared first.
  */
-export function useComputedAsync<T>(
+export function useDerivedAsync<T>(
 	fn: (abortSignal: AbortSignal) => Promise<T> | T,
-	options?: ComputedAsyncOptions<T>,
+	options?: DerivedAsyncOptions<T>,
 ): DisposableSignal<AsyncResult<T>> {
 	const opts = options ?? {};
 	const initialSnapshot: AsyncResult<T> = { status: "pending", value: opts.initialValue };
 	return bindToHostDisposable({
-		utilityName: "useComputedAsync",
+		utilityName: "useDerivedAsync",
 		initialSnapshot,
 		create: snapshot =>
-			_computedAsyncCore<T>(fn, {
+			_derivedAsyncCore<T>(fn, {
 				...opts,
 				initialValue: snapshot.value,
 			}),
@@ -148,9 +148,9 @@ export function useComputedAsync<T>(
 
 // ─── Core factory (no host) ───────────────────────────────────────────────────
 
-function _computedAsyncCore<T>(
+function _derivedAsyncCore<T>(
 	fn: (abortSignal: AbortSignal) => Promise<T> | T,
-	options: ComputedAsyncOptions<T> = {},
+	options: DerivedAsyncOptions<T> = {},
 ): DisposableSignal<AsyncResult<T>> {
 	const { initialValue, equal = Object.is } = options;
 	const adapter = getAdapter();
@@ -273,7 +273,7 @@ function _computedAsyncCore<T>(
 		},
 	) as unknown as DisposableSignal<AsyncResult<T>>;
 
-	// Auto-register with the active owner scope so this computedAsync is
+	// Auto-register with the active owner scope so this derivedAsync is
 	// automatically disposed when the component disconnects from the DOM.
 	getActiveOwner()?.push(output.dispose.bind(output));
 

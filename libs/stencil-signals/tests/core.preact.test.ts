@@ -9,9 +9,9 @@
 
 import { describe, it, expect, vi, expectTypeOf } from "vitest";
 
-import { computedAsync, isPending, isResolved, isError } from "../src/extensions/computed-async";
 import { computedPrevious } from "../src/extensions/computed-previous";
 import { createStore } from "../src/extensions/create-store";
+import { derivedAsync, isPending, isResolved, isError } from "../src/extensions/derived-async";
 import { effect } from "../src/extensions/effect";
 // Import the Preact entry point first — this sets the Preact adapter so all
 // utilities that call getAdapter() work correctly in this test file.
@@ -518,24 +518,24 @@ describe("computedPrevious() [preact]", () => {
 	});
 });
 
-// ─── computedAsync() ─────────────────────────────────────────────────────────
+// ─── derivedAsync() ─────────────────────────────────────────────────────────
 
-describe("computedAsync() [preact]", () => {
+describe("derivedAsync() [preact]", () => {
 	it("starts in pending state", () => {
-		const result = computedAsync(async () => 42);
+		const result = derivedAsync(async () => 42);
 		expect(result().status).toBe("pending");
 		(result as any).dispose?.();
 	});
 
 	it("resolves to the returned value", async () => {
-		const result = computedAsync(async () => "hello");
+		const result = derivedAsync(async () => "hello");
 		await flush();
 		expect(result()).toStrictEqual({ status: "resolved", value: "hello" });
 		(result as any).dispose?.();
 	});
 
 	it("carries initialValue in pending state", () => {
-		const result = computedAsync(async () => 99, { initialValue: 0 });
+		const result = derivedAsync(async () => 99, { initialValue: 0 });
 		expect(result()).toMatchObject({ status: "pending", value: 0 });
 		(result as any).dispose?.();
 	});
@@ -544,7 +544,7 @@ describe("computedAsync() [preact]", () => {
 		const id = signal(1);
 		let resolveNext!: (v: number) => void;
 
-		const result = computedAsync(async abortSignal => {
+		const result = derivedAsync(async abortSignal => {
 			const current = id();
 			if (current === 1) {
 				return 100;
@@ -571,7 +571,7 @@ describe("computedAsync() [preact]", () => {
 	});
 
 	it("transitions to error state on rejection", async () => {
-		const result = computedAsync(async () => {
+		const result = derivedAsync(async () => {
 			throw new Error("boom");
 		});
 		await flush();
@@ -587,7 +587,7 @@ describe("computedAsync() [preact]", () => {
 		const id = signal(1);
 		const calls: number[] = [];
 
-		const result = computedAsync(async () => {
+		const result = derivedAsync(async () => {
 			const v = id();
 			calls.push(v);
 			return v * 10;
@@ -607,7 +607,7 @@ describe("computedAsync() [preact]", () => {
 		const id = signal(1);
 		const aborts: boolean[] = [];
 
-		const result = computedAsync(async abortSignal => {
+		const result = derivedAsync(async abortSignal => {
 			id(); // track dep
 			await new Promise<void>((_, reject) => {
 				abortSignal.addEventListener("abort", () => {
@@ -634,7 +634,7 @@ describe("computedAsync() [preact]", () => {
 
 	it("returns sync value when fn returns non-Promise", async () => {
 		const flag = signal(true);
-		const result = computedAsync(_abortSig => {
+		const result = derivedAsync(_abortSig => {
 			if (flag()) {
 				return "sync-value" as any;
 			}

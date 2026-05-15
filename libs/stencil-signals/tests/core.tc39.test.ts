@@ -8,9 +8,9 @@ import { TestHost } from "@ssv/stencil.core/testing";
 import { describe, it, expect, vi, expectTypeOf } from "vitest";
 
 import { useSignalWatcher } from "../src/controllers/signal-watcher-controller";
-import { computedAsync, useComputedAsync, isPending, isResolved, isError } from "../src/extensions/computed-async";
 import { computedPrevious } from "../src/extensions/computed-previous";
 import { createStore } from "../src/extensions/create-store";
+import { derivedAsync, useDerivedAsync, isPending, isResolved, isError } from "../src/extensions/derived-async";
 import { effect, useSignalEffect } from "../src/extensions/effect";
 // Import the TC39 entry point first — this sets the TC39 adapter so all
 // utilities that call getAdapter() work correctly in this test file.
@@ -563,24 +563,24 @@ describe("computedPrevious()", () => {
 	});
 });
 
-// ─── computedAsync() ─────────────────────────────────────────────────────────
+// ─── derivedAsync() ─────────────────────────────────────────────────────────
 
-describe("computedAsync()", () => {
+describe("derivedAsync()", () => {
 	it("starts in pending state", () => {
-		const result = computedAsync(async () => 42);
+		const result = derivedAsync(async () => 42);
 		expect(result().status).toBe("pending");
 		(result as any).dispose?.();
 	});
 
 	it("resolves to the returned value", async () => {
-		const result = computedAsync(async () => "hello");
+		const result = derivedAsync(async () => "hello");
 		await flush();
 		expect(result()).toStrictEqual({ status: "resolved", value: "hello" });
 		(result as any).dispose?.();
 	});
 
 	it("carries initialValue in pending state", () => {
-		const result = computedAsync(async () => 99, { initialValue: 0 });
+		const result = derivedAsync(async () => 99, { initialValue: 0 });
 		expect(result()).toMatchObject({ status: "pending", value: 0 });
 		(result as any).dispose?.();
 	});
@@ -589,7 +589,7 @@ describe("computedAsync()", () => {
 		const id = signal(1);
 		let resolveNext!: (v: number) => void;
 
-		const result = computedAsync(async abortSignal => {
+		const result = derivedAsync(async abortSignal => {
 			const current = id();
 			if (current === 1) {
 				return 100;
@@ -616,7 +616,7 @@ describe("computedAsync()", () => {
 	});
 
 	it("transitions to error state on rejection", async () => {
-		const result = computedAsync(async () => {
+		const result = derivedAsync(async () => {
 			throw new Error("boom");
 		});
 		await flush();
@@ -632,7 +632,7 @@ describe("computedAsync()", () => {
 		const id = signal(1);
 		const calls: number[] = [];
 
-		const result = computedAsync(async () => {
+		const result = derivedAsync(async () => {
 			const v = id();
 			calls.push(v);
 			return v * 10;
@@ -652,7 +652,7 @@ describe("computedAsync()", () => {
 		const id = signal(1);
 		const aborts: boolean[] = [];
 
-		const result = computedAsync(async abortSignal => {
+		const result = derivedAsync(async abortSignal => {
 			id(); // track dep
 			await new Promise<void>((_, reject) => {
 				abortSignal.addEventListener("abort", () => {
@@ -680,7 +680,7 @@ describe("computedAsync()", () => {
 
 	it("returns sync value when fn returns non-Promise", async () => {
 		const flag = signal(true);
-		const result = computedAsync(abortSig => {
+		const result = derivedAsync(abortSig => {
 			if (flag()) {
 				return "sync-value" as any;
 			}
@@ -713,14 +713,14 @@ describe("computedAsync()", () => {
 
 // ─── Host lifecycle (disconnect / reconnect) ──────────────────────────────────
 
-describe("host lifecycle — computedAsync", () => {
+describe("host lifecycle — derivedAsync", () => {
 	it("disposes on disconnect and reinits on reconnect", async () => {
 		const host = new TestHost();
 		useSignalWatcher();
 		const id = signal(1);
 		const calls: number[] = [];
 
-		const result = useComputedAsync<number>(async () => {
+		const result = useDerivedAsync<number>(async () => {
 			const v = id();
 			calls.push(v);
 			return v * 10;
@@ -749,14 +749,14 @@ describe("host lifecycle — computedAsync", () => {
 
 	it("throws without useSignalWatcher", () => {
 		const host = new TestHost();
-		useComputedAsync(async () => 42);
-		expect(() => host.connect()).toThrow(/useComputedAsync requires useSignalWatcher\(\) declared before this field/);
+		useDerivedAsync(async () => 42);
+		expect(() => host.connect()).toThrow(/useDerivedAsync requires useSignalWatcher\(\) declared before this field/);
 	});
 
 	it("reinit is a no-op when watcher is still live", async () => {
 		const host = new TestHost();
 		useSignalWatcher();
-		const result = useComputedAsync(async () => 42);
+		const result = useDerivedAsync(async () => 42);
 
 		host.connect(); // start computation
 		await flush();

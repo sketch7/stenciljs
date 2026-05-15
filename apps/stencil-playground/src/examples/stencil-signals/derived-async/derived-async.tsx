@@ -1,5 +1,5 @@
 import { signal, useSignalWatcher } from "@ssv/stencil-signals";
-import { useComputedAsync, isError, isPending } from "@ssv/stencil-signals/extensions";
+import { useDerivedAsync, isError, isPending } from "@ssv/stencil-signals/extensions";
 import { SsvElement } from "@ssv/stencil.core";
 import { Component, h } from "@stencil/core";
 
@@ -18,14 +18,14 @@ const userId = signal(1);
 const USER_COUNT = 10;
 
 @Component({
-	tag: "app-signals-computed-async",
-	styleUrl: "computed-async.css",
+	tag: "app-signals-derived-async",
+	styleUrl: "derived-async.css",
 	shadow: true,
 })
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
-export class AppSignalsComputedAsync extends SsvElement {
+export class AppSignalsDerivedAsync extends SsvElement {
 	readonly signalWatcher = useSignalWatcher();
-	readonly user = useComputedAsync<ApiUser>(async (abortSig: AbortSignal) => {
+	readonly user = useDerivedAsync<ApiUser>(async (abortSig: AbortSignal) => {
 		const res = await fetch(`https://jsonplaceholder.typicode.com/users/${userId()}`, { signal: abortSig });
 		if (!res.ok) {
 			throw new Error(`HTTP ${res.status}`);

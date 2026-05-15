@@ -66,7 +66,7 @@ export class MyCounter extends SignalWatcher(class {}) {
 | Auto-tracking side effects | ❌         | ✅ `effect(fn)`                               |
 | Explicit-dep side effects  | ❌         | ✅ `effect(deps, fn)`                         |
 | Lifecycle-bound effects    | ❌         | ✅ `useSignalEffect(fn/deps, fn)`             |
-| Async derived state        | ❌         | ✅ `computedAsync` / `useComputedAsync`       |
+| Async derived state        | ❌         | ✅ `derivedAsync` / `useDerivedAsync`       |
 | Previous value tracking    | ❌         | ✅ `computedPrevious`                         |
 | TC39 standard              | ❌         | ✅                                            |
 
@@ -77,8 +77,8 @@ export class MyCounter extends SignalWatcher(class {}) {
 - **`useSignalProps`** — bridge multiple `@Prop()` fields to signals with full type inference; one-way or two-way bindings; `transform` typed from the prop type automatically
 - **`effect`** — standalone side effects (auto-tracking or explicit deps); returns a `WatcherRef` with `.dispose()`
 - **`useSignalEffect`** — lifecycle-bound variant of `effect`; starts on connect; disposal via `useSignalWatcher()` active-owner scope
-- **`computedAsync`** — standalone async derived signal with `pending`/`resolved`/`error` status and `AbortSignal` cancellation
-- **`useComputedAsync`** — lifecycle-bound variant of `computedAsync`
+- **`derivedAsync`** — standalone async derived signal with `pending`/`resolved`/`error` status and `AbortSignal` cancellation
+- **`useDerivedAsync`** — lifecycle-bound variant of `derivedAsync`
 - **`computedPrevious`** — derived signal that holds the previous value of another signal (single computed, no watcher)
 - **`createStore`** — wrap a plain object in per-property signals via a reactive Proxy
 - **`untracked`** — run a callback without subscribing to signal reads inside it (same idea as Angular `untracked()` and Preact `untracked()`)
@@ -227,9 +227,9 @@ export class MyCounter extends SsvElement {
 }
 ```
 
-**Owner scope and auto-disposal:** When the component connects, `SignalWatcherController` activates a shared owner scope for one microtask. Any `effect` or `computedAsync` created during that window — including in your `connectedCallback` after `super.connectedCallback()` — registers its dispose function automatically. On disconnect, all registered cleanups are flushed in one pass. This is the **only** disposal path for lifecycle-bound utilities.
+**Owner scope and auto-disposal:** When the component connects, `SignalWatcherController` activates a shared owner scope for one microtask. Any `effect` or `derivedAsync` created during that window — including in your `connectedCallback` after `super.connectedCallback()` — registers its dispose function automatically. On disconnect, all registered cleanups are flushed in one pass. This is the **only** disposal path for lifecycle-bound utilities.
 
-`useSignalEffect` and `useComputedAsync` share internal `bindToHostLifecycle` helpers: they start on `hostConnected`, snapshot state on `hostDisconnected`, and recreate on reconnect. **Declare `useSignalWatcher()` before any `use*` field:** Effects and async helpers need connect-gated lifecycle; `computedPrevious` is a plain derived signal and can be used as a class field without `use*`.
+`useSignalEffect` and `useDerivedAsync` share internal `bindToHostLifecycle` helpers: they start on `hostConnected`, snapshot state on `hostDisconnected`, and recreate on reconnect. **Declare `useSignalWatcher()` before any `use*` field:** Effects and async helpers need connect-gated lifecycle; `computedPrevious` is a plain derived signal and can be used as a class field without `use*`.
 
 ```tsx
 readonly signalWatcher = useSignalWatcher();
@@ -423,7 +423,7 @@ private readonly _userEff = useSignalEffect([userId, theme], ([id, t], onCleanup
 | Values passed to fn        | No — call `sig()` manually            | Yes, typed tuple            |
 | Best for                   | Simple reactive side-effects          | Precise control, async work |
 
-### `computedAsync`
+### `derivedAsync`
 
 Standalone async derived signal. `fn` receives an `AbortSignal` and returns `Promise<T>`. The result holds a discriminated union with `status`, `value`, and optional `error`.
 
@@ -432,7 +432,7 @@ When a tracked signal changes, the previous in-flight request is automatically c
 ```ts
 const userId = signal(1);
 
-const user = computedAsync(
+const user = derivedAsync(
   async abortSignal => {
     const res = await fetch(`/api/users/${userId()}`, { signal: abortSignal });
     if (!res.ok) throw new Error(res.statusText);
@@ -453,7 +453,7 @@ const user = computedAsync(
 | `initialValue` | `T`                 | `undefined` | `result.value` before the first resolution   |
 | `equal`        | `(a, b) => boolean` | `Object.is` | Skip update when resolved value is unchanged |
 
-### `useComputedAsync`
+### `useDerivedAsync`
 
 Lifecycle-bound variant. Starts on `hostConnected`; disposal via `useSignalWatcher()` active-owner scope. Declare `useSignalWatcher()` before this field.
 
@@ -464,7 +464,7 @@ const userId = signal(1);
 export class UserCard extends SsvElement {
   readonly signalWatcher = useSignalWatcher();
 
-  readonly user = useComputedAsync<User>(async abortSignal => {
+  readonly user = useDerivedAsync<User>(async abortSignal => {
     const res = await fetch(`/api/users/${userId()}`, { signal: abortSignal });
     if (!res.ok) throw new Error(res.statusText);
     return res.json() as Promise<User>;
@@ -605,8 +605,8 @@ The main entry `@ssv/stencil-signals` exports the full public API but **does not
 
 | Export                               | Description                                                                                                          |
 | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| `computedAsync(fn, options?)`        | Standalone async derived signal. Re-runs when tracked signals change. Returns `DisposableSignal<AsyncResult<T>>`.    |
-| `useComputedAsync(fn, options?)`     | Lifecycle-bound variant of `computedAsync`. Requires `useSignalWatcher()` first; disposal via active-owner scope.    |
+| `derivedAsync(fn, options?)`        | Standalone async derived signal. Re-runs when tracked signals change. Returns `DisposableSignal<AsyncResult<T>>`.    |
+| `useDerivedAsync(fn, options?)`     | Lifecycle-bound variant of `derivedAsync`. Requires `useSignalWatcher()` first; disposal via active-owner scope.    |
 | `computedPrevious(source, init?)` | Previous-value derived signal. Returns `Signal<T \| undefined>`. |
 | `isPending(result)`                  | Type guard — narrows `AsyncResult<T>` to `{ status: 'pending' }`.                                                    |
 | `isResolved(result)`                 | Type guard — narrows `AsyncResult<T>` to `{ status: 'resolved', value: T }`.                                         |

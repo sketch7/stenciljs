@@ -9,7 +9,7 @@ import { describe, it, expect, vi, expectTypeOf } from "vitest";
 
 import { useSignalWatcher } from "../src/controllers/signal-watcher-controller";
 import { computedAsync, useComputedAsync, isPending, isResolved, isError } from "../src/extensions/computed-async";
-import { computedPrevious, useComputedPrevious } from "../src/extensions/computed-previous";
+import { computedPrevious } from "../src/extensions/computed-previous";
 import { createStore } from "../src/extensions/create-store";
 import { effect, useSignalEffect } from "../src/extensions/effect";
 // Import the TC39 entry point first — this sets the TC39 adapter so all
@@ -766,50 +766,6 @@ describe("host lifecycle — computedAsync", () => {
 		host.connect();
 		await flush();
 		expect(result()).toMatchObject({ status: "resolved", value: 42 });
-	});
-});
-
-describe("host lifecycle — computedPrevious", () => {
-	it("disposes on disconnect and reinits on reconnect", async () => {
-		const host = new TestHost();
-		useSignalWatcher();
-		const src = signal(1);
-		const prev = useComputedPrevious(src);
-
-		host.connect(); // hostConnected → starts tracking
-		expect(prev()).toBeUndefined();
-		src.set(2);
-		await tick();
-		expect(prev()).toBe(1);
-
-		// Disconnect — watcher stops tracking.
-		host.disconnect();
-		src.set(3);
-		await tick();
-		expect(prev()).toBe(1); // lastValue snapshot preserved after disconnect
-
-		// Reconnect — watcher reinits and starts tracking from current source value.
-		host.connect();
-		src.set(4);
-		await tick();
-		expect(prev()).toBe(3); // previous is the value at time of reconnect
-	});
-
-	it("reinit is a no-op when watcher is still live", async () => {
-		const host = new TestHost();
-		useSignalWatcher();
-		const src = signal(10);
-		const prev = useComputedPrevious(src);
-
-		host.connect(); // start tracking
-		src.set(20);
-		await tick();
-		expect(prev()).toBe(10);
-
-		host.connect(); // no-op — already live (guarded by inner !== null)
-		src.set(30);
-		await tick();
-		expect(prev()).toBe(20);
 	});
 });
 

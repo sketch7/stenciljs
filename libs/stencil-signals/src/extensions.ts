@@ -12,8 +12,7 @@
  *
  *  Derived / async signals
  *  ───────────────────────
- *  computedPrevious(sig, init?)        Standalone previous-value signal
- *  useComputedPrevious(sig, init?)     Lifecycle-bound previous-value signal
+ *  computedPrevious(sig, init?)        Previous-value signal
  *  computedAsync(fn, opts)             Standalone async derived signal with status + AbortSignal
  *  useComputedAsync(fn, opts)          Lifecycle-bound async derived signal
  *  isPending(result)                   Type-guard: AsyncResult is pending
@@ -30,7 +29,7 @@ export { effect, useSignalEffect } from "./extensions/effect";
 export type { CleanupFn, EffectOptions, WatcherRef, RegisterCleanup } from "./extensions/effect";
 
 // ─── Derived signals ──────────────────────────────────────────────────────────
-export { computedPrevious, useComputedPrevious } from "./extensions/computed-previous";
+export { computedPrevious } from "./extensions/computed-previous";
 export { computedAsync, useComputedAsync, isPending, isResolved, isError } from "./extensions/computed-async";
 export type {
 	DisposableSignal,

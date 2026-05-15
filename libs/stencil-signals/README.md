@@ -67,7 +67,7 @@ export class MyCounter extends SignalWatcher(class {}) {
 | Explicit-dep side effects  | ❌         | ✅ `effect(deps, fn)`                         |
 | Lifecycle-bound effects    | ❌         | ✅ `useSignalEffect(fn/deps, fn)`             |
 | Async derived state        | ❌         | ✅ `computedAsync` / `useComputedAsync`       |
-| Previous value tracking    | ❌         | ✅ `computedPrevious` / `useComputedPrevious` |
+| Previous value tracking    | ❌         | ✅ `computedPrevious`                         |
 | TC39 standard              | ❌         | ✅                                            |
 
 ## Features
@@ -79,8 +79,7 @@ export class MyCounter extends SignalWatcher(class {}) {
 - **`useSignalEffect`** — lifecycle-bound variant of `effect`; starts on connect; disposal via `useSignalWatcher()` active-owner scope
 - **`computedAsync`** — standalone async derived signal with `pending`/`resolved`/`error` status and `AbortSignal` cancellation
 - **`useComputedAsync`** — lifecycle-bound variant of `computedAsync`
-- **`computedPrevious`** — standalone derived signal that holds the previous value of another signal
-- **`useComputedPrevious`** — lifecycle-bound variant of `computedPrevious`
+- **`computedPrevious`** — derived signal that holds the previous value of another signal (single computed, no watcher)
 - **`createStore`** — wrap a plain object in per-property signals via a reactive Proxy
 - **`untracked`** — run a callback without subscribing to signal reads inside it (same idea as Angular `untracked()` and Preact `untracked()`)
 - **Dual-backend** — TC39 (`signal-polyfill`) or Preact Signals; same API, swap by changing the import path
@@ -228,9 +227,9 @@ export class MyCounter extends SsvElement {
 }
 ```
 
-**Owner scope and auto-disposal:** When the component connects, `SignalWatcherController` activates a shared owner scope for one microtask. Any `effect`, `computedAsync`, or `computedPrevious` created during that window — including in your `connectedCallback` after `super.connectedCallback()` — registers its dispose function automatically. On disconnect, all registered cleanups are flushed in one pass. This is the **only** disposal path for lifecycle-bound utilities.
+**Owner scope and auto-disposal:** When the component connects, `SignalWatcherController` activates a shared owner scope for one microtask. Any `effect` or `computedAsync` created during that window — including in your `connectedCallback` after `super.connectedCallback()` — registers its dispose function automatically. On disconnect, all registered cleanups are flushed in one pass. This is the **only** disposal path for lifecycle-bound utilities.
 
-`useSignalEffect`, `useComputedAsync`, and `useComputedPrevious` share internal `bindToHostLifecycle` helpers: they start on `hostConnected`, snapshot state on `hostDisconnected`, and recreate on reconnect. **Declare `useSignalWatcher()` before any `use*` field:**
+`useSignalEffect` and `useComputedAsync` share internal `bindToHostLifecycle` helpers: they start on `hostConnected`, snapshot state on `hostDisconnected`, and recreate on reconnect. **Declare `useSignalWatcher()` before any `use*` field:** Effects and async helpers need connect-gated lifecycle; `computedPrevious` is a plain derived signal and can be used as a class field without `use*`.
 
 ```tsx
 readonly signalWatcher = useSignalWatcher();
@@ -482,7 +481,7 @@ export class UserCard extends SsvElement {
 
 ### `computedPrevious`
 
-Standalone derived signal holding the value a signal had before its most recent change.
+Derived signal holding the value a source signal had before its most recent change. Implemented as a single computed with internal state (no watcher or manual disposal).
 
 ```ts
 const page = signal(1);
@@ -492,8 +491,6 @@ page.set(2);
 prevPage(); // 1
 page.set(3);
 prevPage(); // 2
-
-// call prevPage.dispose() manually when done
 ```
 
 Optional second argument sets the initial value (default: `undefined`):
@@ -502,16 +499,13 @@ Optional second argument sets the initial value (default: `undefined`):
 const prevPage = computedPrevious(page, 0); // 0 before first change
 ```
 
-### `useComputedPrevious`
-
-Lifecycle-bound variant. Starts on `hostConnected`; disposal via `useSignalWatcher()` active-owner scope. Declare `useSignalWatcher()` before this field.
+In a component, declare as a class field; use `useSignalWatcher()` so `render()` re-runs when `prevPage` updates:
 
 ```tsx
 @Component({ tag: "slide-view", shadow: false })
 export class SlideView extends SsvElement {
   readonly signalWatcher = useSignalWatcher();
-
-  readonly prevPage = useComputedPrevious(page);
+  readonly prevPage = computedPrevious(page);
 
   render() {
     const direction = page() > (this.prevPage() ?? 0) ? "forward" : "back";
@@ -613,8 +607,7 @@ The main entry `@ssv/stencil-signals` exports the full public API but **does not
 | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
 | `computedAsync(fn, options?)`        | Standalone async derived signal. Re-runs when tracked signals change. Returns `DisposableSignal<AsyncResult<T>>`.    |
 | `useComputedAsync(fn, options?)`     | Lifecycle-bound variant of `computedAsync`. Requires `useSignalWatcher()` first; disposal via active-owner scope.    |
-| `computedPrevious(source, init?)`    | Standalone previous-value signal. Returns `DisposableSignal<T \| undefined>`.                                        |
-| `useComputedPrevious(source, init?)` | Lifecycle-bound variant of `computedPrevious`. Requires `useSignalWatcher()` first; disposal via active-owner scope. |
+| `computedPrevious(source, init?)` | Previous-value derived signal. Returns `Signal<T \| undefined>`. |
 | `isPending(result)`                  | Type guard — narrows `AsyncResult<T>` to `{ status: 'pending' }`.                                                    |
 | `isResolved(result)`                 | Type guard — narrows `AsyncResult<T>` to `{ status: 'resolved', value: T }`.                                         |
 | `isError(result)`                    | Type guard — narrows `AsyncResult<T>` to `{ status: 'error', error: unknown }`.                                      |

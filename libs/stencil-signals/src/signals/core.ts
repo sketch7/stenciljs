@@ -69,8 +69,8 @@ export function untracked<T>(fn: () => T): T {
 
 // ─── Active owner (effect scope) ────────────────────────────────────────────
 //
-// When non-null, any watcher-based utility (effect, computedAsync,
-// computedPrevious) will push its dispose/cleanup function into this list.
+// When non-null, any watcher-based utility (effect, computedAsync) will push
+// its dispose/cleanup function into this list.
 // `SignalWatcher` activates the owner during `connectedCallback` so all
 // watchers created there are automatically disposed on `disconnectedCallback`.
 //

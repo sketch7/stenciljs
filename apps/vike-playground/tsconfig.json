@@ -3,7 +3,7 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "jsxImportSource": "react",
-    "lib": ["dom", "es2022"],
+    "lib": ["dom", "ES2025"],
     "moduleResolution": "bundler",
     "module": "preserve",
     "noEmit": true,

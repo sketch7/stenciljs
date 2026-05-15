@@ -1,7 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "lib": ["es2022", "dom"],
+    "lib": ["ES2024", "dom"],
     "module": "preserve",
     "moduleResolution": "bundler",
     "verbatimModuleSyntax": true,

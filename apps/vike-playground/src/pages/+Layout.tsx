@@ -33,6 +33,10 @@ const navSections: NavSection[] = [
 		],
 	},
 	{
+		title: "SSV Stencil / TanStack Query",
+		items: [{ href: "/ssv-stencil/ts-query/posts", label: "Posts" }],
+	},
+	{
 		title: "Stencil Signals",
 		items: [
 			{ href: "/stencil-signals/counter", label: "Counter" },

@@ -1,0 +1,114 @@
+:host {
+	display: block;
+}
+
+.posts {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+/* ── Add row ─────────────────────────────────────────────────────────── */
+.add-row {
+	display: flex;
+	gap: 0.5rem;
+}
+
+.post-input {
+	flex: 1;
+	padding: 0.5rem 0.75rem;
+	border: 1px solid var(--color-border, #d1d5db);
+	border-radius: 0.375rem;
+	background: var(--color-bg, #fff);
+	color: var(--color-fg, #111);
+	font-size: 0.875rem;
+}
+
+.post-input:focus {
+	outline: 2px solid var(--color-primary, #6366f1);
+	outline-offset: 1px;
+}
+
+.post-input:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────── */
+.btn {
+	padding: 0.5rem 1rem;
+	border: none;
+	border-radius: 0.375rem;
+	font-size: 0.875rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition: opacity 0.15s;
+}
+
+.btn:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.btn-primary {
+	background: var(--color-primary, #6366f1);
+	color: #fff;
+}
+
+.btn-primary:not(:disabled):hover {
+	opacity: 0.9;
+}
+
+/* ── Notices ─────────────────────────────────────────────────────────── */
+.notice {
+	padding: 0.5rem 0.75rem;
+	border-radius: 0.375rem;
+	font-size: 0.875rem;
+}
+
+.notice--success {
+	background: var(--color-success-bg, #d1fae5);
+	color: var(--color-success-fg, #065f46);
+}
+
+/* ── Status ──────────────────────────────────────────────────────────── */
+.status {
+	font-size: 0.875rem;
+	color: var(--color-muted, #6b7280);
+}
+
+.status--error {
+	color: var(--color-error, #dc2626);
+}
+
+/* ── List ────────────────────────────────────────────────────────────── */
+.list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.375rem;
+}
+
+.item {
+	display: flex;
+	align-items: baseline;
+	gap: 0.5rem;
+	padding: 0.5rem 0.75rem;
+	border: 1px solid var(--color-border, #e5e7eb);
+	border-radius: 0.375rem;
+	background: var(--color-surface, #f9fafb);
+}
+
+.item-id {
+	font-size: 0.75rem;
+	color: var(--color-muted, #9ca3af);
+	flex-shrink: 0;
+}
+
+.item-title {
+	font-size: 0.875rem;
+	color: var(--color-fg, #111);
+	text-transform: capitalize;
+}

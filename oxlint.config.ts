@@ -159,6 +159,15 @@ export default defineConfig({
 		"unicorn/throw-new-error": "error",
 		"unicorn/no-useless-undefined": "warn",
 		"unicorn/prefer-ternary": "off",
+		"unicorn/numeric-separators-style": [
+			"warn",
+			{
+				number: {
+					minimumDigits: 5,
+					groupLength: 3,
+				},
+			},
+		],
 	},
 	overrides: [
 		{

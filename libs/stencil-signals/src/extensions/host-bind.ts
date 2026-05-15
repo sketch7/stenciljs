@@ -16,7 +16,7 @@ import type { WatcherRef } from "./effect";
 function assertRegisteredWithActiveOwner(utilityName: string, cleanupsBefore: number): void {
 	const owner = getActiveOwner();
 	if (!owner || owner.length <= cleanupsBefore) {
-		throw new Error(`${utilityName} requires useSignalController() declared before this field.`);
+		throw new Error(`${utilityName} requires useSignalWatcher() declared before this field.`);
 	}
 }
 

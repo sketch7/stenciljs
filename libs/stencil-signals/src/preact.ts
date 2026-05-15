@@ -17,7 +17,6 @@
  *  Component integration
  *  ─────────────────────
  *  SignalWatcher(Base)         Class mixin — auto-rerenders on signal change
- *  @useSignal(sig)             Property decorator — binds signal ↔ class property
  *
  *  Side effects
  *  ────────────
@@ -49,9 +48,6 @@ export type { WritableSignal, Signal, SignalOptions, ComputedOptions, AdapterWat
 // ─── Component integration ────────────────────────────────────────────────────
 export { SignalWatcherMixin } from "./mixins/signal-watcher";
 export { SignalWatcherController } from "./controllers/signal-watcher-controller";
-
-// ─── Decorators ───────────────────────────────────────────────────────────────
-export { useSignal } from "./directives/use-signal";
 
 // ─── Side effects ─────────────────────────────────────────────────────────────
 export { effect, useSignalEffect } from "./extensions/effect";

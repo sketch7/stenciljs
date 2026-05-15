@@ -159,6 +159,6 @@ export class SignalWatcherController implements ReactiveController {
 	}
 }
 
-export function useSignalController() {
+export function useSignalWatcher() {
 	return use(host => new SignalWatcherController(host));
 }

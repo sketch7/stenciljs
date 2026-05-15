@@ -7,7 +7,7 @@ import { TestHost } from "@ssv/stencil.core/testing";
  */
 import { describe, it, expect, vi, expectTypeOf } from "vitest";
 
-import { useSignalController } from "../src/controllers/signal-watcher-controller";
+import { useSignalWatcher } from "../src/controllers/signal-watcher-controller";
 import { computedAsync, useComputedAsync, isPending, isResolved, isError } from "../src/extensions/computed-async";
 import { computedPrevious, useComputedPrevious } from "../src/extensions/computed-previous";
 import { createStore } from "../src/extensions/create-store";
@@ -716,7 +716,7 @@ describe("computedAsync()", () => {
 describe("host lifecycle — computedAsync", () => {
 	it("disposes on disconnect and reinits on reconnect", async () => {
 		const host = new TestHost();
-		useSignalController();
+		useSignalWatcher();
 		const id = signal(1);
 		const calls: number[] = [];
 
@@ -747,17 +747,15 @@ describe("host lifecycle — computedAsync", () => {
 		expect(calls).toContain(2);
 	});
 
-	it("throws without useSignalController", () => {
+	it("throws without useSignalWatcher", () => {
 		const host = new TestHost();
 		useComputedAsync(async () => 42);
-		expect(() => host.connect()).toThrow(
-			/useComputedAsync requires useSignalController\(\) declared before this field/,
-		);
+		expect(() => host.connect()).toThrow(/useComputedAsync requires useSignalWatcher\(\) declared before this field/);
 	});
 
 	it("reinit is a no-op when watcher is still live", async () => {
 		const host = new TestHost();
-		useSignalController();
+		useSignalWatcher();
 		const result = useComputedAsync(async () => 42);
 
 		host.connect(); // start computation
@@ -774,7 +772,7 @@ describe("host lifecycle — computedAsync", () => {
 describe("host lifecycle — computedPrevious", () => {
 	it("disposes on disconnect and reinits on reconnect", async () => {
 		const host = new TestHost();
-		useSignalController();
+		useSignalWatcher();
 		const src = signal(1);
 		const prev = useComputedPrevious(src);
 
@@ -799,7 +797,7 @@ describe("host lifecycle — computedPrevious", () => {
 
 	it("reinit is a no-op when watcher is still live", async () => {
 		const host = new TestHost();
-		useSignalController();
+		useSignalWatcher();
 		const src = signal(10);
 		const prev = useComputedPrevious(src);
 
@@ -818,7 +816,7 @@ describe("host lifecycle — computedPrevious", () => {
 describe("host lifecycle — useSignalEffect (auto-tracking)", () => {
 	it("disposes on disconnect and reinits on reconnect", async () => {
 		const host = new TestHost();
-		useSignalController();
+		useSignalWatcher();
 		const count = signal(0);
 		const log: number[] = [];
 
@@ -849,7 +847,7 @@ describe("host lifecycle — useSignalEffect (auto-tracking)", () => {
 
 	it("manual dispose stops the effect before disconnect", async () => {
 		const host = new TestHost();
-		useSignalController();
+		useSignalWatcher();
 		const count = signal(0);
 		const log: number[] = [];
 
@@ -874,7 +872,7 @@ describe("host lifecycle — useSignalEffect (auto-tracking)", () => {
 describe("host lifecycle — useSignalEffect (explicit deps)", () => {
 	it("disposes on disconnect and reinits on reconnect", async () => {
 		const host = new TestHost();
-		useSignalController();
+		useSignalWatcher();
 		const a = signal(1);
 		const log: number[] = [];
 

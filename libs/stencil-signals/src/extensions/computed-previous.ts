@@ -60,8 +60,8 @@ export function computedPrevious<T>(source: Signal<T>, initialValue?: T): Dispos
 
 /**
  * Lifecycle-bound variant. Starts on `hostConnected`; disposal via
- * `useSignalController()` active-owner scope. Must be called in a component
- * class-field initializer with `useSignalController()` declared first.
+ * `useSignalWatcher()` active-owner scope. Must be called in a component
+ * class-field initializer with `useSignalWatcher()` declared first.
  */
 export function useComputedPrevious<T>(source: Signal<T>, initialValue?: T): DisposableSignal<T | undefined> {
 	return bindToHostDisposable({

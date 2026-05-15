@@ -1,10 +1,11 @@
 import { TestHost } from "@ssv/stencil.core/testing";
+// oxlint-disable-next-line import/no-unassigned-import
+import "../src/tc39";
 import * as stencilCore from "@stencil/core";
 import { describe, it, expect, vi, afterEach } from "vitest";
 
-import { useSignalController } from "../src/controllers/signal-watcher-controller";
+import { useSignalWatcher } from "../src/controllers/signal-watcher-controller";
 import { useSignalProps } from "../src/extensions/signal-prop";
-import "../src/tc39";
 
 class PropTestHost extends TestHost {
 	duration = 10;
@@ -34,18 +35,16 @@ describe("useSignalProps", () => {
 		vi.restoreAllMocks();
 	});
 
-	it("throws without useSignalController on connect", () => {
+	it("throws without useSignalWatcher on connect", () => {
 		const host = new PropTestHost();
 		useSignalProps(PropTestHost)({ duration: {} });
-		expect(() => host.connect()).toThrow(
-			/useSignalProps requires useSignalController\(\) declared before this field/,
-		);
+		expect(() => host.connect()).toThrow(/useSignalProps requires useSignalWatcher\(\) declared before this field/);
 	});
 
 	it("syncs on hostWillLoad after connect", () => {
 		const host = new PropTestHost();
 		host.duration = 42;
-		useSignalController();
+		useSignalWatcher();
 		const $props = useSignalProps(PropTestHost)({
 			duration: { transform: (v: number) => Math.max(0, v) },
 		});
@@ -64,7 +63,7 @@ describe("useSignalProps", () => {
 	it("preserves snapshot on disconnect and stops syncing", () => {
 		const host = new PropTestHost();
 		host.duration = 10;
-		useSignalController();
+		useSignalWatcher();
 		const $props = useSignalProps(PropTestHost)({ duration: {} });
 
 		host.connect();
@@ -80,7 +79,7 @@ describe("useSignalProps", () => {
 	it("resyncs on reconnect", () => {
 		const host = new PropTestHost();
 		host.duration = 10;
-		useSignalController();
+		useSignalWatcher();
 		const $props = useSignalProps(PropTestHost)({ duration: {} });
 
 		host.connect();
@@ -97,14 +96,14 @@ describe("useSignalProps", () => {
 		const host = new PropTestHost();
 		vi.spyOn(stencilCore, "getElement").mockReturnValue(host as unknown as HTMLStencilElement);
 
-		useSignalController();
+		useSignalWatcher();
 		const $props = useSignalProps(PropTestHost)({ isRunning: { twoWay: true } });
 
 		host.connect();
 		runHostWillLoad(host);
 
 		$props.isRunning.set(true);
-		expect(host.dispatched.some(e => e.type === "isRunningChange" && e.detail === true)).toBe(true);
+		expect(host.dispatched.some(e => e.type === "isRunningChange" && e.detail === true)).toBeTruthy();
 
 		host.disconnect();
 		host.dispatched.length = 0;

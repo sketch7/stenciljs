@@ -123,8 +123,8 @@ export function computedAsync<T>(
 
 /**
  * Lifecycle-bound variant. Starts on `hostConnected`; disposal via
- * `useSignalController()` active-owner scope. Must be called in a component
- * class-field initializer with `useSignalController()` declared first.
+ * `useSignalWatcher()` active-owner scope. Must be called in a component
+ * class-field initializer with `useSignalWatcher()` declared first.
  */
 export function useComputedAsync<T>(
 	fn: (abortSignal: AbortSignal) => Promise<T> | T,

@@ -24,7 +24,7 @@
  *
  * Same signatures, but binds the effect to the host lifecycle via
  * `bindToHostEffect`. Starts on `hostConnected`; disposal is handled by
- * `useSignalController()` active-owner scope on disconnect. Must be called in
+ * `useSignalWatcher()` active-owner scope on disconnect. Must be called in
  * a component class-field initializer (where `use()` resolves the host).
  *
  * Both modes support `onCleanup(fn)` and an optional return-value cleanup.

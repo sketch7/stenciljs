@@ -1,4 +1,4 @@
-import { computed, signal, useSignalController, useSignalEffect } from "@ssv/stencil-signals";
+import { computed, signal, useSignalWatcher, useSignalEffect } from "@ssv/stencil-signals";
 import { useSignalProps } from "@ssv/stencil-signals/extensions";
 import { SsvElement } from "@ssv/stencil.core";
 import { Component, Event, EventEmitter, Prop, h } from "@stencil/core";
@@ -16,7 +16,7 @@ export class AppTimer extends SsvElement {
 
 	@Event() isRunningChange!: EventEmitter<boolean>;
 
-	readonly signalWatcher = useSignalController();
+	readonly signalWatcher = useSignalWatcher();
 	readonly $props = useSignalProps(AppTimer)({
 		duration: { transform: v => Math.max(0, v) },
 		isRunning: { twoWay: true },

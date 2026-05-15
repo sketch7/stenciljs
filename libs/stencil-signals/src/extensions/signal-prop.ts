@@ -257,13 +257,13 @@ class SignalBulkController implements ReactiveController {
 /**
  * Bulk prop bindings — preferred when bridging multiple @Prop fields.
  *
- * Requires `useSignalController()` declared before this field. Prop signals are
+ * Requires `useSignalWatcher()` declared before this field. Prop signals are
  * created on `hostConnected`; disposal is via the signal watcher's active-owner
  * scope. Prop sync uses `hostWillLoad` / `hostWillUpdate`.
  *
  * @example
  * ```ts
- * readonly signalWatcher = useSignalController();
+ * readonly signalWatcher = useSignalWatcher();
  * readonly $props = useSignalProps(AppTimer)({
  *   duration:  { transform: v => Math.max(0, v) },
  *   isRunning: { twoWay: true },

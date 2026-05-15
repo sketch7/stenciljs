@@ -1,4 +1,4 @@
-import { useComputedPrevious, signal, useSignalController } from "@ssv/stencil-signals";
+import { useComputedPrevious, signal, useSignalWatcher } from "@ssv/stencil-signals";
 import { SsvElement } from "@ssv/stencil.core";
 import { Component, h } from "@stencil/core";
 
@@ -10,7 +10,7 @@ const count = signal(0);
 	shadow: true,
 })
 export class AppSignalsComputedPrevious extends SsvElement {
-	readonly signalWatcher = useSignalController();
+	readonly signalWatcher = useSignalWatcher();
 	readonly prevCount = useComputedPrevious(count);
 
 	render() {

@@ -273,8 +273,9 @@ export default defineConfig({
 		},
 		// config files - vitest/tsdown and co
 		{
-			files: ["vitest.config.ts", "vitest.*.config.ts", "tsdown.config.ts", "vite.config.ts"],
+			files: ["*.config.ts"],
 			rules: {
+				"eslint/no-inline-comments": "off",
 				"import/no-default-export": "off",
 			},
 		},

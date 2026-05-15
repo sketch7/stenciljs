@@ -21,7 +21,14 @@
 import { Signal as TC39Signal } from "signal-polyfill";
 
 import { scheduler } from "../signals/core";
-import type { SignalAdapter, WritableSignal, Signal, SignalOptions, AdapterWatcher } from "./types";
+import type {
+	AdapterEffectOptions,
+	SignalAdapter,
+	WritableSignal,
+	Signal,
+	SignalOptions,
+	AdapterWatcher,
+} from "./types";
 
 // ─── WeakMap: wrapper fn → raw TC39 signal ────────────────────────────────────
 //
@@ -60,7 +67,11 @@ export const tc39Adapter: SignalAdapter = {
 		return wrapper;
 	},
 
-	createEffect(fn: (onCleanup: (cb: CleanupFn) => void) => CleanupFn | void): { dispose(): void } {
+	createEffect(
+		fn: (onCleanup: (cb: CleanupFn) => void) => CleanupFn | void,
+		options?: AdapterEffectOptions,
+	): { dispose(): void } {
+		const flushBetweenRuns = options?.flushBetweenRuns !== false;
 		const cleanupState: {
 			pendingCleanup: CleanupFn | null;
 			userCleanup: CleanupFn | undefined;
@@ -78,13 +89,21 @@ export const tc39Adapter: SignalAdapter = {
 
 		function flushAllCleanups(): void {
 			cleanupState.pendingCleanup?.();
+			cleanupState.pendingCleanup = null;
 			if (typeof cleanupState.userCleanup === "function") {
 				cleanupState.userCleanup();
+				cleanupState.userCleanup = undefined;
 			}
 		}
 
 		function runTracked(): void {
-			flushCleanups();
+			if (flushBetweenRuns) {
+				flushCleanups();
+			} else {
+				// Drop prior run's teardown without invoking (host-bound semantics).
+				cleanupState.pendingCleanup = null;
+				cleanupState.userCleanup = undefined;
+			}
 			let onCleanupFn: CleanupFn | null = null;
 			cleanupState.userCleanup = fn(cb => {
 				onCleanupFn = cb;
@@ -121,6 +140,9 @@ export const tc39Adapter: SignalAdapter = {
 
 		return {
 			dispose() {
+				if (disposed) {
+					return;
+				}
 				disposed = true;
 				flushAllCleanups();
 				try {

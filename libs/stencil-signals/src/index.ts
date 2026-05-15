@@ -20,16 +20,13 @@
  *
  *  Side effects
  *  ────────────
- *  effect(fn)                      Standalone auto-tracking effect; returns a dispose function
- *  effect(deps, fn, opts)           Standalone explicit-deps effect; returns a dispose function
- *  useSignalEffect(fn)              Lifecycle auto-tracking effect; starts/stops with host lifecycle
- *  useSignalEffect(deps, fn, opts)  Lifecycle explicit-deps effect; starts/stops with host lifecycle
+ *  effect(fn)                       Auto-tracking side effect; host fields defer to connect (→ use `useSignalWatcher` first)
+ *  effect(deps, fn, opts)           Explicit-deps effect; same host vs standalone split
  *
  *  Derived / async signals
  *  ───────────────────────
  *  computedPrevious(sig, init?)        Previous-value signal (→ /extensions)
  *  derivedAsync(fn, opts?)            Async derived signal → Signal<T> (→ /extensions)
- *  useDerivedAsync(fn, opts?)         Lifecycle-bound async derived signal (→ /extensions)
  *  createStore(init)                   Reactive Proxy over a plain object (→ /extensions)
  *
  * For these utilities, import from "@ssv/stencil-signals/extensions".
@@ -45,12 +42,12 @@ export { SignalWatcherMixin } from "./mixins/signal-watcher";
 export { SignalWatcherController, useSignalWatcher } from "./controllers/signal-watcher-controller";
 
 // ─── Side effects ─────────────────────────────────────────────────────────────
-export { effect, useSignalEffect } from "./extensions/effect";
+export { effect } from "./extensions/effect";
 export type { CleanupFn, EffectOptions, WatcherRef, RegisterCleanup } from "./extensions/effect";
 
 // ─── Derived signals ──────────────────────────────────────────────────────────
 export { computedPrevious } from "./extensions/computed-previous";
-export { derivedAsync, useDerivedAsync } from "./extensions/derived-async";
+export { derivedAsync } from "./extensions/derived-async";
 export type { DisposableSignal, DerivedAsyncFn, DerivedAsyncOptions } from "./extensions/derived-async";
 
 // ─── Store helpers ────────────────────────────────────────────────────────────

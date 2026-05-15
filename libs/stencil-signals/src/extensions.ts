@@ -13,8 +13,7 @@
  *  Derived / async signals
  *  ───────────────────────
  *  computedPrevious(sig, init?)        Previous-value signal
- *  derivedAsync(fn, opts)             Async derived signal (promise / sync T) + AbortSignal
- *  useDerivedAsync(fn, opts)          Lifecycle-bound async derived signal
+ *  derivedAsync(fn, opts)             Async derived signal (host fields bind to lifecycle when used as class fields)
  *
  *  Store helpers
  *  ─────────────
@@ -22,12 +21,12 @@
  */
 
 // ─── Side effects ─────────────────────────────────────────────────────────────
-export { effect, useSignalEffect } from "./extensions/effect";
+export { effect } from "./extensions/effect";
 export type { CleanupFn, EffectOptions, WatcherRef, RegisterCleanup } from "./extensions/effect";
 
 // ─── Derived signals ──────────────────────────────────────────────────────────
 export { computedPrevious } from "./extensions/computed-previous";
-export { derivedAsync, useDerivedAsync } from "./extensions/derived-async";
+export { derivedAsync } from "./extensions/derived-async";
 export type { DisposableSignal, DerivedAsyncFn, DerivedAsyncOptions } from "./extensions/derived-async";
 
 // ─── Store helpers ────────────────────────────────────────────────────────────

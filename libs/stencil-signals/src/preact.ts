@@ -50,10 +50,10 @@ export { SignalWatcherMixin } from "./mixins/signal-watcher";
 export { SignalWatcherController } from "./controllers/signal-watcher-controller";
 
 // ─── Side effects ─────────────────────────────────────────────────────────────
-export { effect, useSignalEffect } from "./extensions/effect";
+export { effect } from "./extensions/effect";
 export type { CleanupFn, EffectOptions, WatcherRef, RegisterCleanup } from "./extensions/effect";
 
 // ─── Derived signals ──────────────────────────────────────────────────────────
 export { computedPrevious } from "./extensions/computed-previous";
-export { derivedAsync, useDerivedAsync } from "./extensions/derived-async";
+export { derivedAsync } from "./extensions/derived-async";
 export type { DisposableSignal, DerivedAsyncFn, DerivedAsyncOptions } from "./extensions/derived-async";

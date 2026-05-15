@@ -122,7 +122,10 @@ export function bindToHostEffect(config: { utilityName: string; create: () => Wa
 			assertRegisteredWithActiveOwner(config.utilityName, cleanupsBefore);
 		},
 		onDisconnect(): void {
-			inner = null;
+			if (inner !== null) {
+				inner.dispose();
+				inner = null;
+			}
 		},
 	});
 

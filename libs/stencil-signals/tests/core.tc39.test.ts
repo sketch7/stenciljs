@@ -10,8 +10,8 @@ import { describe, it, expect, vi, expectTypeOf } from "vitest";
 import { useSignalWatcher } from "../src/controllers/signal-watcher-controller";
 import { computedPrevious } from "../src/extensions/computed-previous";
 import { createStore } from "../src/extensions/create-store";
-import { derivedAsync, useDerivedAsync } from "../src/extensions/derived-async";
-import { effect, useSignalEffect } from "../src/extensions/effect";
+import { derivedAsync } from "../src/extensions/derived-async";
+import { effect } from "../src/extensions/effect";
 // Import the TC39 entry point first — this sets the TC39 adapter so all
 // utilities that call getAdapter() work correctly in this test file.
 import { signal, computed, createWatcher, untracked } from "../src/tc39";
@@ -714,7 +714,7 @@ describe("host lifecycle — derivedAsync", () => {
 		const id = signal(1);
 		const calls: number[] = [];
 
-		const result = useDerivedAsync<number>(async () => {
+		const result = derivedAsync<number>(async () => {
 			const v = id();
 			calls.push(v);
 			return v * 10;
@@ -741,14 +741,14 @@ describe("host lifecycle — derivedAsync", () => {
 
 	it("throws without useSignalWatcher", () => {
 		const host = new TestHost();
-		useDerivedAsync(async () => 42);
-		expect(() => host.connect()).toThrow(/useDerivedAsync requires useSignalWatcher\(\) declared before this field/);
+		derivedAsync(async () => 42);
+		expect(() => host.connect()).toThrow(/derivedAsync requires useSignalWatcher\(\) declared before this field/);
 	});
 
 	it("reinit is a no-op when watcher is still live", async () => {
 		const host = new TestHost();
 		useSignalWatcher();
-		const result = useDerivedAsync(async () => 42);
+		const result = derivedAsync(async () => 42);
 
 		// start computation
 		host.connect();
@@ -762,14 +762,20 @@ describe("host lifecycle — derivedAsync", () => {
 	});
 });
 
-describe("host lifecycle — useSignalEffect (auto-tracking)", () => {
+describe("host lifecycle — effect (auto-tracking)", () => {
+	it("throws without useSignalWatcher", () => {
+		const host = new TestHost();
+		effect(() => {});
+		expect(() => host.connect()).toThrow(/effect requires useSignalWatcher\(\) declared before this field/);
+	});
+
 	it("disposes on disconnect and reinits on reconnect", async () => {
 		const host = new TestHost();
 		useSignalWatcher();
 		const count = signal(0);
 		const log: number[] = [];
 
-		useSignalEffect(_onCleanup => {
+		effect(_onCleanup => {
 			log.push(count());
 		});
 		host.connect(); // hostConnected → starts effect, fn runs synchronously
@@ -800,7 +806,7 @@ describe("host lifecycle — useSignalEffect (auto-tracking)", () => {
 		const count = signal(0);
 		const log: number[] = [];
 
-		const ref = useSignalEffect(_onCleanup => {
+		const ref = effect(_onCleanup => {
 			log.push(count());
 		});
 		host.connect();
@@ -818,14 +824,86 @@ describe("host lifecycle — useSignalEffect (auto-tracking)", () => {
 	});
 });
 
-describe("host lifecycle — useSignalEffect (explicit deps)", () => {
+describe("host lifecycle — effect cleanup (destroy-only teardown)", () => {
+	it("auto-tracking: does not run cleanups between dep updates; runs once on disconnect", async () => {
+		const host = new TestHost();
+		useSignalWatcher();
+		const count = signal(0);
+		const cleanup = vi.fn();
+		effect(onCleanup => {
+			count();
+			onCleanup(cleanup);
+		});
+		host.connect();
+		expect(cleanup).not.toHaveBeenCalled();
+		count.set(1);
+		await tick();
+		await tick();
+		count.set(2);
+		await tick();
+		await tick();
+		expect(cleanup).not.toHaveBeenCalled();
+		host.disconnect();
+		expect(cleanup).toHaveBeenCalledTimes(1);
+		host.dispose();
+	});
+
+	it("auto-tracking: manual outer .dispose() runs cleanup once before disconnect", async () => {
+		const host = new TestHost();
+		useSignalWatcher();
+		const count = signal(0);
+		const cleanup = vi.fn();
+		const ref = effect(onCleanup => {
+			count();
+			onCleanup(cleanup);
+		});
+		host.connect();
+		count.set(1);
+		await tick();
+		await tick();
+		expect(cleanup).not.toHaveBeenCalled();
+		ref.dispose();
+		expect(cleanup).toHaveBeenCalledTimes(1);
+		count.set(2);
+		await tick();
+		await tick();
+		expect(cleanup).toHaveBeenCalledTimes(1);
+		host.disconnect();
+		expect(cleanup).toHaveBeenCalledTimes(1);
+		host.dispose();
+	});
+
+	it("explicit deps: destroy-only teardown on disconnect", async () => {
+		const host = new TestHost();
+		useSignalWatcher();
+		const s = signal(0);
+		const cleanup = vi.fn();
+		effect([s], (_vals, onCleanup) => {
+			onCleanup(cleanup);
+		});
+		host.connect();
+		expect(cleanup).not.toHaveBeenCalled();
+		s.set(1);
+		await tick();
+		await tick();
+		s.set(2);
+		await tick();
+		await tick();
+		expect(cleanup).not.toHaveBeenCalled();
+		host.disconnect();
+		expect(cleanup).toHaveBeenCalledTimes(1);
+		host.dispose();
+	});
+});
+
+describe("host lifecycle — effect (explicit deps)", () => {
 	it("disposes on disconnect and reinits on reconnect", async () => {
 		const host = new TestHost();
 		useSignalWatcher();
 		const a = signal(1);
 		const log: number[] = [];
 
-		useSignalEffect([a], ([v]) => {
+		effect([a], ([v]) => {
 			log.push(v as number);
 		});
 		host.connect(); // hostConnected → starts effect, fn runs synchronously

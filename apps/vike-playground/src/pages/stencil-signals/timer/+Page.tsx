@@ -13,7 +13,7 @@ export default function Page(): JSX.Element {
 			</div>
 
 			<div className="rounded-xl border border-[var(--color-card-border)] bg-[var(--color-card)] p-6">
-				<AppTimer duration={60} />
+				<AppTimer duration={90} />
 			</div>
 
 			<div className="flex flex-col gap-2 text-xs text-[var(--color-muted-fg)]">

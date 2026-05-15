@@ -17,8 +17,8 @@ export default function Page(): JSX.Element {
 			</div>
 
 			<p className="text-xs text-[var(--color-muted-fg)]">
-				<code>useDerivedAsync</code> from <code>@ssv/stencil-signals/extensions</code> uses an internal reactive effect
-				to re-run when <code>userId</code> changes (switch cancellation via <code>AbortSignal</code>). It returns a
+				<code>derivedAsync</code> from <code>@ssv/stencil-signals/extensions</code> uses an internal reactive effect to
+				re-run when <code>userId</code> changes (switch cancellation via <code>AbortSignal</code>). It returns a
 				disposable <code>Signal&lt;T&gt;</code>: typically <code>undefined</code> until the first success, then the
 				resolved value; failed reads throw the rejection (handled with try/catch in this demo). The host ties the
 				lifecycle to this component.

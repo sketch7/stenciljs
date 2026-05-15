@@ -1,10 +1,14 @@
 /**
- * @ssv/stencil-signals — utils/derived-async.ts
+ * @ssv/stencil-signals — extensions/derived-async.ts
  *
  * `derivedAsync(fn, options?)` is a derived signal whose value comes from a
  * promise (or synchronous `T`). It re-runs whenever any signal accessed inside
  * `fn` changes (via `adapter.createEffect`); prior in-flight work is cancelled
  * with `AbortSignal` (switch semantics).
+ *
+ * In a **host field initializer** (`peekCurrentHost() !== null`), the same
+ * function is bound with `bindToHostDisposable` — starts on connect, snapshots
+ * on disconnect — so behavior matches the former `useDerivedAsync` helper.
  *
  * The returned **`DisposableSignal<T>`** reads **`undefined`** until the first
  * successful resolution when `initialValue` is omitted
@@ -49,6 +53,8 @@
  * | `equal` | `(a,b) => boolean` | `Object.is` | Skip update if resolved value is unchanged |
  */
 
+import { peekCurrentHost } from "@ssv/stencil.core";
+
 import { getAdapter } from "../adapters/active";
 import type { Signal } from "../adapters/types";
 import { getActiveOwner } from "../signals/core";
@@ -83,32 +89,30 @@ function isThenable(x: unknown): x is PromiseLike<unknown> {
 
 /**
  * Create a signal whose value is derived from an async computation.
- * Standalone — runs immediately and returns a `DisposableSignal`. Call `.dispose()` manually.
+ *
+ * **Standalone** (no host during init): runs immediately; call `.dispose()` when there is no active owner.
+ *
+ * **Stencil class field**: when constructed during `ReactiveControllerHost` setup, binds like other host utilities —
+ * starts on `hostConnected`, snapshots on disconnect. **Declare `useSignalWatcher()` before this field.**
  */
 export function derivedAsync<T>(fn: DerivedAsyncFn<T>, options?: DerivedAsyncOptions<T>): DisposableSignal<T> {
-	return _derivedAsyncCore(fn, options ?? {});
-}
-
-/**
- * Lifecycle-bound variant. Starts on `hostConnected`; disposal via
- * `useSignalWatcher()` active-owner scope. Must be called in a component
- * class-field initializer with `useSignalWatcher()` declared first.
- */
-export function useDerivedAsync<T>(fn: DerivedAsyncFn<T>, options?: DerivedAsyncOptions<T>): DisposableSignal<T> {
 	const opts = options ?? {};
-	const initialSnapshot = opts.initialValue as T | undefined;
-	return bindToHostDisposable({
-		utilityName: "useDerivedAsync",
-		initialSnapshot,
-		create: snapshot =>
-			_derivedAsyncCore<T>(fn, {
-				...opts,
-				initialValue: snapshot,
-			}),
-		read: inner => inner(),
-		peek: inner => inner.peek(),
-		disposeInner: inner => inner.dispose(),
-	}) as DisposableSignal<T>;
+	if (peekCurrentHost() !== null) {
+		const initialSnapshot = opts.initialValue as T | undefined;
+		return bindToHostDisposable({
+			utilityName: "derivedAsync",
+			initialSnapshot,
+			create: snapshot =>
+				_derivedAsyncCore<T>(fn, {
+					...opts,
+					initialValue: snapshot,
+				}),
+			read: inner => inner(),
+			peek: inner => inner.peek(),
+			disposeInner: inner => inner.dispose(),
+		}) as DisposableSignal<T>;
+	}
+	return _derivedAsyncCore(fn, opts);
 }
 
 function _derivedAsyncCore<T>(fn: DerivedAsyncFn<T>, options: DerivedAsyncOptions<T> = {}): DisposableSignal<T> {

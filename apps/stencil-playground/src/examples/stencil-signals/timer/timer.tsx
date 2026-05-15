@@ -30,6 +30,7 @@ export class AppTimer extends SsvElement {
 	readonly _durationEffect = effect(
 		[this.$props.duration],
 		([d], onCleanup) => {
+			console.warn(">>> run duration effect with", d);
 			this.#stop();
 			this.$timeRemaining.set(d);
 			onCleanup(() => {
@@ -43,8 +44,9 @@ export class AppTimer extends SsvElement {
 		if (this.$isCompleted()) {
 			this.#stop();
 		}
+
 		onCleanup(() => {
-			console.warn(">>>cleanup completion effect");
+			console.warn(">>> cleanup completion effect");
 		});
 	});
 
@@ -86,6 +88,7 @@ export class AppTimer extends SsvElement {
 
 	override disconnectedCallback(): void {
 		super.disconnectedCallback?.();
+		// Stops the interval; bound `effect`s are also torn down via `useSignalWatcher()` on disconnect.
 		this.#stop();
 	}
 

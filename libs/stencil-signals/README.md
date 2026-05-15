@@ -57,28 +57,25 @@ export class MyCounter extends SignalWatcher(class {}) {
 }
 ```
 
-| Feature                    | `@State()` | stencil-signals                       |
-| -------------------------- | ---------- | ------------------------------------- |
-| Triggers re-render         | ✅         | ✅                                    |
-| Shared across components   | ❌         | ✅                                    |
-| Computed/derived values    | ❌         | ✅ `computed()`                       |
-| Non-tracking reads         | ❌         | ✅ `untracked()` / `sig.peek()`       |
-| Auto-tracking side effects | ❌         | ✅ `effect(fn)`                       |
-| Explicit-dep side effects  | ❌         | ✅ `effect(deps, fn)`                 |
-| Lifecycle-bound effects    | ❌         | ✅ `useSignalEffect(fn/deps, fn)`     |
-| Async derived state        | ❌         | ✅ `derivedAsync` / `useDerivedAsync` |
-| Previous value tracking    | ❌         | ✅ `computedPrevious`                 |
-| TC39 standard              | ❌         | ✅                                    |
+| Feature                    | `@State()` | stencil-signals                 |
+| -------------------------- | ---------- | ------------------------------- |
+| Triggers re-render         | ✅         | ✅                              |
+| Shared across components   | ❌         | ✅                              |
+| Computed/derived values    | ❌         | ✅ `computed()`                 |
+| Non-tracking reads         | ❌         | ✅ `untracked()` / `sig.peek()` |
+| Auto-tracking side effects | ❌         | ✅ `effect(fn)`                 |
+| Explicit-dep side effects  | ❌         | ✅ `effect(deps, fn)`           |
+| Async derived state        | ❌         | ✅ `derivedAsync()`             |
+| Previous value tracking    | ❌         | ✅ `computedPrevious`           |
+| TC39 standard              | ❌         | ✅                              |
 
 ## Features
 
 - **`SignalWatcherMixin` mixin** — wraps `render()` to auto-track signal dependencies and re-render when they change
 - **`SignalWatcherController`** — composition-pattern alternative to the mixin; extend `SsvElement` from `@ssv/stencil.core` and call `withSignalController(this)` as a class-property initializer
 - **`useSignalProps`** — bridge multiple `@Prop()` fields to signals with full type inference; one-way or two-way bindings; `transform` typed from the prop type automatically
-- **`effect`** — standalone side effects (auto-tracking or explicit deps); returns a `WatcherRef` with `.dispose()`
-- **`useSignalEffect`** — lifecycle-bound variant of `effect`; starts on connect; disposal via `useSignalWatcher()` active-owner scope
-- **`derivedAsync`** — async derived signal; returns `DisposableSignal<T>` with `AbortSignal` switch-cancellation
-- **`useDerivedAsync`** — lifecycle-bound variant of `derivedAsync`
+- **`effect`** — auto-tracking or explicit-deps side effects; **standalone** runs immediately, **class fields** bind to host connect/disconnect (declare `useSignalWatcher()` first)
+- **`derivedAsync`** — async derived signal with `AbortSignal` switch-cancellation; same **standalone vs class-field** split as `effect`
 - **`computedPrevious`** — derived signal that holds the previous value of another signal (single computed, no watcher)
 - **`createStore`** — wrap a plain object in per-property signals via a reactive Proxy
 - **`untracked`** — run a callback without subscribing to signal reads inside it (same idea as Angular `untracked()` and Preact `untracked()`)
@@ -231,12 +228,12 @@ export class MyCounter extends SsvElement {
 
 **Owner scope and auto-disposal:** When the component connects, `SignalWatcherController` activates a shared owner scope for one microtask. Any `effect` or `derivedAsync` created during that window — including in your `connectedCallback` after `super.connectedCallback()` — registers its dispose function automatically. On disconnect, all registered cleanups are flushed in one pass. This is the **only** disposal path for lifecycle-bound utilities.
 
-`useSignalEffect` and `useDerivedAsync` share internal `bindToHostLifecycle` helpers: they start on `hostConnected`, snapshot state on `hostDisconnected`, and recreate on reconnect. **Declare `useSignalWatcher()` before any `use*` field:** Effects and async helpers need connect-gated lifecycle; `computedPrevious` is a plain derived signal and can be used as a class field without `use*`.
+`effect` and `derivedAsync` detect `ReactiveControllerHost` construction (`peekCurrentHost()`): as **class fields** they use internal `bindToHost*` helpers — they start on `hostConnected`, snapshot state on `hostDisconnected`, and recreate on reconnect. **Declare `useSignalWatcher()` before any such field** so the signal watcher’s active-owner scope is ready; `computedPrevious` is a plain derived signal and does not need this ordering.
 
 ```tsx
 readonly signalWatcher = useSignalWatcher();
 
-readonly _titleEff = useSignalEffect(() => {
+readonly _titleEff = effect(() => {
   document.title = `Count: ${count()}`;
 });
 
@@ -335,7 +332,9 @@ Pair each two-way prop with a Stencil `@Event()` declaration so output targets (
 
 ### `effect`
 
-Standalone, framework-agnostic. Runs immediately and returns a `WatcherRef` (`{ dispose() }`).
+**Standalone** (plain code / tests — no Stencil host during initialization): runs **immediately** and returns a `WatcherRef` (`{ dispose() }`). Cleanup is pushed to `getActiveOwner()` when that scope exists; otherwise call `.dispose()` yourself.
+
+**Stencil class field**: the same `effect()` call is **deferred until `hostConnected`** and torn down with the host via `useSignalWatcher()` — still declare `useSignalWatcher()` **before** the effect field.
 
 **Auto-tracking** — any signal read inside the callback is tracked automatically:
 
@@ -347,7 +346,7 @@ const ref = effect(onCleanup => {
   });
 });
 
-ref.dispose(); // stop manually
+ref.dispose(); // stop manually (standalone) or alongside host disposal (class field)
 ```
 
 **Explicit dependencies** — list the signals you care about; values are passed as a typed tuple:
@@ -367,8 +366,40 @@ const ref = effect(
   { defer: true }, // skip the initial run, fire only on first change
 );
 
-ref.dispose(); // stop manually
+ref.dispose();
 ```
+
+**Stencil — auto-tracking:**
+
+```tsx
+@Component({ tag: "my-comp", shadow: false })
+export class MyComp extends SsvElement {
+  readonly signalWatcher = useSignalWatcher();
+
+  readonly _titleEff = effect(_onCleanup => {
+    document.title = `Count: ${count()}`;
+  });
+}
+```
+
+**Stencil — explicit dependencies:**
+
+```tsx
+private readonly _userEff = effect([userId, theme], ([id, t], onCleanup) => {
+  const ctrl = new AbortController();
+  onCleanup(() => ctrl.abort());
+  fetch(`/api/users/${id}?theme=${t}`, { signal: ctrl.signal })
+    .then(r => r.json())
+    .then(data => userStore.set(data));
+}, { defer: true });
+```
+
+|                            | Auto-tracking                         | Explicit deps               |
+| -------------------------- | ------------------------------------- | --------------------------- |
+| Dep declaration            | Implicit (any `sig()` call inside fn) | Explicit array              |
+| Risk of unexpected re-runs | Higher                                | None                        |
+| Values passed to fn        | No — call `sig()` manually            | Yes, typed tuple            |
+| Best for                   | Simple reactive side-effects          | Precise control, async work |
 
 In both modes, register teardown with `onCleanup(fn)` and/or return a cleanup function. On each re-run and on `dispose()`, prior `onCleanup` runs first, then return cleanup.
 
@@ -390,44 +421,13 @@ const sum = computed(() => a() + untracked(() => b()));
 
 Prefer `sig.peek()` for a single untracked read on one signal; use `untracked(() => { ... })` when you need several reads or non-trivial logic without subscribing.
 
-### `useSignalEffect`
-
-Lifecycle-bound wrapper over `effect`. Must be called in a class-field initializer with `useSignalWatcher()` declared first. Starts on `hostConnected`; disposal is handled by the signal watcher's active-owner scope on disconnect.
-
-**Auto-tracking:**
-
-```tsx
-@Component({ tag: "my-comp", shadow: false })
-export class MyComp extends SsvElement {
-  readonly signalWatcher = useSignalWatcher();
-
-  readonly _titleEff = useSignalEffect(_onCleanup => {
-    document.title = `Count: ${count()}`;
-  });
-}
-```
-
-**Explicit dependencies:**
-
-```tsx
-private readonly _userEff = useSignalEffect([userId, theme], ([id, t], onCleanup) => {
-  const ctrl = new AbortController();
-  onCleanup(() => ctrl.abort());
-  fetch(`/api/users/${id}?theme=${t}`, { signal: ctrl.signal })
-    .then(r => r.json()).then(data => userStore.set(data));
-}, { defer: true });
-```
-
-|                            | Auto-tracking                         | Explicit deps               |
-| -------------------------- | ------------------------------------- | --------------------------- |
-| Dep declaration            | Implicit (any `sig()` call inside fn) | Explicit array              |
-| Risk of unexpected re-runs | Higher                                | None                        |
-| Values passed to fn        | No — call `sig()` manually            | Yes, typed tuple            |
-| Best for                   | Simple reactive side-effects          | Precise control, async work |
-
 ### `derivedAsync`
 
-Standalone async derived signal. Implemented with **`adapter.createEffect`**: any signal reads inside **`fn`** are tracked like a normal effect. **`fn`** takes **`(abortSignal, previousValue?)`** (second argument is optional) and returns **`Promise<T>`** or synchronous **`T`**. **`switch`** semantics via **`AbortSignal`** — each effect re-run aborts the previous in-flight promise.
+**Standalone**: runs immediately; call **`dispose()`** when there is no active owner.
+
+**Stencil class field**: same `derivedAsync()` defers until **`hostConnected`** and ties disposal to **`useSignalWatcher()`** — declare **`useSignalWatcher()`** before this field.
+
+Implemented with **`adapter.createEffect`**: any signal reads inside **`fn`** are tracked like a normal effect. **`fn`** takes **`(abortSignal, previousValue?)`** (second argument is optional) and returns **`Promise<T>`** or synchronous **`T`**. **`switch`** semantics via **`AbortSignal`** — each effect re-run aborts the previous in-flight promise.
 
 Returns **`DisposableSignal<T>`** (read-only **`Signal<T>`** + **`dispose()`**):
 
@@ -435,7 +435,7 @@ Returns **`DisposableSignal<T>`** (read-only **`Signal<T>`** + **`dispose()`**):
 
 - **`initialValue`** fills that gap otherwise; latest resolved value stays visible while the next promise runs (**stale-while-revalidate**).
 
-- Throws from **`fn`** or promise rejections surface as **`get()`/`()` throwing; **`peek()`** does **not** throw — error state yields **`undefined`** (used safely for **`useDerivedAsync`\*\* disconnect snapshots).
+- Throws from **`fn`** or promise rejections surface as **`get()`/`()` throwing; **`peek()`** does **not** throw — error state yields **`undefined`** (used safely for **host disconnect snapshots\*\* on `derivedAsync`).
 
 ```ts
 const userId = signal(1);
@@ -449,19 +449,10 @@ const user = derivedAsync(
   { initialValue: null },
 );
 
-// call user.dispose() manually when done
+// call user.dispose() manually when done (standalone)
 ```
 
-**Options:**
-
-| Option         | Type                | Default     | Description                                           |
-| -------------- | ------------------- | ----------- | ----------------------------------------------------- |
-| `initialValue` | `T`                 | `undefined` | value before first resolution / stable during refetch |
-| `equal`        | `(a, b) => boolean` | `Object.is` | skip update when resolved value is unchanged          |
-
-### `useDerivedAsync`
-
-Lifecycle-bound variant. Starts on **`hostConnected`**; disposal via **`useSignalWatcher()`**. Declare **`useSignalWatcher()`** before this field.
+**Stencil example** (same API — host binding is automatic in field initializers):
 
 ```tsx
 const userId = signal(1);
@@ -470,7 +461,7 @@ const userId = signal(1);
 export class UserCard extends SsvElement {
   readonly signalWatcher = useSignalWatcher();
 
-  readonly user = useDerivedAsync<User>(async abortSignal => {
+  readonly user = derivedAsync<User>(async abortSignal => {
     const res = await fetch(`/api/users/${userId()}`, { signal: abortSignal });
     if (!res.ok) throw new Error(res.statusText);
     return res.json() as Promise<User>;
@@ -490,6 +481,13 @@ export class UserCard extends SsvElement {
   }
 }
 ```
+
+**Options:**
+
+| Option         | Type                | Default     | Description                                           |
+| -------------- | ------------------- | ----------- | ----------------------------------------------------- |
+| `initialValue` | `T`                 | `undefined` | value before first resolution / stable during refetch |
+| `equal`        | `(a, b) => boolean` | `Object.is` | skip update when resolved value is unchanged          |
 
 ### `computedPrevious`
 
@@ -605,24 +603,21 @@ The main entry `@ssv/stencil-signals` exports the full public API but **does not
 
 ### Effects
 
-| Export                                | Description                                                                                                                        |
-| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `WatcherRef`                          | `{ dispose(): void }` — returned by `effect` / `useSignalEffect`; also implemented by `DisposableSignal`.                          |
-| `effect(fn)`                          | Auto-tracking effect. `fn(onCleanup)`; supports `onCleanup` + return cleanup. Returns `WatcherRef`; auto-registers on connect.     |
-| `effect(deps, fn, options?)`          | Explicit-dep effect. `fn(values, onCleanup)`; supports `{ defer: true }`. Returns `WatcherRef`.                                    |
-| `useSignalEffect(fn)`                 | Lifecycle-bound auto-tracking effect. Returns `WatcherRef` (call `.dispose()` to stop early). Requires `useSignalWatcher()` first. |
-| `useSignalEffect(deps, fn, options?)` | Lifecycle-bound explicit-dep effect. Returns `WatcherRef`. Same as above with explicit dep list.                                   |
+| Export                       | Description                                                                                                                                                                              |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `WatcherRef`                 | `{ dispose(): void }` — returned by `effect`; also implemented by `DisposableSignal`.                                                                                                    |
+| `effect(fn)`                 | Auto-tracking effect. `fn(onCleanup)`; supports `onCleanup` + return cleanup. **Standalone**: runs immediately. **Class field**: starts on connect; requires `useSignalWatcher()` first. |
+| `effect(deps, fn, options?)` | Explicit-dep effect. `fn(values, onCleanup)`; supports `{ defer: true }`. Same standalone vs class-field split as above.                                                                 |
 
 ### Derived signals
 
-| Export                            | Description                                                                       |
-| --------------------------------- | --------------------------------------------------------------------------------- |
-| `derivedAsync(fn, options?)`      | Standalone promise-backed derived signal. Returns `DisposableSignal<T>`.          |
-| `useDerivedAsync(fn, options?)`   | Lifecycle-bound `derivedAsync`. Requires `useSignalWatcher()` first.              |
-| `computedPrevious(source, init?)` | Previous-value derived signal. Returns `Signal<T \| undefined>`.                  |
-| `DisposableSignal<T>`             | Read-only signal + `.dispose()` — returned by `derivedAsync` / `useDerivedAsync`. |
-| `DerivedAsyncFn<T>`               | `(abortSignal, previous?) => Promise<T> \| T`.                                    |
-| `DerivedAsyncOptions<T>`          | `{ initialValue?, equal? }`.                                                      |
+| Export                            | Description                                                                                                                 |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `derivedAsync(fn, options?)`      | Promise-backed derived signal. **Standalone** or **class field** (host-bound like `effect`). Returns `DisposableSignal<T>`. |
+| `computedPrevious(source, init?)` | Previous-value derived signal. Returns `Signal<T \| undefined>`.                                                            |
+| `DisposableSignal<T>`             | Read-only signal + `.dispose()` — returned by `derivedAsync`.                                                               |
+| `DerivedAsyncFn<T>`               | `(abortSignal, previous?) => Promise<T> \| T`.                                                                              |
+| `DerivedAsyncOptions<T>`          | `{ initialValue?, equal? }`.                                                                                                |
 
 ### Store
 

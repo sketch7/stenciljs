@@ -62,10 +62,10 @@ export class SignalWatcherController implements ReactiveController {
 	hostConnected(): void {
 		this.__connected = true;
 
-		// Activate the owner scope so any watcher utility (effect,
-		// computedAsync, computedPrevious) called in connectedCallback —
-		// before OR after this controller is notified — auto-registers its
-		// dispose fn and is cleaned up on disconnect.
+		// Activate the owner scope so watcher utilities (effect, computedAsync,
+		// computedPrevious) and use* hooks (via bindToHostLifecycle) register
+		// dispose fns here. hostDisconnected flushes __scopeCleanups; use* hooks
+		// only snapshot state on their own hostDisconnected.
 		setActiveOwner(this.__scopeCleanups);
 		queueMicrotask(() => setActiveOwner(null));
 

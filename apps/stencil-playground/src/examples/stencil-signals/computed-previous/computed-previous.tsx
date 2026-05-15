@@ -1,6 +1,6 @@
-import { SignalWatcherMixin, useComputedPrevious, signal } from "@ssv/stencil-signals";
-import { SsvElementMixin } from "@ssv/stencil.core";
-import { Component, h, Mixin } from "@stencil/core";
+import { useComputedPrevious, signal, useSignalController } from "@ssv/stencil-signals";
+import { SsvElement } from "@ssv/stencil.core";
+import { Component, h } from "@stencil/core";
 
 const count = signal(0);
 
@@ -9,12 +9,11 @@ const count = signal(0);
 	styleUrl: "computed-previous.css",
 	shadow: true,
 })
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
-export class AppSignalsComputedPrevious extends Mixin(SignalWatcherMixin, SsvElementMixin) {
-	// Lifecycle-managed: auto-disposed on disconnectedCallback, reinited on connectedCallback
+export class AppSignalsComputedPrevious extends SsvElement {
+	readonly signalWatcher = useSignalController();
 	readonly prevCount = useComputedPrevious(count);
 
-	override render() {
+	render() {
 		const curr = count();
 		const prev = this.prevCount();
 		const direction = prev === undefined ? "–" : curr > prev ? "↑" : curr < prev ? "↓" : "=";

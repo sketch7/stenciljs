@@ -29,9 +29,12 @@ export class AppTimer extends SsvElement {
 
 	readonly _durationEffect = useSignalEffect(
 		[this.$props.duration],
-		([d]) => {
+		([d], onCleanup) => {
 			this.#stop();
 			this.$timeRemaining.set(d);
+			onCleanup(() => {
+				console.warn(">>> cleanup duration effect");
+			});
 		},
 		{ defer: true },
 	);
@@ -40,6 +43,9 @@ export class AppTimer extends SsvElement {
 		if (this.$isCompleted()) {
 			this.#stop();
 		}
+		return () => {
+			console.warn(">>>cleanup completion effect");
+		};
 	});
 
 	#start() {

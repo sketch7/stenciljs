@@ -41,12 +41,11 @@
  * ```
  */
 
-import { use } from "@ssv/stencil.core";
-
 import { getAdapter } from "../adapters/active";
 import type { Signal } from "../adapters/types";
 import { scheduler, getActiveOwner } from "../signals/core";
 import type { DisposableSignal } from "./computed-async";
+import { bindToHostDisposable } from "./host-bind";
 
 /**
  * Standalone — returns a signal holding the previous value of `source`.
@@ -60,55 +59,19 @@ export function computedPrevious<T>(source: Signal<T>, initialValue?: T): Dispos
 }
 
 /**
- * Lifecycle-bound variant. Starts on `hostConnected`, disposes on `hostDisconnected`.
- * Must be called in a component class-field initializer.
+ * Lifecycle-bound variant. Starts on `hostConnected`; disposal via
+ * `useSignalController()` active-owner scope. Must be called in a component
+ * class-field initializer with `useSignalController()` declared first.
  */
 export function useComputedPrevious<T>(source: Signal<T>, initialValue?: T): DisposableSignal<T | undefined> {
-	return _computedPreviousWithUse(source, initialValue);
-}
-
-// ─── Lifecycle-bound factory ──────────────────────────────────────────────────
-
-function _computedPreviousWithUse<T>(source: Signal<T>, initialValue: T | undefined): DisposableSignal<T | undefined> {
-	let inner: DisposableSignal<T | undefined> | null = null;
-	// Snapshot the last tracked value so it survives disconnect/reconnect cycles.
-	let lastValue: T | undefined = initialValue;
-	let manuallyDisposed = false;
-
-	// Stable wrapper — the class property reference never changes.
-	// Falls back to `lastValue` (last snapshot before disconnect) when inner is null.
-	const wrapper = Object.assign((): T | undefined => inner?.() ?? lastValue, {
-		peek(): T | undefined {
-			return inner?.peek() ?? lastValue;
-		},
-		dispose(): void {
-			if (manuallyDisposed) {
-				return;
-			}
-			manuallyDisposed = true;
-			lastValue = inner?.peek() ?? lastValue;
-			inner?.dispose();
-			inner = null;
-		},
+	return bindToHostDisposable({
+		utilityName: "useComputedPrevious",
+		initialSnapshot: initialValue,
+		create: snapshot => _computedPreviousCore(source, snapshot),
+		read: inner => inner(),
+		peek: inner => inner.peek(),
+		disposeInner: inner => inner.dispose(),
 	}) as DisposableSignal<T | undefined>;
-
-	use({
-		hostConnected(): void {
-			if (manuallyDisposed || inner !== null) {
-				return;
-			}
-			// Re-initialize from lastValue so the source's current value becomes the
-			// new "lastSeen" and the first dep change after reconnect produces prev = source@reconnect.
-			inner = _computedPreviousCore(source, lastValue);
-		},
-		hostDisconnected(): void {
-			lastValue = inner?.peek() ?? lastValue;
-			inner?.dispose();
-			inner = null;
-		},
-	});
-
-	return wrapper;
 }
 
 // ─── Core factory (no host) ───────────────────────────────────────────────────

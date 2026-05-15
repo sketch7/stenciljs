@@ -75,9 +75,9 @@ export class MyCounter extends SignalWatcher(class {}) {
 - **`SignalWatcherMixin` mixin** — wraps `render()` to auto-track signal dependencies and re-render when they change
 - **`SignalWatcherController`** — composition-pattern alternative to the mixin; extend `SsvElement` from `@ssv/stencil.core` and call `withSignalController(this)` as a class-property initializer
 - **`@useSignal` decorator** — bind a signal directly to a class property for ergonomic reads and writes
-- **`withSignalProps`** — bridge multiple `@Prop()` fields to signals with full type inference; one-way or two-way bindings; `transform` typed from the prop type automatically
+- **`useSignalProps`** — bridge multiple `@Prop()` fields to signals with full type inference; one-way or two-way bindings; `transform` typed from the prop type automatically
 - **`effect`** — standalone side effects (auto-tracking or explicit deps); returns a dispose function
-- **`useSignalEffect`** — lifecycle-bound variant of `effect`; auto-starts on connect, auto-disposes on disconnect
+- **`useSignalEffect`** — lifecycle-bound variant of `effect`; starts on connect; disposal via `useSignalController()` active-owner scope
 - **`computedAsync`** — standalone async derived signal with `pending`/`resolved`/`error` status and `AbortSignal` cancellation
 - **`useComputedAsync`** — lifecycle-bound variant of `computedAsync`
 - **`computedPrevious`** — standalone derived signal that holds the previous value of another signal
@@ -228,14 +228,18 @@ export class MyCounter extends SsvElement {
 }
 ```
 
-**Owner scope and auto-disposal:** When the component connects, `SignalWatcherController` activates a shared owner scope for one microtask. Any `effect`, `computedAsync`, or `computedPrevious` created during that window — including in your `connectedCallback` after `super.connectedCallback()` — registers its dispose function automatically. On disconnect, all registered cleanups are flushed in one pass.
+**Owner scope and auto-disposal:** When the component connects, `SignalWatcherController` activates a shared owner scope for one microtask. Any `effect`, `computedAsync`, or `computedPrevious` created during that window — including in your `connectedCallback` after `super.connectedCallback()` — registers its dispose function automatically. On disconnect, all registered cleanups are flushed in one pass. This is the **only** disposal path for lifecycle-bound utilities.
 
-Pass `this` to any watcher utility from a class-property initializer and the utility registers its lifecycle via `addController`, auto-disposing on disconnect and reiniting on the next connect:
+`useSignalEffect`, `useComputedAsync`, and `useComputedPrevious` share internal `bindToHostLifecycle` helpers: they start on `hostConnected`, snapshot state on `hostDisconnected`, and recreate on reconnect. **Declare `useSignalController()` before any `use*` field:**
 
 ```tsx
+readonly signalWatcher = useSignalController();
+
 readonly _titleEff = useSignalEffect(() => {
   document.title = `Count: ${count()}`;
 });
+
+readonly $props = useSignalProps(MyComp)({ count: {} });
 ```
 
 **Comparison with the mixin:**
@@ -275,17 +279,19 @@ export class MyComp extends Mixin(SignalWatcherMixin, SsvElementMixin) {
 > [!NOTE]
 > Writing to a property bound to a `computed` signal throws at runtime. Use `@useSignal` only with writable signals.
 
-### `withSignalProps`
+### `useSignalProps`
 
-Bridge multiple `@Prop()` fields to signals in one call. Each signal stays in sync with its prop across every render — no `@Watch` needed.
+Bridge multiple `@Prop()` fields to signals in one call. Each signal stays in sync with its prop via `hostWillLoad` / `hostWillUpdate` — no `@Watch` needed.
 
 Import from the `/extensions` sub-path:
 
 ```tsx
-import { withSignalProps } from "@ssv/stencil-signals/extensions";
+import { useSignalProps } from "@ssv/stencil-signals/extensions";
 ```
 
-Use it as a class-property initializer, passing the class constructor as the second argument so TypeScript resolves the host type concretely — `transform`'s `v` parameter is then automatically typed from the `@Prop` field:
+Requires `useSignalController()` declared **before** this field. Prop signals are created on `hostConnected`; disposal is via the signal watcher's active-owner scope (same as other `use*` utilities).
+
+Use it as a class-property initializer, passing the class constructor so TypeScript resolves the host type concretely — `transform`'s `v` parameter is then automatically typed from the `@Prop` field:
 
 ```tsx
 @Component({ tag: "app-timer", shadow: true })
@@ -295,11 +301,8 @@ export class AppTimer extends SsvElement {
 
   @Event() isRunningChange!: EventEmitter<boolean>;
 
-  readonly signalWatcher = withSignalController(this);
-  readonly $props = withSignalProps(
-    this,
-    AppTimer,
-  )({
+  readonly signalWatcher = useSignalController();
+  readonly $props = useSignalProps(AppTimer)({
     duration: { transform: v => Math.max(0, v) }, // v: number — Signal<number>
     isRunning: { twoWay: true }, // WritableSignal<boolean>
   });
@@ -318,7 +321,7 @@ export class AppTimer extends SsvElement {
 **One-way (read-only)** — omit `twoWay`; the result is a read-only `Signal<T>` that mirrors the prop:
 
 ```ts
-readonly $props = withSignalProps(this, AppTimerCounter)({
+readonly $props = useSignalProps(AppTimerCounter)({
   timeRemaining: {},   // Signal<number> — auto-syncs on every render
 });
 
@@ -329,7 +332,7 @@ const mins = Math.floor(this.$props.timeRemaining() / 60);
 **Two-way (writable + event)** — set `twoWay: true`; the result is a `WritableSignal<T>`. Every `.set()` / `.update()` also dispatches a `${propName}Change` `CustomEvent` so parent components and framework wrappers can reflect the new value back:
 
 ```ts
-readonly $props = withSignalProps(this, AppTimer)({
+readonly $props = useSignalProps(AppTimer)({
   isRunning: { twoWay: true }, // WritableSignal<boolean>
 });
 
@@ -412,7 +415,7 @@ Prefer `sig.peek()` for a single untracked read on one signal; use `untracked(()
 
 ### `useSignalEffect`
 
-Lifecycle-bound wrapper over `effect`. Must be called in a class-field initializer (where `use()` resolves the host automatically). The effect starts on `hostConnected` and is disposed on `hostDisconnected`.
+Lifecycle-bound wrapper over `effect`. Must be called in a class-field initializer with `useSignalController()` declared first. Starts on `hostConnected`; disposal is handled by the signal watcher's active-owner scope on disconnect.
 
 **Auto-tracking:**
 
@@ -477,14 +480,14 @@ const user = computedAsync(
 
 ### `useComputedAsync`
 
-Lifecycle-bound variant. Starts on `hostConnected`, disposes on `hostDisconnected`. Must be called in a class-field initializer.
+Lifecycle-bound variant. Starts on `hostConnected`; disposal via `useSignalController()` active-owner scope. Declare `useSignalController()` before this field.
 
 ```tsx
 const userId = signal(1);
 
 @Component({ tag: "user-card", shadow: false })
 export class UserCard extends SsvElement {
-  readonly signalWatcher = withSignalController(this);
+  readonly signalWatcher = useSignalController();
 
   readonly user = useComputedAsync<User>(async abortSignal => {
     const res = await fetch(`/api/users/${userId()}`, { signal: abortSignal });
@@ -525,12 +528,12 @@ const prevPage = computedPrevious(page, 0); // 0 before first change
 
 ### `useComputedPrevious`
 
-Lifecycle-bound variant. Starts on `hostConnected`, disposes on `hostDisconnected`. Must be called in a class-field initializer.
+Lifecycle-bound variant. Starts on `hostConnected`; disposal via `useSignalController()` active-owner scope. Declare `useSignalController()` before this field.
 
 ```tsx
 @Component({ tag: "slide-view", shadow: false })
 export class SlideView extends SsvElement {
-  readonly signalWatcher = withSignalController(this);
+  readonly signalWatcher = useSignalController();
 
   readonly prevPage = useComputedPrevious(page);
 
@@ -615,7 +618,7 @@ The main entry `@ssv/stencil-signals` exports the full public API but **does not
 
 | Export                                     | Description                                                                                                                    |
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| `withSignalProps(host, HostClass)(config)` | Curried builder. Creates one signal per `@Prop` entry in `config`. Non-`twoWay` → `Signal<T>`; `twoWay` → `WritableSignal<T>`. |
+| `useSignalProps(HostClass)(config)`        | Curried builder. Creates one signal per `@Prop` entry in `config`. Requires `useSignalController()` first; disposal via active-owner scope. Prop sync on `hostWillLoad` / `hostWillUpdate`. Non-`twoWay` → `Signal<T>`; `twoWay` → `WritableSignal<T>`. |
 | `SignalPropOptions<T>`                     | Options type for each prop entry (`transform`, `twoWay`, `default`, `required`).                                               |
 | `SignalPropsResult<H, C>`                  | Mapped return type — `Signal<T>` or `WritableSignal<T>` per key, inferred from options.                                        |
 
@@ -623,9 +626,9 @@ The main entry `@ssv/stencil-signals` exports the full public API but **does not
 
 | Export                                | Description                                                                                                                                |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `effect(fn)`                          | Auto-tracking effect. Re-runs whenever any signal accessed inside changes. Returns a dispose function.                                     |
+| `effect(fn)`                          | Auto-tracking effect. Re-runs whenever any signal accessed inside changes. Returns a dispose function; auto-registers with active owner when created during connect. |
 | `effect(deps, fn, options?)`          | Explicit-dep effect. `fn` receives signal values as a typed tuple. Supports `{ defer: true }` and `onCleanup`. Returns a dispose function. |
-| `useSignalEffect(fn)`                 | Lifecycle-bound auto-tracking effect. Starts on `hostConnected`, disposes on `hostDisconnected`.                                           |
+| `useSignalEffect(fn)`                 | Lifecycle-bound auto-tracking effect. Requires `useSignalController()` first; disposal via active-owner scope.                             |
 | `useSignalEffect(deps, fn, options?)` | Lifecycle-bound explicit-dep effect. Same as above with explicit dep list.                                                                 |
 
 ### Derived signals
@@ -633,9 +636,9 @@ The main entry `@ssv/stencil-signals` exports the full public API but **does not
 | Export                               | Description                                                                                                       |
 | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
 | `computedAsync(fn, options?)`        | Standalone async derived signal. Re-runs when tracked signals change. Returns `DisposableSignal<AsyncResult<T>>`. |
-| `useComputedAsync(fn, options?)`     | Lifecycle-bound variant of `computedAsync`. Auto lifecycle via host.                                              |
+| `useComputedAsync(fn, options?)`     | Lifecycle-bound variant of `computedAsync`. Requires `useSignalController()` first; disposal via active-owner scope. |
 | `computedPrevious(source, init?)`    | Standalone previous-value signal. Returns `DisposableSignal<T \| undefined>`.                                     |
-| `useComputedPrevious(source, init?)` | Lifecycle-bound variant of `computedPrevious`. Auto lifecycle via host.                                           |
+| `useComputedPrevious(source, init?)` | Lifecycle-bound variant of `computedPrevious`. Requires `useSignalController()` first; disposal via active-owner scope. |
 | `isPending(result)`                  | Type guard — narrows `AsyncResult<T>` to `{ status: 'pending' }`.                                                 |
 | `isResolved(result)`                 | Type guard — narrows `AsyncResult<T>` to `{ status: 'resolved', value: T }`.                                      |
 | `isError(result)`                    | Type guard — narrows `AsyncResult<T>` to `{ status: 'error', error: unknown }`.                                   |

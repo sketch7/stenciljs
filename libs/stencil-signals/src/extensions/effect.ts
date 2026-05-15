@@ -22,20 +22,19 @@
  *   useSignalEffect(fn)
  *   useSignalEffect(deps, fn, options?)
  *
- * Same signatures, but wraps the effect in the host's lifecycle. The effect
- * starts on `hostConnected` and is disposed on `hostDisconnected`. Must be
- * called in a component class-field initializer (where `use()` resolves the
- * host automatically).
+ * Same signatures, but binds the effect to the host lifecycle via
+ * `bindToHostEffect`. Starts on `hostConnected`; disposal is handled by
+ * `useSignalController()` active-owner scope on disconnect. Must be called in
+ * a component class-field initializer (where `use()` resolves the host).
  *
  * In both modes `fn` may return a cleanup function called before each re-run
  * and on final disposal.
  */
 
-import { use } from "@ssv/stencil.core";
-
 import { getAdapter } from "../adapters/active";
 import type { WritableSignal, Signal } from "../adapters/types";
-import { scheduler } from "../signals/core";
+import { getActiveOwner, scheduler } from "../signals/core";
+import { bindToHostEffect } from "./host-bind";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -123,25 +122,16 @@ export function useSignalEffect(
 	fn?: (values: unknown[], onCleanup: (fn: CleanupFn) => void) => CleanupFn | void,
 	options?: EffectOptions,
 ): void {
-	let stop: CleanupFn | null = null;
-	use({
-		hostConnected(): void {
-			if (stop !== null) {
-				return;
-			}
-			stop =
-				typeof fnOrDeps === "function"
-					? effect(fnOrDeps)
-					: fn
-						? effect(fnOrDeps as readonly AnySignal[], fn, options)
-						: () => {
-								/* empty */
-							};
-		},
-		hostDisconnected(): void {
-			stop?.();
-			stop = null;
-		},
+	bindToHostEffect({
+		utilityName: "useSignalEffect",
+		create: () =>
+			typeof fnOrDeps === "function"
+				? effect(fnOrDeps)
+				: fn
+					? effect(fnOrDeps as readonly AnySignal[], fn, options)
+					: () => {
+							/* empty */
+						},
 	});
 }
 
@@ -151,7 +141,9 @@ export function useSignalEffect(
 // internally for both TC39 (Signal.Computed + Watcher) and Preact (effect()).
 
 function autoTrackingEffect(fn: () => CleanupFn | void): CleanupFn {
-	return getAdapter().createEffect(fn);
+	const stop = getAdapter().createEffect(fn);
+	getActiveOwner()?.push(stop);
+	return stop;
 }
 
 // ─── Explicit-deps implementation ─────────────────────────────────────────────
@@ -227,7 +219,8 @@ function explicitDepsEffect(
 		runEffect();
 	}
 
-	return () => {
+	const stop = (): void => {
+		console.warn(">>>> stop effect");
 		disposed = true;
 		watcher.dispose();
 		pendingCleanup?.();
@@ -235,4 +228,6 @@ function explicitDepsEffect(
 			userCleanup();
 		}
 	};
+	getActiveOwner()?.push(stop);
+	return stop;
 }

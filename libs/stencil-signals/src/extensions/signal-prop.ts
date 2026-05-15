@@ -4,14 +4,10 @@
  * Utilities for binding Stencil @Prop() fields to signals so they participate
  * in the signal graph without manual `@Watch` bookkeeping.
  *
- * Three public functions:
+ *   useSignalProps(HostClass)(config)
  *
- * ─── Bulk (many props at once) ────────────────────────────────────────────────
- *
- *   withSignalProps(host, HostClass)
- *
- * Returns a typed builder function. Call the builder with a config map to
- * create one signal per entry. Non-twoWay keys → Signal<T>. twoWay keys → WritableSignal<T>.
+ * Returns a typed map of signals — one per config entry. Non-twoWay keys →
+ * Signal<T>. twoWay keys → WritableSignal<T>.
  */
 
 import { getCurrentHost } from "@ssv/stencil.core";
@@ -19,7 +15,9 @@ import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.co
 import { getElement } from "@stencil/core";
 
 import type { Signal, WritableSignal } from "../adapters/types";
-import { signal as createSignal } from "../signals/core";
+import { getActiveOwner, signal as createSignal } from "../signals/core";
+import { bindToHostProps } from "./host-bind";
+import type { HostPropsSnapshotBag } from "./host-bind";
 
 // ─── Public types ─────────────────────────────────────────────────────────────
 
@@ -63,11 +61,15 @@ type AnyHost = ReactiveControllerHost & Record<string, unknown>;
 type PropEntry = {
 	propName: string;
 	inner: WritableSignal<unknown>;
-	exposed: WritableSignal<unknown> | Signal<unknown>;
 	isSyncing: { value: boolean };
 	options: SignalPropOptions<unknown>;
 	/** Last value received from the external @Prop — used by twoWay to detect genuine external changes. */
 	lastExternalPropValue: unknown;
+};
+
+type PropsBundle = {
+	entries: PropEntry[];
+	controller: SignalBulkController;
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -89,33 +91,82 @@ function dispatchChange(host: AnyHost, propName: string, value: unknown): void {
 	}
 }
 
-function makeTwoWaySignal<T>(
-	inner: WritableSignal<T>,
-	isSyncing: { value: boolean },
-	host: AnyHost,
+function getEntry(bundle: PropsBundle | null, propName: string): PropEntry | undefined {
+	return bundle?.entries.find(e => e.propName === propName);
+}
+
+function makeStableReadonlyFacade<T>(
 	propName: string,
+	getBundle: () => PropsBundle | null,
+	snapshotBag: HostPropsSnapshotBag,
+): Signal<T> {
+	return Object.assign(
+		(): T => {
+			const entry = getEntry(getBundle(), propName);
+			return entry ? (entry.inner() as T) : (snapshotBag.values[propName] as T);
+		},
+		{
+			get(): T {
+				return (this as Signal<T>)();
+			},
+			peek(): T {
+				const entry = getEntry(getBundle(), propName);
+				return entry ? (entry.inner.peek() as T) : (snapshotBag.values[propName] as T);
+			},
+		},
+	);
+}
+
+function makeStableTwoWayFacade<T>(
+	propName: string,
+	host: AnyHost,
+	getBundle: () => PropsBundle | null,
+	snapshotBag: HostPropsSnapshotBag,
 ): WritableSignal<T> {
-	const wrapper = function twoWaySignal() {
-		return inner();
+	const wrapper = function twoWayPropFacade(): T {
+		const entry = getEntry(getBundle(), propName);
+		return entry ? (entry.inner() as T) : (snapshotBag.values[propName] as T);
 	} as unknown as WritableSignal<T>;
 
 	Object.defineProperties(wrapper, {
-		get: { value: () => inner.get() },
-		peek: { value: () => inner.peek() },
-		asReadonly: { value: () => inner.asReadonly() },
+		get: {
+			value: (): T => wrapper(),
+		},
+		peek: {
+			value: (): T => {
+				const entry = getEntry(getBundle(), propName);
+				return entry ? (entry.inner.peek() as T) : (snapshotBag.values[propName] as T);
+			},
+		},
+		asReadonly: {
+			value: (): Signal<T> => makeStableReadonlyFacade<T>(propName, getBundle, snapshotBag),
+		},
 		set: {
 			value: (v: T) => {
-				inner.set(v);
-				if (!isSyncing.value) {
+				const bundle = getBundle();
+				const entry = getEntry(bundle, propName);
+				if (entry === undefined) {
+					snapshotBag.values[propName] = v;
+					return;
+				}
+				entry.inner.set(v);
+				if (!entry.isSyncing.value && bundle?.controller.isActive()) {
 					dispatchChange(host, propName, v);
 				}
 			},
 		},
 		update: {
 			value: (fn: (current: T) => T) => {
-				const next = fn(inner.peek());
-				inner.set(next);
-				if (!isSyncing.value) {
+				const bundle = getBundle();
+				const entry = getEntry(bundle, propName);
+				if (entry === undefined) {
+					const next = fn(snapshotBag.values[propName] as T);
+					snapshotBag.values[propName] = next;
+					return;
+				}
+				const next = fn(entry.inner.peek() as T);
+				entry.inner.set(next);
+				if (!entry.isSyncing.value && bundle?.controller.isActive()) {
 					dispatchChange(host, propName, next);
 				}
 			},
@@ -129,8 +180,7 @@ function buildEntry(host: AnyHost, propName: string, options: SignalPropOptions<
 	const initial = applyTransform(host[propName], options);
 	const inner = createSignal(initial);
 	const isSyncing = { value: false };
-	const exposed = options.twoWay ? makeTwoWaySignal(inner, isSyncing, host, propName) : inner.asReadonly();
-	return { propName, inner, exposed, isSyncing, options, lastExternalPropValue: initial };
+	return { propName, inner, isSyncing, options, lastExternalPropValue: initial };
 }
 
 function syncEntry(host: AnyHost, entry: PropEntry): void {
@@ -165,6 +215,8 @@ function checkRequired(host: AnyHost, entry: PropEntry): void {
 // ─── Bulk ReactiveController ──────────────────────────────────────────────────
 
 class SignalBulkController implements ReactiveController {
+	private active = true;
+
 	constructor(
 		private readonly host: AnyHost,
 		private readonly entries: PropEntry[],
@@ -172,7 +224,18 @@ class SignalBulkController implements ReactiveController {
 		host.addController(this);
 	}
 
+	isActive(): boolean {
+		return this.active;
+	}
+
+	deactivate(): void {
+		this.active = false;
+	}
+
 	hostWillLoad(): void {
+		if (!this.active) {
+			return;
+		}
 		for (const entry of this.entries) {
 			syncEntry(this.host, entry);
 			checkRequired(this.host, entry);
@@ -180,14 +243,13 @@ class SignalBulkController implements ReactiveController {
 	}
 
 	hostWillUpdate(): void {
+		if (!this.active) {
+			return;
+		}
 		for (const entry of this.entries) {
 			syncEntry(this.host, entry);
 		}
 	}
-}
-
-function registerBulkController(host: ReactiveControllerHost, entries: PropEntry[]): SignalBulkController {
-	return new SignalBulkController(host as AnyHost, entries);
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
@@ -195,13 +257,16 @@ function registerBulkController(host: ReactiveControllerHost, entries: PropEntry
 /**
  * Bulk prop bindings — preferred when bridging multiple @Prop fields.
  *
- * Pass the class constructor so TypeScript resolves `H` concretely before
- * evaluating the config. This lets `transform`'s `v` parameter be
- * automatically typed from the `@Prop` type — no annotations needed:
+ * Requires `useSignalController()` declared before this field. Prop signals are
+ * created on `hostConnected`; disposal is via the signal watcher's active-owner
+ * scope. Prop sync uses `hostWillLoad` / `hostWillUpdate`.
+ *
+ * @example
  * ```ts
+ * readonly signalWatcher = useSignalController();
  * readonly $props = useSignalProps(AppTimer)({
- *   duration:  { transform: v => Math.max(0, v) }, // v: number
- *   isRunning: { twoWay: true },                   // WritableSignal<boolean>
+ *   duration:  { transform: v => Math.max(0, v) },
+ *   isRunning: { twoWay: true },
  * });
  * ```
  */
@@ -212,10 +277,41 @@ export function useSignalProps<H extends ReactiveControllerHost>(
 ) => SignalPropsResult<H, C>;
 
 export function useSignalProps(_hostClass: abstract new (...args: unknown[]) => unknown): unknown {
-	const host = getCurrentHost();
+	const host = getCurrentHost() as AnyHost;
+	const bundleRef: { current: PropsBundle | null } = { current: null };
+	const getBundle = (): PropsBundle | null => bundleRef.current;
+
 	return <C extends Record<string, SignalPropOptions<unknown>>>(config: C) => {
-		const entries = Object.entries(config).map(([key, opts]) => buildEntry(host as AnyHost, key, opts ?? {}));
-		registerBulkController(host, entries);
-		return Object.fromEntries(entries.map(e => [e.propName, e.exposed]));
+		const snapshotBag: HostPropsSnapshotBag = { values: {} };
+		const stableProps = {} as Record<string, Signal<unknown> | WritableSignal<unknown>>;
+
+		for (const [propName, opts] of Object.entries(config)) {
+			const options = opts ?? {};
+			snapshotBag.values[propName] = applyTransform(host[propName], options);
+			stableProps[propName] = options.twoWay
+				? makeStableTwoWayFacade(propName, host, getBundle, snapshotBag)
+				: makeStableReadonlyFacade(propName, getBundle, snapshotBag);
+		}
+
+		return bindToHostProps({
+			utilityName: "useSignalProps",
+			snapshotBag,
+			props: stableProps,
+			snapshotFromProps: props =>
+				Object.fromEntries(Object.keys(config).map(key => [key, (props[key] as Signal<unknown>).peek()])),
+			create: () => {
+				const entries = Object.entries(config).map(([key, opts]) => buildEntry(host, key, opts ?? {}));
+				const controller = new SignalBulkController(host, entries);
+				bundleRef.current = { entries, controller };
+
+				const dispose = (): void => {
+					controller.deactivate();
+					host.removeController(controller);
+					bundleRef.current = null;
+				};
+				getActiveOwner()?.push(dispose);
+				return dispose;
+			},
+		}) as SignalPropsResult<ReactiveControllerHost, C>;
 	};
 }

@@ -64,11 +64,10 @@
  * | `equal` | `(a,b) => boolean` | `Object.is` | Skip update if resolved value is the same |
  */
 
-import { use } from "@ssv/stencil.core";
-
 import { getAdapter } from "../adapters/active";
 import type { Signal } from "../adapters/types";
 import { scheduler, getActiveOwner } from "../signals/core";
+import { bindToHostDisposable } from "./host-bind";
 
 // ─── Public types ─────────────────────────────────────────────────────────────
 
@@ -125,58 +124,28 @@ export function computedAsync<T>(
 }
 
 /**
- * Lifecycle-bound variant. Starts on `hostConnected`, disposes on `hostDisconnected`.
- * Must be called in a component class-field initializer.
+ * Lifecycle-bound variant. Starts on `hostConnected`; disposal via
+ * `useSignalController()` active-owner scope. Must be called in a component
+ * class-field initializer with `useSignalController()` declared first.
  */
 export function useComputedAsync<T>(
 	fn: (abortSignal: AbortSignal) => Promise<T> | T,
 	options?: ComputedAsyncOptions<T>,
 ): DisposableSignal<AsyncResult<T>> {
-	return _computedAsyncWithUse(fn, options ?? {});
-}
-
-// ─── use() lifecycle path ──────────────────────────────────────────────────────
-
-function _computedAsyncWithUse<T>(
-	fn: (abortSignal: AbortSignal) => Promise<T> | T,
-	options: ComputedAsyncOptions<T>,
-): DisposableSignal<AsyncResult<T>> {
-	let inner: DisposableSignal<AsyncResult<T>> | null = null;
-	let lastResult: AsyncResult<T> = { status: "pending", value: options.initialValue };
-	let manuallyDisposed = false;
-
-	// Stable wrapper — the class property reference never changes.
-	// Falls back to `lastResult` (last snapshot before disconnect) when inner is null.
-	const wrapper = Object.assign((): AsyncResult<T> => inner?.() ?? lastResult, {
-		peek(): AsyncResult<T> {
-			return inner?.peek() ?? lastResult;
-		},
-		dispose(): void {
-			if (manuallyDisposed) {
-				return;
-			}
-			manuallyDisposed = true;
-			lastResult = inner?.peek() ?? lastResult;
-			inner?.dispose();
-			inner = null;
-		},
+	const opts = options ?? {};
+	const initialSnapshot: AsyncResult<T> = { status: "pending", value: opts.initialValue };
+	return bindToHostDisposable({
+		utilityName: "useComputedAsync",
+		initialSnapshot,
+		create: snapshot =>
+			_computedAsyncCore<T>(fn, {
+				...opts,
+				initialValue: snapshot.value,
+			}),
+		read: inner => inner(),
+		peek: inner => inner.peek(),
+		disposeInner: inner => inner.dispose(),
 	}) as DisposableSignal<AsyncResult<T>>;
-
-	use({
-		hostConnected(): void {
-			if (manuallyDisposed || inner !== null) {
-				return;
-			}
-			inner = _computedAsyncCore<T>(fn, { ...options, initialValue: lastResult.value });
-		},
-		hostDisconnected(): void {
-			lastResult = inner?.peek() ?? lastResult;
-			inner?.dispose();
-			inner = null;
-		},
-	});
-
-	return wrapper;
 }
 
 // ─── Core factory (no host) ───────────────────────────────────────────────────

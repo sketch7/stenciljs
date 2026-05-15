@@ -10,9 +10,9 @@ export type Post = {
 };
 
 const QUERY_KEY = ["posts"] as const;
+const STALE_TIME = 5 * 60 * 1000;
 
 async function fetchPosts(): Promise<Post[]> {
-	console.warn(">>>> fetchPosts");
 	const res = await fetch("https://jsonplaceholder.typicode.com/posts?_limit=10");
 	if (!res.ok) {
 		throw new Error(`Failed to fetch posts: ${res.status}`);
@@ -33,12 +33,14 @@ async function apiCreatePost(title: string): Promise<Post> {
 }
 
 /**
- * Unified hook for the posts feature — query, mutation, and SSR prefetch in one place.
+ * Unified hook for the posts feature — query, mutation, and prefetch in one place.
  * The component only needs to call this and render the result.
+ *
+ * @param queryClient - Optional explicit client; falls back to context.
  *
  * @example
  * ```ts
- * readonly #api = usePosts();
+ * readonly #api = usePosts(this.#queryClient);
  * render() {
  *   const { data, isPending } = this.#api.posts;
  * }
@@ -47,22 +49,19 @@ async function apiCreatePost(title: string): Promise<Post> {
 export function usePosts(queryClient?: QueryClient) {
 	const client = useQueryClient(queryClient);
 
-	// SSR prefetch — runs before the first render on both server and client.
+	// Client-side prefetch for non-SSR navigation. staleTime prevents re-fetching data
+	// that was already hydrated from the server.
 	use({
 		async hostWillLoad() {
-			console.warn(">>>> hostWillLoad prefetchQuery");
-			await client.current?.prefetchQuery({ queryKey: QUERY_KEY, queryFn: fetchPosts });
+			await client.current?.prefetchQuery({ queryKey: QUERY_KEY, queryFn: fetchPosts, staleTime: STALE_TIME });
 		},
 	});
 
 	const posts = useQuery(
 		() => ({
 			queryKey: QUERY_KEY,
-			queryFn: () => {
-				console.warn(">>>> useQuery fetchPosts");
-				return fetchPosts();
-			},
-			staleTime: 5 * 60 * 1000,
+			queryFn: fetchPosts,
+			staleTime: STALE_TIME,
 		}),
 		queryClient,
 	);

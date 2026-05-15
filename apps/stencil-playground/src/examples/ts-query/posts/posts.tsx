@@ -11,7 +11,7 @@ import type { Post } from "./posts.api";
 	shadow: true,
 })
 export class AppTsQueryPosts extends SsvElement {
-	readonly #queryClient = provideQueryClient();
+	readonly #queryClient = provideQueryClient({ ssrKey: "ts-query-posts" });
 	readonly #api = usePosts(this.#queryClient);
 
 	@State() inputValue = "";

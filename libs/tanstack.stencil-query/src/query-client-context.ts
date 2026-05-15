@@ -1,6 +1,7 @@
-import { createContext, provideContext, use, useContext } from "@ssv/stencil.core";
+import { createContext, provideContext, use, useContext, useTransferState } from "@ssv/stencil.core";
 import type { ContextRef } from "@ssv/stencil.core";
-import { QueryClient } from "@tanstack/query-core";
+import { dehydrate, hydrate, QueryClient } from "@tanstack/query-core";
+import type { DehydratedState } from "@tanstack/query-core";
 
 /**
  * Context key used to distribute a `QueryClient` through the component tree.
@@ -8,6 +9,26 @@ import { QueryClient } from "@tanstack/query-core";
  * {@link useQuery}, and {@link useMutation}.
  */
 export const queryClientKey = createContext<QueryClient>(undefined, { name: "QueryClient" });
+
+/**
+ * Options for {@link provideQueryClient}.
+ */
+export type ProvideQueryClientOptions = {
+	/** An existing `QueryClient` instance to use. Defaults to a new instance. */
+	client?: QueryClient;
+	/**
+	 * When set, automatically dehydrates the `QueryClient` into a `<script type="application/json">` tag
+	 * on the server and hydrates it back on the client, preventing a re-fetch on initial load.
+	 *
+	 * Must be unique per page. Corresponds to the `id` attribute of the injected script tag (`ssv-ts-tanstack-query-{ssrKey}`).
+	 *
+	 * @example
+	 * ```ts
+	 * readonly #queryClient = provideQueryClient({ ssrKey: 'posts' });
+	 * ```
+	 */
+	ssrKey?: string;
+};
 
 /**
  * Provides a `QueryClient` to all descendant components and mounts/unmounts it with the host lifecycle.
@@ -25,9 +46,17 @@ export const queryClientKey = createContext<QueryClient>(undefined, { name: "Que
  * ```ts
  * readonly #queryClient = provideQueryClient(new QueryClient({ defaultOptions: { queries: { staleTime: 60_000 } } }));
  * ```
+ *
+ * @example
+ * ```ts
+ * readonly #queryClient = provideQueryClient({ ssrKey: 'posts' });
+ * ```
  */
-export function provideQueryClient(client?: QueryClient): QueryClient {
-	const qc = client ?? new QueryClient();
+export function provideQueryClient(clientOrOptions?: QueryClient | ProvideQueryClientOptions): QueryClient {
+	const qc =
+		clientOrOptions instanceof QueryClient
+			? clientOrOptions
+			: ((clientOrOptions as ProvideQueryClientOptions | undefined)?.client ?? new QueryClient());
 
 	use({
 		hostConnected() {
@@ -39,6 +68,22 @@ export function provideQueryClient(client?: QueryClient): QueryClient {
 	});
 
 	provideContext(queryClientKey, qc);
+
+	const ssrKey =
+		clientOrOptions instanceof QueryClient
+			? undefined
+			: (clientOrOptions as ProvideQueryClientOptions | undefined)?.ssrKey;
+	if (ssrKey) {
+		const transferState = useTransferState<DehydratedState>(`tanstack-query-${ssrKey}`, () => dehydrate(qc));
+		use({
+			hostConnected() {
+				if (transferState.value !== undefined) {
+					hydrate(qc, transferState.value);
+				}
+			},
+		});
+	}
+
 	return qc;
 }
 

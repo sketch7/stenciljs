@@ -26,14 +26,31 @@ const hydrateProxy = new Proxy({} as Record<string, unknown>, {
 		if (prop === "then" || prop === "catch" || prop === "finally") {
 			return null;
 		}
-		return (hydrateModuleRef as Record<string, unknown>)[prop];
+
+		const value = (hydrateModuleRef as Record<string, unknown>)[prop];
+
+		// Inject runtimeLogging so console.log/warn/info/trace inside Stencil
+		// components during SSR are forwarded to the real Node.js console.
+		// Without this, MockWindow replaces console with all-noop stubs.
+		if ((prop === "renderToString" || prop === "hydrateDocument") && typeof value === "function") {
+			return (html: unknown, options: Record<string, unknown> = {}, ...rest: unknown[]) =>
+				(value as (...args: unknown[]) => unknown)(
+					html,
+					{
+						runtimeLogging: true,
+						...options,
+					},
+					...rest,
+				);
+		}
+
+		return value;
 	},
 });
 
 export default defineConfig(({ mode }) => {
 	const env = loadEnv(mode, process.cwd(), "");
-
-	const port = parseInt(env["PORT"] ?? "3000", 10);
+	const port = Number.parseInt(env["PORT"] ?? "3000", 10);
 
 	return {
 		plugins: [
@@ -69,7 +86,7 @@ export default defineConfig(({ mode }) => {
 			alias: [
 				{
 					find: "@/",
-					replacement: path.resolve(__dirname, "./src") + "/",
+					replacement: `${path.resolve(__dirname, "./src")}/`,
 				},
 			],
 		},

@@ -26,16 +26,20 @@
  *
  */
 
-import { getCurrentHost } from "@ssv/stencil.core";
-import type { ReactiveControllerHost } from "@ssv/stencil.core";
+import { use } from "@ssv/stencil.core";
+import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
 
 import { getAdapter } from "../adapters/active";
 import type { AdapterWatcher, Signal, WritableSignal } from "../adapters/types";
 import { scheduler, setActiveOwner } from "../signals/core";
 
+type RenderReactiveControllerHost = ReactiveControllerHost & {
+	render?(): unknown;
+};
+
 // ─── Controller ───────────────────────────────────────────────────────────────
 
-export class SignalWatcherController {
+export class SignalWatcherController implements ReactiveController {
 	/** Guard: suppress requestUpdate calls before the element is connected. */
 	private __connected = false;
 	/** Guard: render override is installed once per controller instance. */
@@ -53,9 +57,7 @@ export class SignalWatcherController {
 	/** Dispose fns for watcher utilities created while this controller is active. */
 	private __scopeCleanups: (() => void)[] = [];
 
-	constructor(private host: ReactiveControllerHost) {
-		host.addController(this);
-	}
+	constructor(private readonly host: RenderReactiveControllerHost) {}
 
 	hostConnected(): void {
 		this.__connected = true;
@@ -157,6 +159,6 @@ export class SignalWatcherController {
 	}
 }
 
-export function useSignalController(): SignalWatcherController {
-	return new SignalWatcherController(getCurrentHost());
+export function useSignalController() {
+	return use(host => new SignalWatcherController(host));
 }

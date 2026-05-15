@@ -12,6 +12,7 @@ export type Post = {
 const QUERY_KEY = ["posts"] as const;
 
 async function fetchPosts(): Promise<Post[]> {
+	console.warn(">>>> fetchPosts");
 	const res = await fetch("https://jsonplaceholder.typicode.com/posts?_limit=10");
 	if (!res.ok) {
 		throw new Error(`Failed to fetch posts: ${res.status}`);
@@ -49,6 +50,7 @@ export function usePosts(queryClient?: QueryClient) {
 	// SSR prefetch — runs before the first render on both server and client.
 	use({
 		async hostWillLoad() {
+			console.warn(">>>> hostWillLoad prefetchQuery");
 			await client.current?.prefetchQuery({ queryKey: QUERY_KEY, queryFn: fetchPosts });
 		},
 	});
@@ -56,7 +58,10 @@ export function usePosts(queryClient?: QueryClient) {
 	const posts = useQuery(
 		() => ({
 			queryKey: QUERY_KEY,
-			queryFn: fetchPosts,
+			queryFn: () => {
+				console.warn(">>>> useQuery fetchPosts");
+				return fetchPosts();
+			},
 			staleTime: 5 * 60 * 1000,
 		}),
 		queryClient,

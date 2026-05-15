@@ -114,7 +114,7 @@ describe("useMutation", () => {
 		host.connect();
 
 		await mutation.mutateAsync(9);
-		await vi.waitFor(() => expect(onSuccess).toHaveBeenCalledWith());
+		await vi.waitFor(() => expect(onSuccess).toHaveBeenCalled());
 
 		// TanStack Query v5 passes (data, variables, context, mutation) to onSuccess
 		expect(onSuccess).toHaveBeenCalledWith(10, 9, undefined, expect.anything());

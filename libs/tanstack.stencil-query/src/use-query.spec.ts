@@ -44,6 +44,7 @@ describe("useQuery", () => {
 	it("triggers requestUpdate and exposes new data when cache changes", async () => {
 		const query = useQuery({ queryKey: ["test"], queryFn: vi.fn<() => unknown>() }, qc);
 		host.connect();
+		host.render(); // establishes subscription (runs after hostWillLoad would have completed)
 
 		qc.setQueryData(["test"], 99);
 		// notifyManager schedules notifications as microtasks — wait for them to flush
@@ -62,7 +63,7 @@ describe("useQuery", () => {
 			qc,
 		);
 		host.connect();
-
+		host.render(); // establishes subscription and triggers the fetch
 		await vi.waitFor(() => expect(query.isError).toBeTruthy());
 		expect((query.error as Error).message).toBe("boom");
 	});

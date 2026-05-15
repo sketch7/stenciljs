@@ -98,18 +98,15 @@ export function useQuery<
 	use(host => ({
 		hostConnected() {
 			const qc = clientRef.current;
+			// Create the observer eagerly so getCurrentResult() works for synchronous reads,
+			// but do NOT subscribe yet — subscription starts in hostWillRender, which runs
+			// after ALL hostWillLoad hooks complete (including any prefetchQuery calls).
+			// This guarantees the observer finds fresh cache data and skips the network fetch.
 			observer = new QueryObserver<TQueryFnData, TError, TData, TQueryFnData, TQueryKey>(
 				qc,
 				qc.defaultQueryOptions(getOpts()),
 			);
 			result = observer.getCurrentResult();
-
-			unsubscribe = observer.subscribe(
-				notifyManager.batchCalls((nextResult: QueryObserverResult<TData, TError>) => {
-					result = nextResult;
-					host.requestUpdate();
-				}),
-			);
 		},
 		hostWillRender() {
 			if (!observer) {
@@ -117,6 +114,16 @@ export function useQuery<
 			}
 			const qc = clientRef.current;
 			observer.setOptions(qc.defaultQueryOptions(getOpts()));
+			// Subscribe on the first render (after all hostWillLoad hooks complete).
+			// On subsequent renders, the subscription is already active — just refresh result.
+			if (!unsubscribe) {
+				unsubscribe = observer.subscribe(
+					notifyManager.batchCalls((nextResult: QueryObserverResult<TData, TError>) => {
+						result = nextResult;
+						host.requestUpdate();
+					}),
+				);
+			}
 			result = observer.getCurrentResult();
 		},
 		hostDisconnected() {

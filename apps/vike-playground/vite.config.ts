@@ -1,3 +1,4 @@
+import type { HydrateDocumentOptions, hydrateDocument, renderToString } from "@app/stencil-playground/hydrate";
 import { stencilWatch } from "@ssv/vite-plugin-stencil-watch";
 import { stencilSSR } from "@stencil/ssr";
 import tailwindcss from "@tailwindcss/vite";
@@ -13,6 +14,16 @@ const stencilPkgDir = path.resolve(__dirname, "../stencil-playground");
 // with the latest artefacts instead of the stale module it resolved at startup.
 let hydrateModuleRef: Record<string, unknown> = {};
 
+type HydrateFn = typeof renderToString | typeof hydrateDocument;
+
+// Wraps a hydrate function to always inject { runtimeLogging: true } into the
+// options, forwarding component console.log/warn/info to the real Node.js console.
+// The generic preserves the overloaded call signature so callers stay fully typed.
+const withRuntimeLogging = <T extends HydrateFn>(fn: T): T =>
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	((input: any, options?: HydrateDocumentOptions) =>
+		(fn as typeof hydrateDocument)(input, { runtimeLogging: true, ...options })) as unknown as T;
+
 // Proxy that delegates every property access to hydrateModuleRef.
 // Passed as hydrateModule to stencilSSR — @stencil/ssr caches the resolved
 // Promise value, but because it's this proxy the cached value always forwards
@@ -26,14 +37,23 @@ const hydrateProxy = new Proxy({} as Record<string, unknown>, {
 		if (prop === "then" || prop === "catch" || prop === "finally") {
 			return null;
 		}
-		return (hydrateModuleRef as Record<string, unknown>)[prop];
+
+		const value = (hydrateModuleRef as Record<string, unknown>)[prop];
+
+		// Inject runtimeLogging so console.log/warn/info/trace inside Stencil
+		// components during SSR are forwarded to the real Node.js console.
+		// Without this, MockWindow replaces console with all-noop stubs.
+		if ((prop === "renderToString" || prop === "hydrateDocument") && typeof value === "function") {
+			return withRuntimeLogging(value as HydrateFn);
+		}
+
+		return value;
 	},
 });
 
 export default defineConfig(({ mode }) => {
 	const env = loadEnv(mode, process.cwd(), "");
-
-	const port = parseInt(env["PORT"] ?? "3000", 10);
+	const port = Number.parseInt(env["PORT"] ?? "3000", 10);
 
 	return {
 		plugins: [
@@ -69,7 +89,7 @@ export default defineConfig(({ mode }) => {
 			alias: [
 				{
 					find: "@/",
-					replacement: path.resolve(__dirname, "./src") + "/",
+					replacement: `${path.resolve(__dirname, "./src")}/`,
 				},
 			],
 		},

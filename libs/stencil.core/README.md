@@ -1,6 +1,6 @@
 # @ssv/stencil.core
 
-Core utilities for hosting lifecycle-aware controllers in [StencilJS](https://stenciljs.com/) components.
+Core utilities for hosting lifecycle-aware controllers and tree-scoped context in [StencilJS](https://stenciljs.com/) components.
 
 ## Install
 
@@ -17,12 +17,11 @@ pnpm add @ssv/stencil.core
 | `SsvElement`      | class | Base class with controller support (single inheritance) |
 | `SsvElementMixin` | mixin | Same as `SsvElement` but composable via `Mixin()`       |
 
-See [docs/hooks.md](docs/hooks.md) for hook exports (`use`, `ReactiveController`, `ReactiveControllerHost`, `ReactiveControllerHostMixin`).
-
 ## Usage
 
 See [docs/hooks.md](docs/hooks.md) for the full `use()` guide — forms, examples, and host context internals.
+See [docs/context.md](docs/context.md) for the tree-scoped context API — `createContext`, `provideContext`, `useContext`, and composing into hooks.
 
 ## Examples
 
-Full working examples: [mouse-host](../../apps/stencil-playground/src/examples/ssv-core/mouse-host/), [timer-host](../../apps/stencil-playground/src/examples/ssv-core/timer-host/).
+Full working examples: [mouse-host](../../apps/stencil-playground/src/examples/ssv-core/mouse-host/), [timer-host](../../apps/stencil-playground/src/examples/ssv-core/timer-host/), [context/counter](../../apps/stencil-playground/src/examples/context/counter/).

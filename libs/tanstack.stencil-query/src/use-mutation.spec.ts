@@ -1,5 +1,5 @@
 import { TestHost } from "@ssv/stencil.core/testing";
-import { QueryClient } from "@tanstack/query-core";
+import { QueryClient, noop } from "@tanstack/query-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useMutation } from "./use-mutation";
@@ -53,7 +53,7 @@ describe("useMutation", () => {
 		);
 		host.connect();
 
-		await mutation.mutateAsync().catch(() => {});
+		await mutation.mutateAsync().catch(noop);
 		await vi.waitFor(() => expect(mutation.isError).toBeTruthy());
 
 		expect((mutation.error as Error).message).toBe("fail");
@@ -73,6 +73,7 @@ describe("useMutation", () => {
 
 		await mutation.mutateAsync("hello");
 		await vi.waitFor(() => expect(mutation.variables).toBe("hello"));
+		expect(mutation.variables).toBe("hello");
 	});
 
 	it("reset() returns to idle state", async () => {
@@ -94,6 +95,7 @@ describe("useMutation", () => {
 
 		await mutation.mutateAsync(42);
 		await vi.waitFor(() => expect(host.renderCount).toBeGreaterThan(0));
+		expect(host.renderCount).toBeGreaterThan(0);
 	});
 
 	it("does not trigger requestUpdate after disconnect", () => {
@@ -114,9 +116,8 @@ describe("useMutation", () => {
 		host.connect();
 
 		await mutation.mutateAsync(9);
-		await vi.waitFor(() => expect(onSuccess).toHaveBeenCalled());
-
 		// TanStack Query v5 passes (data, variables, context, mutation) to onSuccess
+		await vi.waitFor(() => expect(onSuccess).toHaveBeenCalledWith(10, 9, undefined, expect.anything()));
 		expect(onSuccess).toHaveBeenCalledWith(10, 9, undefined, expect.anything());
 	});
 
@@ -130,6 +131,8 @@ describe("useMutation", () => {
 		await comp.mutation.mutateAsync("test");
 		await vi.waitFor(() => expect(comp.mutation.data).toBe("test"));
 
+		comp.disconnect();
 		comp.dispose();
+		expect(comp.mutation.isIdle).toBeTruthy();
 	});
 });

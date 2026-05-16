@@ -115,6 +115,54 @@ describe("useQuery", () => {
 		qc.setQueryData(["sub"], "hello");
 		comp.connect();
 		expect(comp.query.data).toBe("hello");
+		comp.disconnect();
 		comp.dispose();
+		expect(comp.query.isPending).toBeTruthy();
+	});
+
+	it("exposes isLoading — true while pending, false after data arrives", async () => {
+		const query = useQuery({ queryKey: ["loading"], queryFn: () => Promise.resolve("ok") }, qc);
+		host.connect();
+		host.render(); // establishes subscription → starts fetch → isLoading = true
+		expect(query.isLoading).toBeTruthy();
+
+		await vi.waitFor(() => expect(query.isLoading).toBeFalsy());
+		expect(query.isLoading).toBeFalsy();
+	});
+
+	it("exposes isFetched — false before first fetch, true after data arrives", async () => {
+		const query = useQuery({ queryKey: ["fetched"], queryFn: () => Promise.resolve("done") }, qc);
+		host.connect();
+		expect(query.isFetched).toBeFalsy();
+
+		host.render();
+		await vi.waitFor(() => expect(query.isFetched).toBeTruthy());
+		expect(query.isFetched).toBeTruthy();
+	});
+
+	it("exposes isRefetching — true while a background refetch is in-flight", async () => {
+		let resolve!: (v: string) => void;
+		qc.setQueryData(["refetch"], "initial");
+		const query = useQuery(
+			{
+				queryKey: ["refetch"],
+				queryFn: () =>
+					new Promise<string>(r => {
+						resolve = r;
+					}),
+				staleTime: 0,
+			},
+			qc,
+		);
+		host.connect();
+		host.render();
+
+		// eslint-disable-next-line no-void
+		void qc.invalidateQueries({ queryKey: ["refetch"] });
+		await vi.waitFor(() => expect(query.isRefetching).toBeTruthy());
+
+		resolve("updated");
+		await vi.waitFor(() => expect(query.isRefetching).toBeFalsy());
+		expect(query.isRefetching).toBeFalsy();
 	});
 });

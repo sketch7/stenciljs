@@ -1,22 +1,48 @@
 import { use } from "@ssv/stencil.core";
 import { QueryObserver, notifyManager } from "@tanstack/query-core";
-import type {
-	DefaultError,
-	QueryClient,
-	QueryKey,
-	QueryObserverOptions,
-	QueryObserverResult,
-	RefetchOptions,
-} from "@tanstack/query-core";
+import type { DefaultError, NoInfer, QueryClient, QueryKey, QueryObserverResult } from "@tanstack/query-core";
 
 import { useQueryClient } from "./query-client-context";
-import type { UseQueryResult } from "./types";
+import type { DefinedInitialDataOptions, DefinedUseQueryResult, UseQueryOptions, UseQueryResult } from "./types";
+
+/** State returned while the observer is not yet connected to the host. */
+const pendingState = {
+	data: undefined,
+	isPending: true,
+	isLoading: true,
+	isInitialLoading: true,
+	isSuccess: false,
+	isError: false,
+	isFetching: false,
+	isRefetching: false,
+	isFetched: false,
+	isFetchedAfterMount: false,
+	isPlaceholderData: false,
+	isLoadingError: false,
+	isRefetchError: false,
+	isStale: false,
+	status: "pending" as const,
+	fetchStatus: "idle" as const,
+	error: null,
+	failureReason: null,
+	failureCount: 0,
+	dataUpdatedAt: 0,
+	errorUpdatedAt: 0,
+	errorUpdateCount: 0,
+	refetch: (): Promise<never> => Promise.reject(new Error("[ssv:query] Cannot refetch — observer not yet connected.")),
+};
 
 /**
  * Subscribes to a query and schedules a re-render whenever the result changes.
  *
- * Pass a getter function for reactive options (e.g., when `queryKey` depends on a `@Prop`).
+ * Returns the full {@link QueryObserverResult} — every field react-query exposes
+ * (`isLoading`, `isRefetching`, `isFetched`, `failureCount`, `dataUpdatedAt`, etc.) is available.
+ *
+ * Pass a **getter function** for reactive options (e.g. when `queryKey` depends on a `@Prop`).
  * Pass an explicit `client` to bypass context — useful in unit tests.
+ *
+ * When `initialData` is always defined, the return type narrows to {@link DefinedUseQueryResult}
+ * (`data: TData`, never `undefined`).
  *
  * @example
  * ```ts
@@ -26,7 +52,7 @@ import type { UseQueryResult } from "./types";
  * }));
  *
  * render() {
- *   const { data, isPending, isError } = this.#posts;
+ *   const { data, isPending, isError, isLoading, isFetching } = this.#posts;
  * }
  * ```
  *
@@ -47,53 +73,46 @@ export function useQuery<
 	TQueryKey extends QueryKey = QueryKey,
 >(
 	getOptions:
-		| QueryObserverOptions<TQueryFnData, TError, TData, TQueryFnData, TQueryKey>
-		| (() => QueryObserverOptions<TQueryFnData, TError, TData, TQueryFnData, TQueryKey>),
+		| DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>
+		| (() => DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>),
 	client?: QueryClient,
-): UseQueryResult<TData, TError> {
+): DefinedUseQueryResult<NoInfer<TData>, TError>;
+
+export function useQuery<
+	TQueryFnData = unknown,
+	TError = DefaultError,
+	TData = TQueryFnData,
+	TQueryKey extends QueryKey = QueryKey,
+>(
+	getOptions:
+		| UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>
+		| (() => UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>),
+	client?: QueryClient,
+): UseQueryResult<NoInfer<TData>, TError>;
+
+export function useQuery<
+	TQueryFnData = unknown,
+	TError = DefaultError,
+	TData = TQueryFnData,
+	TQueryKey extends QueryKey = QueryKey,
+>(
+	getOptions:
+		| UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>
+		| (() => UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>),
+	client?: QueryClient,
+): QueryObserverResult<TData, TError> {
 	const getOpts =
 		typeof getOptions === "function"
 			? getOptions
-			: () => getOptions as QueryObserverOptions<TQueryFnData, TError, TData, TQueryFnData, TQueryKey>;
+			: () => getOptions as UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>;
 
 	const clientRef = useQueryClient(client);
 
 	let observer: QueryObserver<TQueryFnData, TError, TData, TQueryFnData, TQueryKey> | undefined;
-	let result: QueryObserverResult<TData, TError> | null = null;
 	let unsubscribe: (() => void) | undefined;
 
-	const queryRef: UseQueryResult<TData, TError> = {
-		get data() {
-			return result?.data;
-		},
-		get isPending() {
-			return result?.isPending ?? true;
-		},
-		get isSuccess() {
-			return result?.isSuccess ?? false;
-		},
-		get isError() {
-			return result?.isError ?? false;
-		},
-		get error() {
-			return result?.error ?? null;
-		},
-		get isFetching() {
-			return result?.isFetching ?? false;
-		},
-		get status() {
-			return result?.status ?? "pending";
-		},
-		get fetchStatus() {
-			return result?.fetchStatus ?? "idle";
-		},
-		refetch(options?: RefetchOptions) {
-			return (
-				observer?.refetch(options) ??
-				Promise.reject(new Error("[ssv:query] Cannot refetch — no QueryClient is available."))
-			);
-		},
-	};
+	// A single stable object — properties are updated in place via Object.assign on every result change.
+	const queryRef = { ...pendingState } as unknown as QueryObserverResult<TData, TError>;
 
 	use(host => ({
 		hostConnected() {
@@ -106,7 +125,7 @@ export function useQuery<
 				qc,
 				qc.defaultQueryOptions(getOpts()),
 			);
-			result = observer.getCurrentResult();
+			Object.assign(queryRef, observer.getCurrentResult());
 		},
 		hostWillRender() {
 			if (!observer) {
@@ -119,19 +138,19 @@ export function useQuery<
 			if (!unsubscribe) {
 				unsubscribe = observer.subscribe(
 					notifyManager.batchCalls((nextResult: QueryObserverResult<TData, TError>) => {
-						result = nextResult;
+						Object.assign(queryRef, nextResult);
 						host.requestUpdate();
 					}),
 				);
 			}
-			result = observer.getCurrentResult();
+			Object.assign(queryRef, observer.getCurrentResult());
 		},
 		hostDisconnected() {
 			unsubscribe?.();
 			unsubscribe = undefined;
 			observer?.destroy();
 			observer = undefined;
-			result = null;
+			Object.assign(queryRef, pendingState);
 		},
 	}));
 

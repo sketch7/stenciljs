@@ -1,9 +1,35 @@
+import { provideTransferState } from "@ssv/stencil.core";
 import { TestHost } from "@ssv/stencil.core/testing";
 import { QueryClient, dehydrate, hydrate } from "@tanstack/query-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { provideQueryClient } from "./query-client-context";
 import { useQuery } from "./use-query";
+
+// ── Shared helpers ────────────────────────────────────────────────────────────
+
+type MockScript = {
+	type: string;
+	id: string;
+	textContent: string;
+	remove: ReturnType<typeof vi.fn<() => void>>;
+};
+
+function makeMockScript(scope: string, data: unknown): MockScript {
+	return {
+		type: "application/json",
+		// scriptId(scope) = "ssv-ts-<scope>"
+		id: `ssv-ts-${scope}`,
+		textContent: JSON.stringify(data),
+		remove: vi.fn<() => void>(),
+	};
+}
+
+function attachShadowRoot(host: TestHost, script: MockScript | null): void {
+	(host as unknown as Record<string, unknown>)["shadowRoot"] = {
+		querySelector: (sel: string) => (script && sel === `#${script.id}` ? script : null),
+	};
+}
 
 describe("hydration", () => {
 	let host: TestHost;
@@ -75,110 +101,71 @@ describe("hydration", () => {
 	});
 });
 
-// ── provideQueryClient({ ssrKey }) transfer-state integration ─────────────────
-describe("provideQueryClient SSR transfer state", () => {
-	type MockScript = { type: string; id: string; textContent: string; remove: ReturnType<typeof vi.fn> };
-
-	function createMockDocument() {
-		const scripts = new Map<string, MockScript>();
-		const createElement = vi.fn<(tag: string) => MockScript>(_tag => ({
-			type: "",
-			id: "",
-			textContent: "",
-			remove: vi.fn<() => void>(),
-		}));
-		const head = { append: vi.fn<(s: MockScript) => void>(s => scripts.set(s.id, s)) };
-		const querySelector = vi.fn<(selector: string) => MockScript | null>(selector => {
-			const id = selector.startsWith("#") ? selector.slice(1) : selector;
-			return scripts.get(id) ?? null;
-		});
-		return { head, createElement, querySelector, scripts };
-	}
-
-	// provideContext calls host.addEventListener — TestHost needs to support it.
+// ── provideQueryClient({ withHydration }) SSR hydration ──────────────────────
+describe("provideQueryClient({ withHydration }) SSR hydration", () => {
+	// provideTransferState and provideQueryClient both call provideContext, which calls
+	// host.addEventListener in hostConnected — stub it on the test host.
 	class EventTestHost extends TestHost {
 		addEventListener = vi.fn<() => void>();
 		removeEventListener = vi.fn<() => void>();
-		dispatchEvent = vi.fn<() => boolean>();
+		dispatchEvent = vi.fn<() => boolean>(() => false);
 	}
 
 	let host: EventTestHost;
-	let mockDoc: ReturnType<typeof createMockDocument>;
 
 	beforeEach(() => {
 		host = new EventTestHost();
-		mockDoc = createMockDocument();
-		(globalThis as Record<string, unknown>)["document"] = mockDoc;
+		vi.stubGlobal("window", {});
 	});
 
 	afterEach(() => {
 		host.dispose();
 		vi.unstubAllGlobals();
-		delete (globalThis as Record<string, unknown>)["document"];
 	});
 
-	it("server: injects dehydrated QueryClient into document.head on first render", async () => {
-		// window is undefined in node — no stubbing needed for server mode
-
-		const qc = provideQueryClient({ ssrKey: "posts-test" });
-		await qc.prefetchQuery({ queryKey: ["posts"], queryFn: () => Promise.resolve([{ id: 1 }]) });
-
-		host.render();
-
-		expect(mockDoc.head.append).toHaveBeenCalledOnce();
-		const injected = [...mockDoc.scripts.values()][0];
-		expect(injected.id).toBe("ssv-ts-tanstack-query-posts-test");
-		expect(injected.type).toBe("application/json");
-
-		const state = JSON.parse(injected.textContent);
-		expect(state.queries).toHaveLength(1);
-		expect(state.queries[0].queryKey).toStrictEqual(["posts"]);
-	});
-
-	it("client: hydrates QueryClient from script tag before observer subscribes", () => {
-		vi.stubGlobal("window", {});
-
+	it("provideQueryClient hydrates the QueryClient from the transfer state on connect", () => {
 		const serverData = [{ id: 1, title: "SSR post" }];
 		const serverQc = new QueryClient();
 		serverQc.setQueryData(["posts"], serverData);
-		const serialized = JSON.stringify(dehydrate(serverQc));
+		// DEHYDRATED_KEY = makeTransferKey("state") = "state"
+		const script = makeMockScript("hyd-basic", { state: dehydrate(serverQc) });
 		serverQc.clear();
+		attachShadowRoot(host, script);
 
-		const scriptEl: MockScript = {
-			type: "application/json",
-			id: "ssv-ts-tanstack-query-posts-client",
-			textContent: serialized,
-			remove: vi.fn<() => void>(),
-		};
-		mockDoc.scripts.set("ssv-ts-tanstack-query-posts-client", scriptEl);
-
-		const qc = provideQueryClient({ ssrKey: "posts-client" });
+		// provideTransferState must be registered BEFORE provideQueryClient so its
+		// hostConnected (script read) fires before the hydration hostConnected.
+		const ts = provideTransferState("hyd-basic");
+		const qc = provideQueryClient({ withHydration: ts });
 		host.connect();
 
 		expect(qc.getQueryData(["posts"])).toStrictEqual(serverData);
-		expect(scriptEl.remove).toHaveBeenCalledOnce();
 	});
 
-	it("client: useQuery returns cached data immediately after hydration (no fetch)", () => {
-		vi.stubGlobal("window", {});
+	it("script tag is removed after hydration", () => {
+		const serverQc = new QueryClient();
+		serverQc.setQueryData(["item"], { v: 42 });
+		const script = makeMockScript("hyd-remove", { state: dehydrate(serverQc) });
+		serverQc.clear();
+		attachShadowRoot(host, script);
 
-		const serverData = [{ id: 1, title: "SSR post" }];
+		const ts = provideTransferState("hyd-remove");
+		provideQueryClient({ withHydration: ts });
+		host.connect();
+
+		expect(script.remove).toHaveBeenCalledOnce();
+	});
+
+	it("useQuery returns cached data immediately after hydration — no additional fetch", () => {
+		const serverData = [{ id: 2, title: "Hydrated" }];
 		const serverQc = new QueryClient();
 		serverQc.setQueryData(["posts"], serverData);
-		const serialized = JSON.stringify(dehydrate(serverQc));
+		const script = makeMockScript("hyd-usequery", { state: dehydrate(serverQc) });
 		serverQc.clear();
+		attachShadowRoot(host, script);
 
-		const scriptEl: MockScript = {
-			type: "application/json",
-			id: "ssv-ts-tanstack-query-posts-no-fetch",
-			textContent: serialized,
-			remove: vi.fn<() => void>(),
-		};
-		mockDoc.scripts.set("ssv-ts-tanstack-query-posts-no-fetch", scriptEl);
-
-		// Controllers registered in order: provideQueryClient (transfer state + hydration) → useQuery
-		// hostConnected fires in that same order, so hydration precedes observer creation.
-		const qc = provideQueryClient({ ssrKey: "posts-no-fetch" });
+		// Registration order matters: transfer state → QueryClient (hydrate) → useQuery (observe)
+		const ts = provideTransferState("hyd-usequery");
+		const qc = provideQueryClient({ withHydration: ts });
 		const query = useQuery({ queryKey: ["posts"], queryFn: () => Promise.resolve([]) }, qc);
 		host.connect();
 
@@ -186,14 +173,13 @@ describe("provideQueryClient SSR transfer state", () => {
 		expect(query.isSuccess).toBeTruthy();
 	});
 
-	it("no ssrKey: backward-compatible, no script tag interaction", () => {
-		vi.stubGlobal("window", {});
+	it("no withHydration: backward-compatible, no errors", () => {
+		attachShadowRoot(host, null);
 
 		provideQueryClient();
 		host.connect();
-		host.render();
 
-		expect(mockDoc.head.append).not.toHaveBeenCalled();
-		expect(mockDoc.querySelector).not.toHaveBeenCalled();
+		// Must not throw — backward-compatible with no hydration
+		expect(true).toBeTruthy();
 	});
 });

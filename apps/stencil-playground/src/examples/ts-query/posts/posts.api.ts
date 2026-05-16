@@ -10,7 +10,7 @@ export type Post = {
 };
 
 const QUERY_KEY = ["posts"] as const;
-const STALE_TIME = 5 * 60 * 1000;
+const STALE_TIME = 5 * 60 * 1000; // 5 minutes — prevents refetching data that was already hydrated from the server
 
 async function fetchPosts(): Promise<Post[]> {
 	console.warn(">>>> fetchPosts");

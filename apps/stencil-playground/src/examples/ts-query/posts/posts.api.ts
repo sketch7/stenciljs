@@ -59,7 +59,7 @@ export function usePosts(queryClient?: QueryClient) {
 		},
 	});
 
-	const posts = useQuery(
+	const postsRef = useQuery(
 		() => ({
 			queryKey: QUERY_KEY,
 			staleTime: STALE_TIME,
@@ -71,7 +71,7 @@ export function usePosts(queryClient?: QueryClient) {
 		queryClient,
 	);
 
-	const create = useMutation(
+	const createRef = useMutation(
 		{
 			mutationFn: (title: string) => apiCreatePost(title),
 			onSuccess: () => {
@@ -81,5 +81,12 @@ export function usePosts(queryClient?: QueryClient) {
 		queryClient,
 	);
 
-	return { posts, create };
+	return {
+		get posts() {
+			return postsRef();
+		},
+		get create() {
+			return createRef();
+		},
+	};
 }

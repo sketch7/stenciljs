@@ -26,19 +26,19 @@ describe("useQuery", () => {
 
 	it("starts in pending state before connect", () => {
 		const query = useQuery({ queryKey: ["test"], queryFn: vi.fn<() => unknown>() }, qc);
-		expect(query.isPending).toBeTruthy();
-		expect(query.data).toBeUndefined();
-		expect(query.isSuccess).toBeFalsy();
-		expect(query.isError).toBeFalsy();
+		expect(query().isPending).toBeTruthy();
+		expect(query().data).toBeUndefined();
+		expect(query().isSuccess).toBeFalsy();
+		expect(query().isError).toBeFalsy();
 	});
 
 	it("reads cached data immediately after connect", () => {
 		qc.setQueryData(["test"], 42);
 		const query = useQuery({ queryKey: ["test"], queryFn: vi.fn<() => unknown>() }, qc);
 		host.connect();
-		expect(query.data).toBe(42);
-		expect(query.isSuccess).toBeTruthy();
-		expect(query.isPending).toBeFalsy();
+		expect(query().data).toBe(42);
+		expect(query().isSuccess).toBeTruthy();
+		expect(query().isPending).toBeFalsy();
 	});
 
 	it("triggers requestUpdate and exposes new data when cache changes", async () => {
@@ -50,7 +50,7 @@ describe("useQuery", () => {
 		// notifyManager schedules notifications as microtasks — wait for them to flush
 		await vi.waitFor(() => expect(host.renderCount).toBeGreaterThan(0));
 
-		expect(query.data).toBe(99);
+		expect(query().data).toBe(99);
 	});
 
 	it("exposes error state when queryFn rejects", async () => {
@@ -64,8 +64,8 @@ describe("useQuery", () => {
 		);
 		host.connect();
 		host.render(); // establishes subscription and triggers the fetch
-		await vi.waitFor(() => expect(query.isError).toBeTruthy());
-		expect((query.error as Error).message).toBe("boom");
+		await vi.waitFor(() => expect(query().isError).toBeTruthy());
+		expect((query().error as Error).message).toBe("boom");
 	});
 
 	it("updates options reactively — switches queryKey on re-render", () => {
@@ -76,11 +76,11 @@ describe("useQuery", () => {
 		const query = useQuery(() => ({ queryKey: [key], queryFn: vi.fn<() => unknown>() }), qc);
 		host.connect();
 		host.render();
-		expect(query.data).toBe("result-a");
+		expect(query().data).toBe("result-a");
 
 		key = "b";
 		host.render();
-		expect(query.data).toBe("result-b");
+		expect(query().data).toBe("result-b");
 	});
 
 	it("clears data and unsubscribes after disconnect", async () => {
@@ -94,8 +94,8 @@ describe("useQuery", () => {
 		await Promise.resolve();
 
 		expect(host.renderCount).toBe(countBefore);
-		expect(query.data).toBeUndefined();
-		expect(query.isPending).toBeTruthy();
+		expect(query().data).toBeUndefined();
+		expect(query().isPending).toBeTruthy();
 	});
 
 	it("refetch returns a promise resolving to the query result", async () => {
@@ -103,7 +103,7 @@ describe("useQuery", () => {
 		const query = useQuery({ queryKey: ["test"], queryFn: vi.fn<() => unknown>().mockResolvedValue(2) }, qc);
 		host.connect();
 
-		const result = await query.refetch();
+		const result = await query().refetch();
 		expect(result.data).toBe(2);
 	});
 
@@ -114,30 +114,30 @@ describe("useQuery", () => {
 		const comp = new ComponentLike();
 		qc.setQueryData(["sub"], "hello");
 		comp.connect();
-		expect(comp.query.data).toBe("hello");
+		expect(comp.query().data).toBe("hello");
 		comp.disconnect();
 		comp.dispose();
-		expect(comp.query.isPending).toBeTruthy();
+		expect(comp.query().isPending).toBeTruthy();
 	});
 
 	it("exposes isLoading — true while pending, false after data arrives", async () => {
 		const query = useQuery({ queryKey: ["loading"], queryFn: () => Promise.resolve("ok") }, qc);
 		host.connect();
 		host.render(); // establishes subscription → starts fetch → isLoading = true
-		expect(query.isLoading).toBeTruthy();
+		expect(query().isLoading).toBeTruthy();
 
-		await vi.waitFor(() => expect(query.isLoading).toBeFalsy());
-		expect(query.isLoading).toBeFalsy();
+		await vi.waitFor(() => expect(query().isLoading).toBeFalsy());
+		expect(query().isLoading).toBeFalsy();
 	});
 
 	it("exposes isFetched — false before first fetch, true after data arrives", async () => {
 		const query = useQuery({ queryKey: ["fetched"], queryFn: () => Promise.resolve("done") }, qc);
 		host.connect();
-		expect(query.isFetched).toBeFalsy();
+		expect(query().isFetched).toBeFalsy();
 
 		host.render();
-		await vi.waitFor(() => expect(query.isFetched).toBeTruthy());
-		expect(query.isFetched).toBeTruthy();
+		await vi.waitFor(() => expect(query().isFetched).toBeTruthy());
+		expect(query().isFetched).toBeTruthy();
 	});
 
 	it("exposes isRefetching — true while a background refetch is in-flight", async () => {
@@ -159,10 +159,10 @@ describe("useQuery", () => {
 
 		// eslint-disable-next-line no-void
 		void qc.invalidateQueries({ queryKey: ["refetch"] });
-		await vi.waitFor(() => expect(query.isRefetching).toBeTruthy());
+		await vi.waitFor(() => expect(query().isRefetching).toBeTruthy());
 
 		resolve("updated");
-		await vi.waitFor(() => expect(query.isRefetching).toBeFalsy());
-		expect(query.isRefetching).toBeFalsy();
+		await vi.waitFor(() => expect(query().isRefetching).toBeFalsy());
+		expect(query().isRefetching).toBeFalsy();
 	});
 });

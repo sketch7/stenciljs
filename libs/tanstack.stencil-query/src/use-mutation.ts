@@ -1,9 +1,10 @@
-import { use } from "@ssv/stencil.core";
+import { use, createRef } from "@ssv/stencil.core";
+import type { Ref } from "@ssv/stencil.core";
 import { MutationObserver, notifyManager, noop } from "@tanstack/query-core";
-import type { DefaultError, MutateOptions, MutationObserverResult, QueryClient } from "@tanstack/query-core";
+import type { DefaultError, QueryClient } from "@tanstack/query-core";
 
 import { useQueryClient } from "./query-client-context";
-import type { UseMutationOptions, UseMutationResult } from "./types";
+import type { UseMutationOptions, UseMutationResult, UseMutateFunction, UseMutateAsyncFunction } from "./types";
 
 /** State returned while the observer is not yet connected to the host. */
 const idleState = {
@@ -49,7 +50,7 @@ export function useMutation<TData = unknown, TError = DefaultError, TVariables =
 		| UseMutationOptions<TData, TError, TVariables, TContext>
 		| (() => UseMutationOptions<TData, TError, TVariables, TContext>),
 	client?: QueryClient,
-): UseMutationResult<TData, TError, TVariables, TContext> {
+): Ref<UseMutationResult<TData, TError, TVariables, TContext>> {
 	const getOpts =
 		typeof getOptions === "function"
 			? getOptions
@@ -60,30 +61,20 @@ export function useMutation<TData = unknown, TError = DefaultError, TVariables =
 	let observer: MutationObserver<TData, TError, TVariables, TContext> | undefined;
 	let unsubscribe: (() => void) | undefined;
 
-	// A single stable object — properties are updated in place via Object.assign on every result change.
-	// mutate/mutateAsync are always re-applied after assign so they close over the current observer.
-	const mutationRef = {} as UseMutationResult<TData, TError, TVariables, TContext>;
+	const mutate: UseMutateFunction<TData, TError, TVariables, TContext> = (variables, options) => {
+		observer?.mutate(variables, options).catch(noop);
+	};
 
-	function applyMutationState(r: MutationObserverResult<TData, TError, TVariables, TContext> | null): void {
-		Object.assign(mutationRef, r ?? idleState);
-		mutationRef.mutate = (variables: TVariables, options?: MutateOptions<TData, TError, TVariables, TContext>) => {
-			observer?.mutate(variables, options).catch(noop);
-		};
-		mutationRef.mutateAsync = (variables: TVariables, options?: MutateOptions<TData, TError, TVariables, TContext>) =>
-			observer?.mutate(variables, options) ??
-			Promise.reject(new Error("[ssv:query] Cannot mutate — observer not yet connected."));
-	}
-
-	applyMutationState(null);
+	const mutateAsync: UseMutateAsyncFunction<TData, TError, TVariables, TContext> = (variables, options) =>
+		observer?.mutate(variables, options) ??
+		Promise.reject(new Error("[ssv:query] Cannot mutate — observer not yet connected."));
 
 	use(host => ({
 		hostConnected() {
 			const qc = clientRef.current;
 			observer = new MutationObserver<TData, TError, TVariables, TContext>(qc, getOpts());
-			applyMutationState(observer.getCurrentResult());
 			unsubscribe = observer.subscribe(
-				notifyManager.batchCalls((nextResult: MutationObserverResult<TData, TError, TVariables, TContext>) => {
-					applyMutationState(nextResult);
+				notifyManager.batchCalls(() => {
 					host.requestUpdate();
 				}),
 			);
@@ -93,16 +84,21 @@ export function useMutation<TData = unknown, TError = DefaultError, TVariables =
 				return;
 			}
 			observer.setOptions(getOpts());
-			applyMutationState(observer.getCurrentResult());
 		},
 		hostDisconnected() {
 			unsubscribe?.();
 			unsubscribe = undefined;
 			observer?.reset();
 			observer = undefined;
-			applyMutationState(null);
 		},
 	}));
 
-	return mutationRef;
+	return createRef(
+		() =>
+			({
+				...(observer?.getCurrentResult() ?? idleState),
+				mutate,
+				mutateAsync,
+			}) as UseMutationResult<TData, TError, TVariables, TContext>,
+	);
 }

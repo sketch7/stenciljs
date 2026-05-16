@@ -1,3 +1,4 @@
+import type { Ref } from "@ssv/stencil.core";
 import type {
 	DefaultError,
 	DefinedQueryObserverResult,
@@ -105,3 +106,16 @@ export type UseMutationResult<TData = unknown, TError = DefaultError, TVariables
 > & {
 	mutateAsync: UseMutateAsyncFunction<TData, TError, TVariables, TContext>;
 };
+
+// ── Ref aliases ───────────────────────────────────────────────────────────────
+
+/** {@link Ref} alias for the result of {@link useQuery}. */
+export type UseQueryRef<TData = unknown, TError = DefaultError> = Ref<UseQueryResult<TData, TError>>;
+
+/** {@link Ref} alias for the result of {@link useQuery} when `initialData` is always defined. */
+export type DefinedUseQueryRef<TData = unknown, TError = DefaultError> = Ref<DefinedUseQueryResult<TData, TError>>;
+
+/** {@link Ref} alias for the result of {@link useMutation}. */
+export type UseMutationRef<TData = unknown, TError = DefaultError, TVariables = void, TContext = unknown> = Ref<
+	UseMutationResult<TData, TError, TVariables, TContext>
+>;

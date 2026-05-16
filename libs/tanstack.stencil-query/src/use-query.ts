@@ -1,4 +1,5 @@
-import { use } from "@ssv/stencil.core";
+import { use, createRef } from "@ssv/stencil.core";
+import type { Ref } from "@ssv/stencil.core";
 import { QueryObserver, notifyManager } from "@tanstack/query-core";
 import type { DefaultError, NoInfer, QueryClient, QueryKey, QueryObserverResult } from "@tanstack/query-core";
 
@@ -76,7 +77,7 @@ export function useQuery<
 		| DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>
 		| (() => DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>),
 	client?: QueryClient,
-): DefinedUseQueryResult<NoInfer<TData>, TError>;
+): Ref<DefinedUseQueryResult<NoInfer<TData>, TError>>;
 
 export function useQuery<
 	TQueryFnData = unknown,
@@ -88,7 +89,7 @@ export function useQuery<
 		| UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>
 		| (() => UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>),
 	client?: QueryClient,
-): UseQueryResult<NoInfer<TData>, TError>;
+): Ref<UseQueryResult<NoInfer<TData>, TError>>;
 
 export function useQuery<
 	TQueryFnData = unknown,
@@ -100,7 +101,7 @@ export function useQuery<
 		| UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>
 		| (() => UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>),
 	client?: QueryClient,
-): QueryObserverResult<TData, TError> {
+): Ref<QueryObserverResult<TData, TError>> {
 	const getOpts =
 		typeof getOptions === "function"
 			? getOptions
@@ -110,9 +111,6 @@ export function useQuery<
 
 	let observer: QueryObserver<TQueryFnData, TError, TData, TQueryFnData, TQueryKey> | undefined;
 	let unsubscribe: (() => void) | undefined;
-
-	// A single stable object — properties are updated in place via Object.assign on every result change.
-	const queryRef = { ...pendingState } as unknown as QueryObserverResult<TData, TError>;
 
 	use(host => ({
 		hostConnected() {
@@ -125,7 +123,6 @@ export function useQuery<
 				qc,
 				qc.defaultQueryOptions(getOpts()),
 			);
-			Object.assign(queryRef, observer.getCurrentResult());
 		},
 		hostWillRender() {
 			if (!observer) {
@@ -137,22 +134,21 @@ export function useQuery<
 			// On subsequent renders, the subscription is already active — just refresh result.
 			if (!unsubscribe) {
 				unsubscribe = observer.subscribe(
-					notifyManager.batchCalls((nextResult: QueryObserverResult<TData, TError>) => {
-						Object.assign(queryRef, nextResult);
+					notifyManager.batchCalls(() => {
 						host.requestUpdate();
 					}),
 				);
 			}
-			Object.assign(queryRef, observer.getCurrentResult());
 		},
 		hostDisconnected() {
 			unsubscribe?.();
 			unsubscribe = undefined;
 			observer?.destroy();
 			observer = undefined;
-			Object.assign(queryRef, pendingState);
 		},
 	}));
 
-	return queryRef;
+	return createRef(
+		() => (observer?.getCurrentResult() ?? pendingState) as unknown as QueryObserverResult<TData, TError>,
+	);
 }

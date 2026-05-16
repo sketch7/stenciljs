@@ -76,8 +76,8 @@ describe("hydration", () => {
 		const query = useQuery({ queryKey: ["posts"], queryFn: () => Promise.resolve([]) }, target);
 		host.connect();
 
-		expect(query.data).toStrictEqual([{ id: 1, title: "SSR post" }]);
-		expect(query.isSuccess).toBeTruthy();
+		expect(query().data).toStrictEqual([{ id: 1, title: "SSR post" }]);
+		expect(query().isSuccess).toBeTruthy();
 	});
 
 	it("dehydrate excludes queries that have not been fetched", () => {
@@ -169,8 +169,8 @@ describe("provideQueryClient({ withHydration }) SSR hydration", () => {
 		const query = useQuery({ queryKey: ["posts"], queryFn: () => Promise.resolve([]) }, qc);
 		host.connect();
 
-		expect(query.data).toStrictEqual(serverData);
-		expect(query.isSuccess).toBeTruthy();
+		expect(query().data).toStrictEqual(serverData);
+		expect(query().isSuccess).toBeTruthy();
 	});
 
 	it("no withHydration: backward-compatible, no errors", () => {

@@ -24,8 +24,8 @@ export default function Page(): JSX.Element {
 						<code>useQuery()</code>, and <code>useMutation()</code> — the component only renders.
 					</li>
 					<li>
-						<code>provideQueryClient({ssrKey})</code> automatically dehydrates on the server and hydrates on the client
-						via a <code>&lt;script type="application/json"&gt;</code> tag — no re-fetch on initial load.
+						<code>{"provideQueryClient({ ssrKey })"}</code> automatically dehydrates on the server and hydrates on the
+						client via a <code>&lt;script type="application/json"&gt;</code> tag — no re-fetch on initial load.
 					</li>
 				</ul>
 			</details>

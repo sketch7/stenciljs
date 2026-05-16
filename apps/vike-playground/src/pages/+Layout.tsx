@@ -15,11 +15,15 @@ type NavSection = { title: string; items: NavItem[] };
 
 const navSections: NavSection[] = [
 	{
-		title: "SSV Stencil / Core",
+		title: "SSV / Core / Hooks",
 		items: [
-			{ href: "/ssv-stencil/core/reactive-host/mouse", label: "Mouse Controller" },
-			{ href: "/ssv-stencil/core/reactive-host/timer", label: "Timer Controller" },
+			{ href: "/ssv-stencil/core/hooks/mouse", label: "Mouse Controller" },
+			{ href: "/ssv-stencil/core/hooks/timer", label: "Timer Controller" },
 		],
+	},
+	{
+		title: "SSV / Core / Context",
+		items: [{ href: "/ssv-stencil/core/context/counter", label: "Counter" }],
 	},
 	{
 		title: "SSV Stencil / TanStack Store",

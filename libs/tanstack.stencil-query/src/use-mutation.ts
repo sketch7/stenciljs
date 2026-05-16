@@ -40,8 +40,8 @@ const idleState = {
  * });
  *
  * render() {
- *   const { isPending, isError, context } = this.#create;
- *   return <button disabled={isPending} onClick={() => this.#create.mutate('New Post')}>Create</button>;
+ *   const { isPending, isError } = this.#create();
+ *   return <button disabled={isPending} onClick={() => this.#create().mutate('New Post')}>Create</button>;
  * }
  * ```
  */

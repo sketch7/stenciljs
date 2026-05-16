@@ -16,6 +16,8 @@ pnpm add @ssv/stencil.core
 | ----------------- | ----- | ------------------------------------------------------- |
 | `SsvElement`      | class | Base class with controller support (single inheritance) |
 | `SsvElementMixin` | mixin | Same as `SsvElement` but composable via `Mixin()`       |
+| `Ref<T>`          | type  | Callable reactive ref — `ref()` or `ref.current`        |
+| `createRef`       | fn    | Creates a `Ref<T>` backed by a getter function          |
 
 ## Usage
 

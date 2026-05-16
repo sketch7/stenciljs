@@ -53,7 +53,7 @@ const pendingState = {
  * }));
  *
  * render() {
- *   const { data, isPending, isError, isLoading, isFetching } = this.#posts;
+ *   const { data, isPending, isError } = this.#posts();
  * }
  * ```
  *

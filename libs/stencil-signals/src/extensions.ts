@@ -14,3 +14,7 @@ export type { Store } from "./extensions/create-store";
 // ─── Prop / model bindings ────────────────────────────────────────────────────
 export { useSignalProps } from "./extensions/signal-prop";
 export type { SignalPropOptions, SignalPropsResult } from "./extensions/signal-prop";
+
+// ─── DOM event listeners ──────────────────────────────────────────────────────
+export { signalFromEvent } from "./extensions/signal-from-event";
+export type { SignalFromEventOptions } from "./extensions/signal-from-event";

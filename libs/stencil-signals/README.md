@@ -69,12 +69,170 @@ export class MyCounter extends Mixin(SignalWatcherMixin, SsvElementMixin) {
 
 Any component reading `count` or `doubled` re-renders when those signals change.
 
+## Before / After
+
+The scenarios below use the [`@stencil/store`](https://stenciljs.com/docs/stencil-store) examples in this repo as the baseline.
+
+| Pain point                       | Traditional (`@stencil/store`)                            | With `stencil-signals`                                          |
+| -------------------------------- | --------------------------------------------------------- | --------------------------------------------------------------- |
+| Shared state → trigger re-render | `@State()` mirrors + `this.x = store.x` after every write | `useSignalWatcher()` — read store directly in `render()`        |
+| Derived / computed values        | Inline recalculation every `render()` call                | `computed(() => ...)` — lazy, cached, defined once              |
+| `@Prop` side effects + cleanup   | `@Watch` + `componentWillLoad` + `disconnectedCallback`   | `effect([this.$props.x], ...)` — auto-lifecycle, auto-cleanup   |
+| Cross-component reactivity       | Prop drilling or store subscriptions per component        | Shared `signal()` / `computed()` — any component reads directly |
+
+### Shared state — Counter
+
+**Before** — every mutation requires a manual `@State` sync:
+
+```tsx
+export class AppCounter {
+  @State() count = counterStore.count; // mirror field
+  @State() additionalValue = counterStore.additionalValue;
+
+  private increment() {
+    counterStore.count++;
+    this.count = counterStore.count; // ← manual sync required
+  }
+
+  render() {
+    const doubled = this.additionalValue * 2; // ← recalculated every render
+    const total = this.count + doubled;
+    // ...
+  }
+}
+```
+
+**After** — `useSignalWatcher()` tracks reads in `render()` automatically:
+
+```tsx
+export class AppSignalsCounter extends SsvElement {
+  readonly signalWatcher = useSignalWatcher();
+
+  readonly count = signal(0);
+  readonly additionalValue = signal(0);
+  readonly doubled = computed(() => this.additionalValue() * 2); // defined once, lazy
+  readonly total = computed(() => this.count() + this.doubled());
+
+  render() {
+    // Read signals directly — no @State, no manual sync
+    return (
+      <span>
+        {this.count()} + {this.additionalValue()} × 2 = {this.total()}
+      </span>
+    );
+  }
+}
+```
+
+### Mutation + derived state — Todo
+
+**Before** — three places that manually sync `this.todos` back after mutations:
+
+```tsx
+export class AppTodo {
+  @State() todos = todoStore.todos;   // mirror field
+
+  private addTodo() {
+    todoStore.todos = [...todoStore.todos, { ... }];
+    this.todos = todoStore.todos;     // ← sync #1
+  }
+  private toggleTodo(id: number) {
+    todoStore.todos = todoStore.todos.map(/* ... */);
+    this.todos = todoStore.todos;     // ← sync #2
+  }
+  private deleteTodo(id: number) {
+    todoStore.todos = todoStore.todos.filter(/* ... */);
+    this.todos = todoStore.todos;     // ← sync #3
+  }
+
+  render() {
+    const completed = this.todos.filter(t => t.completed).length; // ← inline every render
+  }
+}
+```
+
+**After** — mutations write once; `completedCount` is a cached `computed`:
+
+```ts
+// todo.store.ts
+export const todoStore = createStore({ todos: [] as Todo[], nextId: 1 }, s => ({
+  completedCount: computed(() => s.todos.filter(t => t.completed).length),
+}));
+```
+
+```tsx
+export class AppSignalsTodo extends SsvElement {
+  readonly signalWatcher = useSignalWatcher();
+
+  private addTodo()            { todoStore.todos = [...todoStore.todos, { ... }]; } // no sync
+  private toggleTodo(id: number) { todoStore.todos = todoStore.todos.map(/* ... */); }
+  private deleteTodo(id: number) { todoStore.todos = todoStore.todos.filter(/* ... */); }
+
+  render() {
+    return <p>{todoStore.completedCount} / {todoStore.todos.length} completed</p>;
+  }
+}
+```
+
+### Prop watching + side effects — Timer
+
+**Before** — three separate lifecycle hooks to manage one derived behaviour:
+
+```tsx
+export class AppTimer {
+  @Prop() duration = 60;
+  @State() timeRemaining = 60;
+
+  componentWillLoad() {
+    this.timeRemaining = this.duration; // ← initialise
+  }
+
+  @Watch("duration")
+  onDurationChange(next: number) {
+    // ← react to prop change
+    this.#stop();
+    this.timeRemaining = Math.max(0, next);
+  }
+
+  disconnectedCallback() {
+    this.#stop(); // ← manual cleanup
+  }
+}
+```
+
+**After** — one `effect` call handles init, change, and cleanup:
+
+```tsx
+export class AppTimer extends SsvElement {
+  @Prop() duration = 60;
+  @Prop({ reflect: true }) isRunning = false;
+
+  readonly signalWatcher = useSignalWatcher();
+  readonly $props = useSignalProps(AppTimer)({
+    duration: { transform: v => Math.max(0, v) },
+    isRunning: { twoWay: true },
+  });
+
+  readonly $timeRemaining = signal(60);
+
+  readonly _durationEffect = effect(
+    [this.$props.duration],
+    ([d]) => {
+      this.#stop();
+      this.$timeRemaining.set(d);
+    },
+    { defer: true }, // ← init + change + auto-cleanup in one
+  );
+}
+```
+
 ## Features
 
 - **`SignalWatcherMixin`** / **`SignalWatcherController`** — auto-tracks signal reads during `render()`, re-renders on change — [docs](docs/signal-watcher.md)
 - **`useSignalProps`** — bridge `@Prop()` fields to signals; one-way or two-way bindings with `transform` support — [docs](docs/signal-props.md)
 - **`effect`** — auto-tracking or explicit-dep side effects; standalone or host-bound — [docs](docs/effect.md)
 - **`derivedAsync`** — async derived signal with `AbortSignal` switch semantics — [docs](docs/derived-async.md)
+- **`signalFromEvent`** — DOM events as signals (`@Listen` parity: event default, optional `map`) — [docs](docs/signal-from-event.md)
 - **`computedPrevious`** — previous-value derived signal (single computed, no watcher)
 - **`createStore`** — reactive Proxy over a plain object
 - **`untracked`** — run without subscribing to reads inside; matches Angular / Preact `untracked()`
@@ -113,6 +271,10 @@ Prefer `sig.peek()` for a single untracked read; use `untracked(() => { ... })` 
 
 See [docs/derived-async.md](docs/derived-async.md).
 
+### `signalFromEvent`
+
+See [docs/signal-from-event.md](docs/signal-from-event.md).
+
 ### `computedPrevious`
 
 Derived signal holding the previous value of a source signal. No watcher or disposal needed.
@@ -146,11 +308,11 @@ const store = createStore(
   }),
 );
 
-store.count++;          // signal.set()
+store.count++; // signal.set()
 store.theme = "dark";
-store.isLoggedIn;       // computed signal
+store.isLoggedIn; // computed signal
 store.$signal("count"); // raw WritableSignal<number>
-store.$reset();         // reset all keys to initial values
+store.$reset(); // reset all keys to initial values
 ```
 
 ## Adapters
@@ -185,17 +347,17 @@ The main entry `@ssv/stencil-signals` exports the full public API but **does not
 
 `WritableSignal<T> extends Signal<T>` — adds write methods:
 
-| Method             | Description                                                                                                                                                                    |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `sig.set(value)`   | Write a new value directly.                                                                                                                                                    |
+| Method             | Description                                                                                                                                                                   |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sig.set(value)`   | Write a new value directly.                                                                                                                                                   |
 | `sig.update(fn)`   | Derive the next value from the current one — `fn` receives the current value via an untracked read. Prefer over `sig.set(sig() + 1)` to avoid accidental dependency tracking. |
-| `sig.asReadonly()` | Return a read-only `Signal<T>` view.                                                                                                                                           |
+| `sig.asReadonly()` | Return a read-only `Signal<T>` view.                                                                                                                                          |
 
-| Export                    | Signature                                           | Description                                               |
-| ------------------------- | --------------------------------------------------- | --------------------------------------------------------- |
-| `computed(fn, options?)`  | `<T>(fn: () => T, options?: SignalOptions<T>) => Signal<T>` | Read-only derived signal. Lazily recomputes when dependencies change. |
-| `batch(fn)`               | `<T>(fn: () => T) => T`                             | Batch multiple signal writes into one update cycle.       |
-| `untracked(fn)`           | `<T>(fn: () => T) => T`                             | Run `fn` without tracking reads inside it.                |
+| Export                   | Signature                                                   | Description                                                           |
+| ------------------------ | ----------------------------------------------------------- | --------------------------------------------------------------------- |
+| `computed(fn, options?)` | `<T>(fn: () => T, options?: SignalOptions<T>) => Signal<T>` | Read-only derived signal. Lazily recomputes when dependencies change. |
+| `batch(fn)`              | `<T>(fn: () => T) => T`                                     | Batch multiple signal writes into one update cycle.                   |
+| `untracked(fn)`          | `<T>(fn: () => T) => T`                                     | Run `fn` without tracking reads inside it.                            |
 
 ### Component integration
 
@@ -226,10 +388,17 @@ The main entry `@ssv/stencil-signals` exports the full public API but **does not
 | Export                            | Description                                                                                                                 |
 | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `derivedAsync(fn, options?)`      | Promise-backed derived signal. **Standalone** or **class field** (host-bound like `effect`). Returns `DisposableSignal<T>`. |
-| `computedPrevious(source, init?)` | Previous-value derived signal. Returns `Signal<T \| undefined>`.                                                           |
+| `computedPrevious(source, init?)` | Previous-value derived signal. Returns `Signal<T \| undefined>`.                                                            |
 | `DisposableSignal<T>`             | Read-only signal + `.dispose()` — returned by `derivedAsync`.                                                               |
 | `DerivedAsyncFn<T>`               | `(abortSignal, previous?) => Promise<T> \| T`.                                                                              |
 | `DerivedAsyncOptions<T>`          | `{ initialValue?, equal? }`.                                                                                                |
+
+### DOM events (`@ssv/stencil-signals/extensions`)
+
+| Export                 | Description                                                                                                      |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `signalFromEvent(name, options?)` | Read-only signal updated on each DOM event. Default value is the event; optional `map` projects stored value. Requires `useSignalWatcher()` on components. |
+| `SignalFromEventOptions<T>` | `ListenOptions` plus `map?` and `initialValue?`.                                                                 |
 
 ### Store
 

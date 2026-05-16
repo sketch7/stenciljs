@@ -24,3 +24,6 @@ export type { CleanupFn, EffectOptions, WatcherRef, RegisterCleanup } from "./ex
 export { computedPrevious } from "./extensions/computed-previous";
 export { derivedAsync } from "./extensions/derived-async";
 export type { DisposableSignal, DerivedAsyncFn, DerivedAsyncOptions } from "./extensions/derived-async";
+
+export { signalFromEvent } from "./extensions/signal-from-event";
+export type { SignalFromEventOptions } from "./extensions/signal-from-event";

@@ -13,3 +13,4 @@ export { AppTimer } from "./examples/stencil-signals/timer/timer";
 export { AppTimerCounter } from "./examples/stencil-signals/timer/timer-counter";
 export { AppSignalsDerivedAsync } from "./examples/stencil-signals/derived-async/derived-async";
 export { AppSignalsComputedPrevious } from "./examples/stencil-signals/computed-previous/computed-previous";
+export { AppSignalsMouseEvent } from "./examples/stencil-signals/mouse-event/mouse-event";

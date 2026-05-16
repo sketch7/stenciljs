@@ -1,81 +1,209 @@
+import { Build, h } from "@stencil/core";
+import type { VNode } from "@stencil/core";
+
+import { createContext, provideContext, useContext } from "../context";
 import { use } from "../hooks/use";
 
 const SCRIPT_TYPE = "application/json";
 
-/** @internal Overridable for testing — returns `true` when running on the server. */
-export const detectServer: () => boolean = () => typeof globalThis.requestAnimationFrame === "undefined";
+/**
+ * Returns `true` when running on the server (SSR).
+ *
+ * Two-signal detection covers all execution contexts:
+ * - `typeof window === "undefined"` — `true` in Vitest / plain Node.js (no window global) and in
+ *   the outermost `hydrateFactory` scope. In real browsers `window` is always defined.
+ * - `Build.isServer` — `true` inside Stencil's `hydrateAppClosure` where
+ *   `const window = $stencilWindow` shadows the global, making `typeof window` unreliable.
+ *
+ * @internal
+ */
+export const detectServer: () => boolean = () => !("window" in globalThis) || Build.isServer;
 
-function scriptId(key: string): string {
-	return `ssv-ts-${key}`;
+function scriptId(id: string): string {
+	return `ssv-ts-${id}`;
 }
 
-/** Read-only reference populated with the transferred value on the client, or `undefined` on the server. */
-export type TransferStateRef<T> = {
-	readonly value: T | undefined;
-};
-
 /**
- * Transfers a value from server to client via a `<script type="application/json">` tag injected into
- * `document.head`.
- *
- * On the **server** (`hostWillRender`, first call only) — calls `getServerValue()`, serializes the result,
- * and injects `<script type="application/json" id="ssv-ts-{key}">…</script>` into `document.head`.
- * On the **client** (`hostConnected`) — reads and removes that script tag; the parsed value is available
- * via `ref.value` for any controller that runs `hostConnected` afterward.
- *
- * @param key - Unique identifier. Will be used as `id="ssv-ts-{key}"` on the script tag.
- * @param getServerValue - Called once on the server to produce the value to transfer.
+ * Typed transfer key. Create with {@link makeTransferKey}.
  *
  * @example
  * ```ts
- * const state = useTransferState('my-data', () => fetchedData);
- * use({ hostConnected() { if (state.value) doSomething(state.value); } });
+ * export const POSTS_KEY = makeTransferKey<Post[]>('posts');
  * ```
  */
-export function useTransferState<T>(key: string, getServerValue: () => T): TransferStateRef<T> {
-	return use(_host => {
-		const ref: { value: T | undefined } = { value: undefined };
-		let injected = false;
-		const id = scriptId(key);
+export type TransferKey<T> = string & { readonly __tsType?: T };
 
-		return {
-			hooks: {
-				hostConnected() {
-					if (detectServer()) {
-						return;
-					}
-					const script = document.querySelector(`#${id}`) as HTMLScriptElement | null;
-					if (script?.type === SCRIPT_TYPE) {
-						try {
-							ref.value = JSON.parse(script.textContent ?? "") as T;
-						} catch {
-							// ignore parse errors — treat as no data
-						}
-						script.remove();
-					}
-				},
-				hostWillRender() {
-					if (!detectServer() || injected) {
-						return;
-					}
-					injected = true;
-					try {
-						const json = JSON.stringify(getServerValue()).replaceAll(/<\/script/gi, String.raw`<\/script`);
-						const script = document.createElement("script");
-						script.type = SCRIPT_TYPE;
-						script.id = id;
-						script.textContent = json;
-						document.head.append(script);
-					} catch {
-						// noop — leave ref.value undefined on client
-					}
-				},
-			},
-			value: {
-				get value() {
-					return ref.value;
-				},
-			} as TransferStateRef<T>,
-		};
-	});
+/**
+ * Creates a typed key for use with {@link provideTransferState} and {@link useTransferState}.
+ *
+ * @example
+ * ```ts
+ * export const TIME_KEY = makeTransferKey<string>('time');
+ * ```
+ */
+export function makeTransferKey<T>(key: string): TransferKey<T> {
+	return key as TransferKey<T>;
+}
+
+/**
+ * Transfer state API — available to both providers and consumers.
+ *
+ * Obtain via {@link provideTransferState} (provider) or {@link useTransferState} (consumer).
+ */
+export type TransferState = {
+	/** Returns the stored value for `key`, or `defaultValue` if absent. */
+	get<T>(key: TransferKey<T>, defaultValue?: T): T | undefined;
+	/** Stores `value` for `key`. */
+	set<T>(key: TransferKey<T>, value: T): void;
+	/**
+	 * Server: calls `getValue()`, stores the result, and returns it.
+	 * Client: returns the value read from the serialized script tag (or `undefined` if absent).
+	 */
+	transfer<T>(key: TransferKey<T>, getValue: () => T): T | undefined;
+	/**
+	 * Returns a `<script type="application/json">` VNode for inclusion in the provider's `render()`.
+	 * **Server only** — returns `null` on the client and when no `id` is set (global no-op state).
+	 *
+	 * Must be placed in the provider component's render output so the data reaches the shadow DOM.
+	 *
+	 * @example
+	 * ```tsx
+	 * render() {
+	 *   return <>{this.#ts.toScriptElement()}<div>…</div></>;
+	 * }
+	 * ```
+	 */
+	toScriptElement(): VNode | null;
+};
+
+class TransferStateImpl implements TransferState {
+	readonly #id: string | undefined;
+	readonly #map = new Map<string, unknown>();
+
+	constructor(id: string | undefined) {
+		this.#id = id;
+	}
+
+	get<T>(key: TransferKey<T>, defaultValue?: T): T | undefined {
+		return this.#map.has(key) ? (this.#map.get(key) as T) : defaultValue;
+	}
+
+	set<T>(key: TransferKey<T>, value: T): void {
+		this.#map.set(key, value);
+	}
+
+	transfer<T>(key: TransferKey<T>, getValue: () => T): T | undefined {
+		if (detectServer()) {
+			const v = getValue();
+			this.#map.set(key, v);
+			return v;
+		}
+		return this.get(key);
+	}
+
+	/** @internal */
+	toJSON(): string {
+		const raw = JSON.stringify(Object.fromEntries(this.#map));
+		return raw.replaceAll(/<\/script/gi, String.raw`<\/script`);
+	}
+
+	/** @internal */
+	fromJSON(json: string): void {
+		let data: Record<string, unknown>;
+		try {
+			data = JSON.parse(json) as Record<string, unknown>;
+		} catch {
+			return;
+		}
+		for (const [k, v] of Object.entries(data)) {
+			this.#map.set(k, v);
+		}
+	}
+
+	toScriptElement(): VNode | null {
+		if (!this.#id || !detectServer()) {
+			return null;
+		}
+		// String child creates a text node — serialized verbatim inside <script> (NON_ESCAPABLE_CONTENT).
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		return h("script" as any, { type: SCRIPT_TYPE, id: scriptId(this.#id) } as any, this.toJSON());
+	}
+}
+
+// Global no-op singleton — fallback when no ancestor provider exists.
+// Has no id, so toScriptElement() always returns null.
+const _globalState = new TransferStateImpl(undefined);
+
+/** @internal */
+export const TransferStateContext = createContext<TransferState>(() => _globalState, { name: "transfer-state" });
+
+/**
+ * Registers the current component as a `TransferState` provider.
+ *
+ * Creates a scoped state keyed by `id`, provides it to descendants via context, and on the
+ * client reads + removes the serialized `<script>` from `shadowRoot`.
+ *
+ * Returns the `TransferState` instance. Include `{this.#ts.toScriptElement()}` in `render()` to
+ * emit the script into the shadow DOM during SSR.
+ *
+ * @example
+ * ```ts
+ * readonly #ts = provideTransferState('my-scope');
+ *
+ * render() {
+ *   const value = this.#ts.transfer(MY_KEY, () => computeOnServer());
+ *   return <>{this.#ts.toScriptElement()}<div>{value}</div></>;
+ * }
+ * ```
+ */
+export function provideTransferState(id: string): TransferState {
+	const state = new TransferStateImpl(id);
+
+	provideContext(TransferStateContext, state);
+
+	use(host => ({
+		hostConnected() {
+			if (detectServer()) {
+				return;
+			}
+			const hostEl = host as unknown as HTMLElement;
+			const script = hostEl.shadowRoot?.querySelector(`#${scriptId(id)}`) as HTMLScriptElement | null;
+			if (script?.type === SCRIPT_TYPE) {
+				state.fromJSON(script.textContent ?? "{}");
+				script.remove();
+			}
+		},
+	}));
+
+	return state;
+}
+
+/**
+ * Consumes the nearest ancestor's `TransferState` via context.
+ * Falls back to a global no-op instance when no provider exists in the ancestor tree.
+ *
+ * Returns a `TransferState` proxy. Use `transfer(key, getValue)` to read server values on the client.
+ *
+ * @example
+ * ```ts
+ * const ts = useTransferState();
+ * const posts = ts.transfer(POSTS_KEY, () => []);
+ * ```
+ */
+export function useTransferState(): TransferState {
+	const ref = useContext(TransferStateContext);
+	return {
+		get<T>(key: TransferKey<T>, defaultValue?: T): T | undefined {
+			return ref.current.get(key, defaultValue);
+		},
+		set<T>(key: TransferKey<T>, value: T): void {
+			ref.current.set(key, value);
+		},
+		transfer<T>(key: TransferKey<T>, getValue: () => T): T | undefined {
+			return ref.current.transfer(key, getValue);
+		},
+		toScriptElement(): VNode | null {
+			return ref.current.toScriptElement();
+		},
+	};
 }

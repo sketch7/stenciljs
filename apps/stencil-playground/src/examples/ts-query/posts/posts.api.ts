@@ -13,6 +13,7 @@ const QUERY_KEY = ["posts"] as const;
 const STALE_TIME = 5 * 60 * 1000;
 
 async function fetchPosts(): Promise<Post[]> {
+	console.warn(">>>> fetchPosts");
 	const res = await fetch("https://jsonplaceholder.typicode.com/posts?_limit=10");
 	if (!res.ok) {
 		throw new Error(`Failed to fetch posts: ${res.status}`);
@@ -53,6 +54,7 @@ export function usePosts(queryClient?: QueryClient) {
 	// that was already hydrated from the server.
 	use({
 		async hostWillLoad() {
+			console.warn(">>>> hostWillLoad prefetchQuery");
 			await client.current?.prefetchQuery({ queryKey: QUERY_KEY, queryFn: fetchPosts, staleTime: STALE_TIME });
 		},
 	});
@@ -60,8 +62,11 @@ export function usePosts(queryClient?: QueryClient) {
 	const posts = useQuery(
 		() => ({
 			queryKey: QUERY_KEY,
-			queryFn: fetchPosts,
 			staleTime: STALE_TIME,
+			queryFn: () => {
+				console.warn(">>>> useQuery fetchPosts");
+				return fetchPosts();
+			},
 		}),
 		queryClient,
 	);

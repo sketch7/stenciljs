@@ -1,4 +1,11 @@
-import { createContext, provideContext, use, useContext, useTransferState } from "@ssv/stencil.core";
+import {
+	createContext,
+	makeTransferKey,
+	provideContext,
+	provideTransferState,
+	use,
+	useContext,
+} from "@ssv/stencil.core";
 import type { ContextRef } from "@ssv/stencil.core";
 import { dehydrate, hydrate, QueryClient } from "@tanstack/query-core";
 import type { DehydratedState } from "@tanstack/query-core";
@@ -73,12 +80,19 @@ export function provideQueryClient(clientOrOptions?: QueryClient | ProvideQueryC
 		clientOrOptions instanceof QueryClient
 			? undefined
 			: (clientOrOptions as ProvideQueryClientOptions | undefined)?.ssrKey;
+
 	if (ssrKey) {
-		const transferState = useTransferState<DehydratedState>(`tanstack-query-${ssrKey}`, () => dehydrate(qc));
+		const DEHYDRATED_KEY = makeTransferKey<DehydratedState>("state");
+		const ts = provideTransferState(`tanstack-query-${ssrKey}`);
+
 		use({
+			hostWillRender() {
+				ts.set(DEHYDRATED_KEY, dehydrate(qc));
+			},
 			hostConnected() {
-				if (transferState.value !== undefined) {
-					hydrate(qc, transferState.value);
+				const dehydrated = ts.get(DEHYDRATED_KEY);
+				if (dehydrated !== undefined) {
+					hydrate(qc, dehydrated);
 				}
 			},
 		});

@@ -1,4 +1,4 @@
-import { SsvElement } from "@ssv/stencil.core";
+import { SsvElement, useTransferState } from "@ssv/stencil.core";
 import { provideQueryClient } from "@ssv/tanstack.stencil-query";
 import { Component, State, h } from "@stencil/core";
 
@@ -12,6 +12,7 @@ import type { Post } from "./posts.api";
 })
 export class AppTsQueryPosts extends SsvElement {
 	readonly #queryClient = provideQueryClient({ ssrKey: "ts-query-posts" });
+	readonly #ts = useTransferState();
 	readonly #api = usePosts(this.#queryClient);
 
 	@State() inputValue = "";
@@ -41,6 +42,7 @@ export class AppTsQueryPosts extends SsvElement {
 
 		return (
 			<div class="posts">
+				{this.#ts.toScriptElement()}
 				<div class="add-row">
 					<input
 						class="post-input"

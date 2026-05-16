@@ -53,6 +53,11 @@ export default function Page(): JSX.Element {
 						title="Timer Controller"
 						description="Elapsed time ticker using setInterval inside a ReactiveController — auto-starts and cleans up with the host lifecycle."
 					/>
+					<ExampleCard
+						href="/ssv-stencil/core/transfer-state"
+						title="Transfer State"
+						description="Server-injected state serialized into the shadow DOM and hydrated on the client — no duplicate fetches."
+					/>
 				</div>
 			</section>
 

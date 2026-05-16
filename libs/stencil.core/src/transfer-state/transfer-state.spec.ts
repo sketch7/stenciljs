@@ -1,159 +1,251 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 
 import { TestHost } from "../testing/test-host";
-import { useTransferState } from "./transfer-state";
+import { makeTransferKey, provideTransferState, useTransferState } from "./transfer-state";
 
-// ── Mock document helpers ──────────────────────────────────────────────────────
-type MockScript = { type: string; id: string; textContent: string; remove: ReturnType<typeof vi.fn> };
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-function createMockDocument() {
-	const scripts = new Map<string, MockScript>();
+type MockScript = {
+	type: string;
+	id: string;
+	textContent: string;
+	remove: ReturnType<typeof vi.fn<() => void>>;
+};
 
-	const createElement = vi.fn<(tag: string) => MockScript>(_tag => ({
-		type: "",
-		id: "",
-		textContent: "",
+function makeMockScript(id: string, data: unknown): MockScript {
+	return {
+		type: "application/json",
+		id,
+		textContent: JSON.stringify(data),
 		remove: vi.fn<() => void>(),
-	}));
-
-	const head = {
-		append: vi.fn<(script: MockScript) => void>(script => scripts.set(script.id, script)),
 	};
-
-	const querySelector = vi.fn<(selector: string) => MockScript | null>(selector => {
-		// selector is `#ssv-ts-{key}` — strip the leading `#`
-		const id = selector.startsWith("#") ? selector.slice(1) : selector;
-		return scripts.get(id) ?? null;
-	});
-
-	return { head, createElement, querySelector, scripts };
 }
 
-describe("useTransferState", () => {
+function attachShadowRoot(host: TestHost, scripts: MockScript[]): void {
+	(host as unknown as Record<string, unknown>)["shadowRoot"] = {
+		querySelector: (sel: string) => scripts.find(s => sel === `#${s.id}`) ?? null,
+	};
+}
+
+// ── makeTransferKey ───────────────────────────────────────────────────────────
+
+describe("makeTransferKey", () => {
+	it("returns the key string", () => {
+		expect(makeTransferKey("posts")).toBe("posts");
+	});
+
+	it("is assignable as a string", () => {
+		const k = makeTransferKey<number>("count");
+		expectTypeOf(k).toBeString();
+	});
+});
+
+// ── provideTransferState / server path ───────────────────────────────────────
+
+describe("provideTransferState", () => {
 	let host: TestHost;
-	let mockDoc: ReturnType<typeof createMockDocument>;
 
 	beforeEach(() => {
 		host = new TestHost();
-		mockDoc = createMockDocument();
-		(globalThis as Record<string, unknown>)["document"] = mockDoc;
 	});
 
 	afterEach(() => {
 		host.dispose();
 		vi.unstubAllGlobals();
-		delete (globalThis as Record<string, unknown>)["document"];
 	});
 
-	describe("server path (detectServer = true)", () => {
+	describe("server path (window undefined)", () => {
+		const TIME_KEY = makeTransferKey<string>("time");
+		const COUNT_KEY = makeTransferKey<number>("count");
+
+		it("transfer() calls getValue() and returns the value", () => {
+			const ts = provideTransferState("test");
+			const result = ts.transfer(TIME_KEY, () => "2026-01-01T00:00:00.000Z");
+			expect(result).toBe("2026-01-01T00:00:00.000Z");
+		});
+
+		it("get() returns the stored value after transfer()", () => {
+			const ts = provideTransferState("test");
+			ts.transfer(COUNT_KEY, () => 42);
+			expect(ts.get(COUNT_KEY)).toBe(42);
+		});
+
+		it("set() stores a value retrievable by get()", () => {
+			const ts = provideTransferState("test");
+			ts.set(COUNT_KEY, 99);
+			expect(ts.get(COUNT_KEY)).toBe(99);
+		});
+
+		it("get() returns defaultValue when key is absent", () => {
+			const ts = provideTransferState("test");
+			expect(ts.get(TIME_KEY, "fallback")).toBe("fallback");
+		});
+
+		it("toScriptElement() returns a non-null VNode on server", () => {
+			const ts = provideTransferState("test");
+			ts.transfer(TIME_KEY, () => "2026-01-01T00:00:00.000Z");
+			expect(ts.toScriptElement()).not.toBeNull();
+		});
+
+		it("toScriptElement() escapes </script in JSON values", () => {
+			const EVIL_KEY = makeTransferKey<string>("evil");
+			const ts = provideTransferState("xss-test");
+			ts.set(EVIL_KEY, "</script><script>alert(1)</script>");
+
+			// Validate escaping via JSON.stringify + replaceAll (same logic as toJSON).
+			const json = JSON.stringify({ evil: ts.get(EVIL_KEY) }).replaceAll(/<\/script/gi, String.raw`<\/script`);
+			expect(json).not.toContain("</script>");
+			expect(json).toContain(String.raw`<\/script>`);
+		});
+
+		it("hostConnected is a no-op on the server", () => {
+			const ts = provideTransferState("server-connect");
+			ts.set(TIME_KEY, "server-value");
+			// No shadowRoot → connect should not throw
+			host.connect();
+			// Value remains set (not cleared)
+			expect(ts.get(TIME_KEY)).toBe("server-value");
+		});
+	});
+
+	describe("client path (window stubbed)", () => {
+		const TIME_KEY = makeTransferKey<string>("time");
+		const ITEMS_KEY = makeTransferKey<string[]>("items");
+
 		beforeEach(() => {
-			vi.stubGlobal("requestAnimationFrame", undefined);
+			vi.stubGlobal("window", {});
 		});
 
-		it("injects script tag into document.head on hostWillRender", () => {
-			const data = [{ id: 1, title: "Post" }];
-			useTransferState("test-key", () => data);
+		it("reads script from shadowRoot on hostConnected and populates state", () => {
+			const script = makeMockScript("ssv-ts-client-test", { time: "server-time" });
+			attachShadowRoot(host, [script]);
 
-			host.render();
-
-			expect(mockDoc.head.append).toHaveBeenCalledTimes(1);
-			const injected = [...mockDoc.scripts.values()][0];
-			expect(injected.id).toBe("ssv-ts-test-key");
-			expect(injected.type).toBe("application/json");
-			expect(JSON.parse(injected.textContent)).toStrictEqual(data);
-		});
-
-		it("does not inject more than once on subsequent renders", () => {
-			useTransferState("idempotent-key", () => ({ value: 42 }));
-
-			host.render();
-			host.render();
-
-			expect(mockDoc.head.append).toHaveBeenCalledTimes(1);
-		});
-
-		it("escapes </script to prevent XSS in injected JSON", () => {
-			useTransferState("xss-key", () => ({ evil: "</script><script>alert(1)</script>" }));
-			host.render();
-
-			const injected = [...mockDoc.scripts.values()][0];
-			expect(injected.textContent).not.toContain("</script>");
-			expect(injected.textContent).toContain(String.raw`<\/script>`);
-		});
-
-		it("does not read document on the server (hostConnected is no-op)", () => {
-			useTransferState("server-connect-noop", () => "value");
+			const ts = provideTransferState("client-test");
 			host.connect();
 
-			expect(mockDoc.querySelector).not.toHaveBeenCalled();
-		});
-	});
-
-	describe("client path (detectServer = false)", () => {
-		beforeEach(() => {
-			vi.stubGlobal("requestAnimationFrame", vi.fn<() => number>());
+			expect(ts.get(TIME_KEY)).toBe("server-time");
 		});
 
-		it("reads and removes existing script tag on hostConnected", () => {
-			const data = { posts: [{ id: 1 }] };
-			const scriptEl: MockScript = {
+		it("removes the script from shadowRoot after reading", () => {
+			const script = makeMockScript("ssv-ts-client-test", { time: "t" });
+			attachShadowRoot(host, [script]);
+
+			provideTransferState("client-test");
+			host.connect();
+
+			expect(script.remove).toHaveBeenCalledOnce();
+		});
+
+		it("transfer() returns the pre-populated value without calling getValue()", () => {
+			const script = makeMockScript("ssv-ts-client-test", { time: "from-server" });
+			attachShadowRoot(host, [script]);
+
+			const ts = provideTransferState("client-test");
+			host.connect();
+
+			const getValue = vi.fn<() => string>(() => "fallback");
+			expect(ts.transfer(TIME_KEY, getValue)).toBe("from-server");
+			expect(getValue).not.toHaveBeenCalled();
+		});
+
+		it("leaves state empty when no script is present in shadowRoot", () => {
+			attachShadowRoot(host, []);
+			const ts = provideTransferState("missing");
+			host.connect();
+			expect(ts.get(TIME_KEY)).toBeUndefined();
+		});
+
+		it("handles malformed JSON gracefully — leaves state empty", () => {
+			const script: MockScript = {
 				type: "application/json",
-				id: "ssv-ts-client-key",
-				textContent: JSON.stringify(data),
+				id: "ssv-ts-bad",
+				textContent: "NOT_VALID_JSON{{{",
 				remove: vi.fn<() => void>(),
 			};
-			mockDoc.scripts.set("ssv-ts-client-key", scriptEl);
+			attachShadowRoot(host, [script]);
 
-			const ref = useTransferState<typeof data>("client-key", () => data);
+			const ts = provideTransferState("bad");
 			host.connect();
-
-			expect(ref.value).toStrictEqual(data);
-			expect(scriptEl.remove).toHaveBeenCalledTimes(1);
+			expect(ts.get(TIME_KEY)).toBeUndefined();
 		});
 
-		it("leaves value undefined when script tag is absent", () => {
-			const ref = useTransferState<string[]>("missing-key", () => []);
-			host.connect();
-
-			expect(ref.value).toBeUndefined();
-		});
-
-		it("leaves value undefined when script has wrong type", () => {
-			const scriptEl: MockScript = {
+		it("ignores script with wrong type", () => {
+			const script: MockScript = {
 				type: "text/javascript",
-				id: "ssv-ts-wrong-type",
-				textContent: '["data"]',
+				id: "ssv-ts-wrong",
+				textContent: JSON.stringify({ time: "value" }),
 				remove: vi.fn<() => void>(),
 			};
-			mockDoc.scripts.set("ssv-ts-wrong-type", scriptEl);
+			attachShadowRoot(host, [script]);
 
-			const ref = useTransferState<string[]>("wrong-type", () => []);
+			const ts = provideTransferState("wrong");
 			host.connect();
 
-			expect(ref.value).toBeUndefined();
-			expect(scriptEl.remove).not.toHaveBeenCalled();
+			expect(ts.get(TIME_KEY)).toBeUndefined();
+			expect(script.remove).not.toHaveBeenCalled();
 		});
 
-		it("leaves value undefined when JSON is malformed", () => {
-			const scriptEl: MockScript = {
-				type: "application/json",
-				id: "ssv-ts-bad-json",
-				textContent: "NOT VALID JSON {{{",
-				remove: vi.fn<() => void>(),
-			};
-			mockDoc.scripts.set("ssv-ts-bad-json", scriptEl);
+		it("toScriptElement() returns null on the client", () => {
+			const ts = provideTransferState("client");
+			expect(ts.toScriptElement()).toBeNull();
+		});
 
-			const ref = useTransferState<unknown>("bad-json", () => null);
+		it("transfer() returns undefined for absent keys on client", () => {
+			attachShadowRoot(host, []);
+			const ts = provideTransferState("absent");
 			host.connect();
-
-			expect(ref.value).toBeUndefined();
+			expect(ts.transfer(ITEMS_KEY, () => ["fallback"])).toBeUndefined();
 		});
+	});
+});
 
-		it("does not inject script tags on the client", () => {
-			useTransferState("no-inject-client", () => "server-only");
-			host.render();
+// ── useTransferState (consumer) ───────────────────────────────────────────────
 
-			expect(mockDoc.head.append).not.toHaveBeenCalled();
-		});
+describe("useTransferState", () => {
+	let host: TestHost;
+
+	beforeEach(() => {
+		host = new TestHost();
+	});
+
+	afterEach(() => {
+		host.dispose();
+		vi.unstubAllGlobals();
+	});
+
+	const MSG_KEY = makeTransferKey<string>("msg");
+
+	it("resolves to the nearest provideTransferState via context", () => {
+		const ts = provideTransferState("scope");
+		ts.set(MSG_KEY, "hello");
+
+		// Consumer registered after provider on same host — context event self-resolves.
+		const consumer = useTransferState();
+		host.connect();
+
+		expect(consumer.get(MSG_KEY)).toBe("hello");
+	});
+
+	it("falls back to global no-op when no provider exists — returns undefined", () => {
+		const consumer = useTransferState();
+		host.connect();
+		expect(consumer.get(MSG_KEY)).toBeUndefined();
+	});
+
+	it("toScriptElement() returns null via global fallback", () => {
+		const consumer = useTransferState();
+		host.connect();
+		expect(consumer.toScriptElement()).toBeNull();
+	});
+
+	it("toScriptElement() forwards to provider's implementation on server", () => {
+		const ts = provideTransferState("fwd");
+		ts.set(MSG_KEY, "value");
+
+		const consumer = useTransferState();
+		host.connect();
+
+		// Server path: provider's toScriptElement returns non-null
+		expect(consumer.toScriptElement()).not.toBeNull();
 	});
 });

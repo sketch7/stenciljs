@@ -24,7 +24,6 @@ describe("hydration", () => {
 
 		expect(state.queries).toHaveLength(1);
 		expect(state.queries[0].queryKey).toStrictEqual(["posts"]);
-		qc.clear();
 	});
 
 	it("hydrate restores query state into a fresh client", async () => {
@@ -37,7 +36,6 @@ describe("hydration", () => {
 		hydrate(target, state);
 
 		expect(target.getQueryData(["posts"])).toStrictEqual([{ id: 1 }]);
-		target.clear();
 	});
 
 	it("hydrated client returns data immediately without fetch in useQuery", () => {
@@ -54,14 +52,12 @@ describe("hydration", () => {
 
 		expect(query.data).toStrictEqual([{ id: 1, title: "SSR post" }]);
 		expect(query.isSuccess).toBeTruthy();
-		target.clear();
 	});
 
 	it("dehydrate excludes queries that have not been fetched", () => {
 		const qc = new QueryClient();
 		const state = dehydrate(qc);
 		expect(state.queries).toHaveLength(0);
-		qc.clear();
 	});
 
 	it("hydrate merges into existing cache without overwriting fresh data", async () => {
@@ -76,7 +72,6 @@ describe("hydration", () => {
 
 		// Fresh data wins over dehydrated stale data (query-core default)
 		expect(target.getQueryData(["item"])).toBe("fresh");
-		target.clear();
 	});
 });
 
@@ -123,14 +118,14 @@ describe("provideQueryClient SSR transfer state", () => {
 	});
 
 	it("server: injects dehydrated QueryClient into document.head on first render", async () => {
-		vi.stubGlobal("requestAnimationFrame", undefined);
+		// window is undefined in node — no stubbing needed for server mode
 
 		const qc = provideQueryClient({ ssrKey: "posts-test" });
 		await qc.prefetchQuery({ queryKey: ["posts"], queryFn: () => Promise.resolve([{ id: 1 }]) });
 
 		host.render();
 
-		expect(mockDoc.head.append).toHaveBeenCalledTimes(1);
+		expect(mockDoc.head.append).toHaveBeenCalledOnce();
 		const injected = [...mockDoc.scripts.values()][0];
 		expect(injected.id).toBe("ssv-ts-tanstack-query-posts-test");
 		expect(injected.type).toBe("application/json");
@@ -138,11 +133,10 @@ describe("provideQueryClient SSR transfer state", () => {
 		const state = JSON.parse(injected.textContent);
 		expect(state.queries).toHaveLength(1);
 		expect(state.queries[0].queryKey).toStrictEqual(["posts"]);
-		qc.clear();
 	});
 
 	it("client: hydrates QueryClient from script tag before observer subscribes", () => {
-		vi.stubGlobal("requestAnimationFrame", vi.fn<() => number>());
+		vi.stubGlobal("window", {});
 
 		const serverData = [{ id: 1, title: "SSR post" }];
 		const serverQc = new QueryClient();
@@ -162,12 +156,11 @@ describe("provideQueryClient SSR transfer state", () => {
 		host.connect();
 
 		expect(qc.getQueryData(["posts"])).toStrictEqual(serverData);
-		expect(scriptEl.remove).toHaveBeenCalledTimes(1);
-		qc.clear();
+		expect(scriptEl.remove).toHaveBeenCalledOnce();
 	});
 
 	it("client: useQuery returns cached data immediately after hydration (no fetch)", () => {
-		vi.stubGlobal("requestAnimationFrame", vi.fn<() => number>());
+		vi.stubGlobal("window", {});
 
 		const serverData = [{ id: 1, title: "SSR post" }];
 		const serverQc = new QueryClient();
@@ -191,11 +184,10 @@ describe("provideQueryClient SSR transfer state", () => {
 
 		expect(query.data).toStrictEqual(serverData);
 		expect(query.isSuccess).toBeTruthy();
-		qc.clear();
 	});
 
 	it("no ssrKey: backward-compatible, no script tag interaction", () => {
-		vi.stubGlobal("requestAnimationFrame", vi.fn<() => number>());
+		vi.stubGlobal("window", {});
 
 		provideQueryClient();
 		host.connect();

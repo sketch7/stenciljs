@@ -1,2 +1,2 @@
-export type { TransferStateRef } from "./transfer-state";
-export { useTransferState } from "./transfer-state";
+export type { TransferKey, TransferState } from "./transfer-state";
+export { detectServer, makeTransferKey, provideTransferState, useTransferState } from "./transfer-state";

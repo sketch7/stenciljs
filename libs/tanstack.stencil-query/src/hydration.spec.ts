@@ -1,5 +1,5 @@
-import { provideTransferState } from "@ssv/stencil.core";
 import { TestHost } from "@ssv/stencil.core/testing";
+import { provideTransferState } from "@ssv/stencil.core/transfer-state";
 import { QueryClient, dehydrate, hydrate } from "@tanstack/query-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 

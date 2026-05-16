@@ -94,7 +94,7 @@ export class AppRoot extends SsvElement {
 ### SSR hydration
 
 ```ts
-import { provideTransferState } from "@ssv/stencil.core";
+import { provideTransferState } from "@ssv/stencil.core/transfer-state";
 
 readonly #ts = provideTransferState("my-scope");
 readonly #qc = provideQueryClient({ withHydration: this.#ts });

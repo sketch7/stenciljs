@@ -1,5 +1,7 @@
-import { createContext, makeTransferKey, provideContext, use, useContext } from "@ssv/stencil.core";
-import type { ContextRef, TransferState } from "@ssv/stencil.core";
+import { createContext, provideContext, use, useContext } from "@ssv/stencil.core";
+import type { ContextRef } from "@ssv/stencil.core";
+import { makeTransferKey } from "@ssv/stencil.core/transfer-state";
+import type { TransferState } from "@ssv/stencil.core/transfer-state";
 import { dehydrate, hydrate, QueryClient } from "@tanstack/query-core";
 import type { DehydratedState } from "@tanstack/query-core";
 

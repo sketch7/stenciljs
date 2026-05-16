@@ -1,4 +1,5 @@
-import { SsvElement, provideTransferState } from "@ssv/stencil.core";
+import { SsvElement } from "@ssv/stencil.core";
+import { provideTransferState } from "@ssv/stencil.core/transfer-state";
 import { provideQueryClient } from "@ssv/tanstack.stencil-query";
 import { Component, State, h } from "@stencil/core";
 

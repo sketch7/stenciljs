@@ -1,4 +1,5 @@
-import { SsvElement, makeTransferKey, provideTransferState } from "@ssv/stencil.core";
+import { SsvElement } from "@ssv/stencil.core";
+import { makeTransferKey, provideTransferState } from "@ssv/stencil.core/transfer-state";
 import { Component, h } from "@stencil/core";
 
 type ServerItem = { id: number; label: string };

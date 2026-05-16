@@ -5,7 +5,7 @@ import type { ListenOptions } from "@stencil/core";
 
 import type { Signal } from "../adapters/types";
 import { getActiveOwner, signal as createSignal } from "../signals/core";
-import type { DisposableSignal } from "./computed-async";
+import type { DisposableSignal } from "./derived-async";
 import { bindToHostDisposable } from "./host-bind";
 import { resolvePassiveOption, toAddEventListenerOptions } from "./passive-heuristics";
 

@@ -4,7 +4,7 @@ Async derived signal whose value comes from a promise. Re-runs whenever any trac
 
 **Standalone**: runs immediately; call `.dispose()` when there is no active owner.
 
-**Class field**: deferred until `hostConnected`; disposal via `useSignalWatcher()`. Declare `useSignalWatcher()` **before** this field.
+**Class field**: starts eagerly at field init (before `hostConnected`). On the server (`Build.isServer`), `hostWillLoad` awaits the first settlement so SSR HTML can include resolved data. Disposal via `useSignalWatcher()`. Declare `useSignalWatcher()` **before** this field.
 
 ## Basic usage
 
@@ -55,11 +55,20 @@ export class UserCard extends SsvElement {
 
 ## Return value
 
-Returns `DisposableSignal<T>` (read-only `Signal<T>` + `dispose()`):
+Returns `DisposableSignal<T>` (read-only `Signal<T>` + `dispose()` + `whenSettled`):
 
 - `undefined` until the first successful resolve when `initialValue` is omitted
 - `initialValue` fills that gap; latest resolved value stays visible during refetch (stale-while-revalidate)
 - `get()` / `()` rethrow on error; `peek()` returns `undefined` instead of throwing
+- `whenSettled` — `Promise` that resolves after the first success or failure (used for SSR `hostWillLoad`)
+
+## SSR (Stencil hydrate)
+
+On the server, `derivedAsync` registers `hostWillLoad` that returns `whenSettled`, so Stencil waits for the first async result before the initial render. The async effect also starts at field init (`eager`), not only on `hostConnected`.
+
+In the browser, `hostWillLoad` does not block — you still get loader-then-data unless you provide `initialValue`.
+
+For no-JavaScript fallbacks, `initialValue` from Vike `+data` remains a good complement.
 
 ## Options
 

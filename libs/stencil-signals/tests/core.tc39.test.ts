@@ -760,6 +760,30 @@ describe("host lifecycle — derivedAsync", () => {
 		await flush();
 		expect(result()).toBe(42);
 	});
+
+	it("eager: starts async work before host.connect()", async () => {
+		const host = new TestHost();
+		useSignalWatcher();
+		let ran = false;
+		const result = derivedAsync(async () => {
+			ran = true;
+			return 7;
+		});
+
+		expect(ran).toBe(true);
+		expect(result()).toBeUndefined();
+
+		host.connect();
+		await flush();
+		expect(result()).toBe(7);
+	});
+
+	it("whenSettled resolves after first success", async () => {
+		const result = derivedAsync(async () => 99);
+		await result.whenSettled;
+		expect(result()).toBe(99);
+		result.dispose();
+	});
 });
 
 describe("host lifecycle — effect (auto-tracking)", () => {

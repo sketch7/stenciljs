@@ -1,4 +1,5 @@
-import { peekCurrentHost } from "@ssv/stencil.core";
+import { peekCurrentHost, use } from "@ssv/stencil.core";
+import { Build } from "@stencil/core";
 
 import { getAdapter } from "../adapters/active";
 import type { Signal } from "../adapters/types";
@@ -19,8 +20,11 @@ export type DerivedAsyncFn<T> = (abortSignal: AbortSignal, previousValue?: T | u
 
 /**
  * A read-only derived signal that owns an internal effect and can be stopped with `dispose()`.
+ * `whenSettled` resolves after the first successful or failed async settlement.
  */
-export type DisposableSignal<T> = WatcherRef & Signal<T>;
+export type DisposableSignal<T> = WatcherRef & Signal<T> & {
+	readonly whenSettled: Promise<void>;
+};
 
 // ─── Internal state ───────────────────────────────────────────────────────────
 
@@ -37,18 +41,35 @@ export function derivedAsync<T>(fn: DerivedAsyncFn<T>, options?: DerivedAsyncOpt
 	const opts = options ?? {};
 	if (peekCurrentHost() !== null) {
 		const initialSnapshot = opts.initialValue as T | undefined;
-		return bindToHostDisposable({
+		let whenSettled: Promise<void> | undefined;
+
+		const wrapper = bindToHostDisposable({
 			utilityName: "derivedAsync",
+			eager: true,
 			initialSnapshot,
-			create: snapshot =>
-				_derivedAsyncCore<T>(fn, {
+			create: snapshot => {
+				const inner = _derivedAsyncCore<T>(fn, {
 					...opts,
 					initialValue: snapshot,
-				}),
+				});
+				whenSettled = inner.whenSettled;
+				return inner;
+			},
 			read: inner => inner(),
 			peek: inner => inner.peek(),
 			disposeInner: inner => inner.dispose(),
-		}) as DisposableSignal<T>;
+		});
+
+		use({
+			hostWillLoad(): Promise<void> | void {
+				if (!Build.isServer || whenSettled === undefined) {
+					return;
+				}
+				return whenSettled;
+			},
+		});
+
+		return wrapper as DisposableSignal<T>;
 	}
 	return _derivedAsyncCore(fn, opts);
 }
@@ -63,6 +84,18 @@ function _derivedAsyncCore<T>(fn: DerivedAsyncFn<T>, options: DerivedAsyncOption
 	});
 
 	let disposed = false;
+	let hasSettled = false;
+	let settleResolve!: () => void;
+	const whenSettled = new Promise<void>(resolve => {
+		settleResolve = resolve;
+	});
+
+	const markSettled = (): void => {
+		if (!hasSettled) {
+			hasSettled = true;
+			settleResolve();
+		}
+	};
 
 	const innerComputed = adapter.createComputed<T>(() => {
 		const st = source();
@@ -92,6 +125,7 @@ function _derivedAsyncCore<T>(fn: DerivedAsyncFn<T>, options: DerivedAsyncOption
 				return;
 			}
 			adapter.untrack(() => source.set({ kind: "value", value }));
+			markSettled();
 		};
 
 		const settleError = (error: unknown): void => {
@@ -99,6 +133,7 @@ function _derivedAsyncCore<T>(fn: DerivedAsyncFn<T>, options: DerivedAsyncOption
 				return;
 			}
 			adapter.untrack(() => source.set({ kind: "error", error }));
+			markSettled();
 		};
 
 		try {
@@ -136,6 +171,7 @@ function _derivedAsyncCore<T>(fn: DerivedAsyncFn<T>, options: DerivedAsyncOption
 			disposed = true;
 			effectRef.dispose();
 		},
+		whenSettled,
 	}) as unknown as DisposableSignal<T>;
 
 	getActiveOwner()?.push(output.dispose.bind(output));

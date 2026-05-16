@@ -5,6 +5,7 @@ import * as stencilCore from "@stencil/core";
 import { describe, it, expect, expectTypeOf, vi, afterEach, beforeEach } from "vitest";
 
 import { useSignalWatcher } from "../src/controllers/signal-watcher-controller";
+import { resolvePassiveOption, toAddEventListenerOptions } from "../src/extensions/passive-heuristics";
 import { signalFromEvent } from "../src/extensions/signal-from-event";
 
 type ListenerRecord = {
@@ -133,34 +134,37 @@ describe("signalFromEvent", () => {
 		vi.stubGlobal("window", win);
 
 		const $scroll = signalFromEvent("scroll", { target: "window" });
+		const scrollOpts = toAddEventListenerOptions(false, resolvePassiveOption("scroll", undefined));
 		host.connect();
 
-		expect(add).toHaveBeenCalledWith("scroll", expect.any(Function), { passive: true });
+		expect(add).toHaveBeenCalledWith("scroll", expect.any(Function), scrollOpts);
 
 		const handler = add.mock.calls[0]![1] as EventListener;
 		handler(new Event("scroll"));
 		expect($scroll()).toBeInstanceOf(Event);
 
 		host.disconnect();
-		expect(remove).toHaveBeenCalledWith("scroll", handler, { passive: true });
+		expect(remove).toHaveBeenCalledWith("scroll", handler, scrollOpts);
 	});
 
 	it("capture: true passed to addEventListener", () => {
 		const host = new EventTargetHost();
 		useSignalWatcher();
 		signalFromEvent("click", { capture: true });
+		const clickOpts = toAddEventListenerOptions(true, resolvePassiveOption("click", undefined));
 
 		host.connect();
-		expect(host.getListener("click", { capture: true })).toBeDefined();
+		expect(host.getListener("click", clickOpts)).toBeDefined();
 	});
 
 	it("passive heuristic for a known event name", () => {
 		const host = new EventTargetHost();
 		useSignalWatcher();
 		signalFromEvent("scroll");
+		const scrollOpts = toAddEventListenerOptions(false, resolvePassiveOption("scroll", undefined));
 
 		host.connect();
-		expect(host.getListener("scroll", { passive: true })).toBeDefined();
+		expect(host.getListener("scroll", scrollOpts)).toBeDefined();
 	});
 
 	it("disconnect/reconnect re-attaches and works", () => {

@@ -14,6 +14,16 @@ export class AppLifecycleDemo extends SsvElement {
 	@State() private _tick = 0;
 
 	render() {
+		// eslint-disable-next-line no-console -- intentional warn for demo
+		console.warn(
+			"%c[lifecycle] %crender()",
+			"color: #94a3b8; font-weight: normal",
+			"color: #e2e8f0; font-weight: bold",
+			{
+				tick: this._tick,
+				eventCount: this.#lifecycle.events.length,
+			},
+		);
 		const events = this.#lifecycle.events;
 
 		return (

@@ -38,7 +38,7 @@ export default function Page(): JSX.Element {
 						</li>
 					</ul>
 					<p>
-						Server detection uses a two-signal check: <code>{'typeof window === "undefined"'}</code> (true in plain
+						Server detection uses a two-signal check: <code>typeof window === "undefined"</code> (true in plain
 						Node.js / Vitest) combined with <code>Build.isServer</code> from <code>@stencil/core</code> (true inside
 						Stencil&apos;s hydrate bundle, where <code>const window = $stencilWindow</code> shadows the global).
 					</p>

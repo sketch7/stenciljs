@@ -107,7 +107,7 @@ class TransferStateImpl implements TransferState {
 		// Double every backslash so `\n` (JSON escape for newline) survives JS template-literal
 		// embedding — @stencil/ssr wraps the shadow-DOM HTML in a backtick template literal,
 		// which would otherwise interpret `\n` as an actual newline and break JSON.parse.
-		return raw.replaceAll("\\", "\\\\").replaceAll(/<\/script/gi, String.raw`<\/script`);
+		return raw.replaceAll("\\", String.raw`\\`).replaceAll(/<\/script/gi, String.raw`<\/script`);
 	}
 
 	/** @internal */
@@ -177,7 +177,7 @@ export function provideTransferState(id: string): TransferState {
 			// In non-lazy builds (dist-custom-elements) getElement returns the element itself.
 			const hostEl = (getElement(host as object) ?? host) as HTMLElement;
 			const script = hostEl.shadowRoot?.querySelector(`#${scriptId(id)}`) as HTMLScriptElement | null;
-			console.warn(">>>> hostConnected hydration script", { id, found: !!script });
+			console.warn(">>>> hostConnected hydration script", { id, found: Boolean(script) });
 			if (script?.type === SCRIPT_TYPE) {
 				state.fromJSON(script.textContent ?? "{}");
 				script.remove();

@@ -231,7 +231,7 @@ describe("provideTransferState", () => {
 				const tsClient = provideTransferState("newline-round-trip");
 				clientHost.connect();
 
-				expect(tsClient.get(BODY_KEY)).toEqual(dataWithNewlines);
+				expect(tsClient.get(BODY_KEY)).toStrictEqual(dataWithNewlines);
 			} finally {
 				clientHost.dispose();
 			}

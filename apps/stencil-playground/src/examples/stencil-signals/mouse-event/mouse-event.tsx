@@ -35,7 +35,7 @@ export class AppSignalsMouseEvent extends SsvElement {
 						<span class="pos-value">{pos.y}</span>
 					</div>
 				</div>
-				<p class="hint">Move your mouse — position comes from `signalFromEvent` on `window` `mousemove`.</p>
+				<p class="hint">Move your mouse — position comes from signalFromEvent on window mousemove.</p>
 			</div>
 		);
 	}

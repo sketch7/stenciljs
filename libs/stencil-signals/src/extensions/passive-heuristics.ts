@@ -52,14 +52,9 @@ export function resolvePassiveOption(eventName: string, passive?: boolean): bool
 
 /** `addEventListener` / `removeEventListener` options matching `capture` + `passive`. */
 export function toAddEventListenerOptions(capture: boolean, passive: boolean): boolean | AddEventListenerOptions {
-	if (capture && passive) {
-		return { capture: true, passive: true };
+	if (capture || passive) {
+		return { capture, passive };
 	}
-	if (capture) {
-		return { capture: true };
-	}
-	if (passive) {
-		return { passive: true };
-	}
+
 	return false;
 }

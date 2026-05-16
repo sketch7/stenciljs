@@ -1,4 +1,4 @@
-import { SsvElement, useTransferState } from "@ssv/stencil.core";
+import { SsvElement, provideTransferState } from "@ssv/stencil.core";
 import { provideQueryClient } from "@ssv/tanstack.stencil-query";
 import { Component, State, h } from "@stencil/core";
 
@@ -11,8 +11,9 @@ import type { Post } from "./posts.api";
 	shadow: true,
 })
 export class AppTsQueryPosts extends SsvElement {
-	readonly #queryClient = provideQueryClient({ ssrKey: "ts-query-posts" });
-	readonly #ts = useTransferState();
+	// Transfer state owns the serialization scope — must be declared before provideQueryClient.
+	readonly #ts = provideTransferState("ts-query-posts");
+	readonly #queryClient = provideQueryClient({ withHydration: this.#ts });
 	readonly #api = usePosts(this.#queryClient);
 
 	@State() inputValue = "";

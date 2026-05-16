@@ -1,4 +1,4 @@
-import { Build, h } from "@stencil/core";
+import { Build, getElement, h } from "@stencil/core";
 import type { VNode } from "@stencil/core";
 
 import { createContext, provideContext, useContext } from "../context";
@@ -112,7 +112,9 @@ class TransferStateImpl implements TransferState {
 		let data: Record<string, unknown>;
 		try {
 			data = JSON.parse(json) as Record<string, unknown>;
+			console.warn(">>>> fromJSON parsed data", { data });
 		} catch {
+			console.error(" [transferState] Failed to parse JSON:", { json });
 			return;
 		}
 		for (const [k, v] of Object.entries(data)) {
@@ -166,8 +168,13 @@ export function provideTransferState(id: string): TransferState {
 			if (detectServer()) {
 				return;
 			}
-			const hostEl = host as unknown as HTMLElement;
+			// In Stencil's lazy-load dist, the component class instance (host) is NOT the registered
+			// custom element — it's a separate "lazy instance". The actual DOM element (which owns
+			// the DSD shadow root with our script tag) is obtained via getElement().
+			// In non-lazy builds (dist-custom-elements) getElement returns the element itself.
+			const hostEl = (getElement(host as object) ?? host) as HTMLElement;
 			const script = hostEl.shadowRoot?.querySelector(`#${scriptId(id)}`) as HTMLScriptElement | null;
+			console.warn(">>>> hostConnected hydration script", { id, found: !!script });
 			if (script?.type === SCRIPT_TYPE) {
 				state.fromJSON(script.textContent ?? "{}");
 				script.remove();

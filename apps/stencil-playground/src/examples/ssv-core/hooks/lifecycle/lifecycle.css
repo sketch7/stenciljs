@@ -1,0 +1,245 @@
+:host {
+	display: block;
+}
+
+/* ── Layout ───────────────────────────────────────────────────────── */
+.lifecycle-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	font-family: ui-monospace, "Cascadia Code", "Fira Code", "JetBrains Mono", monospace;
+}
+
+/* ── Controls ─────────────────────────────────────────────────────── */
+.controls {
+	display: flex;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+
+.btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.4rem 0.85rem;
+	border-radius: 6px;
+	border: 1px solid transparent;
+	font-size: 0.8rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition:
+		background 0.15s,
+		border-color 0.15s,
+		opacity 0.15s;
+	letter-spacing: 0.01em;
+}
+
+.btn-icon {
+	font-size: 0.9rem;
+	line-height: 1;
+}
+
+.btn-update {
+	background: var(--color-primary, #6366f1);
+	color: #fff;
+	border-color: var(--color-primary, #6366f1);
+}
+
+.btn-update:hover {
+	background: #4f46e5;
+	border-color: #4f46e5;
+}
+
+.btn-badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 1.4em;
+	height: 1.4em;
+	padding: 0 0.3em;
+	border-radius: 999px;
+	background: rgba(255 255 255 / 0.2);
+	font-size: 0.7rem;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+}
+
+.btn-clear {
+	background: transparent;
+	color: var(--color-muted-fg, #94a3b8);
+	border-color: var(--color-border, #334155);
+}
+
+.btn-clear:hover {
+	color: var(--color-fg, #f1f5f9);
+	border-color: var(--color-border-hover, #475569);
+	background: var(--color-surface-hover, #263348);
+}
+
+/* ── Log panel ────────────────────────────────────────────────────── */
+.log-panel {
+	border: 1px solid var(--color-border, #334155);
+	border-radius: 8px;
+	overflow: hidden;
+	background: var(--color-bg, #0f172a);
+}
+
+.log-panel-header {
+	display: grid;
+	grid-template-columns: 2.4rem 7rem 1fr 1fr;
+	gap: 0.5rem;
+	padding: 0.4rem 0.75rem;
+	background: var(--color-surface, #1e293b);
+	border-bottom: 1px solid var(--color-border, #334155);
+	font-size: 0.65rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: var(--color-muted-fg, #94a3b8);
+}
+
+.log-entries {
+	display: flex;
+	flex-direction: column;
+	max-height: 320px;
+	overflow-y: auto;
+	scrollbar-width: thin;
+	scrollbar-color: var(--color-border, #334155) transparent;
+}
+
+.log-empty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	padding: 2rem;
+	font-size: 0.8rem;
+	color: var(--color-muted-fg, #94a3b8);
+	font-style: italic;
+}
+
+.log-empty-icon {
+	font-size: 1.1rem;
+	opacity: 0.5;
+	animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+	0%,
+	100% {
+		opacity: 0.3;
+	}
+	50% {
+		opacity: 0.8;
+	}
+}
+
+.log-entry {
+	display: grid;
+	grid-template-columns: 2.4rem 7rem 1fr 1fr;
+	gap: 0.5rem;
+	align-items: center;
+	padding: 0.3rem 0.75rem;
+	font-size: 0.75rem;
+	border-bottom: 1px solid transparent;
+	transition: background 0.1s;
+	border-left: 2px solid var(--entry-accent, transparent);
+}
+
+.log-entry:last-child {
+	border-bottom: none;
+}
+
+.log-entry:hover {
+	background: var(--color-surface, #1e293b);
+}
+
+/* Entry accent lines per hook group */
+.log-entry--connected {
+	--entry-accent: #4ade80;
+}
+.log-entry--disconnected {
+	--entry-accent: #f87171;
+}
+.log-entry--will-load,
+.log-entry--did-load {
+	--entry-accent: #60a5fa;
+}
+.log-entry--will-render,
+.log-entry--did-render {
+	--entry-accent: #fde047;
+}
+.log-entry--will-update,
+.log-entry--did-update {
+	--entry-accent: #a78bfa;
+}
+
+.log-idx {
+	font-variant-numeric: tabular-nums;
+	color: var(--color-muted-fg, #94a3b8);
+	font-size: 0.7rem;
+	text-align: right;
+}
+
+.log-time {
+	font-variant-numeric: tabular-nums;
+	color: var(--color-muted-fg, #94a3b8);
+	font-size: 0.7rem;
+	white-space: nowrap;
+}
+
+.log-hook {
+	white-space: nowrap;
+}
+
+.log-desc {
+	color: var(--color-muted-fg, #94a3b8);
+	font-size: 0.7rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* ── Hook badges ──────────────────────────────────────────────────── */
+.hook-badge {
+	display: inline-block;
+	padding: 0.15em 0.5em;
+	border-radius: 4px;
+	font-size: 0.7rem;
+	font-weight: 600;
+	background: color-mix(in srgb, var(--badge-color) 15%, transparent);
+	color: var(--badge-color);
+	border: 1px solid color-mix(in srgb, var(--badge-color) 30%, transparent);
+}
+
+.hook-badge--connected {
+	--badge-color: #4ade80;
+}
+.hook-badge--disconnected {
+	--badge-color: #f87171;
+}
+.hook-badge--will-load {
+	--badge-color: #67e8f9;
+}
+.hook-badge--did-load {
+	--badge-color: #60a5fa;
+}
+.hook-badge--will-render {
+	--badge-color: #fde047;
+}
+.hook-badge--did-render {
+	--badge-color: #fb923c;
+}
+.hook-badge--will-update {
+	--badge-color: #a78bfa;
+}
+.hook-badge--did-update {
+	--badge-color: #f472b6;
+}
+
+/* ── Legend ───────────────────────────────────────────────────────── */
+.legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+}

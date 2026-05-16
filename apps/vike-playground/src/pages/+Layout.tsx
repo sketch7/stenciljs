@@ -17,6 +17,7 @@ const navSections: NavSection[] = [
 	{
 		title: "SSV / Core / Hooks",
 		items: [
+			{ href: "/ssv-stencil/core/hooks/lifecycle", label: "Lifecycle Explorer" },
 			{ href: "/ssv-stencil/core/hooks/mouse", label: "Mouse Controller" },
 			{ href: "/ssv-stencil/core/hooks/timer", label: "Timer Controller" },
 		],

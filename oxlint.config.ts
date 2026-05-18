@@ -56,6 +56,7 @@ export default defineConfig({
 		],
 		"object-shorthand": "error",
 		"prefer-destructuring": "off",
+		"logical-assignment-operators": "error",
 
 		// ── Import ─────────────────────────────────────────────────────────────
 		"import/no-default-export": "error",
@@ -158,6 +159,8 @@ export default defineConfig({
 		"unicorn/no-nested-ternary": "off",
 		"unicorn/prefer-node-protocol": "error",
 		"unicorn/throw-new-error": "error",
+		// no-negated-condition was split into unicorn/ and eslint/ variants in v1.63.0 — disable the eslint duplicate
+		"no-negated-condition": "off",
 		"unicorn/no-useless-undefined": "warn",
 		"unicorn/prefer-ternary": "off",
 		"unicorn/numeric-separators-style": [
@@ -175,6 +178,7 @@ export default defineConfig({
 			// StencilJS components — class-based, uses h() not React, HTML attrs not React attrs
 			files: ["libs/*/src/**/*.tsx", "libs/*/src/**/*.ts", "libs/*/tests/**/*.tsx", "libs/*/tests/**/*.ts"],
 			rules: {
+				"prefer-arrow-callback": "off",
 				"react/rules-of-hooks": "off",
 				"react/prefer-function-component": "off",
 				// Stencil uses h() imported from @stencil/core, not React.createElement
@@ -278,7 +282,6 @@ export default defineConfig({
 				"vitest/require-test-timeout": "off", // requiring a timeout on every unit test is excessive
 				"vitest/consistent-test-filename": "off", // .spec.ts is a valid convention
 				"vitest/prefer-describe-function-title": "off", // describe title matching an imported name is fine
-				"jest/no-hooks": "off", // beforeEach/afterEach are standard vitest setup patterns
 			},
 		},
 		// config files - vitest/tsdown and co
@@ -310,6 +313,7 @@ export default defineConfig({
 			// Stencil uses h() not React, class components, HTML attributes (not React attrs)
 			files: ["apps/stencil-playground/src/**/*.tsx", "apps/stencil-playground/src/**/*.ts"],
 			rules: {
+				"prefer-arrow-callback": "off",
 				"react/rules-of-hooks": "off",
 				"react/prefer-function-component": "off",
 				"react/no-unknown-property": "off",
@@ -324,6 +328,8 @@ export default defineConfig({
 				"react-perf/jsx-no-new-object-as-prop": "off",
 				"react-perf/jsx-no-new-function-as-prop": "off",
 				"react-perf/jsx-no-jsx-as-prop": "off",
+				// Stencil uses standard HTML label patterns; jsx-a11y checks don't apply to Stencil class components
+				"jsx-a11y/control-has-associated-label": "off",
 			},
 		},
 	],

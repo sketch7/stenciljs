@@ -1,4 +1,4 @@
-import { use } from "../../hooks/use.js";
+import { use } from "../../hooks/use";
 
 export type HookName =
 	| "hostConnected"

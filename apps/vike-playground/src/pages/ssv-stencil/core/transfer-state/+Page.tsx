@@ -28,8 +28,8 @@ export default function Page(): JSX.Element {
 						<li>
 							<strong>Server — </strong>
 							<code>hostWillRender</code>: calls <code>getServerValue()</code>, JSON-serializes the result, and injects{" "}
-							<code>{'<script type="application/json" id="ssv-ts-{key}">'}</code> into <code>document.head</code> (once
-							only).
+							<code>{'<script type="application/json" id="__ssv-state__{key}">'}</code> into <code>document.head</code>{" "}
+							(once only).
 						</li>
 						<li>
 							<strong>Client — </strong>
@@ -38,8 +38,8 @@ export default function Page(): JSX.Element {
 						</li>
 					</ul>
 					<p>
-						Server detection uses a two-signal check: <code>typeof window === "undefined"</code> (true in plain
-						Node.js / Vitest) combined with <code>Build.isServer</code> from <code>@stencil/core</code> (true inside
+						Server detection uses a two-signal check: <code>typeof window === "undefined"</code> (true in plain Node.js
+						/ Vitest) combined with <code>Build.isServer</code> from <code>@stencil/core</code> (true inside
 						Stencil&apos;s hydrate bundle, where <code>const window = $stencilWindow</code> shadows the global).
 					</p>
 					<p>

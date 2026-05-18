@@ -55,7 +55,7 @@ export class AppMyPage extends SsvElement {
 | Server      | Calls `getValue()`, stores + returns the value |
 | Client      | Returns the value read from the script tag     |
 
-`toScriptElement()` emits a `<script id="ssv-ts-{id}" type="application/json">` VNode on the server and returns `null` on the client. Place it anywhere inside the shadow root.
+`toScriptElement()` emits a `<script id="__ssv-state__{id}" type="application/json">` VNode on the server and returns `null` on the client. Place it anywhere inside the shadow root.
 
 ## Consumer
 
@@ -81,12 +81,12 @@ export class AppPostList extends SsvElement {
 Server render
   provideTransferState("id")
     └─ transfer(KEY, getValue)  →  calls getValue(), stores result
-    └─ toScriptElement()        →  <script id="ssv-ts-id">{json}</script>
+    └─ toScriptElement()        →  <script id="__ssv-state__id">{json}</script>
                                     emitted inside <template shadowrootmode="open">
 
 Client hydration
   hostConnected
-    └─ shadowRoot.querySelector("#ssv-ts-id")
+    └─ shadowRoot.querySelector("#__ssv-state__id")
     └─ fromJSON(script.textContent)   → populates internal Map
     └─ script.remove()                → cleaned up before first render
   transfer(KEY, getValue)             → returns stored value, getValue() never called

@@ -19,8 +19,13 @@ const SCRIPT_TYPE = "application/json";
  */
 export const detectServer: () => boolean = () => !("window" in globalThis) || Build.isServer;
 
-function scriptId(id: string): string {
-	return `ssv-ts-${id}`;
+/**
+ * Returns the DOM `id` for the transfer-state `<script>` element.
+ *
+ * @internal
+ */
+export function scriptId(id: string): string {
+	return `__ssv-state__${id}`;
 }
 
 /**

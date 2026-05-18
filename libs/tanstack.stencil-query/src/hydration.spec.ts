@@ -1,5 +1,5 @@
 import { TestHost } from "@ssv/stencil.core/testing";
-import { provideTransferState } from "@ssv/stencil.core/transfer-state";
+import { provideTransferState, scriptId } from "@ssv/stencil.core/transfer-state";
 import { QueryClient, dehydrate, hydrate } from "@tanstack/query-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -18,8 +18,7 @@ type MockScript = {
 function makeMockScript(scope: string, data: unknown): MockScript {
 	return {
 		type: "application/json",
-		// scriptId(scope) = "ssv-ts-<scope>"
-		id: `ssv-ts-${scope}`,
+		id: scriptId(scope),
 		textContent: JSON.stringify(data),
 		remove: vi.fn<() => void>(),
 	};

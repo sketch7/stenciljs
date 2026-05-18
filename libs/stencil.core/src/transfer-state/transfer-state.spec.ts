@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 
 import { TestHost } from "../testing/test-host";
-import { makeTransferKey, provideTransferState, useTransferState } from "./transfer-state";
+import { makeTransferKey, provideTransferState, scriptId, useTransferState } from "./transfer-state";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -117,7 +117,7 @@ describe("provideTransferState", () => {
 		});
 
 		it("reads script from shadowRoot on hostConnected and populates state", () => {
-			const script = makeMockScript("ssv-ts-client-test", { time: "server-time" });
+			const script = makeMockScript(scriptId("client-test"), { time: "server-time" });
 			attachShadowRoot(host, [script]);
 
 			const ts = provideTransferState("client-test");
@@ -127,7 +127,7 @@ describe("provideTransferState", () => {
 		});
 
 		it("removes the script from shadowRoot after reading", () => {
-			const script = makeMockScript("ssv-ts-client-test", { time: "t" });
+			const script = makeMockScript(scriptId("client-test"), { time: "t" });
 			attachShadowRoot(host, [script]);
 
 			provideTransferState("client-test");
@@ -137,7 +137,7 @@ describe("provideTransferState", () => {
 		});
 
 		it("transfer() returns the pre-populated value without calling getValue()", () => {
-			const script = makeMockScript("ssv-ts-client-test", { time: "from-server" });
+			const script = makeMockScript(scriptId("client-test"), { time: "from-server" });
 			attachShadowRoot(host, [script]);
 
 			const ts = provideTransferState("client-test");
@@ -158,7 +158,7 @@ describe("provideTransferState", () => {
 		it("handles malformed JSON gracefully — leaves state empty", () => {
 			const script: MockScript = {
 				type: "application/json",
-				id: "ssv-ts-bad",
+				id: scriptId("bad"),
 				textContent: "NOT_VALID_JSON{{{",
 				remove: vi.fn<() => void>(),
 			};
@@ -172,7 +172,7 @@ describe("provideTransferState", () => {
 		it("ignores script with wrong type", () => {
 			const script: MockScript = {
 				type: "text/javascript",
-				id: "ssv-ts-wrong",
+				id: scriptId("wrong"),
 				textContent: JSON.stringify({ time: "value" }),
 				remove: vi.fn<() => void>(),
 			};
@@ -222,7 +222,7 @@ describe("provideTransferState", () => {
 				vi.stubGlobal("window", {});
 				const script: MockScript = {
 					type: "application/json",
-					id: "ssv-ts-newline-round-trip",
+					id: scriptId("newline-round-trip"),
 					textContent: afterTemplateLiteral,
 					remove: vi.fn<() => void>(),
 				};

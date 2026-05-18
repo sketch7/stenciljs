@@ -1,4 +1,4 @@
-import type { HydrateDocumentOptions, hydrateDocument, renderToString } from "@app/stencil-playground/hydrate";
+import type { SerializeDocumentOptions, hydrateDocument, renderToString } from "@app/stencil-playground/hydrate";
 import { stencilWatch } from "@ssv/vite-plugin-stencil-watch";
 import { stencilSSR } from "@stencil/ssr";
 import tailwindcss from "@tailwindcss/vite";
@@ -16,13 +16,14 @@ let hydrateModuleRef: Record<string, unknown> = {};
 
 type HydrateFn = typeof renderToString | typeof hydrateDocument;
 
-// Wraps a hydrate function to always inject { runtimeLogging: true } into the
-// options, forwarding component console.log/warn/info to the real Node.js console.
-// The generic preserves the overloaded call signature so callers stay fully typed.
+// Wraps a hydrate function to forward component logs to the Node.js console.
 const withRuntimeLogging = <T extends HydrateFn>(fn: T): T =>
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	((input: any, options?: HydrateDocumentOptions) =>
-		(fn as typeof hydrateDocument)(input, { runtimeLogging: true, ...options })) as unknown as T;
+	((input: any, options?: SerializeDocumentOptions) =>
+		(fn as typeof renderToString)(input, {
+			runtimeLogging: true,
+			...options,
+		})) as unknown as T;
 
 // Proxy that delegates every property access to hydrateModuleRef.
 // Passed as hydrateModule to stencilSSR — @stencil/ssr caches the resolved
@@ -40,9 +41,7 @@ const hydrateProxy = new Proxy({} as Record<string, unknown>, {
 
 		const value = (hydrateModuleRef as Record<string, unknown>)[prop];
 
-		// Inject runtimeLogging so console.log/warn/info/trace inside Stencil
-		// components during SSR are forwarded to the real Node.js console.
-		// Without this, MockWindow replaces console with all-noop stubs.
+		// Apply runtime logging to hydrate functions.
 		if ((prop === "renderToString" || prop === "hydrateDocument") && typeof value === "function") {
 			return withRuntimeLogging(value as HydrateFn);
 		}

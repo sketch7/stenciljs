@@ -1,7 +1,7 @@
 {
-  "name": "@ssv/stencil.core",
+  "name": "@ssv/tanstack.stencil-query",
   "version": "0.0.0-PLACEHOLDER",
-  "description": "Core utilities for StencilJS — hooks, context API.",
+  "description": "StencilJS integration for @tanstack/query-core — ReactiveController-based query and mutation hooks.",
   "license": "MIT",
   "files": [
     "dist"
@@ -9,30 +9,16 @@
   "type": "module",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "imports": {
-    "#lib": "./src/index.ts"
-  },
   "exports": {
     ".": {
       "@ssv/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    },
-    "./testing": {
-      "@ssv/source": "./src/testing/index.ts",
-      "types": "./dist/testing/index.d.ts",
-      "import": "./dist/testing/index.js"
-    },
-    "./transfer-state": {
-      "@ssv/source": "./src/transfer-state/index.ts",
-      "types": "./dist/transfer-state/index.d.ts",
-      "import": "./dist/transfer-state/index.js"
     }
   },
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",
-    "build:stencil": "stencil build",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "oxlint src/",
@@ -40,8 +26,9 @@
     "fmt:check": "oxfmt --check src/"
   },
   "devDependencies": {
+    "@ssv/stencil.core": "workspace:*",
     "@stencil/core": "catalog:",
-    "@stencil/vitest": "catalog:",
+    "@tanstack/query-core": "catalog:",
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "oxfmt": "catalog:",
@@ -51,6 +38,8 @@
     "vitest": "catalog:"
   },
   "peerDependencies": {
-    "@stencil/core": ">=4.0.0"
+    "@ssv/stencil.core": "workspace:*",
+    "@stencil/core": ">=4.0.0",
+    "@tanstack/query-core": "^5.0.0"
   }
 }

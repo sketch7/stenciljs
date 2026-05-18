@@ -11,11 +11,12 @@ import type { ReactiveController, ReactiveControllerHost } from "../hooks/reacti
  * afterEach(() => { host.dispose(); });
  * ```
  */
-export class TestHost implements ReactiveControllerHost {
+export class TestHost extends EventTarget implements ReactiveControllerHost {
 	readonly controllers = new Set<ReactiveController>();
 	renderCount = 0;
 
 	constructor() {
+		super();
 		setCurrentHost(this);
 	}
 

@@ -17,6 +17,7 @@ const navSections: NavSection[] = [
 	{
 		title: "SSV / Core / Hooks",
 		items: [
+			{ href: "/ssv-stencil/core/hooks/lifecycle", label: "Lifecycle Explorer" },
 			{ href: "/ssv-stencil/core/hooks/mouse", label: "Mouse Controller" },
 			{ href: "/ssv-stencil/core/hooks/timer", label: "Timer Controller" },
 		],
@@ -26,11 +27,19 @@ const navSections: NavSection[] = [
 		items: [{ href: "/ssv-stencil/core/context/counter", label: "Counter" }],
 	},
 	{
+		title: "SSV / Core / Transfer State",
+		items: [{ href: "/ssv-stencil/core/transfer-state", label: "Transfer State" }],
+	},
+	{
 		title: "SSV Stencil / TanStack Store",
 		items: [
 			{ href: "/ssv-stencil/ts-store/counter", label: "Counter" },
 			{ href: "/ssv-stencil/ts-store/todo", label: "Todo List" },
 		],
+	},
+	{
+		title: "SSV Stencil / TanStack Query",
+		items: [{ href: "/ssv-stencil/ts-query/posts", label: "Posts" }],
 	},
 	{
 		title: "Stencil Signals",

@@ -56,6 +56,7 @@
   "dependencies": {
     "@ssv/stencil-signals": "workspace:*",
     "@ssv/stencil.core": "workspace:*",
+    "@ssv/tanstack.stencil-query": "workspace:*",
     "@ssv/tanstack.stencil-store": "workspace:*",
     "@stencil/core": "catalog:",
     "@stencil/react-output-target": "catalog:",

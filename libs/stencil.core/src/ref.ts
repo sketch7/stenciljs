@@ -11,8 +11,8 @@
 export type Ref<T> = (() => T) & { readonly current: T };
 
 /**
- * A callable writable reference. Set `.current` directly; call `.asReadonly()` to get
- * the public {@link Ref} view.
+ * A callable writable reference — a {@link Ref} with a settable `current`.
+ * Set `.current` directly; expose via `.asReadonly()` for the public API.
  *
  * @example
  * ```ts
@@ -21,9 +21,9 @@ export type Ref<T> = (() => T) & { readonly current: T };
  * return ref.asReadonly();
  * ```
  */
-export type WritableRef<T> = {
-	(): T;
+export type WritableRef<T> = Omit<Ref<T>, "current"> & {
 	current: T;
+	/** Returns a read-only {@link Ref} view. The same object instance, narrowed to `Ref<T>`. */
 	asReadonly(): Ref<T>;
 };
 
@@ -37,13 +37,14 @@ export type WritableRef<T> = {
  */
 export function createRef<T>(getter: () => T): Ref<T> {
 	const fn = () => getter();
-	Object.defineProperty(fn, "current", { get: getter, enumerable: true });
+	Object.defineProperty(fn, "current", { get: getter, enumerable: true, configurable: true });
 	return fn as Ref<T>;
 }
 
 /**
  * Creates a {@link WritableRef} backed by an internal value cell.
- * Assign `.current` imperatively, then expose via `.asReadonly()`.
+ * Starts from a {@link Ref} and extends it with a setter and `.asReadonly()` —
+ * the same function object serves both roles.
  *
  * @example
  * ```ts
@@ -56,17 +57,18 @@ export function createWritableRef<T>(initial?: T): WritableRef<T> {
 	let _value = initial as T;
 	const getter = () => _value;
 
-	const fn = (() => _value) as WritableRef<T>;
-	Object.defineProperty(fn, "current", {
+	// Build the base Ref first, then upgrade it with write capability.
+	// The same function object serves as both WritableRef and Ref (via asReadonly).
+	const ref = createRef(getter) as unknown as WritableRef<T>;
+	Object.defineProperty(ref, "current", {
 		get: getter,
 		set: (v: T) => {
 			_value = v;
 		},
 		enumerable: true,
+		configurable: true,
 	});
+	ref.asReadonly = () => ref as unknown as Ref<T>;
 
-	const readonly = createRef(getter);
-	fn.asReadonly = () => readonly;
-
-	return fn;
+	return ref;
 }

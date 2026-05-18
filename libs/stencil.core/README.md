@@ -12,12 +12,14 @@ pnpm add @ssv/stencil.core
 
 ## API
 
-| Export            | Kind  | Purpose                                                 |
-| ----------------- | ----- | ------------------------------------------------------- |
-| `SsvElement`      | class | Base class with controller support (single inheritance) |
-| `SsvElementMixin` | mixin | Same as `SsvElement` but composable via `Mixin()`       |
-| `Ref<T>`          | type  | Callable reactive ref — `ref()` or `ref.current`        |
-| `createRef`       | fn    | Creates a `Ref<T>` backed by a getter function          |
+| Export              | Kind  | Purpose                                                            |
+| ------------------- | ----- | ------------------------------------------------------------------ |
+| `SsvElement`        | class | Base class with controller support (single inheritance)            |
+| `SsvElementMixin`   | mixin | Same as `SsvElement` but composable via `Mixin()`                  |
+| `Ref<T>`            | type  | Callable read-only ref — `ref()` or `ref.current`                  |
+| `WritableRef<T>`    | type  | Writable callable ref — set `.current`, expose via `.asReadonly()` |
+| `createRef`         | fn    | Creates a `Ref<T>` backed by a getter function                     |
+| `createWritableRef` | fn    | Creates a `WritableRef<T>` backed by a settable value cell         |
 
 ## Usage
 

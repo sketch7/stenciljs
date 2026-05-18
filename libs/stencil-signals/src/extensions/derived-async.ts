@@ -22,9 +22,10 @@ export type DerivedAsyncFn<T> = (abortSignal: AbortSignal, previousValue?: T | u
  * A read-only derived signal that owns an internal effect and can be stopped with `dispose()`.
  * `whenSettled` resolves after the first successful or failed async settlement.
  */
-export type DisposableSignal<T> = WatcherRef & Signal<T> & {
-	readonly whenSettled: Promise<void>;
-};
+export type DisposableSignal<T> = WatcherRef &
+	Signal<T> & {
+		readonly whenSettled: Promise<void>;
+	};
 
 // ─── Internal state ───────────────────────────────────────────────────────────
 

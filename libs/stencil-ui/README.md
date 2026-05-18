@@ -23,26 +23,57 @@ import { compositionRegistry } from "@ssv/stencil-ui/compose";
 
 ### 1. Register compositions
 
+**Declarative map** (recommended for static defs):
+
 ```ts
-// compose-definitions.ts (module scope)
+// compose-Defs.ts (module scope)
+import type { CompositionDefsMap } from "@ssv/stencil-ui/compose";
+
+export const demoCompositionDefs = {
+  timer: { tag: "app-compose-timer", aliases: ["countdown"] },
+  count: { tag: "app-compose-counter" },
+} satisfies CompositionDefsMap;
+```
+
+**Fluent setup callback** in a host field initializer:
+
+```ts
+import { SsvElement } from "@ssv/stencil.core";
+import { provideCompositionRegistry } from "@ssv/stencil-ui/compose";
+
+export class AppComposeDemo extends SsvElement {
+  readonly #registry = provideCompositionRegistry(r =>
+    r
+      .register("timer", { tag: "app-compose-timer", aliases: ["countdown"] })
+      .register("count", { tag: "app-compose-counter" }),
+  );
+}
+```
+
+**Pre-built registry** at module scope:
+
+```ts
+export const demoCompositionRegistry = createCompositionRegistry()
+  .register("timer", { tag: "app-compose-timer" });
+
+readonly #registry = provideCompositionRegistry(demoCompositionRegistry);
+```
+
+**Global singleton** (no provider — default context):
+
+```ts
 import { compositionRegistry } from "@ssv/stencil-ui/compose";
 
-type TimerData = { duration: number };
-
-compositionRegistry
-  .register<TimerData>("timer", { tag: "app-compose-timer", aliases: ["countdown"] })
-  .register("count", { tag: "app-compose-counter" });
+compositionRegistry.register("timer", { tag: "app-compose-timer" });
 ```
 
-### 2. Provider + compose element
+### 2. Compose element
 
 ```tsx
-<ssv-compose-provider registry={demoCompositionRegistry}>
-  <ssv-compose name="timer" data={{ duration: 30 }} />
-</ssv-compose-provider>
+<ssv-compose name="timer" data={{ duration: 30 }} />
 ```
 
-Omit `registry` on the provider to use an isolated empty registry (tests). The global singleton `compositionRegistry` is the default context when no provider overrides it.
+Call `provideCompositionRegistry()` on an `SsvElement` host to scope a registry to descendants. Omit it to use the global `compositionRegistry` singleton.
 
 ### 3. Wrapper components (your app)
 
@@ -52,7 +83,7 @@ Wrappers live in `apps/*` with the `app-` tag prefix. They accept `@Prop() data`
 @Event() ssvComposeOutput!: EventEmitter<{ isRunning: boolean }>;
 ```
 
-`ssv-compose` listens for `ssvComposeOutput` and re-emits `widgetEvent` as `{ name, data }`.
+`ssv-compose` listens for `ssvComposeOutput` and re-emits `event` as `{ name, data }`.
 
 ## Source layout
 
@@ -63,36 +94,39 @@ libs/stencil-ui/src/compose/
   registry/
     registry.ts
     context.ts
+    provide-registry.ts
   compose.tsx           # ssv-compose
   compose.css
-  compose-provider.tsx  # ssv-compose-provider
 ```
 
 ## Package entry points
 
-| Subpath | Purpose |
-| --- | --- |
-| `@ssv/stencil-ui` | Stencil collection — `ssv-compose`, `ssv-compose-provider`, `loader`, `hydrate` |
-| `@ssv/stencil-ui/compose` | `createCompositionRegistry`, `compositionRegistry`, `CompositionRegistryContext`, types |
+| Subpath                   | Purpose                                                              |
+| ------------------------- | -------------------------------------------------------------------- |
+| `@ssv/stencil-ui`         | Stencil collection — `ssv-compose`, `loader`, `hydrate`              |
+| `@ssv/stencil-ui/compose` | Registry API, `provideCompositionRegistry`, `useCompositionRegistry` |
 
 ## API (`@ssv/stencil-ui/compose`)
 
-| Export | Description |
-| --- | --- |
-| `createCompositionRegistry()` | New isolated registry |
-| `compositionRegistry` | Global singleton (default context) |
-| `CompositionRegistryContext` | Context token for `provideContext` / `useContext` |
-| `CompositionDefinition<TData>` | `{ tag, mapData?, aliases? }` |
-| `ComposeEventDetail` | `{ name, data }` on `widgetEvent` |
+| Export                              | Description                                            |
+| ----------------------------------- | ------------------------------------------------------ |
+| `createCompositionRegistry()`       | New isolated registry                                  |
+| `compositionRegistry`               | Global singleton (default context)                     |
+| `provideCompositionRegistry(...)`   | Provide registry to descendants (field initializer)    |
+| `useCompositionRegistry(registry?)` | Consume nearest registry (optional override for tests) |
+| `CompositionRegistryContext`        | Context token                                          |
+| `CompositionDef<TData>`             | `{ tag, mapData?, aliases? }`                          |
+| `CompositionDefsMap`                | Declarative name → Def record                          |
+| `CompositionDefsList`               | Ordered `[name, def]` tuples                           |
+| `ComposeEventDetail`                | `{ name, data }` on `event`                            |
 
-`register(name, definition)` returns the registry for chaining.
+`register(name, def)` returns the registry for chaining.
 
 ## Components
 
-| Tag | Purpose |
-| --- | --- |
+| Tag           | Purpose                                   |
+| ------------- | ----------------------------------------- |
 | `ssv-compose` | Resolve `name` + `data` → `h(tag, props)` |
-| `ssv-compose-provider` | Provide `CompositionRegistry` to descendants |
 
 Unknown names render the **`error` slot**.
 

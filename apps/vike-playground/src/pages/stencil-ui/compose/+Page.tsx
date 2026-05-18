@@ -8,8 +8,8 @@ export default function Page(): JSX.Element {
 				<h1 className="text-2xl font-bold text-[var(--color-fg)]">Stencil UI / Compose</h1>
 				<p className="text-sm text-[var(--color-muted-fg)]">
 					Demonstrates <code>ssv-compose</code> — renders wrapper components by name + data via{" "}
-					<code>@ssv/stencil-ui/compose</code> (<code>compositionRegistry.register(...)</code>) and{" "}
-					<code>ssv-compose-provider</code>.
+					<code>@ssv/stencil-ui/compose</code> (<code>provideCompositionRegistry</code> with a declarative definitions
+					map).
 				</p>
 			</div>
 

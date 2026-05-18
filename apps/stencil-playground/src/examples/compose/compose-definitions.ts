@@ -1,7 +1,8 @@
-import { createCompositionRegistry } from "@ssv/stencil-ui/compose";
+import type { CompositionDef, CompositionDefsMap } from "@ssv/stencil-ui/compose";
 
 import type { ComposeTimerData } from "./timer/compose-timer";
 
-export const demoCompositionRegistry = createCompositionRegistry()
-	.register<ComposeTimerData>("timer", { tag: "app-compose-timer", aliases: ["countdown"] })
-	.register("count", { tag: "app-compose-counter" });
+export const demoCompositionDefs = {
+	timer: { tag: "app-compose-timer", aliases: ["countdown"] },
+	count: { tag: "app-compose-counter" },
+} satisfies CompositionDefsMap satisfies Record<string, CompositionDef<ComposeTimerData | unknown>>;

@@ -1,8 +1,8 @@
-import { SsvElement, useContext } from "@ssv/stencil.core";
+import { SsvElement } from "@ssv/stencil.core";
 import { Component, Event, EventEmitter, Listen, Prop, h } from "@stencil/core";
 import type { VNode } from "@stencil/core";
 
-import { CompositionRegistryContext } from "./registry/context";
+import { useCompositionRegistry } from "./registry/provide-registry";
 import type { ComposeEventDetail } from "./types";
 
 @Component({
@@ -15,12 +15,12 @@ export class SsvCompose extends SsvElement {
 	@Prop() name!: string;
 
 	/** Data object passed to the resolved wrapper component. */
-	@Prop() data: unknown = undefined;
+	@Prop() data: unknown;
 
 	/** Normalized output event from any wrapper in this composition subtree. */
 	@Event() event!: EventEmitter<ComposeEventDetail>;
 
-	readonly #registry = useContext(CompositionRegistryContext);
+	readonly #registry = useCompositionRegistry();
 
 	@Listen("ssvComposeOutput")
 	onComposeOutput(e: CustomEvent): void {

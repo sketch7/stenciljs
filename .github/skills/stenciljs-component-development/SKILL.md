@@ -220,5 +220,70 @@ See: [apps/stencil-playground/stencil.config.ts](../../../apps/stencil-playgroun
 | Component + @ssv/tanstack.stencil-store      | [ts-store/counter/](../../../apps/stencil-playground/src/examples/ts-store/counter/)               |
 | Component + ReactiveController (SsvElement) | [ssv-core/mouse-host/](../../../apps/stencil-playground/src/examples/ssv-core/mouse-host/)         |
 | Component + ReactiveController (Mixin)      | [ssv-core/timer-host/](../../../apps/stencil-playground/src/examples/ssv-core/timer-host/)         |
+| Component + TanStack Query                  | [ts-query/posts/](../../../apps/stencil-playground/src/examples/ts-query/posts/)                   |
 | Output targets config                       | [stencil.config.ts](../../../apps/stencil-playground/stencil.config.ts)                            |
 | Core library API                            | [libs/stencil.core/src/index.ts](../../../libs/stencil.core/src/index.ts)                          |
+
+## TanStack Query (@ssv/tanstack.stencil-query)
+
+`useQuery` and `useMutation` return a `Ref<T>` — a callable function that reads the live observer result on each call.
+
+### Wrapper hook pattern (preferred for components)
+
+Use getter properties to absorb the `()` call so the component accesses plain property paths:
+
+```ts
+// posts.api.ts
+import { useQuery, useMutation } from "@ssv/tanstack.stencil-query";
+
+export function usePosts() {
+  const postsRef = useQuery(() => ({
+    queryKey: ["posts"],
+    queryFn: fetchPosts,
+    staleTime: 5 * 60 * 1000,
+  }));
+
+  const createRef = useMutation({
+    mutationFn: (title: string) => apiCreatePost(title),
+    onSuccess: () => client.current?.invalidateQueries({ queryKey: ["posts"] }),
+  });
+
+  return {
+    get posts() { return postsRef(); },   // getter absorbs ()
+    get create() { return createRef(); }, // getter absorbs ()
+  };
+}
+```
+
+```ts
+// posts.tsx — no () at call sites; plain property access throughout
+export class AppPosts extends SsvElement {
+  readonly #api = usePosts();
+
+  render() {
+    const { data, isPending, isError } = this.#api.posts;
+    return <button onClick={() => this.#api.create.mutate("New post")}>Add</button>;
+  }
+}
+```
+
+### Direct use (hooks or tests)
+
+When using `useQuery`/`useMutation` directly, invoke the ref:
+
+```ts
+readonly #posts = useQuery({ queryKey: ["posts"], queryFn: fetchPosts });
+
+render() {
+  const { data, isPending } = this.#posts(); // () reads live result
+}
+```
+
+### Type aliases
+
+| Type               | Meaning                                            |
+| ------------------ | -------------------------------------------------- |
+| `UseQueryRef<T>`   | `Ref<UseQueryResult<T>>` — return type of `useQuery`   |
+| `UseMutationRef<T,E,V>` | `Ref<UseMutationResult<T,E,V>>` — return type of `useMutation` |
+
+See [libs/tanstack.stencil-query/README.md](../../../libs/tanstack.stencil-query/README.md) for the full API.

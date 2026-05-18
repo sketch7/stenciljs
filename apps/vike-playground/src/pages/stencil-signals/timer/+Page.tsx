@@ -5,18 +5,18 @@ export default function Page(): JSX.Element {
 	return (
 		<div className="flex flex-col gap-6">
 			<div className="flex flex-col gap-1">
-				<h1 className="text-2xl font-bold text-[var(--color-fg)]">Countdown Timer</h1>
-				<p className="text-sm text-[var(--color-muted-fg)]">
+				<h1 className="text-2xl font-bold text-(--color-fg)">Countdown Timer</h1>
+				<p className="text-sm text-(--color-muted-fg)">
 					Pick a preset or start counting down from 60 seconds. Start, pause, and reset — or watch it complete on its
 					own.
 				</p>
 			</div>
 
-			<div className="rounded-xl border border-[var(--color-card-border)] bg-[var(--color-card)] p-6">
-				<AppTimer duration={60} />
+			<div className="rounded-xl border border-(--color-card-border) bg-(--color-card) p-6">
+				<AppTimer duration={90} />
 			</div>
 
-			<div className="flex flex-col gap-2 text-xs text-[var(--color-muted-fg)]">
+			<div className="flex flex-col gap-2 text-xs text-(--color-muted-fg)">
 				<p>
 					<code>
 						withSignalProps(this, AppTimer)(&#123; duration: &#123; transform &#125;, isRunning: &#123; twoWay: true

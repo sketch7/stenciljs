@@ -27,7 +27,14 @@ import {
 } from "@preact/signals-core";
 import type { ReadonlySignal } from "@preact/signals-core";
 
-import type { SignalAdapter, WritableSignal, Signal, SignalOptions, AdapterWatcher } from "./types";
+import type {
+	AdapterEffectOptions,
+	SignalAdapter,
+	WritableSignal,
+	Signal,
+	SignalOptions,
+	AdapterWatcher,
+} from "./types";
 
 // ─── WeakMap: wrapper fn → raw Preact signal ─────────────────────────────────
 //
@@ -83,24 +90,71 @@ export const preactAdapter: SignalAdapter = {
 		return wrapped;
 	},
 
-	createEffect(fn: (onCleanup: (cb: () => void) => void) => (() => void) | void): { dispose(): void } {
+	createEffect(
+		fn: (onCleanup: (cb: () => void) => void) => (() => void) | void,
+		options?: AdapterEffectOptions,
+	): { dispose(): void } {
+		const flushBetweenRuns = options?.flushBetweenRuns !== false;
+
+		if (flushBetweenRuns) {
+			let stop: (() => void) | undefined;
+			stop = preactEffect(() => {
+				let onCleanupFn: (() => void) | null = null;
+				const ret = fn(cb => {
+					onCleanupFn = cb;
+				});
+				return () => {
+					onCleanupFn?.();
+					if (typeof ret === "function") {
+						ret();
+					}
+				};
+			});
+			let disposed = false;
+			return {
+				dispose() {
+					if (disposed) {
+						return;
+					}
+					disposed = true;
+					stop?.();
+					stop = undefined;
+				},
+			};
+		}
+
+		const cleanupState: {
+			pendingCleanup: (() => void) | null;
+			userCleanup: (() => void) | undefined;
+		} = { pendingCleanup: null, userCleanup: undefined };
 		let stop: (() => void) | undefined;
 		stop = preactEffect(() => {
 			let onCleanupFn: (() => void) | null = null;
 			const ret = fn(cb => {
 				onCleanupFn = cb;
 			});
+			cleanupState.pendingCleanup = onCleanupFn;
+			cleanupState.userCleanup = typeof ret === "function" ? ret : undefined;
+			// Preact runs this before the next effect body — keep empty so user cleanups only run on dispose.
 			return () => {
-				onCleanupFn?.();
-				if (typeof ret === "function") {
-					ret();
-				}
+				/* no-op */
 			};
 		});
+		let disposed = false;
 		return {
 			dispose() {
+				if (disposed) {
+					return;
+				}
+				disposed = true;
 				stop?.();
 				stop = undefined;
+				cleanupState.pendingCleanup?.();
+				cleanupState.pendingCleanup = null;
+				if (typeof cleanupState.userCleanup === "function") {
+					cleanupState.userCleanup();
+					cleanupState.userCleanup = undefined;
+				}
 			},
 		};
 	},

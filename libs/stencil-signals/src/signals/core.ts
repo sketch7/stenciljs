@@ -1,14 +1,4 @@
 import { getAdapter } from "../adapters/active";
-/**
- * @ssv/stencil-signals — signals/core.ts
- *
- * Thin facade over the active SignalAdapter. All public primitives
- * (signal, computed, batch, untracked, createWatcher, collectSignals) delegate to
- * whichever adapter was registered by the entry point (TC39 or Preact).
- *
- * Also owns the shared microtask scheduler — it is backend-agnostic and
- * used by all utilities for coalescing effect re-runs.
- */
 import type { AdapterWatcher, ComputedOptions, Signal, WritableSignal } from "../adapters/types";
 export type { WritableSignal, Signal, SignalOptions, ComputedOptions, AdapterWatcher } from "../adapters/types";
 
@@ -69,8 +59,8 @@ export function untracked<T>(fn: () => T): T {
 
 // ─── Active owner (effect scope) ────────────────────────────────────────────
 //
-// When non-null, any watcher-based utility (effect, computedAsync,
-// computedPrevious) will push its dispose/cleanup function into this list.
+// When non-null, effect and derivedAsync factory disposals will push
+// its dispose/cleanup function into this list.
 // `SignalWatcher` activates the owner during `connectedCallback` so all
 // watchers created there are automatically disposed on `disconnectedCallback`.
 //

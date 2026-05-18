@@ -1,15 +1,18 @@
 import { getElement } from "@stencil/core";
 
 import { use } from "../hooks/use";
+import { createWritableRef } from "../ref";
+import type { Ref } from "../ref";
 import { CONTEXT_EVENT } from "./context";
-import type { ContextEventDetail, ContextKey, ContextRef } from "./context";
+import type { ContextEventDetail, ContextKey } from "./context";
 
 /**
  * Consumes the nearest ancestor provider for the given context.
  *
- * Returns a {@link ContextRef} whose `.current` property holds the resolved value.
+ * Returns a {@link Ref} whose `.current` property holds the resolved value.
  * The value is resolved during `hostConnected` (i.e. before the first render), so
- * `.current` is always available by the time `render()` runs.
+ * `.current` is always available by the time `render()` runs. The ref is also callable —
+ * `ref()` returns the same value as `ref.current`.
  *
  * Resolution order:
  * 1. Nearest ancestor with `provideContext(key)` — found via a bubbling DOM event.
@@ -27,9 +30,8 @@ import type { ContextEventDetail, ContextKey, ContextRef } from "./context";
  * }
  * ```
  */
-export function useContext<T>(key: ContextKey<T>): ContextRef<T> {
-	// Mutable cell — set once in hostConnected, read during render.
-	const ref = { current: undefined as unknown as T };
+export function useContext<T>(key: ContextKey<T>): Ref<T> {
+	const ref = createWritableRef<T>();
 
 	// Side-effect factory form: registers lifecycle hooks without returning a value from use().
 	use(host => ({
@@ -67,5 +69,5 @@ export function useContext<T>(key: ContextKey<T>): ContextRef<T> {
 		},
 	}));
 
-	return ref as ContextRef<T>;
+	return ref.asReadonly();
 }

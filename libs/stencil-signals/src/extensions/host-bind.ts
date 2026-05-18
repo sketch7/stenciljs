@@ -6,7 +6,7 @@
  * `SignalWatcherController` via `getActiveOwner()` registration in core factories.
  */
 
-import { use } from "@ssv/stencil.core";
+import { peekCurrentHost, use } from "@ssv/stencil.core";
 
 import { getActiveOwner } from "../signals/core";
 import type { WatcherRef } from "./effect";
@@ -49,6 +49,8 @@ export type HostBoundDisposable<TSnapshot> = {
 export function bindToHostDisposable<TSnapshot, TInner>(config: {
 	utilityName: string;
 	initialSnapshot: TSnapshot;
+	/** When true, create inner during field init (before `hostConnected`). */
+	eager?: boolean;
 	create: (snapshot: TSnapshot) => TInner;
 	read: (inner: TInner) => TSnapshot;
 	peek: (inner: TInner) => TSnapshot;
@@ -57,6 +59,7 @@ export function bindToHostDisposable<TSnapshot, TInner>(config: {
 	let inner: TInner | null = null;
 	let snapshot = config.initialSnapshot;
 	let manuallyDisposed = false;
+	let disposeRegisteredOnOwner = false;
 
 	const wrapper = Object.assign((): TSnapshot => (inner === null ? snapshot : config.read(inner)), {
 		peek(): TSnapshot {
@@ -77,12 +80,22 @@ export function bindToHostDisposable<TSnapshot, TInner>(config: {
 
 	registerHostLifecycle({
 		onConnect(): void {
-			if (manuallyDisposed || inner !== null) {
+			if (manuallyDisposed) {
 				return;
 			}
 			const cleanupsBefore = getActiveOwner()?.length ?? 0;
-			inner = config.create(snapshot);
-			assertRegisteredWithActiveOwner(config.utilityName, cleanupsBefore);
+			const wasEager = inner !== null;
+			if (inner === null) {
+				inner = config.create(snapshot);
+			}
+			if (wasEager && !disposeRegisteredOnOwner) {
+				disposeRegisteredOnOwner = true;
+				const current = inner;
+				getActiveOwner()?.push(() => config.disposeInner(current));
+				assertRegisteredWithActiveOwner(config.utilityName, cleanupsBefore);
+			} else if (!wasEager) {
+				assertRegisteredWithActiveOwner(config.utilityName, cleanupsBefore);
+			}
 		},
 		onDisconnect(): void {
 			if (inner !== null) {
@@ -91,6 +104,10 @@ export function bindToHostDisposable<TSnapshot, TInner>(config: {
 			}
 		},
 	});
+
+	if (config.eager && peekCurrentHost() !== null && !manuallyDisposed && inner === null) {
+		inner = config.create(snapshot);
+	}
 
 	return wrapper;
 }
@@ -122,7 +139,10 @@ export function bindToHostEffect(config: { utilityName: string; create: () => Wa
 			assertRegisteredWithActiveOwner(config.utilityName, cleanupsBefore);
 		},
 		onDisconnect(): void {
-			inner = null;
+			if (inner !== null) {
+				inner.dispose();
+				inner = null;
+			}
 		},
 	});
 

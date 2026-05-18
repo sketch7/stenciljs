@@ -1,0 +1,45 @@
+{
+  "name": "@ssv/tanstack.stencil-query",
+  "version": "0.0.0-PLACEHOLDER",
+  "description": "StencilJS integration for @tanstack/query-core — ReactiveController-based query and mutation hooks.",
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "@ssv/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "oxlint src/",
+    "fmt": "oxfmt src/",
+    "fmt:check": "oxfmt --check src/"
+  },
+  "devDependencies": {
+    "@ssv/stencil.core": "workspace:*",
+    "@stencil/core": "catalog:",
+    "@tanstack/query-core": "catalog:",
+    "@types/node": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "@ssv/stencil.core": "workspace:*",
+    "@stencil/core": ">=4.0.0",
+    "@tanstack/query-core": "^5.0.0"
+  }
+}

@@ -1,39 +1,3 @@
-/**
- * @ssv/stencil-signals — utils/create-store.ts
- *
- * `createStore(initialState, computedFactory?)` — wrap a plain object in
- * per-key signal states and return a reactive `Proxy` that looks and feels
- * like the original object.
- *
- * ## Basic usage
- *
- * ```ts
- * const store = createStore({ count: 0, name: 'Alice' });
- *
- * store.count++;          // → signal.set(1)
- * console.log(store.count); // → signal.get() = 1
- *
- * store.$signal('count'); // → raw SignalState<number>
- * store.$reset();         // → all keys back to initial values
- * ```
- *
- * ## With computed properties
- *
- * ```ts
- * const store = createStore(
- *   { price: 10, qty: 3 },
- *   (s) => ({ total: computed(() => s.price * s.qty) }),
- * );
- * store.total;            // → 30  (reactive derived value)
- * ```
- *
- * ## Notes
- *
- * - `$signal` and `$reset` are reserved — do not use them as state keys.
- * - Writing to a computed key throws a `TypeError`.
- * - Writing to an unknown key throws a `TypeError`.
- */
-
 import { getAdapter } from "../adapters/active";
 import type { WritableSignal, Signal } from "../adapters/types";
 
@@ -52,6 +16,7 @@ export type Store<T extends object, C extends Record<string, Signal<unknown>> = 
 
 // ─── Implementation ───────────────────────────────────────────────────────────
 
+/** Wrap a plain object in per-key signals and expose it as a reactive Proxy. */
 export function createStore<T extends object, C extends Record<string, Signal<unknown>> = Record<never, never>>(
 	initialState: T,
 	computedFactory?: (state: T) => C,

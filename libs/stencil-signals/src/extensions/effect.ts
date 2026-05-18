@@ -1,39 +1,8 @@
-/**
- * @ssv/stencil-signals — extensions/effect.ts
- *
- * ─── Standalone (framework-agnostic) ─────────────────────────────────────────
- *
- *   effect(fn)
- *
- * Runs immediately, auto-tracks every signal read inside `fn`, and re-runs
- * whenever any of those signals change. Returns a `WatcherRef`.
- *
- *   effect(deps, fn, options?)
- *
- * Only re-runs when the signals in `deps` change. The callback receives their
- * current values as typed arguments. Signal reads inside `fn` that are NOT in
- * `deps` are untracked.
- *
- * Options:
- *   `defer: true` — skip the initial run; only fire on first dep change.
- *
- * ─── Lifecycle-bound (Stencil / ReactiveControllerHost) ──────────────────────
- *
- *   useSignalEffect(fn)
- *   useSignalEffect(deps, fn, options?)
- *
- * Same signatures, but binds the effect to the host lifecycle via
- * `bindToHostEffect`. Starts on `hostConnected`; disposal is handled by
- * `useSignalWatcher()` active-owner scope on disconnect. Must be called in
- * a component class-field initializer (where `use()` resolves the host).
- *
- * Both modes support `onCleanup(fn)` and an optional return-value cleanup.
- * On each re-run and on dispose: previous `onCleanup` runs first, then return cleanup.
- */
+import { peekCurrentHost } from "@ssv/stencil.core";
 
 import { getAdapter } from "../adapters/active";
 import type { WritableSignal, Signal } from "../adapters/types";
-import { getActiveOwner, scheduler } from "../signals/core";
+import { getActiveOwner } from "../signals/core";
 import { bindToHostEffect } from "./host-bind";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -78,17 +47,34 @@ function flushCleanups(state: EffectCleanupState): void {
 
 function flushAllCleanups(state: EffectCleanupState): void {
 	state.pendingCleanup?.();
+	state.pendingCleanup = null;
 	if (typeof state.userCleanup === "function") {
 		state.userCleanup();
+		state.userCleanup = undefined;
 	}
 }
 
-/** @internal — runs user fn after flushing prior cleanups; captures onCleanup + return. */
-export function runEffectWithCleanup(
+type EffectCleanupRunOptions = {
+	/**
+	 * When `true` (default), prior run’s cleanups flush before `fn`.
+	 * When `false`, prior registrations are dropped without running (host-bound effects).
+	 */
+	flushBetweenRuns?: boolean;
+};
+
+/** Runs user `fn`; captures onCleanup + return per `flushBetweenRuns`. */
+function runEffectWithCleanup(
 	state: EffectCleanupState,
 	fn: (onCleanup: RegisterCleanup) => CleanupFn | void,
+	runOptions?: EffectCleanupRunOptions,
 ): void {
-	flushCleanups(state);
+	const flushBetweenRuns = runOptions?.flushBetweenRuns ?? true;
+	if (flushBetweenRuns) {
+		flushCleanups(state);
+	} else {
+		state.pendingCleanup = null;
+		state.userCleanup = undefined;
+	}
 	let onCleanupFn: CleanupFn | null = null;
 	state.userCleanup = fn(cb => {
 		onCleanupFn = cb;
@@ -127,48 +113,36 @@ export function effect(
 	fn?: (values: unknown[], onCleanup: RegisterCleanup) => CleanupFn | void,
 	options?: EffectOptions,
 ): WatcherRef {
+	const hostBound = peekCurrentHost() !== null;
+	if (hostBound) {
+		return bindToHostEffect({
+			utilityName: "effect",
+			create: () => createEffectImmediate(fnOrDeps, fn, options, { flushBetweenRuns: false }),
+		});
+	}
+	return createEffectImmediate(fnOrDeps, fn, options, { flushBetweenRuns: true });
+}
+
+type CreateEffectMode = {
+	flushBetweenRuns: boolean;
+};
+
+/** Immediate effect creation; used by `effect()` and `bindToHostEffect.create`. */
+function createEffectImmediate(
+	fnOrDeps: ((onCleanup: RegisterCleanup) => CleanupFn | void) | readonly AnySignal[],
+	fn?: (values: unknown[], onCleanup: RegisterCleanup) => CleanupFn | void,
+	options?: EffectOptions,
+	mode?: CreateEffectMode,
+): WatcherRef {
+	const flushMode = mode ?? { flushBetweenRuns: true };
 	if (typeof fnOrDeps === "function") {
-		return autoTrackingEffect(fnOrDeps);
+		return autoTrackingEffect(fnOrDeps, flushMode);
 	}
 
 	if (!fn) {
 		return noopWatcherRef;
 	}
-	return explicitDepsEffect(fnOrDeps as readonly AnySignal[], fn, options ?? {});
-}
-
-// ─── useSignalEffect overloads ────────────────────────────────────────────────
-
-/**
- * Auto-tracking lifecycle effect. Starts on `hostConnected`, disposes on `hostDisconnected`.
- */
-export function useSignalEffect(fn: (onCleanup: RegisterCleanup) => CleanupFn | void): WatcherRef;
-
-/**
- * Explicit-deps lifecycle effect. Starts on `hostConnected`, disposes on `hostDisconnected`.
- */
-export function useSignalEffect<const Deps extends readonly AnySignal[]>(
-	deps: Deps,
-	fn: (values: SignalValues<Deps>, onCleanup: RegisterCleanup) => CleanupFn | void,
-	options?: EffectOptions,
-): WatcherRef;
-
-// ─── useSignalEffect implementation ──────────────────────────────────────────
-
-export function useSignalEffect(
-	fnOrDeps: ((onCleanup: RegisterCleanup) => CleanupFn | void) | readonly AnySignal[],
-	fn?: (values: unknown[], onCleanup: RegisterCleanup) => CleanupFn | void,
-	options?: EffectOptions,
-): WatcherRef {
-	return bindToHostEffect({
-		utilityName: "useSignalEffect",
-		create: () =>
-			typeof fnOrDeps === "function"
-				? effect(fnOrDeps)
-				: fn
-					? effect(fnOrDeps as readonly AnySignal[], fn, options)
-					: noopWatcherRef,
-	});
+	return explicitDepsEffect(fnOrDeps as readonly AnySignal[], fn, options ?? {}, flushMode);
 }
 
 // ─── Auto-tracking implementation ─────────────────────────────────────────────
@@ -176,73 +150,38 @@ export function useSignalEffect(
 // Delegates to the adapter's createEffect() which handles dep tracking
 // internally for both TC39 (Signal.Computed + Watcher) and Preact (effect()).
 
-function autoTrackingEffect(fn: (onCleanup: RegisterCleanup) => CleanupFn | void): WatcherRef {
-	const ref = getAdapter().createEffect(fn);
+function autoTrackingEffect(fn: (onCleanup: RegisterCleanup) => CleanupFn | void, mode: CreateEffectMode): WatcherRef {
+	const ref = getAdapter().createEffect(fn, { flushBetweenRuns: mode.flushBetweenRuns });
 	getActiveOwner()?.push(() => ref.dispose());
 	return ref;
 }
-
-// ─── Explicit-deps implementation ─────────────────────────────────────────────
-//
-// Uses a single depTracker computed to unify all listed deps into one Signal
-// that the Watcher can watch — same pattern as _computedAsyncCore. Returns {}
-// each evaluation so both TC39 (staleness-based) and Preact (equality-based)
-// adapters always see the signal as changed.
 
 function explicitDepsEffect(
 	deps: readonly AnySignal[],
 	fn: (values: unknown[], onCleanup: RegisterCleanup) => CleanupFn | void,
 	options: EffectOptions,
+	mode: CreateEffectMode,
 ): WatcherRef {
 	const adapter = getAdapter();
 	const cleanupState: EffectCleanupState = { pendingCleanup: null, userCleanup: undefined };
-	let disposed = false;
+	let defer = options.defer;
+	const runOpts: EffectCleanupRunOptions = { flushBetweenRuns: mode.flushBetweenRuns };
 
-	function runEffect(): void {
-		const values = deps.map(s => adapter.untrack(() => s()));
-		runEffectWithCleanup(cleanupState, onCleanup => fn(values, onCleanup));
-	}
-
-	// A computed that reads all deps in one place. Never exposes a meaningful
-	// value — returns a new object reference each time so Preact always
-	// propagates the change to the watcher.
-	const depTracker = adapter.createComputed<object>(() => {
-		try {
-			const dummy = Object.create(null);
-			for (const dep of deps) {
-				dep();
-			}
-			return dummy;
-		} catch {
-			return Object.create(null);
-		}
-	});
-
-	const watcher = adapter.createWatcher(() => {
-		if (disposed) {
-			return;
-		}
-		scheduler.schedule(() => {
-			if (disposed) {
-				return;
-			}
-			watcher.unwatch(depTracker);
-			depTracker();
-			watcher.watch(depTracker);
-			runEffect();
-		});
-	});
-
-	// Initial arm: evaluate depTracker to collect deps, then watch it.
-	depTracker();
-	watcher.watch(depTracker);
-	if (!options.defer) {
-		runEffect();
-	}
+	const innerRef = adapter.createEffect(
+		_onCleanup => {
+			const values = deps.map(s => s());
+			adapter.untrack(() => {
+				if (!defer) {
+					runEffectWithCleanup(cleanupState, oc => fn(values, oc), runOpts);
+				}
+				defer = false;
+			});
+		},
+		{ flushBetweenRuns: mode.flushBetweenRuns },
+	);
 
 	const ref = toWatcherRef(() => {
-		disposed = true;
-		watcher.dispose();
+		innerRef.dispose();
 		flushAllCleanups(cleanupState);
 	});
 	getActiveOwner()?.push(() => ref.dispose());

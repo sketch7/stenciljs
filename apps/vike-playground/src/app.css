@@ -4,21 +4,26 @@
 :root {
 	color-scheme: dark;
 
-	--color-bg: #0f172a;
+	--color-bg: #09101f;
 	--color-fg: #f1f5f9;
-	--color-muted-fg: #94a3b8;
-	--color-surface: #1e293b;
-	--color-surface-hover: #263348;
-	--color-border: #334155;
-	--color-border-hover: #475569;
+	--color-muted-fg: #64748b;
+	--color-surface: #0e1828;
+	--color-surface-hover: #172033;
+	--color-border: #1e2d42;
+	--color-border-hover: #2d4461;
 	--color-primary: #6366f1;
-	--color-primary-hover: #4f46e5;
+	--color-primary-hover: #818cf8;
 	--color-primary-fg: #ffffff;
 	--color-danger: #f87171;
-	--color-danger-bg: #3f1515;
-	--color-card: #1e293b;
-	--color-card-border: #334155;
+	--color-danger-bg: #2d0d0d;
+	--color-card: #0e1828;
+	--color-card-border: #1e2d42;
 	--radius: 0.5rem;
+
+	/* Nav active state */
+	--color-nav-active-bg: color-mix(in srgb, #6366f1 12%, transparent);
+	--color-nav-active-text: #a5b4fc;
+	--color-nav-active-border: #6366f1;
 
 	/* Tailwind CSS custom properties bridge */
 	--background: var(--color-bg);

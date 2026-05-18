@@ -2,6 +2,7 @@ import { defineConfig } from "oxlint";
 
 export default defineConfig({
 	plugins: ["typescript", "import", "react", "react-perf", "jsx-a11y", "vitest", "unicorn"],
+	jsPlugins: ["oxlint-tailwindcss"],
 	env: {
 		browser: true,
 		es2022: true,
@@ -43,7 +44,6 @@ export default defineConfig({
 		"func-style": "off",
 		"new-cap": "off",
 		"require-await": "off",
-		"eslint/max-lines": "off",
 		"id-length": "off",
 		"capitalized-comments": "off",
 		"sort-imports": [
@@ -57,6 +57,7 @@ export default defineConfig({
 		],
 		"object-shorthand": "error",
 		"prefer-destructuring": "off",
+		"logical-assignment-operators": "error",
 
 		// ── Import ─────────────────────────────────────────────────────────────
 		"import/no-default-export": "error",
@@ -135,6 +136,8 @@ export default defineConfig({
 
 		// ── Eslint ─────────────────────────────────────────────────────────────
 		"eslint/max-lines-per-function": "off",
+		"eslint/no-inline-comments": "off",
+		"eslint/max-lines": "off",
 
 		// ── Vitest ─────────────────────────────────────────────────────────────
 		"vitest/no-focused-tests": "error",
@@ -157,14 +160,26 @@ export default defineConfig({
 		"unicorn/no-nested-ternary": "off",
 		"unicorn/prefer-node-protocol": "error",
 		"unicorn/throw-new-error": "error",
+		// no-negated-condition was split into unicorn/ and eslint/ variants in v1.63.0 — disable the eslint duplicate
+		"no-negated-condition": "off",
 		"unicorn/no-useless-undefined": "warn",
 		"unicorn/prefer-ternary": "off",
+		"unicorn/numeric-separators-style": [
+			"warn",
+			{
+				number: {
+					minimumDigits: 5,
+					groupLength: 3,
+				},
+			},
+		],
 	},
 	overrides: [
 		{
 			// StencilJS components — class-based, uses h() not React, HTML attrs not React attrs
 			files: ["libs/*/src/**/*.tsx", "libs/*/src/**/*.ts", "libs/*/tests/**/*.tsx", "libs/*/tests/**/*.ts"],
 			rules: {
+				"prefer-arrow-callback": "off",
 				"react/rules-of-hooks": "off",
 				"react/prefer-function-component": "off",
 				// Stencil uses h() imported from @stencil/core, not React.createElement
@@ -268,14 +283,12 @@ export default defineConfig({
 				"vitest/require-test-timeout": "off", // requiring a timeout on every unit test is excessive
 				"vitest/consistent-test-filename": "off", // .spec.ts is a valid convention
 				"vitest/prefer-describe-function-title": "off", // describe title matching an imported name is fine
-				"jest/no-hooks": "off", // beforeEach/afterEach are standard vitest setup patterns
 			},
 		},
 		// config files - vitest/tsdown and co
 		{
 			files: ["*.config.ts"],
 			rules: {
-				"eslint/no-inline-comments": "off",
 				"import/no-default-export": "off",
 			},
 		},
@@ -286,6 +299,45 @@ export default defineConfig({
 				"import/no-default-export": "off",
 				// Page/Layout/Head components return JSX — explicit return type is noise
 				"typescript/explicit-function-return-type": "off",
+			},
+		},
+		{
+			// Tailwind CSS — vike-playground is the only app using Tailwind v4
+			files: ["apps/vike-playground/src/**/*.tsx", "apps/vike-playground/src/**/*.ts"],
+			rules: {
+				// ── Correctness ────────────────────────────────────────────────────────
+				"tailwindcss/no-unknown-classes": "error",
+				"tailwindcss/no-duplicate-classes": "error",
+				"tailwindcss/no-conflicting-classes": "error",
+				"tailwindcss/no-deprecated-classes": "error",
+				"tailwindcss/no-unnecessary-whitespace": "error",
+				"tailwindcss/no-contradicting-variants": "error",
+				// Warn: dark-first design — intentionally omitting a light-base class is valid
+				"tailwindcss/no-dark-without-light": "warn",
+
+				// ── Style ───────────────────────────────────────────────────────────────
+				"tailwindcss/enforce-canonical": "warn",
+				// Disabled — oxfmt handles Tailwind class sorting via sortTailwindcss; running both causes conflicts
+				"tailwindcss/enforce-sort-order": "off",
+				"tailwindcss/enforce-shorthand": "warn",
+				"tailwindcss/enforce-consistent-important-position": "warn", // default: suffix (v4 canonical)
+				"tailwindcss/enforce-negative-arbitrary-values": "warn",
+				"tailwindcss/enforce-consistent-variable-syntax": "warn", // default: shorthand bg-(--var)
+				"tailwindcss/consistent-variant-order": "warn",
+				// Not enforcing logical (ms-/me-) or physical direction — project has no RTL requirement
+				"tailwindcss/enforce-logical": "off",
+				"tailwindcss/enforce-physical": "off",
+
+				// ── Complexity ──────────────────────────────────────────────────────────
+				"tailwindcss/max-class-count": "off",
+				"tailwindcss/enforce-consistent-line-wrapping": "off", // oxfmt handles wrapping
+
+				// ── Restrictions ────────────────────────────────────────────────────────
+				"tailwindcss/no-hardcoded-colors": "warn", // prefer CSS custom properties / design tokens
+				"tailwindcss/no-unnecessary-arbitrary-value": "warn", // prefer named classes when equivalent
+				"tailwindcss/no-restricted-classes": "off",
+				"tailwindcss/no-arbitrary-value": "off", // project uses CSS vars that need arbitrary syntax
+				"tailwindcss/prefer-theme-tokens": "off", // risky: may silently change CSS output in wrapped-var themes
 			},
 		},
 		{
@@ -301,6 +353,7 @@ export default defineConfig({
 			// Stencil uses h() not React, class components, HTML attributes (not React attrs)
 			files: ["apps/stencil-playground/src/**/*.tsx", "apps/stencil-playground/src/**/*.ts"],
 			rules: {
+				"prefer-arrow-callback": "off",
 				"react/rules-of-hooks": "off",
 				"react/prefer-function-component": "off",
 				"react/no-unknown-property": "off",
@@ -315,6 +368,8 @@ export default defineConfig({
 				"react-perf/jsx-no-new-object-as-prop": "off",
 				"react-perf/jsx-no-new-function-as-prop": "off",
 				"react-perf/jsx-no-jsx-as-prop": "off",
+				// Stencil uses standard HTML label patterns; jsx-a11y checks don't apply to Stencil class components
+				"jsx-a11y/control-has-associated-label": "off",
 			},
 		},
 	],

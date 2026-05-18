@@ -11,11 +11,12 @@ import type { ReactiveController, ReactiveControllerHost } from "../hooks/reacti
  * afterEach(() => { host.dispose(); });
  * ```
  */
-export class TestHost implements ReactiveControllerHost {
+export class TestHost extends EventTarget implements ReactiveControllerHost {
 	readonly controllers = new Set<ReactiveController>();
 	renderCount = 0;
 
 	constructor() {
+		super();
 		setCurrentHost(this);
 	}
 
@@ -44,6 +45,20 @@ export class TestHost implements ReactiveControllerHost {
 	connect(): void {
 		for (const ctrl of this.controllers) {
 			ctrl.hostConnected?.();
+		}
+	}
+
+	/** Simulates `componentWillLoad` → `hostWillLoad` on each controller (awaits promises). */
+	async willLoad(): Promise<void> {
+		const promises: Promise<void>[] = [];
+		for (const ctrl of this.controllers) {
+			const result = ctrl.hostWillLoad?.();
+			if (result) {
+				promises.push(result);
+			}
+		}
+		if (promises.length > 0) {
+			await Promise.all(promises);
 		}
 	}
 

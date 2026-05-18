@@ -1,4 +1,4 @@
-import { computed, signal, useSignalWatcher, useSignalEffect } from "@ssv/stencil-signals";
+import { computed, signal, useSignalWatcher, effect } from "@ssv/stencil-signals";
 import { useSignalProps } from "@ssv/stencil-signals/extensions";
 import { SsvElement } from "@ssv/stencil.core";
 import { Component, Event, EventEmitter, Prop, h } from "@stencil/core";
@@ -27,25 +27,23 @@ export class AppTimer extends SsvElement {
 
 	#intervalId: ReturnType<typeof setInterval> | undefined;
 
-	readonly _durationEffect = useSignalEffect(
+	readonly _durationEffect = effect(
 		[this.$props.duration],
-		([d], onCleanup) => {
+		([d]) => {
 			this.#stop();
 			this.$timeRemaining.set(d);
-			onCleanup(() => {
-				console.warn(">>> cleanup duration effect");
-			});
 		},
 		{ defer: true },
 	);
 
-	readonly _completionEffect = useSignalEffect(() => {
+	readonly _completionEffect = effect(onCleanup => {
 		if (this.$isCompleted()) {
 			this.#stop();
 		}
-		return () => {
-			console.warn(">>>cleanup completion effect");
-		};
+
+		onCleanup(() => {
+			this.#stop();
+		});
 	});
 
 	#start() {
@@ -82,11 +80,6 @@ export class AppTimer extends SsvElement {
 		} else {
 			this.#start();
 		}
-	}
-
-	override disconnectedCallback(): void {
-		super.disconnectedCallback?.();
-		this.#stop();
 	}
 
 	render() {

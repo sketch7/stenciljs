@@ -11,6 +11,7 @@ applyTo: "**/*.ts,**/*.md"
 - **Examples first.** Lead with a code block; explain only what the example cannot show.
 - **No implementation detail.** Document _what_ and _why_, never _how_ internals work.
 - **One concern per doc block.** Split multiple scenarios into separate `@example` tags.
+- **American English.** Use en-US spelling (e.g. "serialized" not "serialised", "behavior" not "behaviour").
 
 ## TSDoc / JSDoc
 

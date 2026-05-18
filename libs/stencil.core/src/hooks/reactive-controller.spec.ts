@@ -13,7 +13,7 @@ vi.mock(import("@stencil/core"), () => ({
 class BaseClass {}
 const ReactiveControllerHostClass = ReactiveControllerHostMixin(BaseClass as any);
 
-describe("ReactiveControllerHostMixin", () => {
+describe("reactiveControllerHostMixin", () => {
 	let host: InstanceType<typeof ReactiveControllerHostClass>;
 
 	beforeEach(() => {

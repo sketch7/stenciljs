@@ -1,25 +1,25 @@
-import { createComposeRegistry, defineCompose } from "@ssv/stencil-ui/compose";
+import { createComposeRegistry } from "@ssv/stencil-ui/compose";
 import type { ComposeEventDetail } from "@ssv/stencil-ui/compose";
 import { Component, State, h } from "@stencil/core";
 
 import type { TimerWidgetData } from "./timer/ssv-timer-widget";
 
-const demoRegistry = createComposeRegistry();
-defineCompose<TimerWidgetData>("timer", { tag: "ssv-timer-widget", aliases: ["countdown"] }, demoRegistry);
-defineCompose("count", { tag: "ssv-count-widget" }, demoRegistry);
+const demoRegistry = createComposeRegistry()
+	.register("timer", { tag: "ssv-timer-widget", aliases: ["countdown"] })
+	.register("count", { tag: "ssv-count-widget" });
 
 @Component({
-	tag: "app-dynamic-widget-demo",
-	styleUrl: "dynamic-widget-demo.css",
+	tag: "app-compose-demo",
+	styleUrl: "compose-demo.css",
 	shadow: true,
 })
-export class AppDynamicWidgetDemo {
+export class AppComposeDemo {
 	@State() activeType: "timer" | "count" = "timer";
 	@State() lastEvent: ComposeEventDetail | null = null;
 
 	readonly #timerData: TimerWidgetData = { duration: 30 };
 
-	#widgetData(active: typeof this.activeType): unknown {
+	#data(active: typeof this.activeType): unknown {
 		switch (active) {
 			case "timer": {
 				return this.#timerData;
@@ -57,7 +57,7 @@ export class AppDynamicWidgetDemo {
 					<div class="widget-host">
 						<ssv-compose
 							name={this.activeType}
-							data={this.#widgetData(this.activeType)}
+							data={this.#data(this.activeType)}
 							onComposeEvent={(e: CustomEvent<ComposeEventDetail>) => (this.lastEvent = e.detail)}
 						/>
 					</div>

@@ -32,7 +32,7 @@ export type ComposeDefinitionInternal = {
 };
 
 export type ComposeRegistry = {
-	register<TData>(type: string, definition: ComposeDefinition<TData>): void;
+	register<TData>(type: string, definition: ComposeDefinition<TData>): ComposeRegistry;
 	resolve(type: string): ComposeDefinitionInternal | undefined;
 };
 

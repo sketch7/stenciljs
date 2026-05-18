@@ -151,7 +151,7 @@ type ComposeEventDetail<TOutput = unknown> = {
 Keep per-widget payloads in one place so new widgets only add a `case`:
 
 ```ts
-#widgetData(active: "timer" | "count"): unknown {
+#data(active: "timer" | "count"): unknown {
   switch (active) {
     case "timer":
       return { duration: 30 };
@@ -163,7 +163,7 @@ Keep per-widget payloads in one place so new widgets only add a `case`:
 }
 
 // render()
-<ssv-compose name={this.active} data={this.#widgetData(this.active)} />
+<ssv-compose name={this.active} data={this.#data(this.active)} />
 ```
 
 ## Context and multiple registries
@@ -191,10 +191,10 @@ Outputs: `dist/` (collection + types), `loader/`, `hydrate/` for SSR.
 
 Full demo in the monorepo:
 
-- [dynamic-widget demo](../../apps/stencil-playground/src/examples/dynamic-widget/) — `app-dynamic-widget-demo`, timer/count wrappers, scoped registry
-- [Vike page](../../apps/vike-playground/src/pages/dynamic-widget/+Page.tsx) — React host around the demo
+- [compose demo](../../apps/stencil-playground/src/examples/compose/) — `app-compose-demo`, timer/count wrappers, scoped registry
+- [Vike page](../../apps/vike-playground/src/pages/compose/+Page.tsx) — React host around the demo
 
-Registry helpers used by the demo: [widget-definitions.ts](../../apps/stencil-playground/src/examples/dynamic-widget/widget-definitions.ts).
+Registry helpers used by the demo: [widget-definitions.ts](../../apps/stencil-playground/src/examples/compose/widget-definitions.ts).
 
 ## Related
 

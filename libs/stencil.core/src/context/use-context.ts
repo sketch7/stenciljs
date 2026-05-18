@@ -48,8 +48,7 @@ export function useContext<T>(key: ContextKey<T>): Ref<T> {
 					},
 				},
 			});
-
-			host.dispatchEvent(event);
+			host.getElement().dispatchEvent(event);
 
 			if (!resolved) {
 				// Falls back to the shared singleton (throws if no defaultFactory).

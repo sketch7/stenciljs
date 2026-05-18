@@ -57,10 +57,30 @@ export type ReactiveControllerHost = {
 /**
  * Intersection of {@link ReactiveControllerHost} and `HTMLElement`.
  *
- * This is the type of the `host` parameter inside a `use()` factory. At runtime it is the actual
- * DOM element (resolved via `getElement` in lazy builds, identical to `host` in custom-elements builds).
+ * The resolved DOM element returned by `UseHostContext.getElement()`.
  */
 export type ReactiveHostElement = ReactiveControllerHost & HTMLElement;
+
+/**
+ * Host context passed to the factory function in {@link use}.
+ * Use `getElement()` inside lifecycle hooks to access the underlying DOM element.
+ *
+ * @example
+ * ```ts
+ * use((host) => ({
+ *   hostConnected() {
+ *     host.getElement().addEventListener('click', handler);
+ *   },
+ *   hostDisconnected() {
+ *     host.getElement().removeEventListener('click', handler);
+ *   },
+ * }));
+ * ```
+ */
+export type UseHostContext = ReactiveControllerHost & {
+	/** Returns the host's underlying DOM element. Call during lifecycle hooks — not at construction time. */
+	getElement(): ReactiveHostElement;
+};
 
 /**
  * Mixin factory that adds `ReactiveController` support to any Stencil component class.

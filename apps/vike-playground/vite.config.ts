@@ -18,12 +18,25 @@ let hydrateModuleRef: Record<string, unknown> = {};
 
 type HydrateFn = typeof renderToString | typeof hydrateDocument;
 
-// Wraps a hydrate function to forward component logs to the Node.js console.
+// Wraps a hydrate function to forward component logs to the Node.js console and inject
+// real Node.js fetch into Stencil's MockWindow.
+// MockWindow does not include fetch by default; without injection, any fetch() call inside
+// a component during SSR throws "fetch() is not implemented".
 const withRuntimeLogging = <T extends HydrateFn>(fn: T): T =>
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	((input: any, options?: SerializeDocumentOptions) =>
 		(fn as typeof renderToString)(input, {
 			runtimeLogging: true,
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			beforeHydrate(doc: any) {
+				const win = doc?.defaultView;
+				if (win && typeof globalThis.fetch === "function") {
+					win.fetch = globalThis.fetch;
+					if (typeof globalThis.Request === "function") win.Request = globalThis.Request;
+					if (typeof globalThis.Response === "function") win.Response = globalThis.Response;
+					if (typeof globalThis.Headers === "function") win.Headers = globalThis.Headers;
+				}
+			},
 			...options,
 		})) as unknown as T;
 

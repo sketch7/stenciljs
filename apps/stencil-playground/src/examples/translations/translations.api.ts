@@ -1,18 +1,20 @@
 import { use } from "@ssv/stencil.core";
 import { useQuery, useQueryClient } from "@ssv/tanstack.stencil-query";
 import type { QueryClient } from "@ssv/tanstack.stencil-query";
+import { Build } from "@stencil/core";
 
 export type TranslationMap = Record<string, string>;
 
 const QUERY_KEY = ["translations"] as const;
 const STALE_TIME = Infinity;
 
-// SSR needs an absolute URL; browser can use relative.
-const translationsUrl =
-	globalThis.window === undefined ? "http://localhost:3000/api/translations" : "/api/translations";
-
 async function fetchTranslations(): Promise<TranslationMap> {
-	const res = await fetch(translationsUrl);
+	// Build.isServer is a Stencil compile-time constant: true in the hydrate bundle, false in
+	// browser bundles. The module-level code runs inside Stencil's hydrateFactory closure where
+	// `window` is already present in globalThis (mock DOM), so globalThis.window checks are
+	// unreliable. Build.isServer is the correct signal.
+	const url = Build.isServer ? "http://localhost:3000/api/translations" : "/api/translations";
+	const res = await fetch(url);
 	if (!res.ok) {
 		throw new Error(`Failed to fetch translations: ${res.status}`);
 	}

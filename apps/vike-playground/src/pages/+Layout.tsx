@@ -38,8 +38,9 @@ const navSections: NavSection[] = [
 			{ href: "/stencil-signals/counter", label: "Counter" },
 			{ href: "/stencil-signals/todo", label: "Todo List" },
 			{ href: "/stencil-signals/timer", label: "Timer" },
-			{ href: "/stencil-signals/computed-async", label: "Computed Async" },
+			{ href: "/stencil-signals/derived-async", label: "Derived Async" },
 			{ href: "/stencil-signals/computed-previous", label: "Computed Previous" },
+			{ href: "/stencil-signals/mouse-event", label: "Mouse event (signalFromEvent)" },
 		],
 	},
 	{

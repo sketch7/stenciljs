@@ -17,6 +17,14 @@ export function clearCurrentHost(): void {
 }
 
 /**
+ * Returns the host currently being constructed, or `null` if none is set.
+ * Safer than `getCurrentHost()` when you only need to branch behavior (e.g. bind to lifecycle vs run immediately).
+ */
+export function peekCurrentHost(): ReactiveControllerHost | null {
+	return currentHost;
+}
+
+/**
  * Returns the host currently being constructed.
  * Throws if called outside a component constructor context.
  *

@@ -1,30 +1,9 @@
-/**
- * @ssv/stencil-signals — mixins/signal-watcher.ts
- *
- * `SignalWatcher` makes any StencilJS component automatically re-render
- * whenever a signal accessed during `render()` changes.
- *
- * Thin composition shell:
- *  - Requires `Base` to already implement `ReactiveControllerHost` (e.g. via `SsvElementMixin`)
- *  - Installs `SignalWatcherController` via `withSignalController` in the constructor
- *
- * @example
- * ```ts
- * // Compose with SsvElementMixin to provide the controller host:
- * export class MyComponent extends Mixin(SignalWatcherMixin, SsvElementMixin) {}
- *
- * // Or extend SsvElement directly + add the controller as a field:
- * export class MyComponent extends SsvElement {
- *   readonly signalWatcher = withSignalController(this);
- * }
- * ```
- */
-
 import type { ReactiveControllerHost } from "@ssv/stencil.core";
 import type { ComponentInterface, MixedInCtor } from "@stencil/core";
 
 import { useSignalWatcher } from "../controllers/signal-watcher-controller";
 
+/** Mixin factory that patches `render()` to auto-track signal dependencies and re-render on change. */
 export function SignalWatcherMixin<TBase extends MixedInCtor<ComponentInterface>>(
 	Base: TBase,
 ): TBase & MixedInCtor<ReactiveControllerHost> {

@@ -1,0 +1,49 @@
+{
+  "name": "tanstack-stencil-query",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "libs/tanstack.stencil-query/src",
+  "tags": ["type:lib", "scope:tanstack"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm build",
+        "cwd": "libs/tanstack.stencil-query"
+      },
+      "outputs": ["{projectRoot}/dist"],
+      "cache": true,
+      "dependsOn": ["^build"]
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm test",
+        "cwd": "libs/tanstack.stencil-query"
+      },
+      "cache": true,
+      "dependsOn": ["^build"]
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm oxlint src/",
+        "cwd": "libs/tanstack.stencil-query"
+      }
+    },
+    "fmt": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm oxfmt src/",
+        "cwd": "libs/tanstack.stencil-query"
+      }
+    },
+    "fmt:check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm oxfmt --check src/",
+        "cwd": "libs/tanstack.stencil-query"
+      }
+    }
+  }
+}

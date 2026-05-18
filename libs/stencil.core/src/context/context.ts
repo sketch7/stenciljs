@@ -30,6 +30,7 @@ export type ContextKey<T> = {
 	createInstance(): T;
 };
 
+// todo: type alias ContextRef<T> = Ref<T>
 /**
  * A stable reference to a context value resolved lazily in `hostConnected`.
  * Access `.current` only during or after the first render — it is always set by then.

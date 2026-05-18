@@ -43,7 +43,6 @@ export default defineConfig({
 		"func-style": "off",
 		"new-cap": "off",
 		"require-await": "off",
-		"eslint/max-lines": "off",
 		"id-length": "off",
 		"capitalized-comments": "off",
 		"sort-imports": [
@@ -135,6 +134,8 @@ export default defineConfig({
 
 		// ── Eslint ─────────────────────────────────────────────────────────────
 		"eslint/max-lines-per-function": "off",
+		"eslint/no-inline-comments": "off",
+		"eslint/max-lines": "off",
 
 		// ── Vitest ─────────────────────────────────────────────────────────────
 		"vitest/no-focused-tests": "error",
@@ -159,6 +160,15 @@ export default defineConfig({
 		"unicorn/throw-new-error": "error",
 		"unicorn/no-useless-undefined": "warn",
 		"unicorn/prefer-ternary": "off",
+		"unicorn/numeric-separators-style": [
+			"warn",
+			{
+				number: {
+					minimumDigits: 5,
+					groupLength: 3,
+				},
+			},
+		],
 	},
 	overrides: [
 		{
@@ -275,7 +285,6 @@ export default defineConfig({
 		{
 			files: ["*.config.ts"],
 			rules: {
-				"eslint/no-inline-comments": "off",
 				"import/no-default-export": "off",
 			},
 		},

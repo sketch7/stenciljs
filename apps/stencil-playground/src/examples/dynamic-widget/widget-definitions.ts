@@ -1,10 +1,10 @@
-import { defineWidget } from "@ssv/dynamic-widget";
+import { defineCompose } from "@ssv/dynamic-widget";
 
 import type { TimerWidgetData } from "./timer/ssv-timer-widget";
 
-defineWidget<TimerWidgetData>("timer", {
+defineCompose<TimerWidgetData>("timer", {
 	tag: "ssv-timer-widget",
 	aliases: ["countdown"],
 });
 
-defineWidget("count", { tag: "ssv-count-widget" });
+defineCompose("count", { tag: "ssv-count-widget" });

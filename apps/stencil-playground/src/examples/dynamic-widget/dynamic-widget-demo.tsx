@@ -1,12 +1,12 @@
-import { createWidgetRegistry, defineWidget } from "@ssv/dynamic-widget";
-import type { WidgetEventDetail } from "@ssv/dynamic-widget";
+import { createComposeRegistry, defineCompose } from "@ssv/dynamic-widget";
+import type { ComposeEventDetail } from "@ssv/dynamic-widget";
 import { Component, State, h } from "@stencil/core";
 
 import type { TimerWidgetData } from "./timer/ssv-timer-widget";
 
-const demoRegistry = createWidgetRegistry();
-defineWidget<TimerWidgetData>("timer", { tag: "ssv-timer-widget", aliases: ["countdown"] }, demoRegistry);
-defineWidget("count", { tag: "ssv-count-widget" }, demoRegistry);
+const demoRegistry = createComposeRegistry();
+defineCompose<TimerWidgetData>("timer", { tag: "ssv-timer-widget", aliases: ["countdown"] }, demoRegistry);
+defineCompose("count", { tag: "ssv-count-widget" }, demoRegistry);
 
 @Component({
 	tag: "app-dynamic-widget-demo",
@@ -15,7 +15,7 @@ defineWidget("count", { tag: "ssv-count-widget" }, demoRegistry);
 })
 export class AppDynamicWidgetDemo {
 	@State() activeType: "timer" | "count" = "timer";
-	@State() lastEvent: WidgetEventDetail | null = null;
+	@State() lastEvent: ComposeEventDetail | null = null;
 
 	readonly #timerData: TimerWidgetData = { duration: 30 };
 
@@ -35,9 +35,9 @@ export class AppDynamicWidgetDemo {
 
 	render() {
 		return (
-			<ssv-widget-registry-provider registry={demoRegistry}>
+			<ssv-compose-registry-provider registry={demoRegistry}>
 				<div class="demo">
-					<h2>Dynamic Widget Demo</h2>
+					<h2>Compose Demo</h2>
 
 					<div class="tabs">
 						<button
@@ -55,16 +55,16 @@ export class AppDynamicWidgetDemo {
 					</div>
 
 					<div class="widget-host">
-						<ssv-dynamic-widget
+						<ssv-compose
 							name={this.activeType}
 							data={this.#widgetData(this.activeType)}
-							onWidgetEvent={(e: CustomEvent<WidgetEventDetail>) => (this.lastEvent = e.detail)}
+							onComposeEvent={(e: CustomEvent<ComposeEventDetail>) => (this.lastEvent = e.detail)}
 						/>
 					</div>
 
 					{this.lastEvent && (
 						<div class="event-log">
-							<strong>Last widgetEvent:</strong>
+							<strong>Last composeEvent:</strong>
 							<pre>{JSON.stringify(this.lastEvent, null, 2)}</pre>
 						</div>
 					)}
@@ -73,19 +73,19 @@ export class AppDynamicWidgetDemo {
 						<p>
 							<em>&quot;countdown&quot; is an alias for &quot;timer&quot;</em>
 						</p>
-						<ssv-dynamic-widget name="countdown" data={{ duration: 10 }} />
+						<ssv-compose name="countdown" data={{ duration: 10 }} />
 					</div>
 
 					<div class="error-demo">
 						<p>
 							<em>Unknown type renders error slot:</em>
 						</p>
-						<ssv-dynamic-widget name="does-not-exist">
+						<ssv-compose name="does-not-exist">
 							<span slot="error">⚠ Widget name not registered</span>
-						</ssv-dynamic-widget>
+						</ssv-compose>
 					</div>
 				</div>
-			</ssv-widget-registry-provider>
+			</ssv-compose-registry-provider>
 		);
 	}
 }

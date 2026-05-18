@@ -1,6 +1,20 @@
 import type { ReactiveControllerHost } from "./reactive-controller";
 
-let currentHost: ReactiveControllerHost | null = null;
+// State is stored on globalThis (keyed by a Symbol.for) rather than a module-local
+// `let` binding. This serves two purposes:
+//
+// 1. When downstream bundlers (Rollup/Stencil) duplicate this module across
+//    chunks, every duplicate reads/writes the same slot. Without this, a chunk
+//    where `setCurrentHost` is never called locally would have an isolated
+//    `currentHost = null`, and `getCurrentHost()` from that chunk always throws.
+// 2. Rollup's constant folding cannot reason across globalThis, so the
+//    `if (!currentHost)` check in `getCurrentHost` is preserved (otherwise it
+//    can be eliminated to an unconditional throw).
+const HOST_KEY = Symbol.for("@ssv/stencil.core:currentHost");
+
+type HostGlobal = { [HOST_KEY]?: ReactiveControllerHost | null };
+
+const hostGlobal = globalThis as unknown as HostGlobal;
 
 /**
  * Sets the current host for implicit hook registration.
@@ -8,12 +22,12 @@ let currentHost: ReactiveControllerHost | null = null;
  * Exported for use in tests and custom host implementations.
  */
 export function setCurrentHost(host: ReactiveControllerHost): void {
-	currentHost = host;
+	hostGlobal[HOST_KEY] = host;
 }
 
 /** Clears the current host context. Queued as a microtask by `SsvElement` constructors. */
 export function clearCurrentHost(): void {
-	currentHost = null;
+	hostGlobal[HOST_KEY] = null;
 }
 
 /**
@@ -21,7 +35,7 @@ export function clearCurrentHost(): void {
  * Safer than `getCurrentHost()` when you only need to branch behavior (e.g. bind to lifecycle vs run immediately).
  */
 export function peekCurrentHost(): ReactiveControllerHost | null {
-	return currentHost;
+	return hostGlobal[HOST_KEY] ?? null;
 }
 
 /**
@@ -40,11 +54,12 @@ export function peekCurrentHost(): ReactiveControllerHost | null {
  * ```
  */
 export function getCurrentHost(): ReactiveControllerHost {
-	if (!currentHost) {
+	const host = hostGlobal[HOST_KEY];
+	if (!host) {
 		throw new Error(
 			"Hooks must be called in class field initializers of a ReactiveControllerHost component. " +
 				"If you are writing tests, call setCurrentHost(host) before invoking hooks.",
 		);
 	}
-	return currentHost;
+	return host;
 }

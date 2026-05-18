@@ -7,6 +7,30 @@
 	max-width: 600px;
 }
 
+.demo-section {
+	margin-bottom: 1.5rem;
+}
+
+.demo-section h3 {
+	margin: 0 0 0.5rem;
+	font-size: 1rem;
+}
+
+.demo-hint {
+	margin: 0 0 0.75rem;
+	color: var(--color-muted-fg, #666);
+	font-size: 0.875rem;
+}
+
+.demo-hint code {
+	font-size: 0.8em;
+}
+
+.global-section {
+	padding-top: 1rem;
+	border-top: 1px solid var(--color-border, #eee);
+}
+
 .tabs {
 	display: flex;
 	gap: 0.5rem;
@@ -51,15 +75,11 @@
 	color: var(--color-muted-fg, #555);
 }
 
-.alias-demo,
-.error-demo {
-	margin-top: 1.5rem;
-	padding-top: 1rem;
-	border-top: 1px solid var(--color-border, #eee);
+.alias-demo {
+	margin-top: 1rem;
 }
 
-.alias-demo p,
-.error-demo p {
+.alias-demo p {
 	margin: 0 0 0.5rem;
 	color: var(--color-muted-fg, #666);
 	font-size: 0.875rem;

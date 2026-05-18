@@ -1,8 +1,9 @@
-import { SsvElement, useContext } from "@ssv/stencil.core";
+import { SsvElement } from "@ssv/stencil.core";
 import { Component, Event, EventEmitter, Listen, Prop, h } from "@stencil/core";
 import type { VNode } from "@stencil/core";
 
-import { ComposeRegistryContext } from "./registry/context";
+import { isComposeDevEnv } from "./registry/is-compose-dev";
+import { useCompositionRegistry } from "./registry/use-composition-registry";
 import type { ComposeEventDetail } from "./types";
 
 @Component({
@@ -20,7 +21,7 @@ export class SsvCompose extends SsvElement {
 	/** Normalized output event from any wrapper component in this compose's subtree. */
 	@Event() composeEvent!: EventEmitter<ComposeEventDetail>;
 
-	readonly #registry = useContext(ComposeRegistryContext);
+	readonly #registry = useCompositionRegistry();
 
 	@Listen("ssvComposeOutput")
 	onComposeOutput(e: CustomEvent): void {
@@ -29,8 +30,15 @@ export class SsvCompose extends SsvElement {
 	}
 
 	render(): VNode | null {
-		const definition = this.#registry.current.resolve(this.name);
+		const registry = this.#registry.current;
+		const definition = registry.resolve(this.name);
 		if (!definition) {
+			if (isComposeDevEnv()) {
+				const known = registry.listTypes();
+				console.warn(
+					`[compose] No definition for name "${this.name}". Known types: ${known.length > 0 ? known.join(", ") : "(none)"}`,
+				);
+			}
 			return <slot name="error" />;
 		}
 		const props = definition.mapData ? definition.mapData(this.data) : { data: this.data };

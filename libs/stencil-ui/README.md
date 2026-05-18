@@ -15,47 +15,73 @@ pnpm add @ssv/stencil-ui @ssv/stencil.core
 Add the package to your Stencil app so its component collection is included in the build (same as any `libs/` dependency in this monorepo). Then import registry helpers where you register composes:
 
 ```ts
-import { createComposeRegistry, defineCompose } from "@ssv/stencil-ui/compose";
+import { createCompositionDefs, registerCompositionDefs } from "@ssv/stencil-ui/compose";
 ```
 
 ## Quick start
 
-### 1. Register compose types
+### 1. Define a static catalog
 
 ```ts
-// widget-definitions.ts (run once at module load, or inside a provider)
-import { defineCompose } from "@ssv/stencil-ui/compose";
+// compose-defs.ts
+import {
+  createCompositionDefs,
+  registerCompositionDefs,
+  type CompositionNameOf,
+} from "@ssv/stencil-ui/compose";
 
-type TimerData = { duration: number };
-
-defineCompose<TimerData>("timer", {
-  tag: "ssv-timer-widget",
-  aliases: ["countdown"],
+export const appCompositionDefs = createCompositionDefs({
+  timer: { tag: "ssv-timer-widget", aliases: ["countdown"] },
+  count: { tag: "ssv-count-widget" },
 });
 
-defineCompose("count", { tag: "ssv-count-widget" });
+export type AppCompositionName = CompositionNameOf<typeof appCompositionDefs>;
+// "timer" | "count" | "countdown"
 ```
 
-### 2. Wrap the tree with a registry (optional)
+### 2. Global registry (SSR / hard refresh)
 
-Use `ssv-compose-registry-provider` when you need an **isolated** registry (per page, per tenant, tests). Omit it to use the **global** singleton populated by `defineCompose()` without a third argument.
+Import the defs module from your Stencil **`global.ts`** so registration runs on the server and on every client load:
+
+```ts
+// global.ts
+import "./compose-defs";
+```
+
+```ts
+// compose-defs.ts (side effect at module load)
+registerCompositionDefs(appCompositionDefs);
+```
+
+Any `<ssv-compose>` without a scoped provider uses the global `composeRegistry` singleton.
+
+### 3. Scoped registry (subtree)
+
+On an `SsvElement` host, call `provideCompositionRegistry` as a field initializer:
 
 ```tsx
-import { createComposeRegistry } from "@ssv/stencil-ui/compose";
+import { SsvElement } from "@ssv/stencil.core";
+import { provideCompositionRegistry } from "@ssv/stencil-ui/compose";
 
-const registry = createComposeRegistry();
-// defineCompose("timer", { tag: "ssv-timer-widget" }, registry);
+@Component({ tag: "app-dashboard" })
+export class AppDashboard extends SsvElement {
+  readonly #registry = provideCompositionRegistry(appCompositionDefs);
 
-render() {
-  return (
-    <ssv-compose-registry-provider registry={registry}>
-      <ssv-compose name="timer" data={{ duration: 30 }} />
-    </ssv-compose-registry-provider>
-  );
+  render() {
+    return <ssv-compose name="timer" data={{ duration: 30 }} />;
+  }
 }
 ```
 
-### 3. Render by name + data
+Fluent setup is also supported:
+
+```ts
+readonly #registry = provideCompositionRegistry(r =>
+  r.register("timer", { tag: "ssv-timer-widget" }),
+);
+```
+
+### 4. Render by name + data
 
 ```tsx
 <ssv-compose
@@ -65,7 +91,7 @@ render() {
 />
 ```
 
-Unknown names render the **`error` slot** instead of throwing:
+Unknown names render the **`error` slot** instead of throwing. In development, `ssv-compose` also logs a console warning listing known primary keys from the active registry.
 
 ```tsx
 <ssv-compose name="missing">
@@ -78,7 +104,7 @@ Unknown names render the **`error` slot** instead of throwing:
 | Tag                             | Extends      | Purpose                                                                                     |
 | ------------------------------- | ------------ | ------------------------------------------------------------------------------------------- |
 | `ssv-compose`                   | `SsvElement` | Resolves `name` in the registry and renders the matching custom element via `h(tag, props)` |
-| `ssv-compose-registry-provider` | `SsvElement` | Provides a `ComposeRegistry` to descendants via `@ssv/stencil.core` context                 |
+| `ssv-compose-registry-provider` | `SsvElement` | Legacy provider — prefer `provideCompositionRegistry` on hosts                              |
 
 Both require a host that supports reactive controllers and context (`SsvElement` or `Mixin(SsvElementMixin)`).
 
@@ -113,14 +139,22 @@ export class SsvTimerWidget {
 
 ## Registry API
 
-| Export                                    | Description                                                                                          |
-| ----------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `defineCompose(type, options, registry?)` | Register a name → definition. Third arg defaults to global `composeRegistry`.                        |
-| `createComposeRegistry()`                 | New isolated `Map`-backed registry.                                                                  |
-| `composeRegistry`                         | Global singleton used when no provider overrides context.                                            |
-| `ComposeRegistryContext`                  | Context token from `@ssv/stencil.core` (`createContext`). Default factory returns `composeRegistry`. |
+| Export                                        | Description                                                                                          |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `createCompositionDefs(defs)`                 | Preserves literal keys for `CompositionNameOf` inference.                                            |
+| `registerCompositionDefs(defs, registry?)`    | Bulk-register a defs map. Defaults to global `composeRegistry`.                                      |
+| `provideCompositionRegistry(setup)`           | Scoped registry + `provideContext` on an `SsvElement` host.                                          |
+| `useCompositionRegistry()`                    | Consume nearest registry (or global fallback).                                                       |
+| `defineCompose(type, options, registry?)`     | Register one entry. Alias for `registry.register(...)`.                                              |
+| `createComposeRegistry()`                     | New isolated `Map`-backed registry.                                                                  |
+| `composeRegistry`                             | Global singleton used when no provider overrides context.                                            |
+| `ComposeRegistryContext`                      | Context token from `@ssv/stencil.core` (`createContext`). Default factory returns `composeRegistry`. |
 
 All of the above are exported from `@ssv/stencil-ui/compose`.
+
+### Duplicate registration
+
+**Policy: last wins.** Re-registering a primary key or alias overwrites the previous entry. This keeps HMR and intentional overrides predictable. In development, the registry logs a `console.warn` when overwriting an existing key; production builds do not warn.
 
 ### `ComposeDefinition<TData>`
 
@@ -140,6 +174,8 @@ defineCompose<TimerData>("timer", {
 ### Types
 
 ```ts
+type CompositionNameOf<TDefs> = /* keys of TDefs + all alias strings */;
+
 type ComposeEventDetail<TOutput = unknown> = {
   name: string; // registry name on ssv-compose
   data: TOutput; // wrapper's ssvComposeOutput detail
@@ -148,12 +184,13 @@ type ComposeEventDetail<TOutput = unknown> = {
 
 ## Passing data from a host
 
-Keep per-widget payloads in one place so new widgets only add a `case`:
+Use `CompositionNameOf<typeof yourDefs>` for typed tab state and payload helpers:
 
 ```ts
-#data(active: "timer" | "count"): unknown {
+#data(active: AppCompositionName): unknown {
   switch (active) {
     case "timer":
+    case "countdown":
       return { duration: 30 };
     case "count":
       return {};
@@ -166,17 +203,19 @@ Keep per-widget payloads in one place so new widgets only add a `case`:
 <ssv-compose name={this.active} data={this.#data(this.active)} />
 ```
 
+`ssv-compose` keeps `@Prop() name!: string` at the component boundary so generic consumers are not tied to your defs map.
+
 ## Context and multiple registries
 
 ```
-ssv-compose-registry-provider  →  provideContext(ComposeRegistryContext)
+SsvElement host  →  provideCompositionRegistry(defs | fn)
         │
-        └── ssv-compose  →  useContext(ComposeRegistryContext).resolve(name)
+        └── ssv-compose  →  useCompositionRegistry().resolve(name)
 ```
 
-- **Global:** call `defineCompose(...)` at module scope (no third argument). Any `ssv-compose` without an ancestor provider uses `composeRegistry`.
-- **Scoped:** `createComposeRegistry()`, register with the third `defineCompose` argument, pass `registry` to `ssv-compose-registry-provider`.
-- **Empty provider:** omit `registry` on the provider to get a fresh internal registry (useful for tests).
+- **Global:** `registerCompositionDefs(...)` in a module imported from `global.ts`.
+- **Scoped:** `provideCompositionRegistry(...)` on an `SsvElement` ancestor.
+- **Legacy:** `ssv-compose-registry-provider` (prefer `provideCompositionRegistry` for new code).
 
 ## Build
 
@@ -191,10 +230,10 @@ Outputs: `dist/` (collection + types), `loader/`, `hydrate/` for SSR.
 
 Full demo in the monorepo:
 
-- [compose demo](../../apps/stencil-playground/src/examples/compose/) — `app-compose-demo`, timer/count wrappers, scoped registry
+- [compose demo](../../apps/stencil-playground/src/examples/compose/) — typed defs, scoped + global sections, dev resolve warnings
 - [Vike page](../../apps/vike-playground/src/pages/compose/+Page.tsx) — React host around the demo
 
-Registry helpers used by the demo: [widget-definitions.ts](../../apps/stencil-playground/src/examples/compose/widget-definitions.ts).
+Registry setup: [compose-defs.ts](../../apps/stencil-playground/src/examples/compose/compose-defs.ts) (imported from [global.ts](../../apps/stencil-playground/src/global.ts)).
 
 ## Related
 

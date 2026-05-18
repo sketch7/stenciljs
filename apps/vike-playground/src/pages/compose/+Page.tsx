@@ -7,9 +7,10 @@ export default function Page(): JSX.Element {
 			<div className="flex flex-col gap-1">
 				<h1 className="text-2xl font-bold text-(--color-fg)">Compose</h1>
 				<p className="text-sm text-(--color-muted-fg)">
-					Demonstrates <code>ssv-compose</code> — renders components by name string + data object using a context-scoped
-					registry. The demo component provides its own registry via{" "}
-					<code>provideContext(ComposeRegistryContext, registry)</code>.
+					Demonstrates <code>ssv-compose</code> — render widgets by name + data. The demo uses{" "}
+					<code>provideCompositionRegistry</code> for a scoped registry and <code>registerCompositionDefs</code> in{" "}
+					<code>global.ts</code> for SSR-safe global types. Host state uses <code>CompositionNameOf</code> for typed tab
+					names; unknown <code>name</code> values show the error slot and log known types in dev.
 				</p>
 			</div>
 

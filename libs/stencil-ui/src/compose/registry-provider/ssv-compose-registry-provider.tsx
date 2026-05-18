@@ -1,3 +1,4 @@
+// TODO: Remove this component in favor of provideCompositionRegistry() on SsvElement hosts.
 import { SsvElement, provideContext } from "@ssv/stencil.core";
 import { Component, Prop, h } from "@stencil/core";
 
@@ -27,14 +28,12 @@ export class SsvComposeRegistryProvider extends SsvElement {
 	// Methods read #activeRegistry at call time so @Prop() registry changes are reflected.
 	readonly #delegate: ComposeRegistry = {
 		register: (type: string, definition: ComposeDefinition) => this.#activeRegistry.register(type, definition),
+		registerFromDefs: defs => this.#activeRegistry.registerFromDefs(defs),
 		resolve: (type: string): ComposeDefinitionInternal | undefined => this.#activeRegistry.resolve(type),
+		listTypes: () => this.#activeRegistry.listTypes(),
 	};
 
-	constructor() {
-		super();
-		// Called after field initializers; currentHost is still set by SsvElement mixin.
-		provideContext(ComposeRegistryContext, this.#delegate);
-	}
+	readonly registryContext = provideContext(ComposeRegistryContext, this.#delegate);
 
 	render() {
 		return <slot />;

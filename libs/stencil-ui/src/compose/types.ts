@@ -31,9 +31,31 @@ export type ComposeDefinitionInternal = {
 	mapData?: (data: unknown) => Record<string, unknown>;
 };
 
+/** Static catalog of compose types keyed by primary name. */
+export type CompositionDefsMap = Record<string, ComposeDefinition>;
+
+/** Alias strings from a single definition entry. */
+export type AliasesOf<TDef extends ComposeDefinition> = TDef extends { aliases: infer A }
+	? A extends readonly string[]
+		? A[number]
+		: never
+	: never;
+
+/** Keys of the defs map plus every entry's alias strings. */
+export type CompositionNameOf<TDefs extends CompositionDefsMap> =
+	| (keyof TDefs & string)
+	| AliasesOf<TDefs[keyof TDefs]>;
+
+export function createCompositionDefs<const T extends CompositionDefsMap>(defs: T): T {
+	return defs;
+}
+
 export type ComposeRegistry = {
 	register<TData>(type: string, definition: ComposeDefinition<TData>): ComposeRegistry;
+	registerFromDefs(defs: CompositionDefsMap): ComposeRegistry;
 	resolve(type: string): ComposeDefinitionInternal | undefined;
+	/** @internal Dev-only; lists registered primary keys (not every alias). */
+	listTypes(): string[];
 };
 
 /** Normalized output event detail emitted by ssv-compose. */

@@ -34,6 +34,6 @@ export function defineCompose<TData>(
 	type: string,
 	options: ComposeDefinition<TData>,
 	registry: ComposeRegistry = composeRegistry,
-): void {
-	registry.register<TData>(type, options);
+): ComposeRegistry {
+	return registry.register<TData>(type, options);
 }

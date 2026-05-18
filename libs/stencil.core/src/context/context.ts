@@ -1,3 +1,5 @@
+import type { Ref } from "../ref";
+
 /** Internal custom-event name used to propagate context through the DOM tree. */
 export const CONTEXT_EVENT = "__ssv:context-request" as const;
 
@@ -30,15 +32,11 @@ export type ContextKey<T> = {
 	createInstance(): T;
 };
 
-// todo: type alias ContextRef<T> = Ref<T>
 /**
- * A stable reference to a context value resolved lazily in `hostConnected`.
- * Access `.current` only during or after the first render — it is always set by then.
+ * A stable reference to a context value. Callable and readable via `.current`.
+ * Alias of {@link Ref} — compatible anywhere a `Ref<T>` is expected.
  */
-export type ContextRef<T> = {
-	/** The resolved context value. Available after `hostConnected` (i.e. during render). */
-	readonly current: T;
-};
+export type ContextRef<T> = Ref<T>;
 
 /**
  * Creates a typed context token.

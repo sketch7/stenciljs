@@ -14,7 +14,7 @@ export type HookEvent = {
 	hook: HookName;
 	ts: string;
 	index: number;
-}
+};
 
 export const hookMeta: Record<HookName, { badge: string; desc: string }> = {
 	hostConnected: { badge: "connected", desc: "Element connected to the DOM" },
@@ -29,11 +29,12 @@ export const hookMeta: Record<HookName, { badge: string; desc: string }> = {
 
 function timestamp(): string {
 	const now = new Date();
-	return (
-		`${now.toLocaleTimeString("en", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" }) 
-		}.${ 
-		String(now.getMilliseconds()).padStart(3, "0")}`
-	);
+	return `${now.toLocaleTimeString("en", {
+		hour12: false,
+		hour: "2-digit",
+		minute: "2-digit",
+		second: "2-digit",
+	})}.${String(now.getMilliseconds()).padStart(3, "0")}`;
 }
 
 const hookColors: Record<HookName, string> = {

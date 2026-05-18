@@ -1,4 +1,4 @@
-import { getCurrentHost } from "@ssv/stencil.core";
+import { createWritableRef, getCurrentHost } from "@ssv/stencil.core";
 import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
 import { getElement } from "@stencil/core";
 
@@ -251,7 +251,7 @@ export function useSignalProps<H extends ReactiveControllerHost>(
 
 export function useSignalProps(_hostClass: abstract new (...args: unknown[]) => unknown): unknown {
 	const host = getCurrentHost() as AnyHost;
-	const bundleRef: { current: PropsBundle | null } = { current: null };
+	const bundleRef = createWritableRef<PropsBundle | null>(null);
 	const getBundle = (): PropsBundle | null => bundleRef.current;
 
 	return <C extends Record<string, SignalPropOptions<unknown>>>(config: C) => {

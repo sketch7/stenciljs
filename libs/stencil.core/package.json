@@ -27,6 +27,11 @@
       "@ssv/source": "./src/transfer-state/index.ts",
       "types": "./dist/transfer-state/index.d.ts",
       "import": "./dist/transfer-state/index.js"
+    },
+    "./dev": {
+      "@ssv/source": "./src/dev/index.ts",
+      "types": "./dist/dev/index.d.ts",
+      "import": "./dist/dev/index.js"
     }
   },
   "scripts": {

@@ -1,5 +1,5 @@
-import { createContext, provideContext, use, useContext } from "@ssv/stencil.core";
-import type { ContextRef } from "@ssv/stencil.core";
+import { createContext, createRef, provideContext, use, useContext } from "@ssv/stencil.core";
+import type { Ref } from "@ssv/stencil.core";
 import { makeTransferKey } from "@ssv/stencil.core/transfer-state";
 import type { TransferState } from "@ssv/stencil.core/transfer-state";
 import { dehydrate, hydrate, QueryClient } from "@tanstack/query-core";
@@ -114,7 +114,7 @@ export function provideQueryClient(clientOrOptions?: QueryClient | ProvideQueryC
 /**
  * Resolves the nearest `QueryClient` from the component tree, or returns the explicit client if provided.
  *
- * Returns a {@link ContextRef} whose `.current` is available after `hostConnected` (before the first render).
+ * Returns a {@link Ref} whose `.current` is available after `hostConnected` (before the first render).
  * Pass an explicit `client` to bypass context — useful in tests.
  *
  * @example
@@ -125,9 +125,9 @@ export function provideQueryClient(clientOrOptions?: QueryClient | ProvideQueryC
  * this.#client.current.invalidateQueries({ queryKey: ['posts'] });
  * ```
  */
-export function useQueryClient(client?: QueryClient): ContextRef<QueryClient> {
+export function useQueryClient(client?: QueryClient): Ref<QueryClient> {
 	if (client) {
-		return { current: client };
+		return createRef(() => client);
 	}
 	return useContext(queryClientKey);
 }

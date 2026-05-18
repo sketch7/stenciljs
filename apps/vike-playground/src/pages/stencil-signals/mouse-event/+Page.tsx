@@ -18,10 +18,8 @@ export default function Page(): JSX.Element {
 			</div>
 
 			<p className="text-xs text-[var(--color-muted-fg)]">
-				<code>
-					signalFromEvent(&apos;mousemove&apos;, &#123; target: &apos;window&apos;, map: ... &#125;)
-				</code>{" "}
-				mirrors <code>@Listen(&apos;mousemove&apos;, &#123; target: &apos;window&apos; &#125;)</code>.{" "}
+				<code>signalFromEvent(&apos;mousemove&apos;, &#123; target: &apos;window&apos;, map: ... &#125;)</code> mirrors{" "}
+				<code>@Listen(&apos;mousemove&apos;, &#123; target: &apos;window&apos; &#125;)</code>.{" "}
 				<code>useSignalWatcher()</code> re-renders when the signal updates — no <code>@State</code> or{" "}
 				<code>requestUpdate()</code> in the component.
 			</p>

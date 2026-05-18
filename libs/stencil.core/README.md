@@ -12,18 +12,21 @@ pnpm add @ssv/stencil.core
 
 ## API
 
-| Export            | Kind  | Purpose                                                 |
-| ----------------- | ----- | ------------------------------------------------------- |
-| `SsvElement`      | class | Base class with controller support (single inheritance) |
-| `SsvElementMixin` | mixin | Same as `SsvElement` but composable via `Mixin()`       |
-| `Ref<T>`          | type  | Callable reactive ref — `ref()` or `ref.current`        |
-| `createRef`       | fn    | Creates a `Ref<T>` backed by a getter function          |
+| Export              | Kind  | Purpose                                                            |
+| ------------------- | ----- | ------------------------------------------------------------------ |
+| `SsvElement`        | class | Base class with controller support (single inheritance)            |
+| `SsvElementMixin`   | mixin | Same as `SsvElement` but composable via `Mixin()`                  |
+| `Ref<T>`            | type  | Callable read-only ref — `ref()` or `ref.current`                  |
+| `WritableRef<T>`    | type  | Writable callable ref — set `.current`, expose via `.asReadonly()` |
+| `createRef`         | fn    | Creates a `Ref<T>` backed by a getter function                     |
+| `createWritableRef` | fn    | Creates a `WritableRef<T>` backed by a settable value cell         |
 
 ## Usage
 
 See [docs/hooks.md](docs/hooks.md) for the full `use()` guide — forms, examples, and host context internals.
 See [docs/context.md](docs/context.md) for the tree-scoped context API — `createContext`, `provideContext`, `useContext`, and composing into hooks.
 See [docs/transfer-state.md](docs/transfer-state.md) for SSR state serialization — `provideTransferState`, `useTransferState`, and shadow DOM hydration. Import from `@ssv/stencil.core/transfer-state`.
+See [docs/dev.md](docs/dev.md) for development utilities — `useLifecycleLogger` and related types. Import from `@ssv/stencil.core/dev`.
 
 ## Examples
 

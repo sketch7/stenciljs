@@ -1,8 +1,8 @@
 import { createContext } from "@ssv/stencil.core";
 
-import type { WidgetRegistry } from "../types";
-import { widgetRegistry } from "./registry";
+import type { ComposeRegistry } from "../types";
+import { composeRegistry } from "./registry";
 
-export const WidgetRegistryContext = createContext<WidgetRegistry>(() => widgetRegistry, {
-	name: "widget-registry",
+export const ComposeRegistryContext = createContext<ComposeRegistry>(() => composeRegistry, {
+	name: "compose-registry",
 });

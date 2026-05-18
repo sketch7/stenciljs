@@ -1,4 +1,4 @@
-export { defineWidget } from "./registry/define-widget";
-export { createWidgetRegistry, widgetRegistry } from "./registry/registry";
-export { WidgetRegistryContext } from "./registry/context";
-export type { WidgetDefinition, WidgetDefinitionInternal, WidgetEventDetail, WidgetRegistry } from "./types";
+export { defineCompose } from "./registry/define-compose";
+export { createComposeRegistry, composeRegistry } from "./registry/registry";
+export { ComposeRegistryContext } from "./registry/context";
+export type { ComposeDefinition, ComposeDefinitionInternal, ComposeEventDetail, ComposeRegistry } from "./types";

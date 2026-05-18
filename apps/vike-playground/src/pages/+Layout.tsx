@@ -61,7 +61,7 @@ const navSections: NavSection[] = [
 		],
 	},
 	{
-		title: "Dynamic Widget",
+		title: "Compose",
 		items: [{ href: "/dynamic-widget", label: "Demo" }],
 	},
 ];

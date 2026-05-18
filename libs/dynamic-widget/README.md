@@ -1,6 +1,6 @@
 # @ssv/dynamic-widget
 
-> Registry-driven Stencil web components — render a widget by **name** and **data**, with typed wrappers and normalized output events.
+> Registry-driven Stencil web components — render a compose by **name** and **data**, with typed wrappers and normalized output events.
 
 [![license](https://img.shields.io/npm/l/@ssv/dynamic-widget.svg)](LICENSE)
 
@@ -12,45 +12,45 @@ pnpm add @ssv/dynamic-widget @ssv/stencil.core
 
 **Peer dependencies:** `@stencil/core >=4.0.0`, `@ssv/stencil.core` (workspace or published)
 
-Add the package to your Stencil app so its component collection is included in the build (same as any `libs/` dependency in this monorepo). Then import registry helpers where you register widgets:
+Add the package to your Stencil app so its component collection is included in the build (same as any `libs/` dependency in this monorepo). Then import registry helpers where you register composes:
 
 ```ts
-import { createWidgetRegistry, defineWidget } from "@ssv/dynamic-widget";
+import { createComposeRegistry, defineCompose } from "@ssv/dynamic-widget";
 ```
 
 ## Quick start
 
-### 1. Register widget types
+### 1. Register compose types
 
 ```ts
 // widget-definitions.ts (run once at module load, or inside a provider)
-import { defineWidget } from "@ssv/dynamic-widget";
+import { defineCompose } from "@ssv/dynamic-widget";
 
 type TimerData = { duration: number };
 
-defineWidget<TimerData>("timer", {
+defineCompose<TimerData>("timer", {
   tag: "ssv-timer-widget",
   aliases: ["countdown"],
 });
 
-defineWidget("count", { tag: "ssv-count-widget" });
+defineCompose("count", { tag: "ssv-count-widget" });
 ```
 
 ### 2. Wrap the tree with a registry (optional)
 
-Use `ssv-widget-registry-provider` when you need an **isolated** registry (per page, per tenant, tests). Omit it to use the **global** singleton populated by `defineWidget()` without a third argument.
+Use `ssv-compose-registry-provider` when you need an **isolated** registry (per page, per tenant, tests). Omit it to use the **global** singleton populated by `defineCompose()` without a third argument.
 
 ```tsx
-import { createWidgetRegistry } from "@ssv/dynamic-widget";
+import { createComposeRegistry } from "@ssv/dynamic-widget";
 
-const registry = createWidgetRegistry();
-// defineWidget("timer", { tag: "ssv-timer-widget" }, registry);
+const registry = createComposeRegistry();
+// defineCompose("timer", { tag: "ssv-timer-widget" }, registry);
 
 render() {
   return (
-    <ssv-widget-registry-provider registry={registry}>
-      <ssv-dynamic-widget name="timer" data={{ duration: 30 }} />
-    </ssv-widget-registry-provider>
+    <ssv-compose-registry-provider registry={registry}>
+      <ssv-compose name="timer" data={{ duration: 30 }} />
+    </ssv-compose-registry-provider>
   );
 }
 ```
@@ -58,27 +58,27 @@ render() {
 ### 3. Render by name + data
 
 ```tsx
-<ssv-dynamic-widget
+<ssv-compose
   name="timer"
   data={{ duration: 30 }}
-  onWidgetEvent={(e) => console.log(e.detail)}
+  onComposeEvent={(e) => console.log(e.detail)}
 />
 ```
 
 Unknown names render the **`error` slot** instead of throwing:
 
 ```tsx
-<ssv-dynamic-widget name="missing">
+<ssv-compose name="missing">
   <span slot="error">Widget not registered</span>
-</ssv-dynamic-widget>
+</ssv-compose>
 ```
 
 ## Components
 
 | Tag | Extends | Purpose |
 | --- | --- | --- |
-| `ssv-dynamic-widget` | `SsvElement` | Resolves `name` in the registry and renders the matching custom element via `h(tag, props)` |
-| `ssv-widget-registry-provider` | `SsvElement` | Provides a `WidgetRegistry` to descendants via `@ssv/stencil.core` context |
+| `ssv-compose` | `SsvElement` | Resolves `name` in the registry and renders the matching custom element via `h(tag, props)` |
+| `ssv-compose-registry-provider` | `SsvElement` | Provides a `ComposeRegistry` to descendants via `@ssv/stencil.core` context |
 
 Both require a host that supports reactive controllers and context (`SsvElement` or `Mixin(SsvElementMixin)`).
 
@@ -94,14 +94,14 @@ Each registry entry points at a **wrapper** custom element you own (`ssv-*` in `
 @Component({ tag: "ssv-timer-widget", shadow: false })
 export class SsvTimerWidget {
   @Prop() data!: { duration: number };
-  @Event() ssvWidgetOutput!: EventEmitter<{ isRunning: boolean }>;
+  @Event() ssvComposeOutput!: EventEmitter<{ isRunning: boolean }>;
 
   render() {
     return (
       <app-timer
         duration={this.data.duration}
         onIsRunningChange={(e: CustomEvent<boolean>) =>
-          this.ssvWidgetOutput.emit({ isRunning: e.detail })
+          this.ssvComposeOutput.emit({ isRunning: e.detail })
         }
       />
     );
@@ -109,27 +109,27 @@ export class SsvTimerWidget {
 }
 ```
 
-`ssv-dynamic-widget` listens for `ssvWidgetOutput`, stops propagation, and re-emits **`widgetEvent`** with `{ name, data }` where `name` is the widget’s registry key and `data` is the wrapper’s payload.
+`ssv-compose` listens for `ssvComposeOutput`, stops propagation, and re-emits **`composeEvent`** with `{ name, data }` where `name` is the registry key and `data` is the wrapper's payload.
 
 ## Registry API
 
 | Export | Description |
 | --- | --- |
-| `defineWidget(type, options, registry?)` | Register a name → definition. Third arg defaults to global `widgetRegistry`. |
-| `createWidgetRegistry()` | New isolated `Map`-backed registry. |
-| `widgetRegistry` | Global singleton used when no provider overrides context. |
-| `WidgetRegistryContext` | Context token from `@ssv/stencil.core` (`createContext`). Default factory returns `widgetRegistry`. |
+| `defineCompose(type, options, registry?)` | Register a name → definition. Third arg defaults to global `composeRegistry`. |
+| `createComposeRegistry()` | New isolated `Map`-backed registry. |
+| `composeRegistry` | Global singleton used when no provider overrides context. |
+| `ComposeRegistryContext` | Context token from `@ssv/stencil.core` (`createContext`). Default factory returns `composeRegistry`. |
 
-### `WidgetDefinition<TData>`
+### `ComposeDefinition<TData>`
 
 | Field | Description |
 | --- | --- |
-| `tag` | Custom element tag passed to Stencil’s `h()` |
+| `tag` | Custom element tag passed to Stencil's `h()` |
 | `mapData?` | `(data: TData) => Record<string, unknown>` — return value becomes props instead of `{ data }` |
 | `aliases?` | Extra names that resolve to the same definition (e.g. `"countdown"` → `"timer"`) |
 
 ```ts
-defineWidget<TimerData>("timer", {
+defineCompose<TimerData>("timer", {
   tag: "app-timer",
   mapData: (d) => ({ duration: d.duration, isRunning: false }),
 });
@@ -138,9 +138,9 @@ defineWidget<TimerData>("timer", {
 ### Types
 
 ```ts
-type WidgetEventDetail<TOutput = unknown> = {
-  name: string;   // registry name on ssv-dynamic-widget
-  data: TOutput;  // wrapper’s ssvWidgetOutput detail
+type ComposeEventDetail<TOutput = unknown> = {
+  name: string;   // registry name on ssv-compose
+  data: TOutput;  // wrapper's ssvComposeOutput detail
 };
 ```
 
@@ -161,19 +161,19 @@ Keep per-widget payloads in one place so new widgets only add a `case`:
 }
 
 // render()
-<ssv-dynamic-widget name={this.active} data={this.#widgetData(this.active)} />
+<ssv-compose name={this.active} data={this.#widgetData(this.active)} />
 ```
 
 ## Context and multiple registries
 
 ```
-ssv-widget-registry-provider  →  provideContext(WidgetRegistryContext)
+ssv-compose-registry-provider  →  provideContext(ComposeRegistryContext)
         │
-        └── ssv-dynamic-widget  →  useContext(WidgetRegistryContext).resolve(name)
+        └── ssv-compose  →  useContext(ComposeRegistryContext).resolve(name)
 ```
 
-- **Global:** call `defineWidget(...)` at module scope (no third argument). Any `ssv-dynamic-widget` without an ancestor provider uses `widgetRegistry`.
-- **Scoped:** `createWidgetRegistry()`, register with the third `defineWidget` argument, pass `registry` to `ssv-widget-registry-provider`.
+- **Global:** call `defineCompose(...)` at module scope (no third argument). Any `ssv-compose` without an ancestor provider uses `composeRegistry`.
+- **Scoped:** `createComposeRegistry()`, register with the third `defineCompose` argument, pass `registry` to `ssv-compose-registry-provider`.
 - **Empty provider:** omit `registry` on the provider to get a fresh internal registry (useful for tests).
 
 ## Build

@@ -15,14 +15,14 @@ export type TimerWidgetOutput = {
 })
 export class SsvTimerWidget {
 	@Prop() data?: TimerWidgetData;
-	@Event() ssvWidgetOutput!: EventEmitter<TimerWidgetOutput>;
+	@Event() ssvComposeOutput!: EventEmitter<TimerWidgetOutput>;
 
 	render() {
 		return (
 			<app-timer
 				duration={this.data?.duration}
 				isRunning={this.data?.isRunning ?? false}
-				onIsRunningChange={(e: CustomEvent<boolean>) => this.ssvWidgetOutput.emit({ isRunning: e.detail })}
+				onIsRunningChange={(e: CustomEvent<boolean>) => this.ssvComposeOutput.emit({ isRunning: e.detail })}
 			/>
 		);
 	}

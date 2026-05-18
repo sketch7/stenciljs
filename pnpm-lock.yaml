@@ -134,12 +134,12 @@ importers:
 
   apps/stencil-playground:
     dependencies:
-      '@ssv/dynamic-widget':
-        specifier: workspace:*
-        version: link:../../libs/dynamic-widget
       '@ssv/stencil-signals':
         specifier: workspace:*
         version: link:../../libs/stencil-signals
+      '@ssv/stencil-ui':
+        specifier: workspace:*
+        version: link:../../libs/stencil-ui
       '@ssv/stencil.core':
         specifier: workspace:*
         version: link:../../libs/stencil.core
@@ -227,25 +227,6 @@ importers:
         specifier: 'catalog:'
         version: 8.0.13(@types/node@25.8.0)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.47.1)(yaml@2.8.0)
 
-  libs/dynamic-widget:
-    dependencies:
-      '@ssv/stencil.core':
-        specifier: workspace:*
-        version: link:../stencil.core
-      '@stencil/core':
-        specifier: 'catalog:'
-        version: 4.43.4
-    devDependencies:
-      oxfmt:
-        specifier: 'catalog:'
-        version: 0.50.0
-      oxlint:
-        specifier: 'catalog:'
-        version: 1.65.0
-      typescript:
-        specifier: 'catalog:'
-        version: 6.0.3
-
   libs/stencil-signals:
     devDependencies:
       '@preact/signals-core':
@@ -278,6 +259,25 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 4.1.6(@types/node@25.8.0)(@vitest/coverage-v8@4.1.6)(vite@8.0.13(@types/node@25.8.0)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.47.1)(yaml@2.8.0))
+
+  libs/stencil-ui:
+    dependencies:
+      '@ssv/stencil.core':
+        specifier: workspace:*
+        version: link:../stencil.core
+      '@stencil/core':
+        specifier: 'catalog:'
+        version: 4.43.4
+    devDependencies:
+      oxfmt:
+        specifier: 'catalog:'
+        version: 0.50.0
+      oxlint:
+        specifier: 'catalog:'
+        version: 1.65.0
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
 
   libs/stencil.core:
     devDependencies:

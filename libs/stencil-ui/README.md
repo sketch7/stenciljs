@@ -1,13 +1,13 @@
-# @ssv/dynamic-widget
+# @ssv/stencil-ui
 
 > Registry-driven Stencil web components — render a compose by **name** and **data**, with typed wrappers and normalized output events.
 
-[![license](https://img.shields.io/npm/l/@ssv/dynamic-widget.svg)](LICENSE)
+[![license](https://img.shields.io/npm/l/@ssv/stencil-ui.svg)](LICENSE)
 
 ## Installation
 
 ```bash
-pnpm add @ssv/dynamic-widget @ssv/stencil.core
+pnpm add @ssv/stencil-ui @ssv/stencil.core
 ```
 
 **Peer dependencies:** `@stencil/core >=4.0.0`, `@ssv/stencil.core` (workspace or published)
@@ -15,7 +15,7 @@ pnpm add @ssv/dynamic-widget @ssv/stencil.core
 Add the package to your Stencil app so its component collection is included in the build (same as any `libs/` dependency in this monorepo). Then import registry helpers where you register composes:
 
 ```ts
-import { createComposeRegistry, defineCompose } from "@ssv/dynamic-widget";
+import { createComposeRegistry, defineCompose } from "@ssv/stencil-ui/compose";
 ```
 
 ## Quick start
@@ -24,7 +24,7 @@ import { createComposeRegistry, defineCompose } from "@ssv/dynamic-widget";
 
 ```ts
 // widget-definitions.ts (run once at module load, or inside a provider)
-import { defineCompose } from "@ssv/dynamic-widget";
+import { defineCompose } from "@ssv/stencil-ui/compose";
 
 type TimerData = { duration: number };
 
@@ -41,7 +41,7 @@ defineCompose("count", { tag: "ssv-count-widget" });
 Use `ssv-compose-registry-provider` when you need an **isolated** registry (per page, per tenant, tests). Omit it to use the **global** singleton populated by `defineCompose()` without a third argument.
 
 ```tsx
-import { createComposeRegistry } from "@ssv/dynamic-widget";
+import { createComposeRegistry } from "@ssv/stencil-ui/compose";
 
 const registry = createComposeRegistry();
 // defineCompose("timer", { tag: "ssv-timer-widget" }, registry);
@@ -61,7 +61,7 @@ render() {
 <ssv-compose
   name="timer"
   data={{ duration: 30 }}
-  onComposeEvent={(e) => console.log(e.detail)}
+  onComposeEvent={e => console.log(e.detail)}
 />
 ```
 
@@ -75,10 +75,10 @@ Unknown names render the **`error` slot** instead of throwing:
 
 ## Components
 
-| Tag | Extends | Purpose |
-| --- | --- | --- |
-| `ssv-compose` | `SsvElement` | Resolves `name` in the registry and renders the matching custom element via `h(tag, props)` |
-| `ssv-compose-registry-provider` | `SsvElement` | Provides a `ComposeRegistry` to descendants via `@ssv/stencil.core` context |
+| Tag                             | Extends      | Purpose                                                                                     |
+| ------------------------------- | ------------ | ------------------------------------------------------------------------------------------- |
+| `ssv-compose`                   | `SsvElement` | Resolves `name` in the registry and renders the matching custom element via `h(tag, props)` |
+| `ssv-compose-registry-provider` | `SsvElement` | Provides a `ComposeRegistry` to descendants via `@ssv/stencil.core` context                 |
 
 Both require a host that supports reactive controllers and context (`SsvElement` or `Mixin(SsvElementMixin)`).
 
@@ -113,25 +113,27 @@ export class SsvTimerWidget {
 
 ## Registry API
 
-| Export | Description |
-| --- | --- |
-| `defineCompose(type, options, registry?)` | Register a name → definition. Third arg defaults to global `composeRegistry`. |
-| `createComposeRegistry()` | New isolated `Map`-backed registry. |
-| `composeRegistry` | Global singleton used when no provider overrides context. |
-| `ComposeRegistryContext` | Context token from `@ssv/stencil.core` (`createContext`). Default factory returns `composeRegistry`. |
+| Export                                    | Description                                                                                          |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `defineCompose(type, options, registry?)` | Register a name → definition. Third arg defaults to global `composeRegistry`.                        |
+| `createComposeRegistry()`                 | New isolated `Map`-backed registry.                                                                  |
+| `composeRegistry`                         | Global singleton used when no provider overrides context.                                            |
+| `ComposeRegistryContext`                  | Context token from `@ssv/stencil.core` (`createContext`). Default factory returns `composeRegistry`. |
+
+All of the above are exported from `@ssv/stencil-ui/compose`.
 
 ### `ComposeDefinition<TData>`
 
-| Field | Description |
-| --- | --- |
-| `tag` | Custom element tag passed to Stencil's `h()` |
+| Field      | Description                                                                                   |
+| ---------- | --------------------------------------------------------------------------------------------- |
+| `tag`      | Custom element tag passed to Stencil's `h()`                                                  |
 | `mapData?` | `(data: TData) => Record<string, unknown>` — return value becomes props instead of `{ data }` |
-| `aliases?` | Extra names that resolve to the same definition (e.g. `"countdown"` → `"timer"`) |
+| `aliases?` | Extra names that resolve to the same definition (e.g. `"countdown"` → `"timer"`)              |
 
 ```ts
 defineCompose<TimerData>("timer", {
   tag: "app-timer",
-  mapData: (d) => ({ duration: d.duration, isRunning: false }),
+  mapData: d => ({ duration: d.duration, isRunning: false }),
 });
 ```
 
@@ -139,8 +141,8 @@ defineCompose<TimerData>("timer", {
 
 ```ts
 type ComposeEventDetail<TOutput = unknown> = {
-  name: string;   // registry name on ssv-compose
-  data: TOutput;  // wrapper's ssvComposeOutput detail
+  name: string; // registry name on ssv-compose
+  data: TOutput; // wrapper's ssvComposeOutput detail
 };
 ```
 
@@ -179,8 +181,8 @@ ssv-compose-registry-provider  →  provideContext(ComposeRegistryContext)
 ## Build
 
 ```bash
-pnpm nx run dynamic-widget:build
-pnpm nx run dynamic-widget:dev    # watch
+pnpm nx run stencil-ui:build
+pnpm nx run stencil-ui:dev    # watch
 ```
 
 Outputs: `dist/` (collection + types), `loader/`, `hydrate/` for SSR.

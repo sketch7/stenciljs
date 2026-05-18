@@ -1,5 +1,5 @@
-import { createComposeRegistry, defineCompose } from "@ssv/dynamic-widget";
-import type { ComposeEventDetail } from "@ssv/dynamic-widget";
+import { createComposeRegistry, defineCompose } from "@ssv/stencil-ui/compose";
+import type { ComposeEventDetail } from "@ssv/stencil-ui/compose";
 import { Component, State, h } from "@stencil/core";
 
 import type { TimerWidgetData } from "./timer/ssv-timer-widget";

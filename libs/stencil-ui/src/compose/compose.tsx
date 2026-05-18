@@ -2,12 +2,12 @@ import { SsvElement, useContext } from "@ssv/stencil.core";
 import { Component, Event, EventEmitter, Listen, Prop, h } from "@stencil/core";
 import type { VNode } from "@stencil/core";
 
-import { ComposeRegistryContext } from "../../registry/context";
-import type { ComposeEventDetail } from "../../types";
+import { ComposeRegistryContext } from "./registry/context";
+import type { ComposeEventDetail } from "./types";
 
 @Component({
 	tag: "ssv-compose",
-	styleUrl: "ssv-compose.css",
+	styleUrl: "compose.css",
 	shadow: false,
 })
 export class SsvCompose extends SsvElement {

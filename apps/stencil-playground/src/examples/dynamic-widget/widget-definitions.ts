@@ -1,4 +1,4 @@
-import { defineCompose } from "@ssv/dynamic-widget";
+import { defineCompose } from "@ssv/stencil-ui/compose";
 
 import type { TimerWidgetData } from "./timer/ssv-timer-widget";
 

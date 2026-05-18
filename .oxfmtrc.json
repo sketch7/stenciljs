@@ -15,6 +15,9 @@
     ],
     "newlinesBetween": true
   },
+  "sortTailwindcss": {
+    "stylesheet": "apps/vike-playground/src/app.css"
+  },
   "ignorePatterns": [
     "dist/**",
     "build/**",

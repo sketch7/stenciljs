@@ -2,6 +2,7 @@ import { defineConfig } from "oxlint";
 
 export default defineConfig({
 	plugins: ["typescript", "import", "react", "react-perf", "jsx-a11y", "vitest", "unicorn"],
+	jsPlugins: ["oxlint-tailwindcss"],
 	env: {
 		browser: true,
 		es2022: true,
@@ -298,6 +299,45 @@ export default defineConfig({
 				"import/no-default-export": "off",
 				// Page/Layout/Head components return JSX — explicit return type is noise
 				"typescript/explicit-function-return-type": "off",
+			},
+		},
+		{
+			// Tailwind CSS — vike-playground is the only app using Tailwind v4
+			files: ["apps/vike-playground/src/**/*.tsx", "apps/vike-playground/src/**/*.ts"],
+			rules: {
+				// ── Correctness ────────────────────────────────────────────────────────
+				"tailwindcss/no-unknown-classes": "error",
+				"tailwindcss/no-duplicate-classes": "error",
+				"tailwindcss/no-conflicting-classes": "error",
+				"tailwindcss/no-deprecated-classes": "error",
+				"tailwindcss/no-unnecessary-whitespace": "error",
+				"tailwindcss/no-contradicting-variants": "error",
+				// Warn: dark-first design — intentionally omitting a light-base class is valid
+				"tailwindcss/no-dark-without-light": "warn",
+
+				// ── Style ───────────────────────────────────────────────────────────────
+				"tailwindcss/enforce-canonical": "warn",
+				// Disabled — oxfmt handles Tailwind class sorting via sortTailwindcss; running both causes conflicts
+				"tailwindcss/enforce-sort-order": "off",
+				"tailwindcss/enforce-shorthand": "warn",
+				"tailwindcss/enforce-consistent-important-position": "warn", // default: suffix (v4 canonical)
+				"tailwindcss/enforce-negative-arbitrary-values": "warn",
+				"tailwindcss/enforce-consistent-variable-syntax": "warn", // default: shorthand bg-(--var)
+				"tailwindcss/consistent-variant-order": "warn",
+				// Not enforcing logical (ms-/me-) or physical direction — project has no RTL requirement
+				"tailwindcss/enforce-logical": "off",
+				"tailwindcss/enforce-physical": "off",
+
+				// ── Complexity ──────────────────────────────────────────────────────────
+				"tailwindcss/max-class-count": "off",
+				"tailwindcss/enforce-consistent-line-wrapping": "off", // oxfmt handles wrapping
+
+				// ── Restrictions ────────────────────────────────────────────────────────
+				"tailwindcss/no-hardcoded-colors": "warn", // prefer CSS custom properties / design tokens
+				"tailwindcss/no-unnecessary-arbitrary-value": "warn", // prefer named classes when equivalent
+				"tailwindcss/no-restricted-classes": "off",
+				"tailwindcss/no-arbitrary-value": "off", // project uses CSS vars that need arbitrary syntax
+				"tailwindcss/prefer-theme-tokens": "off", // risky: may silently change CSS output in wrapped-var themes
 			},
 		},
 		{

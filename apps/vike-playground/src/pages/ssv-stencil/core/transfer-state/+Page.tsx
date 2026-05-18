@@ -5,26 +5,26 @@ export default function Page(): JSX.Element {
 	return (
 		<div className="flex flex-col gap-6">
 			<div>
-				<h1 className="text-2xl font-semibold mb-1">Transfer State</h1>
-				<p className="text-sm text-[var(--color-muted)]">
+				<h1 className="mb-1 text-2xl font-semibold">Transfer State</h1>
+				<p className="text-sm text-(--color-muted)">
 					Demonstrates <code>useTransferState</code> from <code>@ssv/stencil.core</code>. The server injects a{" "}
 					<code>{'<script type="application/json">'}</code> tag into the page for each key; the client reads and removes
 					it before the first render, avoiding a duplicate network request.
 				</p>
 			</div>
 
-			<div className="rounded-xl border border-[var(--color-card-border)] bg-[var(--color-card)] p-6">
+			<div className="rounded-xl border border-(--color-card-border) bg-(--color-card) p-6">
 				<AppTransferState />
 			</div>
 
-			<details className="text-xs text-[var(--color-muted)] mt-2">
-				<summary className="cursor-pointer select-none font-medium">How it works</summary>
+			<details className="mt-2 text-xs text-(--color-muted)">
+				<summary className="cursor-pointer font-medium select-none">How it works</summary>
 				<div className="mt-2 flex flex-col gap-2 pl-2">
 					<p>
 						Each <code>useTransferState(key, getServerValue)</code> call registers two lifecycle hooks on the host
 						component:
 					</p>
-					<ul className="list-disc pl-4 flex flex-col gap-1">
+					<ul className="flex list-disc flex-col gap-1 pl-4">
 						<li>
 							<strong>Server — </strong>
 							<code>hostWillRender</code>: calls <code>getServerValue()</code>, JSON-serializes the result, and injects{" "}

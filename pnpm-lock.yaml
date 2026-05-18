@@ -57,6 +57,9 @@ catalogs:
     oxlint:
       specifier: ^1.65.0
       version: 1.65.0
+    oxlint-tailwindcss:
+      specifier: ^0.8.0
+      version: 0.8.0
     react:
       specifier: ^19.2.6
       version: 19.2.6
@@ -116,6 +119,9 @@ importers:
       oxlint:
         specifier: 'catalog:'
         version: 1.65.0
+      oxlint-tailwindcss:
+        specifier: 'catalog:'
+        version: 0.8.0(@oxlint/plugins@1.65.0)
       tslib:
         specifier: ^2.8.1
         version: 2.8.1
@@ -1908,6 +1914,10 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@oxlint/plugins@1.65.0':
+    resolution: {integrity: sha512-xUg0v7/+xyDZHkjCie/OW9dqRW8ItEGt2xM90ry3lOc67Ehtj2swGz3d3vfYC+gxiV7n+1fI3jeciFAKuzuHvQ==}
+    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
 
@@ -3553,6 +3563,12 @@ packages:
     peerDependenciesMeta:
       svelte:
         optional: true
+
+  oxlint-tailwindcss@0.8.0:
+    resolution: {integrity: sha512-vfWnQ9S3AZXb9oqQPxilz9UlUcFvuKKJh7mT7vHw0lyHQVpKPOx117oS5y1/FuSAGSJAZa1gUeXCFNF8Ax28jA==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      '@oxlint/plugins': '>=1.43.0'
 
   oxlint@1.65.0:
     resolution: {integrity: sha512-ChUuE3Q7XnAbscvT4XLMsH7HFJmLgLVv9lu+RRgFL5wSXnDqUOzTp5IS8qWDBGd/ZDSzQ2tbX8fjAmijlGLC7A==}
@@ -5634,6 +5650,8 @@ snapshots:
   '@oxlint/binding-win32-x64-msvc@1.65.0':
     optional: true
 
+  '@oxlint/plugins@1.65.0': {}
+
   '@polka/url@1.0.0-next.29': {}
 
   '@preact/signals-core@1.14.2': {}
@@ -7286,6 +7304,12 @@ snapshots:
       '@oxfmt/binding-win32-arm64-msvc': 0.50.0
       '@oxfmt/binding-win32-ia32-msvc': 0.50.0
       '@oxfmt/binding-win32-x64-msvc': 0.50.0
+
+  oxlint-tailwindcss@0.8.0(@oxlint/plugins@1.65.0):
+    dependencies:
+      '@oxlint/plugins': 1.65.0
+      '@tailwindcss/node': 4.3.0
+      tailwindcss: 4.3.0
 
   oxlint@1.65.0:
     optionalDependencies:

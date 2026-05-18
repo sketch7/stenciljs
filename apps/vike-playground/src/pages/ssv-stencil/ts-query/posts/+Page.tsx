@@ -5,15 +5,15 @@ export default function Page(): JSX.Element {
 	return (
 		<div className="flex flex-col gap-6">
 			<div>
-				<h1 className="text-2xl font-semibold mb-1">TanStack Query — Posts</h1>
-				<p className="text-sm text-[var(--color-muted)]">
+				<h1 className="mb-1 text-2xl font-semibold">TanStack Query — Posts</h1>
+				<p className="text-sm text-(--color-muted)">
 					Fetches from JSONPlaceholder via <code>useQuery</code>. Create a post with <code>useMutation</code> — on
 					success the list is invalidated and refetched automatically.
 				</p>
 			</div>
 			<AppTsQueryPosts />
-			<details className="text-xs text-[var(--color-muted)] mt-2">
-				<summary className="cursor-pointer select-none font-medium">How it works</summary>
+			<details className="mt-2 text-xs text-(--color-muted)">
+				<summary className="cursor-pointer font-medium select-none">How it works</summary>
 				<ul className="mt-2 ml-4 list-disc space-y-1">
 					<li>
 						<code>provideQueryClient()</code> creates and provides a <code>QueryClient</code> to all descendants via

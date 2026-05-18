@@ -3,9 +3,9 @@ import "../app.css";
 
 export default function Layout({ children }: { children: React.ReactNode }): JSX.Element {
 	return (
-		<div className="flex min-h-screen bg-[var(--color-bg)] text-[var(--color-fg)]">
+		<div className="flex min-h-screen bg-(--color-bg) text-(--color-fg)">
 			<Sidebar />
-			<main className="flex-1 min-w-0 px-6 py-8 max-w-3xl">{children}</main>
+			<main className="max-w-3xl min-w-0 flex-1 px-6 py-8">{children}</main>
 		</div>
 	);
 }
@@ -63,25 +63,25 @@ const navSections: NavSection[] = [
 
 function Sidebar(): JSX.Element {
 	return (
-		<aside className="w-56 shrink-0 border-r border-[var(--color-border)] bg-[var(--color-surface)] flex flex-col sticky top-0 h-screen overflow-y-auto">
-			<div className="px-4 py-5 border-b border-[var(--color-border)]">
+		<aside className="sticky top-0 flex h-screen w-56 shrink-0 flex-col overflow-y-auto border-r border-(--color-border) bg-(--color-surface)">
+			<div className="border-b border-(--color-border) px-4 py-5">
 				<a
 					href="/"
-					className="font-semibold tracking-tight text-[var(--color-fg)] hover:text-[var(--color-primary)] transition-colors">
+					className="font-semibold tracking-tight text-(--color-fg) transition-colors hover:text-(--color-primary)">
 					Vike Playground
 				</a>
 			</div>
-			<nav className="flex flex-col gap-5 px-3 py-4 flex-1">
+			<nav className="flex flex-1 flex-col gap-5 px-3 py-4">
 				{navSections.map(section => (
 					<div key={section.title} className="flex flex-col gap-1">
-						<span className="px-2 mb-1 text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--color-muted-fg)]">
+						<span className="mb-1 px-2 text-[0.65rem] font-semibold tracking-widest text-(--color-muted-fg) uppercase">
 							{section.title}
 						</span>
 						{section.items.map(item => (
 							<a
 								key={item.href}
 								href={item.href}
-								className="px-2 py-1.5 rounded-md text-sm text-[var(--color-muted-fg)] hover:text-[var(--color-fg)] hover:bg-[var(--color-surface-hover)] transition-colors">
+								className="rounded-md px-2 py-1.5 text-sm text-(--color-muted-fg) transition-colors hover:bg-(--color-surface-hover) hover:text-(--color-fg)">
 								{item.label}
 							</a>
 						))}

@@ -32,35 +32,31 @@ export function useContext<T>(key: ContextKey<T>): Ref<T> {
 	const ref = createWritableRef<T>();
 
 	// Side-effect factory form: registers lifecycle hooks without returning a value from use().
-	// host is ReactiveControllerHost; at runtime it is also the HTMLElement (Stencil component).
-	use(host => {
-		const hostEl = host as unknown as HTMLElement & typeof host;
-		return {
-			hostConnected() {
-				let resolved = false;
+	use(host => ({
+		hostConnected() {
+			let resolved = false;
 
-				const event = new CustomEvent<ContextEventDetail<T>>(CONTEXT_EVENT, {
-					bubbles: true,
-					// crosses shadow-DOM boundaries for deeply nested components
-					composed: true,
-					detail: {
-						contextId: key.id,
-						callback(value: T) {
-							ref.current = value;
-							resolved = true;
-						},
+			const event = new CustomEvent<ContextEventDetail<T>>(CONTEXT_EVENT, {
+				bubbles: true,
+				// crosses shadow-DOM boundaries for deeply nested components
+				composed: true,
+				detail: {
+					contextId: key.id,
+					callback(value: T) {
+						ref.current = value;
+						resolved = true;
 					},
-				});
+				},
+			});
 
-				hostEl.dispatchEvent(event);
+			host.dispatchEvent(event);
 
-				if (!resolved) {
-					// Falls back to the shared singleton (throws if no defaultFactory).
-					ref.current = key.getDefault();
-				}
-			},
-		};
-	});
+			if (!resolved) {
+				// Falls back to the shared singleton (throws if no defaultFactory).
+				ref.current = key.getDefault();
+			}
+		},
+	}));
 
 	return ref.asReadonly();
 }

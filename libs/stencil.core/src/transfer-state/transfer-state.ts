@@ -1,4 +1,4 @@
-import { Build, getElement, h } from "@stencil/core";
+import { Build, h } from "@stencil/core";
 import type { VNode } from "@stencil/core";
 
 import { createContext, provideContext, useContext } from "../context";
@@ -175,12 +175,7 @@ export function provideTransferState(id: string): TransferState {
 			if (detectServer()) {
 				return;
 			}
-			// In Stencil's lazy-load dist, the component class instance (host) is NOT the registered
-			// custom element — it's a separate "lazy instance". The actual DOM element (which owns
-			// the DSD shadow root with our script tag) is obtained via getElement().
-			// In non-lazy builds (dist-custom-elements) getElement returns the element itself.
-			const hostEl = (getElement(host as object) ?? host) as HTMLElement;
-			const script = hostEl.shadowRoot?.querySelector(`#${scriptId(id)}`) as HTMLScriptElement | null;
+			const script = host.shadowRoot?.querySelector(`#${scriptId(id)}`) as HTMLScriptElement | null;
 			if (script?.type === SCRIPT_TYPE) {
 				state.fromJSON(script.textContent ?? "{}");
 				script.remove();

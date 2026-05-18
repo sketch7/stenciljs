@@ -1,27 +1,25 @@
 {
-  "name": "@app/stencil-playground",
+  "name": "@ssv/stencil-ui",
   "version": "0.0.0-PLACEHOLDER",
-  "private": true,
-  "description": "StencilJS demo components (counter + todo) using @stencil/store — consumed by vike-playground.",
+  "description": "Stencil UI primitives — ssv-compose registry-driven composition",
+  "license": "MIT",
   "files": [
-    "dist/",
-    "loader/",
-    "hydrate/",
-    "src/react/"
+    "dist",
+    "loader",
+    "hydrate"
   ],
   "type": "module",
-  "main": "dist/index.cjs.js",
-  "module": "dist/index.js",
-  "types": "dist/types/index.d.ts",
+  "types": "dist/compose.d.ts",
   "exports": {
     ".": {
+      "@ssv/source": "./src/index.ts",
       "types": "./dist/types/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs.js"
+      "import": "./dist/index.js"
     },
-    "./react": {
-      "types": "./src/react/components.ts",
-      "import": "./src/react/components.ts"
+    "./compose": {
+      "@ssv/source": "./src/compose/index.ts",
+      "types": "./dist/compose.d.ts",
+      "import": "./dist/compose.js"
     },
     "./loader": {
       "import": "./loader/index.js"
@@ -46,32 +44,26 @@
     }
   },
   "scripts": {
-    "build": "stencil build",
+    "build": "stencil build && tsdown",
     "dev": "stencil build --dev --watch",
-    "generate": "stencil generate",
     "lint": "oxlint src/",
     "fmt": "oxfmt src/",
     "fmt:check": "oxfmt --check src/"
   },
   "dependencies": {
-    "@ssv/stencil-ui": "workspace:*",
-    "@ssv/stencil-signals": "workspace:*",
     "@ssv/stencil.core": "workspace:*",
-    "@ssv/tanstack.stencil-store": "workspace:*",
-    "@stencil/core": "catalog:",
-    "@stencil/react-output-target": "catalog:",
-    "@stencil/store": "catalog:",
-    "signal-polyfill": "catalog:"
+    "@stencil/core": "catalog:"
   },
   "devDependencies": {
-    "@types/node": "catalog:",
-    "oxlint": "catalog:"
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:"
   },
   "peerDependencies": {
-    "@ssv/stencil.core": "workspace:*",
-    "react": ">=18.0.0"
+    "@stencil/core": ">=4.0.0"
   },
   "collection": "dist/collection/collection-manifest.json",
   "collection:main": "dist/collection/index.js",
-  "es2017": "dist/esm/index.mjs"
+  "packageManager": "pnpm@9.15.0"
 }

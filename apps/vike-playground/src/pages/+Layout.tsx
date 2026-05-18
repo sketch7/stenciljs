@@ -50,6 +50,10 @@ const navSections: NavSection[] = [
 			{ href: "/stencil/todo", label: "Todo List" },
 		],
 	},
+	{
+		title: "Stencil UI / Compose",
+		items: [{ href: "/stencil-ui/compose", label: "Compose demo" }],
+	},
 ];
 
 function Sidebar(): JSX.Element {

@@ -25,7 +25,7 @@ export class AppTransferState extends SsvElement {
 			{ id: 3, label: "Gamma (from server)" },
 		]);
 
-		const env = !("window" in globalThis) ? "server" : "client";
+		const env = "window" in globalThis ? "client" : "server";
 
 		return (
 			<div class="ts-demo">

@@ -1,15 +1,3 @@
-/**
- * @ssv/stencil-signals — utils/signal-prop.ts
- *
- * Utilities for binding Stencil @Prop() fields to signals so they participate
- * in the signal graph without manual `@Watch` bookkeeping.
- *
- *   useSignalProps(HostClass)(config)
- *
- * Returns a typed map of signals — one per config entry. Non-twoWay keys →
- * Signal<T>. twoWay keys → WritableSignal<T>.
- */
-
 import { getCurrentHost } from "@ssv/stencil.core";
 import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
 import { getElement } from "@stencil/core";
@@ -254,22 +242,7 @@ class SignalBulkController implements ReactiveController {
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
-/**
- * Bulk prop bindings — preferred when bridging multiple @Prop fields.
- *
- * Requires `useSignalWatcher()` declared before this field. Prop signals are
- * created on `hostConnected`; disposal is via the signal watcher's active-owner
- * scope. Prop sync uses `hostWillLoad` / `hostWillUpdate`.
- *
- * @example
- * ```ts
- * readonly signalWatcher = useSignalWatcher();
- * readonly $props = useSignalProps(AppTimer)({
- *   duration:  { transform: v => Math.max(0, v) },
- *   isRunning: { twoWay: true },
- * });
- * ```
- */
+/** Bridge `@Prop()` fields to signals; declare `useSignalWatcher()` first. */
 export function useSignalProps<H extends ReactiveControllerHost>(
 	hostClass: abstract new (...args: unknown[]) => H,
 ): <const C extends { [K in keyof H & string]?: SignalPropOptions<H[K]> }>(

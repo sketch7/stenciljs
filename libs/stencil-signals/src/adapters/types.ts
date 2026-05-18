@@ -36,11 +36,20 @@ export type SignalOptions<T> = {
 /** Options accepted by computed() — same shape as SignalOptions. */
 export type ComputedOptions<T> = SignalOptions<T>;
 
+/** Options for adapter `createEffect` (auto-tracking effects). */
+export type AdapterEffectOptions = {
+	/**
+	 * When `true` (default), prior `onCleanup` registries and return-value cleanups run before each reactive re-run.
+	 * When `false`, they run only on effect `dispose()` (Stencil host-bound `effect()` uses this).
+	 */
+	flushBetweenRuns?: boolean;
+};
+
 // ─── Watcher ─────────────────────────────────────────────────────────────────
 
 /**
  * Low-level watcher returned by `createWatcher()` and used internally by
- * effect, computedPrevious, and computedAsync.
+ * reactive utilities (explicit-deps `effect(deps, …)` composes `createEffect` instead).
  *
  * TC39 backend: wraps Signal.subtle.Watcher.
  * Preact backend: emulated via a combined computed() + effect().
@@ -66,10 +75,14 @@ export type SignalAdapter = {
 	/**
 	 * Run `fn` as a reactive effect. `fn` is called immediately and re-runs
 	 * whenever any signal accessed inside it changes.
-	 * `fn` receives `onCleanup` and may return a cleanup function; on each re-run
-	 * and dispose, prior `onCleanup` runs first, then return cleanup.
+	 * `fn` receives `onCleanup` and may return a cleanup function.
+	 * With default `flushBetweenRuns`, prior `onCleanup` runs first, then return cleanup, before each re-run and on dispose.
+	 * With `flushBetweenRuns: false`, those run only on dispose (final run).
 	 */
-	createEffect(fn: (onCleanup: (fn: () => void) => void) => (() => void) | void): { dispose(): void };
+	createEffect(
+		fn: (onCleanup: (fn: () => void) => void) => (() => void) | void,
+		options?: AdapterEffectOptions,
+	): { dispose(): void };
 
 	/** Read signals inside `fn` without creating tracking subscriptions. */
 	untrack<T>(fn: () => T): T;

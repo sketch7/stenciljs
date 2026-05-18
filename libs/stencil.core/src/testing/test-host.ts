@@ -48,6 +48,20 @@ export class TestHost extends EventTarget implements ReactiveControllerHost {
 		}
 	}
 
+	/** Simulates `componentWillLoad` → `hostWillLoad` on each controller (awaits promises). */
+	async willLoad(): Promise<void> {
+		const promises: Promise<void>[] = [];
+		for (const ctrl of this.controllers) {
+			const result = ctrl.hostWillLoad?.();
+			if (result) {
+				promises.push(result);
+			}
+		}
+		if (promises.length > 0) {
+			await Promise.all(promises);
+		}
+	}
+
 	/** Simulates `disconnectedCallback` → `hostDisconnected` on each controller. */
 	disconnect(): void {
 		for (const ctrl of this.controllers) {

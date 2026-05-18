@@ -1,9 +1,9 @@
 import { SsvElement, provideContext } from "@ssv/stencil.core";
 import { Component, Prop, h } from "@stencil/core";
 
-import { ComposeRegistryContext } from "../../registry/context";
-import { createComposeRegistry } from "../../registry/registry";
-import type { ComposeDefinition, ComposeDefinitionInternal, ComposeRegistry } from "../../types";
+import { ComposeRegistryContext } from "../registry/context";
+import { createComposeRegistry } from "../registry/registry";
+import type { ComposeDefinition, ComposeDefinitionInternal, ComposeRegistry } from "../types";
 
 @Component({
 	tag: "ssv-compose-registry-provider",

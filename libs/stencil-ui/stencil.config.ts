@@ -1,7 +1,7 @@
 import type { Config } from "@stencil/core";
 
 export const config: Config = {
-	namespace: "ssv-dynamic-widget",
+	namespace: "ssv-stencil-ui",
 	outputTargets: [
 		{
 			type: "dist",

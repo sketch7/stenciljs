@@ -101,7 +101,6 @@ export function provideQueryClient(clientOrOptions?: QueryClient | ProvideQueryC
 			},
 			hostConnected() {
 				const dehydrated = ts.get(DEHYDRATED_KEY);
-				console.warn(">>>> hostConnected hydrate", { DEHYDRATED_KEY, dehydrated });
 				if (dehydrated !== undefined) {
 					hydrate(qc, dehydrated);
 				}

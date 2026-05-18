@@ -49,6 +49,10 @@ const navSections: NavSection[] = [
 			{ href: "/stencil/todo", label: "Todo List" },
 		],
 	},
+	{
+		title: "Dynamic Widget",
+		items: [{ href: "/dynamic-widget", label: "Demo" }],
+	},
 ];
 
 function Sidebar(): JSX.Element {

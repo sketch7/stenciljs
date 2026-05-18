@@ -125,6 +125,9 @@ importers:
 
   apps/stencil-playground:
     dependencies:
+      '@ssv/dynamic-widget':
+        specifier: workspace:*
+        version: link:../../libs/dynamic-widget
       '@ssv/stencil-signals':
         specifier: workspace:*
         version: link:../../libs/stencil-signals
@@ -211,6 +214,25 @@ importers:
       vite:
         specifier: 'catalog:'
         version: 8.0.12(@types/node@25.7.0)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.47.1)(yaml@2.8.0)
+
+  libs/dynamic-widget:
+    dependencies:
+      '@ssv/stencil.core':
+        specifier: workspace:*
+        version: link:../stencil.core
+      '@stencil/core':
+        specifier: 'catalog:'
+        version: 4.43.4
+    devDependencies:
+      oxfmt:
+        specifier: 'catalog:'
+        version: 0.49.0
+      oxlint:
+        specifier: 'catalog:'
+        version: 1.62.0
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
 
   libs/stencil-signals:
     devDependencies:

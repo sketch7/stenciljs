@@ -1,3 +1,5 @@
+import { getElement } from "@stencil/core";
+
 import { use } from "../hooks/use";
 import { CONTEXT_EVENT } from "./context";
 import type { ContextEventDetail, ContextKey, ContextRef } from "./context";
@@ -30,35 +32,40 @@ export function useContext<T>(key: ContextKey<T>): ContextRef<T> {
 	const ref = { current: undefined as unknown as T };
 
 	// Side-effect factory form: registers lifecycle hooks without returning a value from use().
-	// host is ReactiveControllerHost; at runtime it is also the HTMLElement (Stencil component).
-	use(host => {
-		const hostEl = host as unknown as HTMLElement & typeof host;
-		return {
-			hostConnected() {
-				let resolved = false;
+	use(host => ({
+		hostConnected() {
+			// getElement() resolves the real host element — in lazy (hydrate/SSR)
+			// builds the component instance is not the DOM element.
+			const hostEl = getElement(host);
+			let resolved = false;
 
-				const event = new CustomEvent<ContextEventDetail<T>>(CONTEXT_EVENT, {
-					bubbles: true,
-					// crosses shadow-DOM boundaries for deeply nested components
-					composed: true,
-					detail: {
-						contextId: key.id,
-						callback(value: T) {
-							ref.current = value;
-							resolved = true;
-						},
+			// Build the event with the host document's own CustomEvent constructor.
+			// During SSR/hydrate that is mock-doc's CustomEvent, whose target /
+			// currentTarget are writable (mock-doc's dispatchEvent assigns to them);
+			// the native CustomEvent's are read-only and would make SSR dispatch throw.
+			const CustomEventCtor = hostEl.ownerDocument?.defaultView?.CustomEvent ?? CustomEvent;
+
+			const event = new CustomEventCtor<ContextEventDetail<T>>(CONTEXT_EVENT, {
+				bubbles: true,
+				// crosses shadow-DOM boundaries for deeply nested components
+				composed: true,
+				detail: {
+					contextId: key.id,
+					callback(value: T) {
+						ref.current = value;
+						resolved = true;
 					},
-				});
+				},
+			});
 
-				hostEl.dispatchEvent(event);
+			hostEl.dispatchEvent(event);
 
-				if (!resolved) {
-					// Falls back to the shared singleton (throws if no defaultFactory).
-					ref.current = key.getDefault();
-				}
-			},
-		};
-	});
+			if (!resolved) {
+				// Falls back to the shared singleton (throws if no defaultFactory).
+				ref.current = key.getDefault();
+			}
+		},
+	}));
 
 	return ref as ContextRef<T>;
 }

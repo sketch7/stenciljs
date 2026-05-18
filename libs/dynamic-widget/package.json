@@ -1,13 +1,12 @@
 {
-  "name": "@app/stencil-playground",
+  "name": "@ssv/dynamic-widget",
   "version": "0.0.0-PLACEHOLDER",
-  "private": true,
-  "description": "StencilJS demo components (counter + todo) using @stencil/store — consumed by vike-playground.",
+  "description": "Registry-driven Stencil widgets — render by name + data with ssv-dynamic-widget",
+  "license": "MIT",
   "files": [
-    "dist/",
-    "loader/",
-    "hydrate/",
-    "src/react/"
+    "dist",
+    "loader",
+    "hydrate"
   ],
   "type": "module",
   "main": "dist/index.cjs.js",
@@ -15,13 +14,10 @@
   "types": "dist/types/index.d.ts",
   "exports": {
     ".": {
+      "@ssv/source": "./src/index.ts",
       "types": "./dist/types/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs.js"
-    },
-    "./react": {
-      "types": "./src/react/components.ts",
-      "import": "./src/react/components.ts"
     },
     "./loader": {
       "import": "./loader/index.js"
@@ -48,30 +44,24 @@
   "scripts": {
     "build": "stencil build",
     "dev": "stencil build --dev --watch",
-    "generate": "stencil generate",
     "lint": "oxlint src/",
     "fmt": "oxfmt src/",
     "fmt:check": "oxfmt --check src/"
   },
   "dependencies": {
-    "@ssv/dynamic-widget": "workspace:*",
-    "@ssv/stencil-signals": "workspace:*",
     "@ssv/stencil.core": "workspace:*",
-    "@ssv/tanstack.stencil-store": "workspace:*",
-    "@stencil/core": "catalog:",
-    "@stencil/react-output-target": "catalog:",
-    "@stencil/store": "catalog:",
-    "signal-polyfill": "catalog:"
+    "@stencil/core": "catalog:"
   },
   "devDependencies": {
-    "@types/node": "catalog:",
-    "oxlint": "catalog:"
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "typescript": "catalog:"
   },
   "peerDependencies": {
-    "@ssv/stencil.core": "workspace:*",
-    "react": ">=18.0.0"
+    "@stencil/core": ">=4.0.0"
   },
   "collection": "dist/collection/collection-manifest.json",
   "collection:main": "dist/collection/index.js",
-  "es2017": "dist/esm/index.mjs"
+  "es2017": "dist/esm/index.mjs",
+  "packageManager": "pnpm@9.15.0"
 }

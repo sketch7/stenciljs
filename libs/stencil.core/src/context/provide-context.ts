@@ -1,3 +1,5 @@
+import { getElement } from "@stencil/core";
+
 import { use } from "../hooks/use";
 import { CONTEXT_EVENT } from "./context";
 import type { ContextEventDetail, ContextKey } from "./context";
@@ -41,19 +43,17 @@ export function provideContext<T>(key: ContextKey<T>, valueOrFactory?: T | (() =
 		}
 	};
 
-	// host is ReactiveControllerHost; at runtime it is also the HTMLElement (Stencil component),
-	// which is required to attach the DOM event listener.
-	use(host => {
-		const hostEl = host as unknown as HTMLElement & typeof host;
-		return {
-			hostConnected() {
-				hostEl.addEventListener(CONTEXT_EVENT, handleRequest);
-			},
-			hostDisconnected() {
-				hostEl.removeEventListener(CONTEXT_EVENT, handleRequest);
-			},
-		};
-	});
+	// getElement() resolves the real host element in both lazy (hydrate/SSR) and
+	// custom-elements builds — the component instance is not the DOM element in
+	// lazy mode, so the listener must be attached to getElement(host), not host.
+	use(host => ({
+		hostConnected() {
+			getElement(host).addEventListener(CONTEXT_EVENT, handleRequest);
+		},
+		hostDisconnected() {
+			getElement(host).removeEventListener(CONTEXT_EVENT, handleRequest);
+		},
+	}));
 
 	return value;
 }

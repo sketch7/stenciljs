@@ -1,3 +1,4 @@
+export * from "./dynamic-widget";
 export * from "./ssv-core";
 export * from "./stencil-signals";
 export * from "./ts-store";

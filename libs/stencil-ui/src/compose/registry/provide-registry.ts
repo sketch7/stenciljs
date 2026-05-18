@@ -1,4 +1,4 @@
-import { provideContext, useContext } from "@ssv/stencil.core";
+import { createRef, provideContext, useContext } from "@ssv/stencil.core";
 import type { ContextRef } from "@ssv/stencil.core";
 
 import type {
@@ -77,7 +77,7 @@ export function provideCompositionRegistry(
  */
 export function useCompositionRegistry(registry?: CompositionRegistry): ContextRef<CompositionRegistry> {
 	if (registry) {
-		return { current: registry };
+		return createRef(() => registry);
 	}
 	return useContext(CompositionRegistryContext);
 }

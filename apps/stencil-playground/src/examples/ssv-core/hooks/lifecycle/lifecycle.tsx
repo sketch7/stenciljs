@@ -30,6 +30,7 @@ export class AppLifecycleDemo extends SsvElement {
 			<div class="lifecycle-demo">
 				<div class="controls">
 					<button
+						type="button"
 						class="btn btn-update"
 						onClick={() => {
 							this._tick += 1;
@@ -39,6 +40,7 @@ export class AppLifecycleDemo extends SsvElement {
 						<span class="btn-badge">{this._tick}</span>
 					</button>
 					<button
+						type="button"
 						class="btn btn-clear"
 						onClick={() => {
 							this.#lifecycle.clear();
@@ -63,8 +65,8 @@ export class AppLifecycleDemo extends SsvElement {
 								<span>Waiting for lifecycle events…</span>
 							</div>
 						) : (
-							events.map((ev, i) => (
-								<div key={i} class={`log-entry log-entry--${hookMeta[ev.hook].badge}`}>
+							events.map(ev => (
+								<div key={ev.index} class={`log-entry log-entry--${hookMeta[ev.hook].badge}`}>
 									<span class="log-idx">{ev.index}</span>
 									<span class="log-time">{ev.ts}</span>
 									<span class={`log-hook hook-badge hook-badge--${hookMeta[ev.hook].badge}`}>{ev.hook}</span>

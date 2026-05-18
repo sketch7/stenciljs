@@ -112,7 +112,7 @@ class TransferStateImpl implements TransferState {
 		// Double every backslash so `\n` (JSON escape for newline) survives JS template-literal
 		// embedding — @stencil/ssr wraps the shadow-DOM HTML in a backtick template literal,
 		// which would otherwise interpret `\n` as an actual newline and break JSON.parse.
-		return raw.replaceAll("\\", String.raw`\\`).replaceAll(/<\/script/gi, String.raw`<\/script`);
+		return raw.replaceAll("\\", String.raw`\\`).replaceAll(/<\/script/giu, String.raw`<\/script`);
 	}
 
 	/** @internal */

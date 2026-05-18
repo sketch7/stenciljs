@@ -38,9 +38,9 @@ export default function Page(): JSX.Element {
 						</li>
 					</ul>
 					<p>
-						Server detection uses a two-signal check: <code>typeof window === "undefined"</code> (true in plain Node.js
-						/ Vitest) combined with <code>Build.isServer</code> from <code>@stencil/core</code> (true inside
-						Stencil&apos;s hydrate bundle, where <code>const window = $stencilWindow</code> shadows the global).
+						Server detection uses a two-signal check: <code>typeof window === &quot;undefined&quot;</code> (true in
+						plain Node.js / Vitest) combined with <code>Build.isServer</code> from <code>@stencil/core</code> (true
+						inside Stencil&apos;s hydrate bundle, where <code>const window = $stencilWindow</code> shadows the global).
 					</p>
 					<p>
 						Three transfer keys are used here: <code>ts-demo-time</code> (string), <code>ts-demo-count</code> (number),

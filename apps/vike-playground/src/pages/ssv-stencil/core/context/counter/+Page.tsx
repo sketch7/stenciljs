@@ -53,7 +53,7 @@ export default function Page(): JSX.Element {
 						<h2 className="text-base font-semibold text-(--color-fg)">Global — no provider</h2>
 						<p className="text-xs text-(--color-muted-fg)">
 							No <code>AppCtxCounterGroup</code> ancestor — falls back to the shared singleton from{" "}
-							<code>createContext</code>'s default factory.
+							<code>createContext</code>&apos;s default factory.
 						</p>
 					</div>
 					<div className="flex justify-center rounded-xl border border-(--color-card-border) bg-(--color-card) p-6">

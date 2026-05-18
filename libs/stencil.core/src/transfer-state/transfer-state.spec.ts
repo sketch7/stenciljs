@@ -93,7 +93,8 @@ describe("provideTransferState", () => {
 			ts.set(EVIL_KEY, "</script><script>alert(1)</script>");
 
 			// Validate escaping via JSON.stringify + replaceAll (same logic as toJSON).
-			const json = JSON.stringify({ evil: ts.get(EVIL_KEY) }).replaceAll(/<\/script/gi, String.raw`<\/script`);
+			const json = JSON.stringify({ evil: ts.get(EVIL_KEY) }).replaceAll(/<\/script/giu, String.raw`<\/script`);
+
 			expect(json).not.toContain("</script>");
 			expect(json).toContain(String.raw`<\/script>`);
 		});

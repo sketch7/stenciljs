@@ -1,9 +1,10 @@
 import { AppLifecycleDemo } from "@app/stencil-playground/react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import type { JSX } from "react";
 
 export default function Page(): JSX.Element {
 	const [mounted, setMounted] = useState(true);
+	const toggleMounted = useCallback(() => setMounted(m => !m), []);
 
 	return (
 		<div className="flex flex-col gap-6">
@@ -19,7 +20,8 @@ export default function Page(): JSX.Element {
 			{/* Mount / Unmount toggle */}
 			<div className="flex items-center gap-3">
 				<button
-					onClick={() => setMounted(m => !m)}
+					type="button"
+					onClick={toggleMounted}
 					className={[
 						"inline-flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors",
 						mounted
@@ -49,7 +51,7 @@ export default function Page(): JSX.Element {
 				) : (
 					<div className="flex items-center justify-center gap-2 py-10 text-sm text-(--color-muted-fg)">
 						<span className="text-lg opacity-50">⬡</span>
-						<span>Component is unmounted — click "Mount component" to reconnect it.</span>
+						<span>Component is unmounted — click &quot;Mount component&quot; to reconnect it.</span>
 					</div>
 				)}
 			</div>
@@ -78,7 +80,7 @@ export default function Page(): JSX.Element {
 									<td className="px-3 py-2">
 										<span
 											className="inline-block rounded px-2 py-0.5 font-mono text-[0.7rem] font-semibold"
-											style={{ background: `${row.color}18`, color: row.color, border: `1px solid ${row.color}40` }}>
+											style={row.badgeStyle}>
 											{row.hook}
 										</span>
 									</td>
@@ -152,4 +154,7 @@ const hookRows = [
 		when: "After a re-render — never called on first render",
 		color: "#f472b6",
 	},
-] as const;
+].map(row => ({
+	...row,
+	badgeStyle: { background: `${row.color}18`, color: row.color, border: `1px solid ${row.color}40` },
+}));

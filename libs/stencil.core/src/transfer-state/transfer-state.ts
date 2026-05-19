@@ -175,7 +175,7 @@ export function provideTransferState(id: string): TransferState {
 			if (detectServer()) {
 				return;
 			}
-			const script = host.shadowRoot?.querySelector(`#${scriptId(id)}`) as HTMLScriptElement | null;
+			const script = host.getElement().shadowRoot?.querySelector(`#${scriptId(id)}`) as HTMLScriptElement | null;
 			if (script?.type === SCRIPT_TYPE) {
 				state.fromJSON(script.textContent ?? "{}");
 				script.remove();

@@ -43,10 +43,10 @@ export function provideContext<T>(key: ContextKey<T>, valueOrFactory?: T | (() =
 
 	use(host => ({
 		hostConnected() {
-			host.addEventListener(CONTEXT_EVENT, handleRequest);
+			host.getElement().addEventListener(CONTEXT_EVENT, handleRequest);
 		},
 		hostDisconnected() {
-			host.removeEventListener(CONTEXT_EVENT, handleRequest);
+			host.getElement().removeEventListener(CONTEXT_EVENT, handleRequest);
 		},
 	}));
 

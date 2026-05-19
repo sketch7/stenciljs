@@ -1,6 +1,7 @@
-import type { ReactiveController } from "#lib";
 import { render, h } from "@stencil/vitest";
 import { describe, it, expect } from "vitest";
+
+import type { ReactiveController } from "#lib";
 
 // Test components are defined in co-located files (one @Component per module,
 // per Stencil's module bundling rules) and registered via vitest-setup.ts.

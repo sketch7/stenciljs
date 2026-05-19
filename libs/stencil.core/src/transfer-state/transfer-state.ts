@@ -10,14 +10,15 @@ const SCRIPT_TYPE = "application/json";
  * Returns `true` when running on the server (SSR).
  *
  * Two-signal detection covers all execution contexts:
- * - `typeof window === "undefined"` — `true` in Vitest / plain Node.js (no window global) and in
- *   the outermost `hydrateFactory` scope. In real browsers `window` is always defined.
- * - `Build.isServer` — `true` inside Stencil's `hydrateAppClosure` where
- *   `const window = $stencilWindow` shadows the global, making `typeof window` unreliable.
+ * - `Build.isServer` — `true` inside Stencil's `hydrateAppClosure`; the primary signal for
+ *   Stencil SSR. In the hydrate runtime `window` is always available (mock provided by the
+ *   runtime), so a `window` presence check is not reliable for Stencil SSR detection.
+ * - `!("window" in globalThis)` — `true` in plain Node.js without a DOM environment, enabling
+ *   use of this utility outside the Stencil hydrate bundle.
  *
  * @internal
  */
-export const detectServer: () => boolean = () => !("window" in globalThis) || Build.isServer;
+export const detectServer: () => boolean = () => Build.isServer || !("window" in globalThis);
 
 /**
  * Returns the DOM `id` for the transfer-state `<script>` element.

@@ -115,14 +115,26 @@ export function useQuery<
 	use(host => ({
 		hostConnected() {
 			const qc = clientRef.current;
-			// Create the observer eagerly so getCurrentResult() works for synchronous reads,
-			// but do NOT subscribe yet — subscription starts in hostWillRender, which runs
-			// after ALL hostWillLoad hooks complete (including any prefetchQuery calls).
-			// This guarantees the observer finds fresh cache data and skips the network fetch.
-			observer = new QueryObserver<TQueryFnData, TError, TData, TQueryFnData, TQueryKey>(
-				qc,
-				qc.defaultQueryOptions(getOpts()),
-			);
+			// Create the observer eagerly so getCurrentResult() works for synchronous reads.
+			// Skip if QueryClient is not yet available (bottom-up hydration: consumer connected
+			// before provider) — hostWillLoad will create it once the context is resolved.
+			if (qc) {
+				observer = new QueryObserver<TQueryFnData, TError, TData, TQueryFnData, TQueryKey>(
+					qc,
+					qc.defaultQueryOptions(getOpts()),
+				);
+			}
+		},
+		hostWillLoad() {
+			// Fallback: QueryClient was not available in hostConnected (context was pending).
+			// By hostWillLoad, all providers have connected and context is guaranteed resolved.
+			if (!observer) {
+				const qc = clientRef.current;
+				observer = new QueryObserver<TQueryFnData, TError, TData, TQueryFnData, TQueryKey>(
+					qc,
+					qc.defaultQueryOptions(getOpts()),
+				);
+			}
 		},
 		hostWillRender() {
 			if (!observer) {

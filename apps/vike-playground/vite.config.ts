@@ -7,6 +7,8 @@ import path from "node:path";
 import vike from "vike/plugin";
 import { defineConfig, loadEnv } from "vite";
 
+import { translationsApi } from "./src/api/translations";
+
 const stencilPkgDir = path.resolve(__dirname, "../stencil-playground");
 
 // Mutable reference to the current Stencil hydrate module.
@@ -56,6 +58,32 @@ export default defineConfig(({ mode }) => {
 
 	return {
 		plugins: [
+			{
+				name: "api-routes",
+				configureServer(server) {
+					server.middlewares.use(async (req, res, next) => {
+						if (!req.url?.startsWith("/api/")) {
+							next();
+							return;
+						}
+						const url = new URL(req.url, `http://localhost:${port}`);
+						const webReq = new Request(url.toString(), {
+							method: req.method ?? "GET",
+							headers: Object.fromEntries(
+								Object.entries(req.headers).flatMap(([k, v]) => (typeof v === "string" ? [[k, v]] : [])),
+							),
+						});
+						try {
+							const resp = await translationsApi.fetch(webReq);
+							res.statusCode = resp.status;
+							resp.headers.forEach((value, key) => res.setHeader(key, value));
+							res.end(Buffer.from(await resp.arrayBuffer()));
+						} catch (err) {
+							next(err);
+						}
+					});
+				},
+			},
 			vike(),
 			react(),
 			tailwindcss(),

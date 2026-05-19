@@ -4,6 +4,6 @@ export default defineProject({
 	test: {
 		name: "stencil.core/unit",
 		include: ["src/**/*.{spec,test}.ts"],
-		environment: "node",
+		environment: "jsdom",
 	},
 });

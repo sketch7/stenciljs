@@ -37,14 +37,14 @@
     "lint": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm oxlint src/",
+        "command": "pnpm oxlint src/ tests/",
         "cwd": "libs/stencil.core"
       }
     },
     "fmt": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm oxfmt src/",
+        "command": "pnpm oxfmt src/ tests/",
         "cwd": "libs/stencil.core"
       }
     },

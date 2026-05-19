@@ -1,6 +1,6 @@
 import { use } from "../hooks/use";
-import { CONTEXT_EVENT } from "./context";
-import type { ContextEventDetail, ContextKey } from "./context";
+import { CONTEXT_EVENT, PROVIDER_CONNECTED_EVENT } from "./context";
+import type { ContextEventDetail, ContextKey, ProviderConnectedDetail } from "./context";
 
 /**
  * Registers the current component as a provider for the given context.
@@ -44,6 +44,13 @@ export function provideContext<T>(key: ContextKey<T>, valueOrFactory?: T | (() =
 	use(host => ({
 		hostConnected() {
 			host.getElement().addEventListener(CONTEXT_EVENT, handleRequest);
+			// Notify any consumers that connected before this provider and are waiting.
+			// Dispatched after the DOM listener is registered so re-tries from consumers succeed.
+			globalThis.dispatchEvent(
+				new CustomEvent<ProviderConnectedDetail>(PROVIDER_CONNECTED_EVENT, {
+					detail: { contextId: key.id },
+				}),
+			);
 		},
 		hostDisconnected() {
 			host.getElement().removeEventListener(CONTEXT_EVENT, handleRequest);

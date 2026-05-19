@@ -31,6 +31,7 @@
     "@tanstack/query-core": "catalog:",
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",
+    "jsdom": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "tsdown": "catalog:",

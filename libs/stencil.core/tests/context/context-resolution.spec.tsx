@@ -29,6 +29,27 @@ const NoDefaultCtx = createContext<{ id: number }>(undefined, { name: "no-defaul
 /** Has a default factory — mirrors a context that can fall back to a singleton. */
 const WithDefaultCtx = createContext<{ id: number }>(() => ({ id: -1 }), { name: "with-default" });
 
+// ── Connection order helpers ──────────────────────────────────────────────────
+
+type ConnectFn = (provider: DomTestHost, consumer: DomTestHost) => void;
+
+/** Provider connects first — mirrors SSR render and client navigation. */
+const connectTopDown: ConnectFn = (provider, consumer) => {
+	provider.connect();
+	consumer.connect();
+};
+
+/** Consumer connects first — mirrors SSR→client DSD hydration. */
+const connectBottomUp: ConnectFn = (provider, consumer) => {
+	consumer.connect();
+	provider.connect();
+};
+
+const connectOrders = [
+	{ label: "top-down", connect: connectTopDown },
+	{ label: "bottom-up", connect: connectBottomUp },
+];
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe("context-resolution", () => {
@@ -55,24 +76,15 @@ describe("context-resolution", () => {
 			providerEl.remove();
 		});
 
-		it("top-down: resolves immediately when provider connects before consumer", () => {
-			providerEl.connect(); // registers CONTEXT_EVENT listener
-			consumerEl.connect(); // dispatches event → provider catches → resolved
+		it.each(connectOrders)("$label: resolves to provider value", ({ connect }) => {
+			connect(providerEl, consumerEl);
 
 			expect(ref.current).toStrictEqual(providerValue);
 		});
 
-		it("bottom-up: resolved the moment provider connects (no willLoad needed)", () => {
-			consumerEl.connect(); // no provider yet → pending
-			providerEl.connect(); // broadcasts PROVIDER_CONNECTED_EVENT → consumer resolves
-
-			expect(ref.current).toStrictEqual(providerValue);
-		});
-
-		it("bottom-up: willLoad succeeds (and is a no-op) after provider already connected", async () => {
-			consumerEl.connect();
-			providerEl.connect(); // resolves via window event
-			await consumerEl.willLoad(); // must not throw
+		it.each(connectOrders)("$label: willLoad is a no-op after both connected", async ({ connect }) => {
+			connect(providerEl, consumerEl);
+			await consumerEl.willLoad();
 
 			expect(ref.current).toStrictEqual(providerValue);
 		});
@@ -127,7 +139,7 @@ describe("context-resolution", () => {
 			el2.remove();
 		});
 
-		it("bottom-up: provider value wins over default when provider connects before willLoad", async () => {
+		it.each(connectOrders)("$label: provider value wins over singleton default", async ({ connect }) => {
 			const providerEl = new DomTestHost();
 			const providerValue = { id: 99 };
 			provideContext(WithDefaultCtx, providerValue);
@@ -139,12 +151,10 @@ describe("context-resolution", () => {
 			providerEl.append(consumerEl);
 			document.body.append(providerEl);
 
-			// bottom-up: consumer connects before provider
-			consumerEl.connect();
-			providerEl.connect(); // broadcasts PROVIDER_CONNECTED_EVENT → consumer resolves
-			await consumerEl.willLoad(); // must be a no-op — already resolved
+			connect(providerEl, consumerEl);
+			await consumerEl.willLoad();
 
-			expect(ref.current).toBe(providerValue); // provider wins, not the default singleton
+			expect(ref.current).toBe(providerValue);
 
 			consumerEl.disconnect();
 			providerEl.disconnect();

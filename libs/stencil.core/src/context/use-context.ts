@@ -60,15 +60,9 @@ export function useContext<T>(key: ContextKey<T>): Ref<T> {
 				if (dispatchContextRequest()) {
 					return;
 				}
-				try {
-					// Falls back to the shared singleton (throws if no defaultFactory).
-					ref.current = key.getDefault();
-					return;
-				} catch {
-					// No provider connected AND no default factory — wait for a late provider.
-				}
-				// Subscribe on window so the provider notifies us synchronously when it
-				// connects — guaranteed before hostWillLoad runs, with no polling needed.
+				// Do not call getDefault() here — the hierarchy may not be stable yet
+				// (bottom-up hydration: parent provider hasn't connected).
+				// Always subscribe for a late provider; hostWillLoad resolves once stable.
 				const listener = (event: Event): void => {
 					const e = event as CustomEvent<ProviderConnectedDetail>;
 					if (e.detail.contextId !== key.id) {

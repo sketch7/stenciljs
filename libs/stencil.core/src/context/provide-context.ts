@@ -46,13 +46,11 @@ export function provideContext<T>(key: ContextKey<T>, valueOrFactory?: T | (() =
 			host.getElement().addEventListener(CONTEXT_EVENT, handleRequest);
 			// Notify any consumers that connected before this provider and are waiting.
 			// Dispatched after the DOM listener is registered so re-tries from consumers succeed.
-			if (typeof window !== "undefined" && typeof window.dispatchEvent === "function") {
-				window.dispatchEvent(
-					new CustomEvent<ProviderConnectedDetail>(PROVIDER_CONNECTED_EVENT, {
-						detail: { contextId: key.id },
-					}),
-				);
-			}
+			globalThis.dispatchEvent(
+				new CustomEvent<ProviderConnectedDetail>(PROVIDER_CONNECTED_EVENT, {
+					detail: { contextId: key.id },
+				}),
+			);
 		},
 		hostDisconnected() {
 			host.getElement().removeEventListener(CONTEXT_EVENT, handleRequest);

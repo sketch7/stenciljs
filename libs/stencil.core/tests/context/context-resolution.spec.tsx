@@ -140,7 +140,7 @@ describe("context-resolution", () => {
 	});
 
 	describe("default-factory context (singleton fallback)", () => {
-		it("no provider: falls back to singleton", () => {
+		it("no provider: falls back to singleton after willLoad", async () => {
 			const el = createDomHost();
 			document.body.appendChild(el);
 
@@ -149,13 +149,14 @@ describe("context-resolution", () => {
 			clearCurrentHost();
 
 			el.connect();
+			await el.willLoad();
 			expect(ref.current).toEqual({ id: -1 });
 
 			el.disconnect();
 			document.body.removeChild(el);
 		});
 
-		it("two standalone consumers share the same singleton instance", () => {
+		it("two standalone consumers share the same singleton instance", async () => {
 			const el1 = createDomHost();
 			const el2 = createDomHost();
 			document.body.appendChild(el1);
@@ -169,6 +170,7 @@ describe("context-resolution", () => {
 
 			el1.connect();
 			el2.connect();
+			await Promise.all([el1.willLoad(), el2.willLoad()]);
 
 			expect(ref1.current).toBe(ref2.current);
 
@@ -176,6 +178,31 @@ describe("context-resolution", () => {
 			el2.disconnect();
 			document.body.removeChild(el1);
 			document.body.removeChild(el2);
+		});
+
+		it("bottom-up: provider value wins over default when provider connects before willLoad", async () => {
+			const providerEl = createDomHost();
+			const consumerEl = createDomHost();
+			providerEl.appendChild(consumerEl);
+			document.body.appendChild(providerEl);
+
+			const providerValue = { id: 99 };
+			setCurrentHost(asHost(providerEl));
+			provideContext(WithDefaultCtx, providerValue);
+			setCurrentHost(asHost(consumerEl));
+			const ref = useContext(WithDefaultCtx);
+			clearCurrentHost();
+
+			// bottom-up: consumer connects before provider
+			consumerEl.connect();
+			providerEl.connect(); // broadcasts PROVIDER_CONNECTED_EVENT → consumer resolves
+			await consumerEl.willLoad(); // must be a no-op — already resolved
+
+			expect(ref.current).toBe(providerValue); // provider wins, not the default singleton
+
+			consumerEl.disconnect();
+			providerEl.disconnect();
+			document.body.removeChild(providerEl);
 		});
 	});
 });

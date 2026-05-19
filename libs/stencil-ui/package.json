@@ -54,16 +54,15 @@
     "fmt": "oxfmt src/",
     "fmt:check": "oxfmt --check src/"
   },
-  "dependencies": {
-    "@ssv/stencil.core": "workspace:*",
-    "@stencil/core": "catalog:"
-  },
   "devDependencies": {
+    "@ssv/stencil.core": "workspace:*",
+    "@stencil/core": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "typescript": "catalog:"
   },
   "peerDependencies": {
+    "@ssv/stencil.core": "workspace:*",
     "@stencil/core": ">=4.0.0"
   },
   "collection": "dist/collection/collection-manifest.json",

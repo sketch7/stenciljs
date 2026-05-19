@@ -30,6 +30,11 @@ export class SsvCompose extends SsvElement {
 	}
 
 	render(): VNode | null {
+		// During hydration the element can render before its `name` prop is
+		// populated — nothing to resolve yet, so skip the registry lookup.
+		if (this.name === undefined) {
+			return null;
+		}
 		const registry = this.#registry.current;
 		const definition = registry.resolve(this.name);
 		if (!definition) {

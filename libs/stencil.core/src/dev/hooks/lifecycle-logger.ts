@@ -1,3 +1,5 @@
+import { Build } from "@stencil/core";
+
 import { use } from "../../hooks/use";
 
 export type HookName =
@@ -64,12 +66,17 @@ export function useLifecycleLogger(options?: LifecycleLoggerOptions) {
 				return;
 			}
 			const ev: HookEvent = { hook, ts: timestamp(), index: ++count };
-			const label = options?.name ? `%c[lifecycle:${options.name}] %c${hook}` : `%c[lifecycle] %c${hook}`;
-			// eslint-disable-next-line no-console -- intentional dev logging
-			console.warn(label, "color: #94a3b8; font-weight: normal", `color: ${hookColors[hook]}; font-weight: bold`, {
-				index: ev.index,
-				ts: ev.ts,
-			});
+			const prefix = options?.name ? `[lifecycle:${options.name}]` : "[lifecycle]";
+			if (Build.isServer) {
+				console.warn(`${prefix} ${hook}`, { index: ev.index, ts: ev.ts });
+			} else {
+				console.warn(
+					`%c${prefix} %c${hook}`,
+					"color: #94a3b8; font-weight: normal",
+					`color: ${hookColors[hook]}; font-weight: bold`,
+					{ index: ev.index, ts: ev.ts },
+				);
+			}
 			events.push(ev);
 		}
 

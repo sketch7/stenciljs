@@ -1,5 +1,6 @@
 import { useContext, createContext, provideContext } from "@ssv/stencil.core";
 import type { Ref } from "@ssv/stencil.core";
+
 import type { ComposeDef, ComposeDefInternal, ComposeRegistry, CompositionDefsMap } from "../types";
 import { isComposeDevEnv } from "./is-compose-dev";
 
@@ -41,11 +42,9 @@ export function createComposeRegistry(): ComposeRegistry {
 	return registry;
 }
 
-// Named contexts use Symbol.for — automatically deduplicated across Stencil/Rollup lazy chunks.
 const ComposeRegistryContext = createContext<ComposeRegistry>(undefined, {
 	name: "@ssv/stencil-ui:compose-registry",
 });
-
 
 /** Ref to the active compose registry from the nearest `provideCompositionRegistry()` ancestor. */
 export type CompositionRegistryRef = Ref<ComposeRegistry>;
@@ -71,7 +70,6 @@ export function provideCompositionRegistry(
 	setup: CompositionDefsMap | ((registry: ComposeRegistry) => ComposeRegistry),
 ): ComposeRegistry {
 	const registry = createComposeRegistry();
-	console.warn(">>>>>> provideCompositionRegistry");
 	if (typeof setup === "function") {
 		setup(registry);
 	} else {

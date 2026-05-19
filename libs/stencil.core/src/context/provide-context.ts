@@ -47,18 +47,19 @@ export function provideContext<T>(key: ContextKey<T>, valueOrFactory?: T | (() =
 		hostConnected() {
 			const hydrating = host.isHydrating();
 			log(
-				`hostConnected  tag=${host.getElement().tagName?.toLowerCase() ?? "?"}  contextId=${key.name}  hydrating=${hydrating}`,
+				() =>
+					`hostConnected  tag=${host.getElement().tagName?.toLowerCase() ?? "?"}  contextId=${key.name}  hydrating=${hydrating}`,
 			);
 
 			host.getElement().addEventListener(CONTEXT_EVENT, handleRequest);
 			if (!hydrating) {
 				// Not hydrating: init is top-down — all consumers connect after their provider,
 				// so no waiting consumers exist yet. Skip the global broadcast.
-				log(`hostConnected  not hydrating → skip PROVIDER_CONNECTED_EVENT  contextId=${key.name}`);
+				log(() => `hostConnected  not hydrating → skip PROVIDER_CONNECTED_EVENT  contextId=${key.name}`);
 				return;
 			}
 			// Hydration: bottom-up init may have left consumers waiting on the global event.
-			log(`hostConnected  hydrating → dispatching PROVIDER_CONNECTED_EVENT  contextId=${key.name}`);
+			log(() => `hostConnected  hydrating → dispatching PROVIDER_CONNECTED_EVENT  contextId=${key.name}`);
 			globalThis.dispatchEvent(
 				new CustomEvent<ProviderConnectedDetail>(PROVIDER_CONNECTED_EVENT, {
 					detail: { contextId: key.id },

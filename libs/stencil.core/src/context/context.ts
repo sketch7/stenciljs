@@ -13,16 +13,17 @@ export const PROVIDER_CONNECTED_EVENT = "__ssv:provider-connected" as const;
  * Set to `true` to enable context resolution logging for both `provideContext` and `useContext`.
  * @internal
  */
-const DEBUG = true;
+const DEBUG = false;
 
 /**
  * Returns a logger prefixed with `[<name>]` when `DEBUG` is enabled, otherwise a no-op.
+ * Accepts a factory `() => string` so interpolations are never evaluated when logging is off.
  * @internal
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-function
-const noop = (_msg: string): void => undefined;
-export const createContextLogger = (name: string): ((msg: string) => void) =>
-	DEBUG ? (msg: string) => console.warn(`[${name}] ${msg}`) : noop;
+const noop = (_msg: () => string): void => undefined;
+export const createContextLogger = (name: string): ((msg: () => string) => void) =>
+	DEBUG ? msg => console.warn(`[${name}] ${msg()}`) : noop;
 
 /** @internal Payload carried by a `CONTEXT_EVENT` custom event. */
 export type ContextEventDetail<T> = {

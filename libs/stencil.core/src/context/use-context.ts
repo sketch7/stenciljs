@@ -69,18 +69,19 @@ export function useContext<T>(key: ContextKey<T>): Ref<T> {
 			hostConnected() {
 				const hydrating = host.isHydrating();
 				log(
-					`hostConnected  tag=${host.getElement().tagName?.toLowerCase() ?? "?"}  contextId=${key.name}  hydrating=${hydrating}`,
+					() =>
+						`hostConnected  tag=${host.getElement().tagName?.toLowerCase() ?? "?"}  contextId=${key.name}  hydrating=${hydrating}`,
 				);
 
 				if (dispatchContextRequest()) {
-					log(`hostConnected  resolved immediately  contextId=${key.name}`);
+					log(() => `hostConnected  resolved immediately  contextId=${key.name}`);
 					return;
 				}
 				if (!hydrating) {
 					// Not hydrating: init is top-down (SSR or client navigation) — provider is
 					// already connected if it exists. No listener needed; defer default resolution
 					// to hostWillLoad so errors surface there rather than in connectedCallback.
-					log(`hostConnected  not hydrating → deferring to hostWillLoad  contextId=${key.name}`);
+					log(() => `hostConnected  not hydrating → deferring to hostWillLoad  contextId=${key.name}`);
 					cleanupPending = () => {};
 					return;
 				}
@@ -88,7 +89,7 @@ export function useContext<T>(key: ContextKey<T>): Ref<T> {
 				// but keeps it as a JS property. Bottom-up init — parent provider may not
 				// have connected yet.
 				// Subscribe for a late provider; hostWillLoad resolves once the tree is stable.
-				log(`hostConnected  hydrating → subscribing for late provider  contextId=${key.name}`);
+				log(() => `hostConnected  hydrating → subscribing for late provider  contextId=${key.name}`);
 				const listener = (event: Event): void => {
 					const e = event as CustomEvent<ProviderConnectedDetail>;
 					if (e.detail.contextId !== key.id) {
@@ -99,7 +100,7 @@ export function useContext<T>(key: ContextKey<T>): Ref<T> {
 					}
 					cleanupPending?.();
 					cleanupPending = undefined;
-					log(`PROVIDER_CONNECTED_EVENT resolved  contextId=${key.name}`);
+					log(() => `PROVIDER_CONNECTED_EVENT resolved  contextId=${key.name}`);
 
 					try {
 						host.requestUpdate();
@@ -116,14 +117,14 @@ export function useContext<T>(key: ContextKey<T>): Ref<T> {
 				if (!cleanupPending) {
 					return;
 				}
-				log(`hostWillLoad  safety-net retry  contextId=${key.name}`);
+				log(() => `hostWillLoad  safety-net retry  contextId=${key.name}`);
 				cleanupPending();
 				cleanupPending = undefined;
 				if (dispatchContextRequest()) {
-					log(`hostWillLoad  resolved via retry  contextId=${key.name}`);
+					log(() => `hostWillLoad  resolved via retry  contextId=${key.name}`);
 				} else {
 					// Provider still not connected — fall back to singleton or throw.
-					log(`hostWillLoad  provider absent → falling back to default  contextId=${key.name}`);
+					log(() => `hostWillLoad  provider absent → falling back to default  contextId=${key.name}`);
 					ref.current = key.getDefault();
 				}
 			},

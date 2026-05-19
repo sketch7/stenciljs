@@ -1,5 +1,5 @@
-import { createContext } from "@ssv/stencil.core";
-import type { ContextKey } from "@ssv/stencil.core";
+import { useContext, createContext, provideContext } from "@ssv/stencil.core";
+import type { Ref } from "@ssv/stencil.core";
 import type { ComposeDef, ComposeDefInternal, ComposeRegistry, CompositionDefsMap } from "../types";
 import { isComposeDevEnv } from "./is-compose-dev";
 
@@ -41,22 +41,42 @@ export function createComposeRegistry(): ComposeRegistry {
 	return registry;
 }
 
-// Store the global singleton on globalThis so all module copies (split by
-// Stencil/Rollup across lazy chunks) share the same instance. App code that
-// registers into `composeRegistry` and `ssv-compose` reading from it would
-// otherwise hit separate isolated Maps.
-const GLOBAL_REGISTRY_KEY = Symbol.for("@ssv/stencil-ui:composeRegistry");
-type GlobalWithRegistry = typeof globalThis & { [GLOBAL_REGISTRY_KEY]?: ComposeRegistry };
-const g = globalThis as GlobalWithRegistry;
-if (!g[GLOBAL_REGISTRY_KEY]) {
-	g[GLOBAL_REGISTRY_KEY] = createComposeRegistry();
-}
-export const composeRegistry: ComposeRegistry = g[GLOBAL_REGISTRY_KEY]!;
+// Named contexts use Symbol.for — automatically deduplicated across Stencil/Rollup lazy chunks.
+const ComposeRegistryContext = createContext<ComposeRegistry>(undefined, {
+	name: "@ssv/stencil-ui:compose-registry",
+});
 
-const GLOBAL_CONTEXT_KEY = Symbol.for("@ssv/stencil-ui:ComposeRegistryContext");
-type GlobalWithContext = typeof globalThis & { [GLOBAL_CONTEXT_KEY]?: ContextKey<ComposeRegistry> };
-const gc = globalThis as GlobalWithContext;
-if (!gc[GLOBAL_CONTEXT_KEY]) {
-	gc[GLOBAL_CONTEXT_KEY] = createContext<ComposeRegistry>(() => composeRegistry, { name: "compose-registry" });
+
+/** Ref to the active compose registry from the nearest `provideCompositionRegistry()` ancestor. */
+export type CompositionRegistryRef = Ref<ComposeRegistry>;
+
+/**
+ * Consumes the nearest `ComposeRegistry` from context.
+ *
+ * @example
+ * ```ts
+ * readonly #registry = useCompositionRegistry();
+ *
+ * render() {
+ *   const types = this.#registry.current.listTypes();
+ * }
+ * ```
+ */
+
+export function useCompositionRegistry(): CompositionRegistryRef {
+	return useContext(ComposeRegistryContext);
 }
-export const ComposeRegistryContext: ContextKey<ComposeRegistry> = gc[GLOBAL_CONTEXT_KEY]!;
+
+export function provideCompositionRegistry(
+	setup: CompositionDefsMap | ((registry: ComposeRegistry) => ComposeRegistry),
+): ComposeRegistry {
+	const registry = createComposeRegistry();
+	console.warn(">>>>>> provideCompositionRegistry");
+	if (typeof setup === "function") {
+		setup(registry);
+	} else {
+		registry.registerFromDefs(setup);
+	}
+
+	return provideContext(ComposeRegistryContext, registry);
+}

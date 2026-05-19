@@ -69,6 +69,7 @@ export function createContext<T>(defaultFactory?: () => T, options?: { name?: st
 
 	return {
 		id: Symbol(displayName),
+		// id: Symbol.for(displayName),
 		name: displayName,
 		getDefault(): T {
 			if (!defaultFactory) {

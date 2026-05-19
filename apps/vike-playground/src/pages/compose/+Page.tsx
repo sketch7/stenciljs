@@ -8,9 +8,8 @@ export default function Page(): JSX.Element {
 				<h1 className="text-2xl font-bold text-(--color-fg)">Compose</h1>
 				<p className="text-sm text-(--color-muted-fg)">
 					Demonstrates <code>ssv-compose</code> — render widgets by name + data. The demo uses{" "}
-					<code>provideCompositionRegistry</code> for a scoped registry. Host state uses{" "}
-					<code>CompositionNameOf</code> for typed tab names; unknown <code>name</code> values show the error slot
-					and log known types in dev.
+					<code>provideCompositionRegistry</code> for a scoped registry. Host state uses <code>CompositionNameOf</code>{" "}
+					for typed tab names; unknown <code>name</code> values show the error slot and log known types in dev.
 				</p>
 			</div>
 

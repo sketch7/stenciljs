@@ -78,10 +78,9 @@ export function use<T>(
 	host.addController(controllerOrFactory);
 }
 
-/** @internal Creates a {@link UseHostContext} with a lazy DOM element resolver — deferred until called inside a lifecycle hook. */
+/** @internal Extends `host` in-place with a lazy DOM element resolver, returning it as {@link UseHostContext}. */
 function createUseHostContext(host: ReactiveControllerHost): UseHostContext {
-	return {
-		...host,
+	return Object.assign(host, {
 		getElement(): ReactiveHostElement {
 			try {
 				const el = getElement(host as object);
@@ -97,5 +96,5 @@ function createUseHostContext(host: ReactiveControllerHost): UseHostContext {
 			}
 			return host as unknown as ReactiveHostElement;
 		},
-	};
+	});
 }

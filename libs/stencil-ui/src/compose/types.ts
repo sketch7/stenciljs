@@ -2,7 +2,7 @@
  * Public-facing definition type. Pass TData to constrain the mapData signature.
  * TOutput is declared separately on wrapper components via @Event() ssvComposeOutput.
  */
-export type ComposeDefinition<TData = unknown> = {
+export type ComposeDef<TData = unknown> = {
 	/** Custom element tag name the registry passes to h(). */
 	tag: string;
 	/**
@@ -26,16 +26,16 @@ export type ComposeDefinition<TData = unknown> = {
  * `@Prop() data: TData`.
  * @internal
  */
-export type ComposeDefinitionInternal = {
+export type ComposeDefInternal = {
 	tag: string;
 	mapData?: (data: unknown) => Record<string, unknown>;
 };
 
 /** Static catalog of compose types keyed by primary name. */
-export type CompositionDefsMap = Record<string, ComposeDefinition>;
+export type CompositionDefsMap = Record<string, ComposeDef>;
 
 /** Alias strings from a single definition entry. */
-export type AliasesOf<TDef extends ComposeDefinition> = TDef extends { aliases: infer A }
+export type AliasesOf<TDef extends ComposeDef> = TDef extends { aliases: infer A }
 	? A extends readonly string[]
 		? A[number]
 		: never
@@ -51,9 +51,9 @@ export function createCompositionDefs<const T extends CompositionDefsMap>(defs: 
 }
 
 export type ComposeRegistry = {
-	register<TData>(type: string, definition: ComposeDefinition<TData>): ComposeRegistry;
+	register<TData>(type: string, definition: ComposeDef<TData>): ComposeRegistry;
 	registerFromDefs(defs: CompositionDefsMap): ComposeRegistry;
-	resolve(type: string): ComposeDefinitionInternal | undefined;
+	resolve(type: string): ComposeDefInternal | undefined;
 	/** @internal Dev-only; lists registered primary keys (not every alias). */
 	listTypes(): string[];
 };

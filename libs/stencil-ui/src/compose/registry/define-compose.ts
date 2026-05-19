@@ -1,4 +1,4 @@
-import type { ComposeDefinition, ComposeRegistry } from "../types";
+import type { ComposeDef, ComposeRegistry } from "../types";
 import { composeRegistry } from "./registry";
 
 /**
@@ -32,7 +32,7 @@ import { composeRegistry } from "./registry";
  */
 export function defineCompose<TData>(
 	type: string,
-	options: ComposeDefinition<TData>,
+	options: ComposeDef<TData>,
 	registry: ComposeRegistry = composeRegistry,
 ): ComposeRegistry {
 	return registry.register<TData>(type, options);

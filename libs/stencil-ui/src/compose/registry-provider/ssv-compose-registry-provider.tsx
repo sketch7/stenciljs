@@ -4,7 +4,7 @@ import { Component, Prop, h } from "@stencil/core";
 
 import { ComposeRegistryContext } from "../registry/context";
 import { createComposeRegistry } from "../registry/registry";
-import type { ComposeDefinition, ComposeDefinitionInternal, ComposeRegistry } from "../types";
+import type { ComposeDef, ComposeDefInternal, ComposeRegistry } from "../types";
 
 @Component({
 	tag: "ssv-compose-registry-provider",
@@ -27,9 +27,9 @@ export class SsvComposeRegistryProvider extends SsvElement {
 	// Stable delegate — provideContext captures this reference once.
 	// Methods read #activeRegistry at call time so @Prop() registry changes are reflected.
 	readonly #delegate: ComposeRegistry = {
-		register: (type: string, definition: ComposeDefinition) => this.#activeRegistry.register(type, definition),
+		register: (type: string, definition: ComposeDef) => this.#activeRegistry.register(type, definition),
 		registerFromDefs: defs => this.#activeRegistry.registerFromDefs(defs),
-		resolve: (type: string): ComposeDefinitionInternal | undefined => this.#activeRegistry.resolve(type),
+		resolve: (type: string): ComposeDefInternal | undefined => this.#activeRegistry.resolve(type),
 		listTypes: () => this.#activeRegistry.listTypes(),
 	};
 

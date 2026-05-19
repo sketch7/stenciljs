@@ -6,8 +6,8 @@ export { useCompositionRegistry, type CompositionRegistryRef } from "./registry/
 export { ComposeRegistryContext } from "./registry/context";
 export type {
 	AliasesOf,
-	ComposeDefinition,
-	ComposeDefinitionInternal,
+	ComposeDef,
+	ComposeDefInternal,
 	ComposeEventDetail,
 	ComposeRegistry,
 	CompositionDefsMap,

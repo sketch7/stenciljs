@@ -1,5 +1,3 @@
-import { getElement } from "@stencil/core";
-
 import { use } from "../hooks/use";
 import { createWritableRef } from "../ref";
 import type { Ref } from "../ref";

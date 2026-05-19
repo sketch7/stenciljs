@@ -81,9 +81,7 @@ export function use<T>(
 /** @internal Creates a {@link UseHostContext} with a lazy DOM element resolver — deferred until called inside a lifecycle hook. */
 function createUseHostContext(host: ReactiveControllerHost): UseHostContext {
 	return {
-		addController: c => host.addController(c),
-		removeController: c => host.removeController(c),
-		requestUpdate: () => host.requestUpdate(),
+		...host,
 		getElement(): ReactiveHostElement {
 			try {
 				const el = getElement(host as object);
@@ -93,6 +91,9 @@ function createUseHostContext(host: ReactiveControllerHost): UseHostContext {
 			} catch {
 				// SSR — getElement is unavailable at construction time; falls through to host cast.
 				// The component instance IS the mock DOM element in the hydrate bundle.
+				console.error(
+					"use() called outside of lifecycle hook; getElement() is unavailable. Returning host as fallback.",
+				);
 			}
 			return host as unknown as ReactiveHostElement;
 		},

@@ -6,6 +6,16 @@ import { defineProject } from "vitest/config";
 const stencilEnv = fileURLToPath(new URL("node_modules/@stencil/vitest/dist/environments/stencil.js", import.meta.url));
 
 export default defineProject({
+	resolve: {
+		conditions: ["@ssv/source", "import", "module", "default"],
+	},
+	environments: {
+		ssr: {
+			resolve: {
+				conditions: ["@ssv/source", "import", "module", "default"],
+			},
+		},
+	},
 	test: {
 		name: "stencil.core/integration",
 		include: ["tests/**/*.spec.tsx"],

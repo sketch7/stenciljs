@@ -1,0 +1,53 @@
+:host {
+	display: block;
+}
+
+.shell {
+	display: flex;
+	flex-direction: column;
+	border: 1px solid var(--color-border, #e5e7eb);
+	border-radius: 0.5rem;
+	overflow: hidden;
+}
+
+/* ── Nav ─────────────────────────────────────────────────────────────── */
+.shell-nav {
+	background: var(--color-surface, #f9fafb);
+	border-bottom: 1px solid var(--color-border, #e5e7eb);
+	padding: 0 0.75rem;
+}
+
+.shell-nav-list {
+	display: flex;
+	gap: 0;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.shell-nav-item {
+	padding: 0.75rem 0.875rem;
+	font-size: 0.8125rem;
+	font-weight: 500;
+	color: var(--color-muted-fg, #6b7280);
+	cursor: pointer;
+	border-bottom: 2px solid transparent;
+	transition:
+		color 0.15s,
+		border-color 0.15s;
+	user-select: none;
+}
+
+.shell-nav-item--active {
+	color: var(--color-primary, #6366f1);
+	border-bottom-color: var(--color-primary, #6366f1);
+}
+
+.shell-nav-item:not(.shell-nav-item--active):hover {
+	color: var(--color-fg, #111);
+}
+
+/* ── Content ─────────────────────────────────────────────────────────── */
+.shell-content {
+	padding: 1.25rem;
+}

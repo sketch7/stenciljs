@@ -40,7 +40,10 @@ const navSections: NavSection[] = [
 	},
 	{
 		title: "@ssv / TanStack Query",
-		items: [{ href: "/ssv-stencil/ts-query/posts", label: "Posts" }],
+		items: [
+			{ href: "/ssv-stencil/ts-query/posts", label: "Posts" },
+			{ href: "/ssv-stencil/translations", label: "Translations" },
+		],
 	},
 	{
 		title: "@ssv / Stencil Signals",
@@ -54,15 +57,15 @@ const navSections: NavSection[] = [
 		],
 	},
 	{
+		title: "@ssv / UI / compose",
+		items: [{ href: "/compose", label: "Demo" }],
+	},
+	{
 		title: "Stencil / Store",
 		items: [
 			{ href: "/stencil/counter", label: "Counter" },
 			{ href: "/stencil/todo", label: "Todo List" },
 		],
-	},
-	{
-		title: "@ssv / UI / compose",
-		items: [{ href: "/compose", label: "Demo" }],
 	},
 ];
 

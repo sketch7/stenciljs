@@ -1,3 +1,4 @@
+import { Build } from "@stencil/core";
 import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 
 import { TestHost } from "../testing/test-host";
@@ -51,12 +52,19 @@ describe("provideTransferState", () => {
 
 	afterEach(() => {
 		host.dispose();
-		vi.unstubAllGlobals();
 	});
 
-	describe("server path (window undefined)", () => {
+	describe("server path", () => {
 		const TIME_KEY = makeTransferKey<string>("time");
 		const COUNT_KEY = makeTransferKey<number>("count");
+
+		beforeEach(() => {
+			Object.assign(Build, { isServer: true });
+		});
+
+		afterEach(() => {
+			Object.assign(Build, { isServer: false });
+		});
 
 		it("transfer() calls getValue() and returns the value", () => {
 			const ts = provideTransferState("test");
@@ -109,13 +117,9 @@ describe("provideTransferState", () => {
 		});
 	});
 
-	describe("client path (window stubbed)", () => {
+	describe("client path", () => {
 		const TIME_KEY = makeTransferKey<string>("time");
 		const ITEMS_KEY = makeTransferKey<string[]>("items");
-
-		beforeEach(() => {
-			vi.stubGlobal("window", {});
-		});
 
 		it("reads script from shadowRoot on hostConnected and populates state", () => {
 			const script = makeMockScript(scriptId("client-test"), { time: "server-time" });
@@ -220,7 +224,6 @@ describe("provideTransferState", () => {
 			// Client: fromJSON must parse the template-literal-processed content correctly.
 			const clientHost = new TestHost();
 			try {
-				vi.stubGlobal("window", {});
 				const script: MockScript = {
 					type: "application/json",
 					id: scriptId("newline-round-trip"),
@@ -251,7 +254,7 @@ describe("useTransferState", () => {
 
 	afterEach(() => {
 		host.dispose();
-		vi.unstubAllGlobals();
+		Object.assign(Build, { isServer: false });
 	});
 
 	const MSG_KEY = makeTransferKey<string>("msg");
@@ -267,26 +270,28 @@ describe("useTransferState", () => {
 		expect(consumer.get(MSG_KEY)).toBe("hello");
 	});
 
-	it("falls back to global no-op when no provider exists — returns undefined", () => {
+	it("falls back to global no-op when no provider exists — returns undefined", async () => {
 		const consumer = useTransferState();
 		host.connect();
+		await host.willLoad();
 		expect(consumer.get(MSG_KEY)).toBeUndefined();
 	});
 
-	it("toScriptElement() returns null via global fallback", () => {
+	it("toScriptElement() returns null via global fallback", async () => {
 		const consumer = useTransferState();
 		host.connect();
+		await host.willLoad();
 		expect(consumer.toScriptElement()).toBeNull();
 	});
 
 	it("toScriptElement() forwards to provider's implementation on server", () => {
+		Object.assign(Build, { isServer: true });
 		const ts = provideTransferState("fwd");
 		ts.set(MSG_KEY, "value");
 
 		const consumer = useTransferState();
 		host.connect();
 
-		// Server path: provider's toScriptElement returns non-null
 		expect(consumer.toScriptElement()).not.toBeNull();
 	});
 });

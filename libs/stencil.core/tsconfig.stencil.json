@@ -1,13 +1,14 @@
 {
   "compilerOptions": {
+    "customConditions": ["@ssv/source"],
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
     "experimentalDecorators": true,
-    "lib": ["dom", "es2022"],
+    "lib": ["dom", "dom.iterable", "ES2024"],
     "moduleResolution": "bundler",
     "module": "esnext",
     "rootDir": ".",
-    "target": "es2022",
+    "target": "es2024",
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
     "noImplicitReturns": true,

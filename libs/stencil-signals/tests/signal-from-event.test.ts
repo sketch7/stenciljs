@@ -1,6 +1,7 @@
 import { TestHost } from "@ssv/stencil.core/testing";
 // oxlint-disable-next-line import/no-unassigned-import
 import "../src/tc39";
+// oxlint-disable-next-line import/no-namespace -- namespace required for vi.spyOn module mock
 import * as stencilCore from "@stencil/core";
 import { describe, it, expect, expectTypeOf, vi, afterEach, beforeEach } from "vitest";
 
@@ -105,7 +106,7 @@ describe("signalFromEvent", () => {
 		expectTypeOf($pos).returns.toEqualTypeOf<{ x: number; y: number }>();
 
 		host.connect();
-		expect($pos()).toEqual({ x: 0, y: 0 });
+		expect($pos()).toStrictEqual({ x: 0, y: 0 });
 	});
 
 	it("with map: signal holds detail", () => {
@@ -118,7 +119,7 @@ describe("signalFromEvent", () => {
 		host.connect();
 		host.dispatchEvent(new CustomEvent("todoCompleted", { detail: { id: 42 } }));
 
-		expect($detail()).toEqual({ id: 42 });
+		expect($detail()).toStrictEqual({ id: 42 });
 	});
 
 	it("target window", () => {
@@ -134,7 +135,7 @@ describe("signalFromEvent", () => {
 		vi.stubGlobal("window", win);
 
 		const $scroll = signalFromEvent("scroll", { target: "window" });
-		const scrollOpts = toAddEventListenerOptions(false, resolvePassiveOption("scroll", undefined));
+		const scrollOpts = toAddEventListenerOptions(false, resolvePassiveOption("scroll"));
 		host.connect();
 
 		expect(add).toHaveBeenCalledWith("scroll", expect.any(Function), scrollOpts);
@@ -151,7 +152,7 @@ describe("signalFromEvent", () => {
 		const host = new EventTargetHost();
 		useSignalWatcher();
 		signalFromEvent("click", { capture: true });
-		const clickOpts = toAddEventListenerOptions(true, resolvePassiveOption("click", undefined));
+		const clickOpts = toAddEventListenerOptions(true, resolvePassiveOption("click"));
 
 		host.connect();
 		expect(host.getListener("click", clickOpts)).toBeDefined();
@@ -161,7 +162,7 @@ describe("signalFromEvent", () => {
 		const host = new EventTargetHost();
 		useSignalWatcher();
 		signalFromEvent("scroll");
-		const scrollOpts = toAddEventListenerOptions(false, resolvePassiveOption("scroll", undefined));
+		const scrollOpts = toAddEventListenerOptions(false, resolvePassiveOption("scroll"));
 
 		host.connect();
 		expect(host.getListener("scroll", scrollOpts)).toBeDefined();

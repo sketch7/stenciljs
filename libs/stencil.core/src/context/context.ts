@@ -3,11 +3,20 @@ import type { Ref } from "../ref";
 /** Internal custom-event name used to propagate context through the DOM tree. */
 export const CONTEXT_EVENT = "__ssv:context-request" as const;
 
+/**
+ * Internal event dispatched on `window` when a provider connects.
+ * Allows consumers that connected before their provider to retry context resolution.
+ */
+export const PROVIDER_CONNECTED_EVENT = "__ssv:provider-connected" as const;
+
 /** @internal Payload carried by a `CONTEXT_EVENT` custom event. */
 export type ContextEventDetail<T> = {
 	readonly contextId: symbol;
 	callback(value: T): void;
 };
+
+/** @internal Payload carried by a `PROVIDER_CONNECTED_EVENT` window event. */
+export type ProviderConnectedDetail = { readonly contextId: symbol };
 
 /**
  * Opaque token that uniquely identifies a context type.

@@ -58,12 +58,8 @@ export function createContext<T>(defaultFactory?: () => T, options?: { name?: st
 	let singleton: T | undefined;
 	let initialized = false;
 
-	// Use Symbol.for so the same name produces the same symbol even when this
-	// module is bundled into multiple Rollup chunks (e.g. Stencil lazy loading).
-	// Without this, provider and consumer in different chunks would carry
-	// different symbols and the context event would never match.
 	return {
-		id: Symbol.for(`@ssv/stencil.core:context:${displayName}`),
+		id: Symbol(displayName),
 		name: displayName,
 		getDefault(): T {
 			if (!defaultFactory) {

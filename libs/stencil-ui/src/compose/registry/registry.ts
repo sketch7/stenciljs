@@ -39,10 +39,10 @@ export function createComposeRegistry(): ComposeRegistry {
 	return registry;
 }
 
-// Store the global singleton on globalThis so all module copies (duplicated by
-// Rollup across lazy chunks) share the same instance. Without this, app code
-// registering into `composeRegistry` and ssv-compose reading from it would each
-// hit their own isolated Map.
+// Store the global singleton on globalThis so all module copies (split by
+// Stencil/Rollup across lazy chunks) share the same instance. App code that
+// registers into `composeRegistry` and `ssv-compose` reading from it would
+// otherwise hit separate isolated Maps.
 const GLOBAL_REGISTRY_KEY = Symbol.for("@ssv/stencil-ui:composeRegistry");
 type GlobalWithRegistry = typeof globalThis & { [GLOBAL_REGISTRY_KEY]?: ComposeRegistry };
 const g = globalThis as GlobalWithRegistry;

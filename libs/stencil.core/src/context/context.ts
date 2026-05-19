@@ -62,7 +62,7 @@ export type ContextRef<T> = Ref<T>;
  * );
  * ```
  */
-export function createContext<T>(defaultFactory?: () => T, options?: { name?: string; }): ContextKey<T> {
+export function createContext<T>(defaultFactory?: () => T, options?: { name?: string }): ContextKey<T> {
 	const displayName = options?.name ?? "(unnamed)";
 	let singleton: T | undefined;
 	let initialized = false;

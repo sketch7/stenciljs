@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "vike",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@app/vike-playground", "dev"],
+      "port": 3000
+    }
+  ]
+}

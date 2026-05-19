@@ -46,7 +46,7 @@ const navSections: NavSection[] = [
 		],
 	},
 	{
-		title: "Stencil Signals",
+		title: "@ssv / Stencil Signals",
 		items: [
 			{ href: "/stencil-signals/counter", label: "Counter" },
 			{ href: "/stencil-signals/todo", label: "Todo List" },
@@ -62,6 +62,10 @@ const navSections: NavSection[] = [
 			{ href: "/stencil/counter", label: "Counter" },
 			{ href: "/stencil/todo", label: "Todo List" },
 		],
+	},
+	{
+		title: "@ssv / UI / compose",
+		items: [{ href: "/compose", label: "Demo" }],
 	},
 ];
 

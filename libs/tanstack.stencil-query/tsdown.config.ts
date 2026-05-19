@@ -5,7 +5,4 @@ export default defineConfig({
 	platform: "neutral",
 	hash: false,
 	tsconfig: "tsconfig.lib.json",
-	deps: {
-		neverBundle: ["@stencil/core", "@ssv/stencil.core", "@tanstack/query-core"],
-	},
 });

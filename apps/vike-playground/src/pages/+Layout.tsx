@@ -57,15 +57,15 @@ const navSections: NavSection[] = [
 		],
 	},
 	{
+		title: "@ssv / UI / compose",
+		items: [{ href: "/compose", label: "Demo" }],
+	},
+	{
 		title: "Stencil / Store",
 		items: [
 			{ href: "/stencil/counter", label: "Counter" },
 			{ href: "/stencil/todo", label: "Todo List" },
 		],
-	},
-	{
-		title: "@ssv / UI / compose",
-		items: [{ href: "/compose", label: "Demo" }],
 	},
 ];
 

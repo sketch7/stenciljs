@@ -1,7 +1,6 @@
 import { TestHost } from "@ssv/stencil.core/testing";
 import { Build } from "@stencil/core";
 import { describe, it, expect, afterEach } from "vitest";
-
 // oxlint-disable-next-line import/no-unassigned-import
 import "../src/tc39";
 

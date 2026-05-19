@@ -16,45 +16,6 @@ import { effect } from "../src/extensions/effect";
 // utilities that call getAdapter() work correctly in this test file.
 import { signal, computed, createWatcher, untracked } from "../src/tc39";
 
-// ─── Mock host ────────────────────────────────────────────────────────────────
-
-type MockHost = {
-	addController(ctrl: { hostConnected?(): void; hostDisconnected?(): void }): void;
-	removeController(ctrl: { hostConnected?(): void; hostDisconnected?(): void }): void;
-	requestUpdate(): void;
-	connect(): void;
-	disconnect(): void;
-};
-
-function makeMockHost(): MockHost {
-	type Ctrl = { hostConnected?(): void; hostDisconnected?(): void };
-	const controllers: Ctrl[] = [];
-	return {
-		addController(ctrl: Ctrl) {
-			controllers.push(ctrl);
-		},
-		removeController(ctrl: Ctrl) {
-			const i = controllers.indexOf(ctrl);
-			if (i !== -1) {
-				controllers.splice(i, 1);
-			}
-		},
-		requestUpdate() {
-			/* empty */
-		},
-		connect() {
-			for (const c of controllers) {
-				c.hostConnected?.();
-			}
-		},
-		disconnect() {
-			for (const c of controllers) {
-				c.hostDisconnected?.();
-			}
-		},
-	};
-}
-
 // Helper: flush all pending microtasks
 const flush = () => new Promise<void>(r => setTimeout(r, 0));
 const tick = () => new Promise<void>(r => queueMicrotask(r));
@@ -316,7 +277,11 @@ describe("watchEffect() — auto-tracking", () => {
 		const a = signal(1);
 		const b = signal(10);
 		const fn = vi.fn(() => {
-			toggle() ? b() : a();
+			if (toggle()) {
+				b();
+			} else {
+				a();
+			}
 		});
 		const cleanup = effect(fn);
 
@@ -770,7 +735,7 @@ describe("host lifecycle — derivedAsync", () => {
 			return 7;
 		});
 
-		expect(ran).toBe(true);
+		expect(ran).toBeTruthy();
 		expect(result()).toBeUndefined();
 
 		host.connect();
@@ -868,7 +833,7 @@ describe("host lifecycle — effect cleanup (destroy-only teardown)", () => {
 		await tick();
 		expect(cleanup).not.toHaveBeenCalled();
 		host.disconnect();
-		expect(cleanup).toHaveBeenCalledTimes(1);
+		expect(cleanup).toHaveBeenCalledOnce();
 		host.dispose();
 	});
 
@@ -887,13 +852,13 @@ describe("host lifecycle — effect cleanup (destroy-only teardown)", () => {
 		await tick();
 		expect(cleanup).not.toHaveBeenCalled();
 		ref.dispose();
-		expect(cleanup).toHaveBeenCalledTimes(1);
+		expect(cleanup).toHaveBeenCalledOnce();
 		count.set(2);
 		await tick();
 		await tick();
-		expect(cleanup).toHaveBeenCalledTimes(1);
+		expect(cleanup).toHaveBeenCalledOnce();
 		host.disconnect();
-		expect(cleanup).toHaveBeenCalledTimes(1);
+		expect(cleanup).toHaveBeenCalledOnce();
 		host.dispose();
 	});
 
@@ -915,7 +880,7 @@ describe("host lifecycle — effect cleanup (destroy-only teardown)", () => {
 		await tick();
 		expect(cleanup).not.toHaveBeenCalled();
 		host.disconnect();
-		expect(cleanup).toHaveBeenCalledTimes(1);
+		expect(cleanup).toHaveBeenCalledOnce();
 		host.dispose();
 	});
 });

@@ -273,7 +273,11 @@ describe("watchEffect() — auto-tracking [preact]", () => {
 		const a = signal(1);
 		const b = signal(10);
 		const fn = vi.fn(() => {
-			toggle() ? b() : a();
+			if (toggle()) {
+				b();
+			} else {
+				a();
+			}
 		});
 		const cleanup = effect(fn);
 

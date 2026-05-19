@@ -58,6 +58,10 @@ describe("provideTransferState", () => {
 		const TIME_KEY = makeTransferKey<string>("time");
 		const COUNT_KEY = makeTransferKey<number>("count");
 
+		beforeEach(() => {
+			vi.stubGlobal("window", undefined);
+		});
+
 		it("transfer() calls getValue() and returns the value", () => {
 			const ts = provideTransferState("test");
 			const result = ts.transfer(TIME_KEY, () => "2026-01-01T00:00:00.000Z");
@@ -267,19 +271,22 @@ describe("useTransferState", () => {
 		expect(consumer.get(MSG_KEY)).toBe("hello");
 	});
 
-	it("falls back to global no-op when no provider exists — returns undefined", () => {
+	it("falls back to global no-op when no provider exists — returns undefined", async () => {
 		const consumer = useTransferState();
 		host.connect();
+		await host.willLoad();
 		expect(consumer.get(MSG_KEY)).toBeUndefined();
 	});
 
-	it("toScriptElement() returns null via global fallback", () => {
+	it("toScriptElement() returns null via global fallback", async () => {
 		const consumer = useTransferState();
 		host.connect();
+		await host.willLoad();
 		expect(consumer.toScriptElement()).toBeNull();
 	});
 
 	it("toScriptElement() forwards to provider's implementation on server", () => {
+		vi.stubGlobal("window", undefined);
 		const ts = provideTransferState("fwd");
 		ts.set(MSG_KEY, "value");
 

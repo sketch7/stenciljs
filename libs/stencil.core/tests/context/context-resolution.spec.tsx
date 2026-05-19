@@ -49,7 +49,7 @@ function createDomHost(): DomHost {
 				ps.push(r);
 			}
 		});
-		if (ps.length) {
+		if (ps.length > 0) {
 			await Promise.all(ps);
 		}
 	};
@@ -83,8 +83,8 @@ describe("context-resolution", () => {
 			providerEl = createDomHost();
 			consumerEl = createDomHost();
 			// Consumer is a DOM descendant of provider — enables event bubbling.
-			providerEl.appendChild(consumerEl);
-			document.body.appendChild(providerEl);
+			providerEl.append(consumerEl);
+			document.body.append(providerEl);
 
 			setCurrentHost(asHost(providerEl));
 			providerValue = provideContext(NoDefaultCtx, { id: 42 });
@@ -95,14 +95,14 @@ describe("context-resolution", () => {
 		});
 
 		afterEach(() => {
-			document.body.removeChild(providerEl);
+			providerEl.remove();
 		});
 
 		it("top-down: resolves immediately when provider connects before consumer", () => {
 			providerEl.connect(); // registers CONTEXT_EVENT listener
 			consumerEl.connect(); // dispatches event → provider catches → resolved
 
-			expect(ref.current).toEqual(providerValue);
+			expect(ref.current).toStrictEqual(providerValue);
 		});
 
 		// RED test — fails with the hostWillLoad-only approach because ref.current
@@ -112,7 +112,7 @@ describe("context-resolution", () => {
 			consumerEl.connect(); // no provider yet → pending
 			providerEl.connect(); // broadcasts PROVIDER_CONNECTED_EVENT → consumer resolves
 
-			expect(ref.current).toEqual(providerValue);
+			expect(ref.current).toStrictEqual(providerValue);
 		});
 
 		it("bottom-up: willLoad succeeds (and is a no-op) after provider already connected", async () => {
@@ -120,12 +120,12 @@ describe("context-resolution", () => {
 			providerEl.connect(); // resolves via window event
 			await consumerEl.willLoad(); // must not throw
 
-			expect(ref.current).toEqual(providerValue);
+			expect(ref.current).toStrictEqual(providerValue);
 		});
 
 		it("no provider: willLoad throws a descriptive [ssv:context] error", async () => {
 			const standaloneEl = createDomHost();
-			document.body.appendChild(standaloneEl);
+			document.body.append(standaloneEl);
 
 			setCurrentHost(asHost(standaloneEl));
 			useContext(NoDefaultCtx);
@@ -135,14 +135,14 @@ describe("context-resolution", () => {
 			await expect(standaloneEl.willLoad()).rejects.toThrow("[ssv:context]");
 
 			standaloneEl.disconnect();
-			document.body.removeChild(standaloneEl);
+			standaloneEl.remove();
 		});
 	});
 
 	describe("default-factory context (singleton fallback)", () => {
 		it("no provider: falls back to singleton after willLoad", async () => {
 			const el = createDomHost();
-			document.body.appendChild(el);
+			document.body.append(el);
 
 			setCurrentHost(asHost(el));
 			const ref = useContext(WithDefaultCtx);
@@ -150,17 +150,17 @@ describe("context-resolution", () => {
 
 			el.connect();
 			await el.willLoad();
-			expect(ref.current).toEqual({ id: -1 });
+			expect(ref.current).toStrictEqual({ id: -1 });
 
 			el.disconnect();
-			document.body.removeChild(el);
+			el.remove();
 		});
 
 		it("two standalone consumers share the same singleton instance", async () => {
 			const el1 = createDomHost();
 			const el2 = createDomHost();
-			document.body.appendChild(el1);
-			document.body.appendChild(el2);
+			document.body.append(el1);
+			document.body.append(el2);
 
 			setCurrentHost(asHost(el1));
 			const ref1 = useContext(WithDefaultCtx);
@@ -176,15 +176,15 @@ describe("context-resolution", () => {
 
 			el1.disconnect();
 			el2.disconnect();
-			document.body.removeChild(el1);
-			document.body.removeChild(el2);
+			el1.remove();
+			el2.remove();
 		});
 
 		it("bottom-up: provider value wins over default when provider connects before willLoad", async () => {
 			const providerEl = createDomHost();
 			const consumerEl = createDomHost();
-			providerEl.appendChild(consumerEl);
-			document.body.appendChild(providerEl);
+			providerEl.append(consumerEl);
+			document.body.append(providerEl);
 
 			const providerValue = { id: 99 };
 			setCurrentHost(asHost(providerEl));
@@ -202,7 +202,7 @@ describe("context-resolution", () => {
 
 			consumerEl.disconnect();
 			providerEl.disconnect();
-			document.body.removeChild(providerEl);
+			providerEl.remove();
 		});
 	});
 });

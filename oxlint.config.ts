@@ -283,6 +283,8 @@ export default defineConfig({
 				"vitest/require-test-timeout": "off", // requiring a timeout on every unit test is excessive
 				"vitest/consistent-test-filename": "off", // .spec.ts is a valid convention
 				"vitest/prefer-describe-function-title": "off", // describe title matching an imported name is fine
+				"vitest/require-mock-type-parameters": "off", // explicit type params on every vi.fn() is excessive in test files
+				"vitest/require-to-throw-message": "off", // asserting a throw happens is sufficient without requiring a specific message
 			},
 		},
 		// config files - vitest/tsdown and co

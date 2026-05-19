@@ -1,8 +1,9 @@
-import type { ContextRef } from "#lib";
 import { h, render } from "@stencil/vitest";
 import { describe, expect, it } from "vitest";
 
 import type { TestCtxValue } from "./test-context";
+
+import type { ContextRef } from "#lib";
 
 // Test components are registered automatically via vitest-setup.ts (glob: test-*.js).
 // No import needed here — JSX tags reference the registered custom elements.
@@ -33,7 +34,7 @@ describe("context", () => {
 			await waitForChanges();
 
 			const provider = root as unknown as WithCtxValue;
-			const [c1, c2] = Array.from(root.children) as unknown as WithCtxRef[];
+			const [c1, c2] = [...root.children] as unknown as WithCtxRef[];
 
 			// Consumers receive the provider's instance, not the singleton
 			expect(c1.ctxRef.current).toBe(provider.ctxValue);

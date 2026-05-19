@@ -59,41 +59,41 @@ export function useContext<T>(key: ContextKey<T>): Ref<T> {
 
 		return {
 			hostConnected() {
-				if (!dispatchContextRequest()) {
-					try {
-						// Falls back to the shared singleton (throws if no defaultFactory).
-						ref.current = key.getDefault();
-					} catch {
-						// No provider connected AND no default factory.
-						if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
-							// Subscribe on window so the provider notifies us synchronously when it
-							// connects — guaranteed before hostWillLoad runs, with no polling needed.
-							const listener = (event: Event): void => {
-								const e = event as CustomEvent<ProviderConnectedDetail>;
-								if (e.detail.contextId !== key.id) {
-									return;
-								}
-								if (dispatchContextRequest()) {
-									cleanupPending?.();
-									cleanupPending = undefined;
-									try {
-										// Re-render if the component already painted with a placeholder.
-										host.requestUpdate();
-									} catch {
-										// Component may not be fully initialised yet during SSR hydration;
-										// hostWillLoad / render will still see the resolved ref.current.
-									}
-								}
-							};
-							window.addEventListener(PROVIDER_CONNECTED_EVENT, listener);
-							cleanupPending = () => window.removeEventListener(PROVIDER_CONNECTED_EVENT, listener);
-						} else {
-							// SSR / no window: cannot subscribe; use a no-op sentinel so
-							// hostWillLoad knows it still needs to retry via the DOM event.
-							cleanupPending = () => {};
-						}
-					}
+				if (dispatchContextRequest()) {
+					return;
 				}
+				try {
+					// Falls back to the shared singleton (throws if no defaultFactory).
+					ref.current = key.getDefault();
+					return;
+				} catch {
+					// No provider connected AND no default factory — wait for a late provider.
+				}
+				if (typeof window === "undefined" || typeof window.addEventListener !== "function") {
+					// SSR / no window: use a no-op sentinel so hostWillLoad retries via DOM event.
+					cleanupPending = () => {};
+					return;
+				}
+				// Subscribe on window so the provider notifies us synchronously when it
+				// connects — guaranteed before hostWillLoad runs, with no polling needed.
+				const listener = (event: Event): void => {
+					const e = event as CustomEvent<ProviderConnectedDetail>;
+					if (e.detail.contextId !== key.id) {
+						return;
+					}
+					if (!dispatchContextRequest()) {
+						return;
+					}
+					cleanupPending?.();
+					cleanupPending = undefined;
+					try {
+						host.requestUpdate();
+					} catch {
+						// Component may not be fully initialised yet; hostWillLoad will still see the resolved ref.
+					}
+				};
+				window.addEventListener(PROVIDER_CONNECTED_EVENT, listener);
+				cleanupPending = () => window.removeEventListener(PROVIDER_CONNECTED_EVENT, listener);
 			},
 			hostWillLoad() {
 				// Runs after all connectedCallbacks in the tree, so the provider's DOM

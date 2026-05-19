@@ -1,10 +1,12 @@
 import type { Config } from "@stencil/core";
 
+import { externalizePeerDeps } from "../../scripts/stencil-external-deps";
+
 export const config: Config = {
 	namespace: "ssv-stencil-ui",
 	rollupConfig: {
 		inputOptions: {
-			external: [/^@ssv\/stencil\.core(\/.*)?$/],
+			external: externalizePeerDeps(),
 		},
 	},
 	outputTargets: [

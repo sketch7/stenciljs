@@ -1,4 +1,3 @@
-import { use } from "../hooks/use";
 import { createWritableRef } from "../ref";
 import type { Ref } from "../ref";
 import { CONTEXT_EVENT } from "./context";
@@ -34,8 +33,6 @@ export function useContext<T>(key: ContextKey<T>): Ref<T> {
 	// Side-effect factory form: registers lifecycle hooks without returning a value from use().
 	use(host => ({
 		hostConnected() {
-			// getElement() resolves the real host element — in lazy (hydrate/SSR)
-			// builds the component instance is not the DOM element.
 			let resolved = false;
 
 			const event = new CustomEvent<ContextEventDetail<T>>(CONTEXT_EVENT, {

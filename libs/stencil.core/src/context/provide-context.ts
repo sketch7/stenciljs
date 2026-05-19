@@ -1,5 +1,3 @@
-import { getElement } from "@stencil/core";
-
 import { use } from "../hooks/use";
 import { CONTEXT_EVENT } from "./context";
 import type { ContextEventDetail, ContextKey } from "./context";
@@ -43,9 +41,6 @@ export function provideContext<T>(key: ContextKey<T>, valueOrFactory?: T | (() =
 		}
 	};
 
-	// getElement() resolves the real host element in both lazy (hydrate/SSR) and
-	// custom-elements builds — the component instance is not the DOM element in
-	// lazy mode, so the listener must be attached to getElement(host), not host.
 	use(host => ({
 		hostConnected() {
 			host.getElement().addEventListener(CONTEXT_EVENT, handleRequest);

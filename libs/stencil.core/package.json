@@ -23,6 +23,11 @@
       "types": "./dist/testing/index.d.ts",
       "import": "./dist/testing/index.js"
     },
+    "./testing/dom": {
+      "@ssv/source": "./src/testing/dom/index.ts",
+      "types": "./dist/testing/dom/index.d.ts",
+      "import": "./dist/testing/dom/index.js"
+    },
     "./transfer-state": {
       "@ssv/source": "./src/transfer-state/index.ts",
       "types": "./dist/transfer-state/index.d.ts",

@@ -1,3 +1,4 @@
+import { DomTestHost } from "@ssv/stencil.core/testing/dom";
 /**
  * Context resolution order tests.
  *
@@ -6,55 +7,19 @@
  *   - bottom-up (SSR→client DSD hydration)              → consumer connects first
  *   - no-provider                                        → singleton fallback or error
  *
- * Uses augmented HTMLDivElement hosts instead of compiled Stencil components so
- * that `setCurrentHost` / lifecycle methods can be driven manually — confirming
- * pure controller logic without depending on Stencil's async scheduler timing.
+ * Uses `DomTestHost` (real HTMLElement) instead of compiled Stencil components so
+ * that lifecycle methods can be driven manually in any order — confirming pure
+ * controller logic without depending on Stencil's top-down async scheduler.
  *
- * Event bubbling works because the div elements are real DOM nodes in JSDOM and
- * `consumerEl` is a descendant of `providerEl`.
+ * Event bubbling works because `DomTestHost` elements are real DOM nodes in JSDOM
+ * and `consumerEl` is a descendant of `providerEl`.
  */
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { clearCurrentHost, setCurrentHost } from "../../src/hooks/host-context";
+import { clearCurrentHost } from "../../src/hooks/host-context";
 
-import type { ContextRef, ReactiveController, ReactiveControllerHost } from "#lib";
+import type { ContextRef } from "#lib";
 import { createContext, provideContext, useContext } from "#lib";
-
-// ── DOM test host ─────────────────────────────────────────────────────────────
-
-type DomHost = HTMLDivElement &
-	ReactiveControllerHost & {
-		connect(): void;
-		disconnect(): void;
-		willLoad(): Promise<void>;
-		renderCount: number;
-	};
-
-function createDomHost(): DomHost {
-	const el = document.createElement("div") as DomHost;
-	const ctrls = new Set<ReactiveController>();
-	el.addController = c => ctrls.add(c);
-	el.removeController = c => ctrls.delete(c);
-	el.renderCount = 0;
-	el.requestUpdate = () => {
-		el.renderCount++;
-	};
-	el.connect = () => ctrls.forEach(c => c.hostConnected?.());
-	el.disconnect = () => ctrls.forEach(c => c.hostDisconnected?.());
-	el.willLoad = async () => {
-		const ps: Promise<void>[] = [];
-		ctrls.forEach(c => {
-			const r = c.hostWillLoad?.();
-			if (r) {
-				ps.push(r);
-			}
-		});
-		if (ps.length > 0) {
-			await Promise.all(ps);
-		}
-	};
-	return el;
-}
 
 // ── Context fixtures ──────────────────────────────────────────────────────────
 
@@ -64,34 +29,26 @@ const NoDefaultCtx = createContext<{ id: number }>(undefined, { name: "no-defaul
 /** Has a default factory — mirrors a context that can fall back to a singleton. */
 const WithDefaultCtx = createContext<{ id: number }>(() => ({ id: -1 }), { name: "with-default" });
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function asHost(el: DomHost): ReactiveControllerHost {
-	return el as unknown as ReactiveControllerHost;
-}
-
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe("context-resolution", () => {
 	describe("no-default-factory context (e.g. QueryClient)", () => {
-		let providerEl: DomHost;
-		let consumerEl: DomHost;
+		let providerEl: DomTestHost;
+		let consumerEl: DomTestHost;
 		let providerValue: { id: number };
 		let ref: ContextRef<{ id: number }>;
 
 		beforeEach(() => {
-			providerEl = createDomHost();
-			consumerEl = createDomHost();
-			// Consumer is a DOM descendant of provider — enables event bubbling.
-			providerEl.append(consumerEl);
-			document.body.append(providerEl);
-
-			setCurrentHost(asHost(providerEl));
+			providerEl = new DomTestHost();
 			providerValue = provideContext(NoDefaultCtx, { id: 42 });
 
-			setCurrentHost(asHost(consumerEl));
+			consumerEl = new DomTestHost();
 			ref = useContext(NoDefaultCtx);
 			clearCurrentHost();
+
+			// Consumer is a DOM descendant of provider — enables CONTEXT_EVENT bubbling.
+			providerEl.append(consumerEl);
+			document.body.append(providerEl);
 		});
 
 		afterEach(() => {
@@ -105,9 +62,6 @@ describe("context-resolution", () => {
 			expect(ref.current).toStrictEqual(providerValue);
 		});
 
-		// RED test — fails with the hostWillLoad-only approach because ref.current
-		// is still undefined after providerEl.connect(); only hostWillLoad retries
-		// and we haven't called willLoad here.
 		it("bottom-up: resolved the moment provider connects (no willLoad needed)", () => {
 			consumerEl.connect(); // no provider yet → pending
 			providerEl.connect(); // broadcasts PROVIDER_CONNECTED_EVENT → consumer resolves
@@ -124,12 +78,10 @@ describe("context-resolution", () => {
 		});
 
 		it("no provider: willLoad throws a descriptive [ssv:context] error", async () => {
-			const standaloneEl = createDomHost();
-			document.body.append(standaloneEl);
-
-			setCurrentHost(asHost(standaloneEl));
+			const standaloneEl = new DomTestHost();
 			useContext(NoDefaultCtx);
 			clearCurrentHost();
+			document.body.append(standaloneEl);
 
 			standaloneEl.connect();
 			await expect(standaloneEl.willLoad()).rejects.toThrow("[ssv:context]");
@@ -141,12 +93,10 @@ describe("context-resolution", () => {
 
 	describe("default-factory context (singleton fallback)", () => {
 		it("no provider: falls back to singleton after willLoad", async () => {
-			const el = createDomHost();
-			document.body.append(el);
-
-			setCurrentHost(asHost(el));
+			const el = new DomTestHost();
 			const ref = useContext(WithDefaultCtx);
 			clearCurrentHost();
+			document.body.append(el);
 
 			el.connect();
 			await el.willLoad();
@@ -157,17 +107,14 @@ describe("context-resolution", () => {
 		});
 
 		it("two standalone consumers share the same singleton instance", async () => {
-			const el1 = createDomHost();
-			const el2 = createDomHost();
-			document.body.append(el1);
-			document.body.append(el2);
-
-			setCurrentHost(asHost(el1));
+			const el1 = new DomTestHost();
 			const ref1 = useContext(WithDefaultCtx);
-			setCurrentHost(asHost(el2));
+
+			const el2 = new DomTestHost();
 			const ref2 = useContext(WithDefaultCtx);
 			clearCurrentHost();
 
+			document.body.append(el1, el2);
 			el1.connect();
 			el2.connect();
 			await Promise.all([el1.willLoad(), el2.willLoad()]);
@@ -181,17 +128,16 @@ describe("context-resolution", () => {
 		});
 
 		it("bottom-up: provider value wins over default when provider connects before willLoad", async () => {
-			const providerEl = createDomHost();
-			const consumerEl = createDomHost();
-			providerEl.append(consumerEl);
-			document.body.append(providerEl);
-
+			const providerEl = new DomTestHost();
 			const providerValue = { id: 99 };
-			setCurrentHost(asHost(providerEl));
 			provideContext(WithDefaultCtx, providerValue);
-			setCurrentHost(asHost(consumerEl));
+
+			const consumerEl = new DomTestHost();
 			const ref = useContext(WithDefaultCtx);
 			clearCurrentHost();
+
+			providerEl.append(consumerEl);
+			document.body.append(providerEl);
 
 			// bottom-up: consumer connects before provider
 			consumerEl.connect();

@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "customConditions": ["@ssv/source"],
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
     "experimentalDecorators": true,

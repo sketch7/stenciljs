@@ -206,7 +206,8 @@ export default defineConfig({
 				"react-perf/jsx-no-new-array-as-prop": "off",
 				"react-perf/jsx-no-new-object-as-prop": "off",
 				"react-perf/jsx-no-new-function-as-prop": "off",
-				"react-perf/jsx-no-jsx-as-prop": "off",
+				"react-perf/jsx-no-jsx-as-prop": "off", // react/exhaustive-deps targets React hooks; Stencil uses custom hooks named use*
+				"react/exhaustive-deps": "off",
 			},
 		},
 		{

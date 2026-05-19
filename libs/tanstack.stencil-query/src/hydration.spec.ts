@@ -63,7 +63,7 @@ describe("hydration", () => {
 		expect(target.getQueryData(["posts"])).toStrictEqual([{ id: 1 }]);
 	});
 
-	it("hydrated client returns data immediately without fetch in useQuery", () => {
+	it("hydrated client returns data immediately without fetch in useQuery", async () => {
 		const source = new QueryClient();
 		source.setQueryData(["posts"], [{ id: 1, title: "SSR post" }]);
 		const state = dehydrate(source);
@@ -74,6 +74,7 @@ describe("hydration", () => {
 
 		const query = useQuery({ queryKey: ["posts"], queryFn: () => Promise.resolve([]) }, target);
 		host.connect();
+		await host.willLoad();
 
 		expect(query().data).toStrictEqual([{ id: 1, title: "SSR post" }]);
 		expect(query().isSuccess).toBeTruthy();
@@ -154,7 +155,7 @@ describe("provideQueryClient({ withHydration }) SSR hydration", () => {
 		expect(script.remove).toHaveBeenCalledOnce();
 	});
 
-	it("useQuery returns cached data immediately after hydration — no additional fetch", () => {
+	it("useQuery returns cached data immediately after hydration — no additional fetch", async () => {
 		const serverData = [{ id: 2, title: "Hydrated" }];
 		const serverQc = new QueryClient();
 		serverQc.setQueryData(["posts"], serverData);
@@ -167,6 +168,7 @@ describe("provideQueryClient({ withHydration }) SSR hydration", () => {
 		const qc = provideQueryClient({ withHydration: ts });
 		const query = useQuery({ queryKey: ["posts"], queryFn: () => Promise.resolve([]) }, qc);
 		host.connect();
+		await host.willLoad();
 
 		expect(query().data).toStrictEqual(serverData);
 		expect(query().isSuccess).toBeTruthy();

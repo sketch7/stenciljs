@@ -1,4 +1,4 @@
-import { use, createRef } from "@ssv/stencil.core";
+import { use, createRef, useLoadEffect } from "@ssv/stencil.core";
 import type { Ref } from "@ssv/stencil.core";
 import { QueryObserver, notifyManager } from "@tanstack/query-core";
 import type { DefaultError, NoInfer, QueryClient, QueryKey, QueryObserverResult } from "@tanstack/query-core";
@@ -112,30 +112,23 @@ export function useQuery<
 	let observer: QueryObserver<TQueryFnData, TError, TData, TQueryFnData, TQueryKey> | undefined;
 	let unsubscribe: (() => void) | undefined;
 
+	// hostWillLoad: context guaranteed resolved (clientRef.current always defined here).
+	// Collapses the previous hostConnected + hostWillLoad dual-path into one place.
+	useLoadEffect(_ => {
+		const qc = clientRef.current;
+		observer = new QueryObserver<TQueryFnData, TError, TData, TQueryFnData, TQueryKey>(
+			qc,
+			qc.defaultQueryOptions(getOpts()),
+		);
+		return () => {
+			unsubscribe?.();
+			unsubscribe = undefined;
+			observer?.destroy();
+			observer = undefined;
+		};
+	});
+
 	use(host => ({
-		hostConnected() {
-			const qc = clientRef.current;
-			// Create the observer eagerly so getCurrentResult() works for synchronous reads.
-			// Skip if QueryClient is not yet available (bottom-up hydration: consumer connected
-			// before provider) — hostWillLoad will create it once the context is resolved.
-			if (qc) {
-				observer = new QueryObserver<TQueryFnData, TError, TData, TQueryFnData, TQueryKey>(
-					qc,
-					qc.defaultQueryOptions(getOpts()),
-				);
-			}
-		},
-		hostWillLoad() {
-			// Fallback: QueryClient was not available in hostConnected (context was pending).
-			// By hostWillLoad, all providers have connected and context is guaranteed resolved.
-			if (!observer) {
-				const qc = clientRef.current;
-				observer = new QueryObserver<TQueryFnData, TError, TData, TQueryFnData, TQueryKey>(
-					qc,
-					qc.defaultQueryOptions(getOpts()),
-				);
-			}
-		},
 		hostWillRender() {
 			if (!observer) {
 				return;
@@ -151,12 +144,6 @@ export function useQuery<
 					}),
 				);
 			}
-		},
-		hostDisconnected() {
-			unsubscribe?.();
-			unsubscribe = undefined;
-			observer?.destroy();
-			observer = undefined;
 		},
 	}));
 

@@ -168,6 +168,52 @@ export class SsvTimerHost extends Mixin(SsvElementMixin) {
 }
 ```
 
+## `useEffect`
+
+Registers a side-effect with React-identical semantics. Two forms:
+
+| Call                | Lifecycle                                                             | React equivalent    |
+| ------------------- | --------------------------------------------------------------------- | ------------------- |
+| `useEffect(fn)`     | `hostDidRender` → cleanup → `hostDidRender` … → cleanup on disconnect | `useEffect(fn)`     |
+| `useEffect(fn, [])` | `hostConnected` → cleanup on `hostDisconnected`                       | `useEffect(fn, [])` |
+
+The setup function has no `host` access. Use `@State` mutation (via arrow function in a class field — which captures `this`) for reactivity.
+
+```ts
+// Every render — e.g. sync document.title with component state
+_title = useEffect(() => {
+  const prev = document.title;
+  document.title = `count: ${this._count}`;
+  return () => { document.title = prev; };
+});
+
+// Mount-only — persistent event listener
+_ = useEffect(() => {
+  const onResize = () => { this._width = window.innerWidth; };
+  window.addEventListener("resize", onResize);
+  return () => window.removeEventListener("resize", onResize);
+}, []);
+```
+
+TypeScript enforces that `deps` is exactly `[]` — non-empty arrays are a compile error.
+
+## `useLoadEffect`
+
+Registers an effect that runs in `hostWillLoad` — after all context providers have connected.
+
+Use when setup depends on context (e.g. a `QueryClient`) that may not be resolved at `hostConnected` during SSR hydration. Exposes `host` for `host.requestUpdate()`.
+
+There is no React equivalent — this hook addresses the Stencil-specific bottom-up hydration ordering where context may not be resolved at `hostConnected`.
+
+```ts
+useLoadEffect(host => {
+  const qc = clientRef.current; // guaranteed resolved by hostWillLoad
+  const observer = new QueryObserver(qc, opts);
+  const unsub = observer.subscribe(() => host.requestUpdate());
+  return () => { unsub(); observer.destroy(); };
+});
+```
+
 ## Host context (`getCurrentHost`)
 
 `getCurrentHost()` is a low-level primitive used internally by `use()`. You only need it when building a hook primitive that requires the host reference outside a `use()` factory.

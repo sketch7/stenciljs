@@ -32,10 +32,11 @@ describe("useQuery", () => {
 		expect(query().isError).toBeFalsy();
 	});
 
-	it("reads cached data immediately after connect", () => {
+	it("reads cached data immediately after connect", async () => {
 		qc.setQueryData(["test"], 42);
 		const query = useQuery({ queryKey: ["test"], queryFn: vi.fn<() => unknown>() }, qc);
 		host.connect();
+		await host.willLoad();
 		expect(query().data).toBe(42);
 		expect(query().isSuccess).toBeTruthy();
 		expect(query().isPending).toBeFalsy();
@@ -44,7 +45,8 @@ describe("useQuery", () => {
 	it("triggers requestUpdate and exposes new data when cache changes", async () => {
 		const query = useQuery({ queryKey: ["test"], queryFn: vi.fn<() => unknown>() }, qc);
 		host.connect();
-		host.render(); // establishes subscription (runs after hostWillLoad would have completed)
+		await host.willLoad();
+		host.render(); // establishes subscription
 
 		qc.setQueryData(["test"], 99);
 		// notifyManager schedules notifications as microtasks — wait for them to flush
@@ -63,18 +65,20 @@ describe("useQuery", () => {
 			qc,
 		);
 		host.connect();
+		await host.willLoad();
 		host.render(); // establishes subscription and triggers the fetch
 		await vi.waitFor(() => expect(query().isError).toBeTruthy());
 		expect((query().error as Error).message).toBe("boom");
 	});
 
-	it("updates options reactively — switches queryKey on re-render", () => {
+	it("updates options reactively — switches queryKey on re-render", async () => {
 		let key = "a";
 		qc.setQueryData(["a"], "result-a");
 		qc.setQueryData(["b"], "result-b");
 
 		const query = useQuery(() => ({ queryKey: [key], queryFn: vi.fn<() => unknown>() }), qc);
 		host.connect();
+		await host.willLoad();
 		host.render();
 		expect(query().data).toBe("result-a");
 
@@ -87,6 +91,8 @@ describe("useQuery", () => {
 		qc.setQueryData(["test"], 1);
 		const query = useQuery({ queryKey: ["test"], queryFn: vi.fn<() => unknown>() }, qc);
 		host.connect();
+		await host.willLoad();
+		host.render(); // establishes subscription
 		host.disconnect();
 
 		const countBefore = host.renderCount;
@@ -102,18 +108,20 @@ describe("useQuery", () => {
 		qc.setQueryData(["test"], 1);
 		const query = useQuery({ queryKey: ["test"], queryFn: vi.fn<() => unknown>().mockResolvedValue(2) }, qc);
 		host.connect();
+		await host.willLoad();
 
 		const result = await query().refetch();
 		expect(result.data).toBe(2);
 	});
 
-	it("component subclass pattern — field initializer in class body", () => {
+	it("component subclass pattern — field initializer in class body", async () => {
 		class ComponentLike extends TestHost {
 			readonly query = useQuery({ queryKey: ["sub"], queryFn: vi.fn<() => unknown>() }, qc);
 		}
 		const comp = new ComponentLike();
 		qc.setQueryData(["sub"], "hello");
 		comp.connect();
+		await comp.willLoad();
 		expect(comp.query().data).toBe("hello");
 		comp.disconnect();
 		comp.dispose();
@@ -123,6 +131,7 @@ describe("useQuery", () => {
 	it("exposes isLoading — true while pending, false after data arrives", async () => {
 		const query = useQuery({ queryKey: ["loading"], queryFn: () => Promise.resolve("ok") }, qc);
 		host.connect();
+		await host.willLoad();
 		host.render(); // establishes subscription → starts fetch → isLoading = true
 		expect(query().isLoading).toBeTruthy();
 
@@ -135,6 +144,7 @@ describe("useQuery", () => {
 		host.connect();
 		expect(query().isFetched).toBeFalsy();
 
+		await host.willLoad();
 		host.render();
 		await vi.waitFor(() => expect(query().isFetched).toBeTruthy());
 		expect(query().isFetched).toBeTruthy();
@@ -155,6 +165,7 @@ describe("useQuery", () => {
 			qc,
 		);
 		host.connect();
+		await host.willLoad();
 		host.render();
 
 		// eslint-disable-next-line no-void

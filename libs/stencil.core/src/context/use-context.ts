@@ -38,16 +38,9 @@ export function useContext<T>(key: ContextKey<T>): Ref<T> {
 		hostConnected() {
 			// getElement() resolves the real host element — in lazy (hydrate/SSR)
 			// builds the component instance is not the DOM element.
-			const hostEl = getElement(host);
 			let resolved = false;
 
-			// Build the event with the host document's own CustomEvent constructor.
-			// During SSR/hydrate that is mock-doc's CustomEvent, whose target /
-			// currentTarget are writable (mock-doc's dispatchEvent assigns to them);
-			// the native CustomEvent's are read-only and would make SSR dispatch throw.
-			const CustomEventCtor = hostEl.ownerDocument?.defaultView?.CustomEvent ?? CustomEvent;
-
-			const event = new CustomEventCtor<ContextEventDetail<T>>(CONTEXT_EVENT, {
+			const event = new CustomEvent<ContextEventDetail<T>>(CONTEXT_EVENT, {
 				bubbles: true,
 				// crosses shadow-DOM boundaries for deeply nested components
 				composed: true,

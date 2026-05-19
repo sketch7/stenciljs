@@ -1,4 +1,5 @@
 import { SsvElement } from "@ssv/stencil.core";
+import { useLifecycleLogger } from "@ssv/stencil.core/dev";
 import { Component, h } from "@stencil/core";
 
 import { useTranslations } from "./translations.api";
@@ -9,6 +10,7 @@ import { useTranslations } from "./translations.api";
 	shadow: true,
 })
 export class AppTranslationShell extends SsvElement {
+	readonly _lifecycle = useLifecycleLogger({ name: "translation-shell" });
 	readonly #tr = useTranslations();
 
 	render() {

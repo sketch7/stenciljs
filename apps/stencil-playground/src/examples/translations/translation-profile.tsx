@@ -1,4 +1,5 @@
 import { SsvElement } from "@ssv/stencil.core";
+import { useLifecycleLogger } from "@ssv/stencil.core/dev";
 import { Component, State, h } from "@stencil/core";
 
 import { useTranslations } from "./translations.api";
@@ -11,6 +12,7 @@ type ProfileStatus = "idle" | "success" | "error" | "empty";
 	shadow: true,
 })
 export class AppTranslationProfile extends SsvElement {
+	readonly _lifecycle = useLifecycleLogger({ name: "translation-profile" });
 	readonly #tr = useTranslations();
 
 	@State() name = "Alice";

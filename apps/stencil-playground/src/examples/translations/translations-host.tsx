@@ -1,4 +1,5 @@
 import { SsvElement } from "@ssv/stencil.core";
+import { useLifecycleLogger } from "@ssv/stencil.core/dev";
 import { provideTransferState } from "@ssv/stencil.core/transfer-state";
 import { provideQueryClient } from "@ssv/tanstack.stencil-query";
 import { Component, h } from "@stencil/core";
@@ -12,6 +13,7 @@ import { useTranslations } from "./translations.api";
 })
 export class AppTranslationsHost extends SsvElement {
 	// Transfer state must be declared BEFORE provideQueryClient.
+	readonly _lifecycle = useLifecycleLogger({ name: "translations-host" });
 	readonly #ts = provideTransferState("translations");
 	readonly #queryClient = provideQueryClient({ withHydration: this.#ts });
 	readonly #tr = useTranslations(this.#queryClient);

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 
 import { TestHost } from "../testing/test-host";
 import { useEffect, useLoadEffect } from "./use-effect";
@@ -17,7 +17,7 @@ describe("useEffect — no deps", () => {
 	});
 
 	it("registers exactly one controller with the host", () => {
-		useEffect(() => {});
+		useEffect(vi.fn());
 		expect(host.controllers.size).toBe(1);
 	});
 
@@ -43,16 +43,16 @@ describe("useEffect — no deps", () => {
 		});
 		host.render();
 		host.render();
-		expect(order).toEqual(["setup", "cleanup", "setup"]);
+		expect(order).toStrictEqual(["setup", "cleanup", "setup"]);
 	});
 
 	it("cleanup is NOT called when setup returns void", () => {
-		useEffect(() => {
-			/* no return */
-		});
+		const setup = vi.fn<() => void>();
+		useEffect(setup);
 		host.render();
 		host.render();
-		host.disconnect(); // should not throw
+		host.disconnect();
+		expect(setup).toHaveBeenCalledTimes(2);
 	});
 
 	it("cleanup runs on hostDisconnected", () => {
@@ -96,7 +96,7 @@ describe("useEffect — [] deps (mount-only)", () => {
 	});
 
 	it("registers exactly one controller with the host", () => {
-		useEffect(() => {}, []);
+		useEffect(vi.fn(), []);
 		expect(host.controllers.size).toBe(1);
 	});
 
@@ -131,11 +131,11 @@ describe("useEffect — [] deps (mount-only)", () => {
 	});
 
 	it("cleanup is NOT called when setup returns void", () => {
-		useEffect(() => {
-			/* no return */
-		}, []);
+		const setup = vi.fn<() => void>();
+		useEffect(setup, []);
 		host.connect();
-		host.disconnect(); // should not throw
+		host.disconnect();
+		expect(setup).toHaveBeenCalledOnce();
 	});
 
 	it("disconnect then reconnect: cleanup fires then setup fires again", () => {
@@ -147,7 +147,7 @@ describe("useEffect — [] deps (mount-only)", () => {
 		host.connect();
 		host.disconnect();
 		host.connect();
-		expect(order).toEqual(["setup", "cleanup", "setup"]);
+		expect(order).toStrictEqual(["setup", "cleanup", "setup"]);
 	});
 });
 
@@ -165,7 +165,7 @@ describe("useLoadEffect", () => {
 	});
 
 	it("registers exactly one controller with the host", () => {
-		useLoadEffect(() => {});
+		useLoadEffect(vi.fn());
 		expect(host.controllers.size).toBe(1);
 	});
 
@@ -192,11 +192,11 @@ describe("useLoadEffect", () => {
 	});
 
 	it("cleanup is NOT called when setup returns void", async () => {
-		useLoadEffect(() => {
-			/* no return */
-		});
+		const setup = vi.fn<() => void>();
+		useLoadEffect(setup);
 		await host.willLoad();
-		host.disconnect(); // should not throw
+		host.disconnect();
+		expect(setup).toHaveBeenCalledOnce();
 	});
 
 	it("receives UseHostContext — host.requestUpdate is callable", async () => {
@@ -206,6 +206,6 @@ describe("useLoadEffect", () => {
 		});
 		await host.willLoad();
 		expect(capturedHost).toBeDefined();
-		expect(typeof capturedHost?.requestUpdate).toBe("function");
+		expectTypeOf(capturedHost?.requestUpdate).toBeFunction();
 	});
 });

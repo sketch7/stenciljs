@@ -32,14 +32,14 @@ export type EffectCleanup = () => void;
  * }, []);
  * ```
  */
-export function useEffect(setup: () => EffectCleanup | void): void;
-export function useEffect(setup: () => EffectCleanup | void, deps: readonly []): void;
+export function useEffect(setup: () => EffectCleanup | void, deps?: readonly []): void;
 export function useEffect(setup: () => EffectCleanup | void, deps?: readonly []): void {
-	if (deps !== undefined) {
+	if (deps === undefined) {
 		use(() => {
 			let cleanup: EffectCleanup | void;
 			return {
-				hostConnected() {
+				hostDidRender() {
+					cleanup?.();
 					cleanup = setup();
 				},
 				hostDisconnected() {
@@ -52,8 +52,7 @@ export function useEffect(setup: () => EffectCleanup | void, deps?: readonly [])
 		use(() => {
 			let cleanup: EffectCleanup | void;
 			return {
-				hostDidRender() {
-					cleanup?.();
+				hostConnected() {
 					cleanup = setup();
 				},
 				hostDisconnected() {

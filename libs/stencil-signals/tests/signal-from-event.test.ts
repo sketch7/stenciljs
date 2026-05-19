@@ -69,18 +69,18 @@ class EventTargetHost extends TestHost {
 }
 
 describe("signalFromEvent", () => {
-	afterEach(() => {
-		vi.restoreAllMocks();
-	});
-
 	beforeEach(() => {
 		vi.spyOn(stencilCore, "getElement").mockImplementation(host => host as unknown as HTMLStencilElement);
+	});
+
+	afterEach(() => {
+		vi.restoreAllMocks();
 	});
 
 	it("throws without useSignalWatcher on connect", () => {
 		const host = new EventTargetHost();
 		signalFromEvent("todoCompleted");
-		expect(() => host.connect()).toThrow(/signalFromEvent requires useSignalWatcher\(\) declared before this field/);
+		expect(() => host.connect()).toThrow(/signalFromEvent requires useSignalWatcher\(\) declared before this field/u);
 	});
 
 	it("no map: dispatchEvent on host stores the same CustomEvent reference", () => {

@@ -18,7 +18,7 @@ import { createComposeRegistry } from "./registry";
  * @example Fluent registration
  * ```ts
  * readonly #registry = provideCompositionRegistry(r =>
- *   r.register("timer", { tag: "ssv-timer-widget" }),
+ *   r.register("timer", { tag: "app-timer-widget" }),
  * );
  * ```
  */

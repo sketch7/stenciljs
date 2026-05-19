@@ -15,7 +15,10 @@ pnpm add @ssv/stencil-ui @ssv/stencil.core
 Add the package to your Stencil app so its component collection is included in the build (same as any `libs/` dependency in this monorepo). Then import registry helpers where you register composes:
 
 ```ts
-import { createCompositionDefs, registerCompositionDefs } from "@ssv/stencil-ui/compose";
+import {
+  createCompositionDefs,
+  registerCompositionDefs,
+} from "@ssv/stencil-ui/compose";
 ```
 
 ## Quick start
@@ -31,8 +34,8 @@ import {
 } from "@ssv/stencil-ui/compose";
 
 export const appCompositionDefs = createCompositionDefs({
-  timer: { tag: "ssv-timer-widget", aliases: ["countdown"] },
-  count: { tag: "ssv-count-widget" },
+  timer: { tag: "app-timer-widget", aliases: ["countdown"] },
+  count: { tag: "app-count-widget" },
 });
 
 export type AppCompositionName = CompositionNameOf<typeof appCompositionDefs>;
@@ -77,7 +80,7 @@ Fluent setup is also supported:
 
 ```ts
 readonly #registry = provideCompositionRegistry(r =>
-  r.register("timer", { tag: "ssv-timer-widget" }),
+  r.register("timer", { tag: "app-timer-widget" }),
 );
 ```
 
@@ -116,7 +119,7 @@ Each registry entry points at a **wrapper** custom element you own (`ssv-*` in `
 **Output:** bubble a single normalized event so parents do not listen to every inner tag:
 
 ```tsx
-@Component({ tag: "ssv-timer-widget", shadow: false })
+@Component({ tag: "app-timer-widget", shadow: false })
 export class SsvTimerWidget {
   @Prop() data!: { duration: number };
   @Event() ssvComposeOutput!: EventEmitter<{ isRunning: boolean }>;
@@ -138,16 +141,16 @@ export class SsvTimerWidget {
 
 ## Registry API
 
-| Export                                        | Description                                                                                          |
-| --------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `createCompositionDefs(defs)`                 | Preserves literal keys for `CompositionNameOf` inference.                                            |
-| `registerCompositionDefs(defs, registry?)`    | Bulk-register a defs map. Defaults to global `composeRegistry`.                                      |
-| `provideCompositionRegistry(setup)`           | Scoped registry + `provideContext` on an `SsvElement` host.                                          |
-| `useCompositionRegistry()`                    | Consume nearest registry (or global fallback).                                                       |
-| `defineCompose(type, options, registry?)`     | Register one entry. Alias for `registry.register(...)`.                                              |
-| `createComposeRegistry()`                     | New isolated `Map`-backed registry.                                                                  |
-| `composeRegistry`                             | Global singleton used when no provider overrides context.                                            |
-| `ComposeRegistryContext`                      | Context token from `@ssv/stencil.core` (`createContext`). Default factory returns `composeRegistry`. |
+| Export                                     | Description                                                                                          |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| `createCompositionDefs(defs)`              | Preserves literal keys for `CompositionNameOf` inference.                                            |
+| `registerCompositionDefs(defs, registry?)` | Bulk-register a defs map. Defaults to global `composeRegistry`.                                      |
+| `provideCompositionRegistry(setup)`        | Scoped registry + `provideContext` on an `SsvElement` host.                                          |
+| `useCompositionRegistry()`                 | Consume nearest registry (or global fallback).                                                       |
+| `defineCompose(type, options, registry?)`  | Register one entry. Alias for `registry.register(...)`.                                              |
+| `createComposeRegistry()`                  | New isolated `Map`-backed registry.                                                                  |
+| `composeRegistry`                          | Global singleton used when no provider overrides context.                                            |
+| `ComposeRegistryContext`                   | Context token from `@ssv/stencil.core` (`createContext`). Default factory returns `composeRegistry`. |
 
 All of the above are exported from `@ssv/stencil-ui/compose`.
 

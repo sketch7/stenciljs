@@ -13,10 +13,10 @@ import { composeRegistry } from "./registry";
  *
  * @example — wrapper component targeting an explicit registry
  * const r = createComposeRegistry();
- * defineCompose<TimerData>("timer", { tag: "ssv-timer-widget" }, r);
+ * defineCompose<TimerData>("timer", { tag: "app-timer-widget" }, r);
  *
  * @example — global registry (no third arg)
- * defineCompose<TimerData>("timer", { tag: "ssv-timer-widget" });
+ * defineCompose<TimerData>("timer", { tag: "app-timer-widget" });
  *
  * @example — mapData shorthand
  * defineCompose<TimerData>("timer", {
@@ -26,7 +26,7 @@ import { composeRegistry } from "./registry";
  *
  * @example — with aliases
  * defineCompose<TimerData>("timer", {
- *   tag: "ssv-timer-widget",
+ *   tag: "app-timer-widget",
  *   aliases: ["countdown", "kitchen-timer"],
  * });
  */

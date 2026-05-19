@@ -5,7 +5,7 @@ import { Component, State, h } from "@stencil/core";
 
 import { demoCompositionDefs } from "./compose-defs";
 import type { DemoCompositionName } from "./compose-defs";
-import type { TimerWidgetData } from "./timer/ssv-timer-widget";
+import type { TimerWidgetData } from "./timer/app-timer-widget";
 
 @Component({
 	tag: "app-compose-demo",

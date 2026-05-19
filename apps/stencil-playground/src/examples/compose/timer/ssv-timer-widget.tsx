@@ -10,7 +10,7 @@ export type TimerWidgetOutput = {
 };
 
 @Component({
-	tag: "ssv-timer-widget",
+	tag: "app-timer-widget",
 	shadow: false,
 })
 export class SsvTimerWidget {

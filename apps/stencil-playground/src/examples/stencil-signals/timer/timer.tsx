@@ -27,14 +27,10 @@ export class AppTimer extends SsvElement {
 
 	#intervalId: ReturnType<typeof setInterval> | undefined;
 
-	readonly _durationEffect = effect(
-		[this.$props.duration],
-		([d]) => {
-			this.#stop();
-			this.$timeRemaining.set(d);
-		},
-		{ defer: true },
-	);
+	readonly _durationEffect = effect([this.$props.duration], ([d]) => {
+		this.#stop();
+		this.$timeRemaining.set(d);
+	});
 
 	readonly _completionEffect = effect(onCleanup => {
 		if (this.$isCompleted()) {

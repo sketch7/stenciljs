@@ -1,3 +1,4 @@
+export * from "./compose";
 export * from "./ssv-core";
 export * from "./stencil-signals";
 export * from "./transfer-state";

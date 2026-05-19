@@ -1,4 +1,9 @@
-export { createComposeRegistry, provideCompositionRegistry, useCompositionRegistry, type CompositionRegistryRef } from "./registry/registry";
+export {
+	createComposeRegistry,
+	provideCompositionRegistry,
+	useCompositionRegistry,
+	type CompositionRegistryRef,
+} from "./registry/registry";
 export type {
 	AliasesOf,
 	ComposeDef,

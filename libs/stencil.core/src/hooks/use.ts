@@ -96,5 +96,8 @@ function createUseHostContext(host: ReactiveControllerHost): UseHostContext {
 			}
 			return host as unknown as ReactiveHostElement;
 		},
+		isHydrating(): boolean {
+			return Boolean((getElement(host as object) as unknown as Record<string, unknown>)["s-id"]);
+		},
 	});
 }

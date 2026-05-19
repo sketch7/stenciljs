@@ -32,51 +32,29 @@ export function useContext<T>(key: ContextKey<T>): Ref<T> {
 	const ref = createWritableRef<T>();
 
 	use(host => {
-		// contextPending: true while a provider is needed but not yet found.
-		// Used by hostWillLoad as a fallback for environments without window (SSR).
-		let contextPending = false;
-		// pendingWindowListener: true while a PROVIDER_CONNECTED_EVENT listener is
-		// registered on window. Cleaned up in hostDisconnected and when resolved.
-		let pendingWindowListener = false;
+		// `undefined`  → context is resolved (no cleanup needed).
+		// function ref → context is pending; call it to remove the window listener.
+		//                In SSR / stubbed-window environments this is the no-op `() => {}`
+		//                sentinel, which keeps hostWillLoad's retry path active.
+		let cleanupPending: (() => void) | undefined;
 
 		const dispatchContextRequest = (): boolean => {
 			let resolved = false;
-			const event = new CustomEvent<ContextEventDetail<T>>(CONTEXT_EVENT, {
-				bubbles: true,
-				// crosses shadow-DOM boundaries for deeply nested components
-				composed: true,
-				detail: {
-					contextId: key.id,
-					callback(value: T) {
-						ref.current = value;
-						resolved = true;
+			host.getElement().dispatchEvent(
+				new CustomEvent<ContextEventDetail<T>>(CONTEXT_EVENT, {
+					bubbles: true,
+					// crosses shadow-DOM boundaries for deeply nested components
+					composed: true,
+					detail: {
+						contextId: key.id,
+						callback(value: T) {
+							ref.current = value;
+							resolved = true;
+						},
 					},
-				},
-			});
-			host.getElement().dispatchEvent(event);
+				}),
+			);
 			return resolved;
-		};
-
-		const onProviderConnected = (event: Event): void => {
-			const e = event as CustomEvent<ProviderConnectedDetail>;
-			if (e.detail.contextId !== key.id) {
-				return;
-			}
-			if (dispatchContextRequest()) {
-				if (typeof window !== "undefined" && typeof window.removeEventListener === "function") {
-					window.removeEventListener(PROVIDER_CONNECTED_EVENT, onProviderConnected);
-				}
-				pendingWindowListener = false;
-				contextPending = false;
-				// Trigger a re-render in case the component has already rendered
-				// with a placeholder (e.g. provider added to DOM after first paint).
-				try {
-					host.requestUpdate();
-				} catch {
-					// Stencil may not have fully initialised the component yet during SSR hydration;
-					// hostWillLoad / render will still see the resolved ref.current value.
-				}
-			}
 		};
 
 		return {
@@ -87,48 +65,53 @@ export function useContext<T>(key: ContextKey<T>): Ref<T> {
 						ref.current = key.getDefault();
 					} catch {
 						// No provider connected AND no default factory.
-						// Primary path (browser): subscribe to PROVIDER_CONNECTED_EVENT.
-						// Provider dispatches this event on window immediately after
-						// registering its DOM listener, so the retry in onProviderConnected
-						// is guaranteed to find the provider.
-						contextPending = true;
-						if (
-							typeof window !== "undefined" &&
-							typeof window.addEventListener === "function" &&
-							!pendingWindowListener
-						) {
-							window.addEventListener(PROVIDER_CONNECTED_EVENT, onProviderConnected);
-							pendingWindowListener = true;
+						if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+							// Subscribe on window so the provider notifies us synchronously when it
+							// connects — guaranteed before hostWillLoad runs, with no polling needed.
+							const listener = (event: Event): void => {
+								const e = event as CustomEvent<ProviderConnectedDetail>;
+								if (e.detail.contextId !== key.id) {
+									return;
+								}
+								if (dispatchContextRequest()) {
+									cleanupPending?.();
+									cleanupPending = undefined;
+									try {
+										// Re-render if the component already painted with a placeholder.
+										host.requestUpdate();
+									} catch {
+										// Component may not be fully initialised yet during SSR hydration;
+										// hostWillLoad / render will still see the resolved ref.current.
+									}
+								}
+							};
+							window.addEventListener(PROVIDER_CONNECTED_EVENT, listener);
+							cleanupPending = () => window.removeEventListener(PROVIDER_CONNECTED_EVENT, listener);
+						} else {
+							// SSR / no window: cannot subscribe; use a no-op sentinel so
+							// hostWillLoad knows it still needs to retry via the DOM event.
+							cleanupPending = () => {};
 						}
 					}
 				}
 			},
 			hostWillLoad() {
-				// Fallback for SSR / environments without window, and as a safety net
-				// for edge cases where the window event fires between tasks.
-				if (!contextPending) {
+				// Runs after all connectedCallbacks in the tree, so the provider's DOM
+				// listener is always registered by this point. Acts as a fallback for SSR
+				// and an edge-case safety net for when the window event fires between tasks.
+				if (!cleanupPending) {
 					return;
 				}
-				// Clean up any window listener that is still pending.
-				if (pendingWindowListener) {
-					if (typeof window !== "undefined" && typeof window.removeEventListener === "function") {
-						window.removeEventListener(PROVIDER_CONNECTED_EVENT, onProviderConnected);
-					}
-					pendingWindowListener = false;
-				}
-				contextPending = false;
+				cleanupPending();
+				cleanupPending = undefined;
 				if (!dispatchContextRequest()) {
 					// Provider still not connected — fall back to singleton or throw.
 					ref.current = key.getDefault();
 				}
 			},
 			hostDisconnected() {
-				if (pendingWindowListener) {
-					if (typeof window !== "undefined" && typeof window.removeEventListener === "function") {
-						window.removeEventListener(PROVIDER_CONNECTED_EVENT, onProviderConnected);
-					}
-					pendingWindowListener = false;
-				}
+				cleanupPending?.();
+				cleanupPending = undefined;
 			},
 		};
 	});

@@ -1,3 +1,5 @@
+import { createContext } from "@ssv/stencil.core";
+import type { ContextKey } from "@ssv/stencil.core";
 import type { ComposeDef, ComposeDefInternal, ComposeRegistry, CompositionDefsMap } from "../types";
 import { isComposeDevEnv } from "./is-compose-dev";
 
@@ -50,3 +52,11 @@ if (!g[GLOBAL_REGISTRY_KEY]) {
 	g[GLOBAL_REGISTRY_KEY] = createComposeRegistry();
 }
 export const composeRegistry: ComposeRegistry = g[GLOBAL_REGISTRY_KEY]!;
+
+const GLOBAL_CONTEXT_KEY = Symbol.for("@ssv/stencil-ui:ComposeRegistryContext");
+type GlobalWithContext = typeof globalThis & { [GLOBAL_CONTEXT_KEY]?: ContextKey<ComposeRegistry> };
+const gc = globalThis as GlobalWithContext;
+if (!gc[GLOBAL_CONTEXT_KEY]) {
+	gc[GLOBAL_CONTEXT_KEY] = createContext<ComposeRegistry>(() => composeRegistry, { name: "compose-registry" });
+}
+export const ComposeRegistryContext: ContextKey<ComposeRegistry> = gc[GLOBAL_CONTEXT_KEY]!;

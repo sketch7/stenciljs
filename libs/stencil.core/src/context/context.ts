@@ -59,7 +59,7 @@ export function createContext<T>(defaultFactory?: () => T, options?: { name?: st
 	let initialized = false;
 
 	return {
-		id: Symbol.for(`@ssv/stencil-ui:Context:${displayName}`),
+		id: Symbol(displayName),
 		name: displayName,
 		getDefault(): T {
 			if (!defaultFactory) {

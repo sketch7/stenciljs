@@ -2,7 +2,7 @@ import { useContext } from "@ssv/stencil.core";
 import type { Ref } from "@ssv/stencil.core";
 
 import type { ComposeRegistry } from "../types";
-import { ComposeRegistryContext } from "./context";
+import { ComposeRegistryContext } from "./registry";
 
 /** Ref to the active compose registry (nearest provider or global singleton). */
 export type CompositionRegistryRef = Ref<ComposeRegistry>;

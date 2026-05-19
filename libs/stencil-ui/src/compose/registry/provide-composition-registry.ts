@@ -1,7 +1,7 @@
 import { provideContext } from "@ssv/stencil.core";
 
 import type { CompositionDefsMap, ComposeRegistry } from "../types";
-import { ComposeRegistryContext } from "./context";
+import { ComposeRegistryContext } from "./registry";
 import { createComposeRegistry } from "./registry";
 
 /**

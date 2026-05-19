@@ -1,4 +1,4 @@
-import { createCompositionDefs, registerCompositionDefs } from "@ssv/stencil-ui/compose";
+import { createCompositionDefs } from "@ssv/stencil-ui/compose";
 import type { CompositionNameOf } from "@ssv/stencil-ui/compose";
 
 export const demoCompositionDefs = createCompositionDefs({
@@ -7,5 +7,3 @@ export const demoCompositionDefs = createCompositionDefs({
 });
 
 export type DemoCompositionName = CompositionNameOf<typeof demoCompositionDefs>;
-
-registerCompositionDefs(demoCompositionDefs);

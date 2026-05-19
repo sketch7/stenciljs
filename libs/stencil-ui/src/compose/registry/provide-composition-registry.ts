@@ -2,7 +2,6 @@ import { provideContext } from "@ssv/stencil.core";
 
 import type { CompositionDefsMap, ComposeRegistry } from "../types";
 import { ComposeRegistryContext } from "./context";
-import { registerCompositionDefs } from "./register-composition-defs";
 import { createComposeRegistry } from "./registry";
 
 /**
@@ -29,7 +28,7 @@ export function provideCompositionRegistry(
 	if (typeof setup === "function") {
 		setup(registry);
 	} else {
-		registerCompositionDefs(setup, registry);
+		registry.registerFromDefs(setup);
 	}
 	return provideContext(ComposeRegistryContext, registry);
 }

@@ -48,10 +48,10 @@ export function provideContext<T>(key: ContextKey<T>, valueOrFactory?: T | (() =
 	// lazy mode, so the listener must be attached to getElement(host), not host.
 	use(host => ({
 		hostConnected() {
-			getElement(host).addEventListener(CONTEXT_EVENT, handleRequest);
+			host.getElement().addEventListener(CONTEXT_EVENT, handleRequest);
 		},
 		hostDisconnected() {
-			getElement(host).removeEventListener(CONTEXT_EVENT, handleRequest);
+			host.getElement().removeEventListener(CONTEXT_EVENT, handleRequest);
 		},
 	}));
 

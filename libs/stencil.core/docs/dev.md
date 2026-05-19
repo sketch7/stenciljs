@@ -8,11 +8,12 @@ import { useLifecycleLogger } from "@ssv/stencil.core/dev";
 
 ## API
 
-| Export               | Kind | Purpose                                                            |
-| -------------------- | ---- | ------------------------------------------------------------------ |
-| `useLifecycleLogger` | fn   | Logs all lifecycle hooks to the console; accumulates `HookEvent[]` |
-| `HookEvent`          | type | `{ hook: HookName; ts: string; index: number }`                    |
-| `HookName`           | type | Union of all eight Stencil lifecycle hook names                    |
+| Export                   | Kind | Purpose                                                            |
+| ------------------------ | ---- | ------------------------------------------------------------------ |
+| `useLifecycleLogger`     | fn   | Logs all lifecycle hooks to the console; accumulates `HookEvent[]` |
+| `LifecycleLoggerOptions` | type | Options for `useLifecycleLogger`                                   |
+| `HookEvent`              | type | `{ hook: HookName; ts: string; index: number }`                    |
+| `HookName`               | type | Union of all eight Stencil lifecycle hook names                    |
 
 ## `useLifecycleLogger`
 
@@ -25,13 +26,22 @@ import { Component, h } from "@stencil/core";
 
 @Component({ tag: "app-demo", shadow: true })
 export class AppDemo extends SsvElement {
-  readonly #lifecycle = useLifecycleLogger();
+  readonly #lifecycle = useLifecycleLogger({ name: "AppDemo" });
 
   render() {
     return <pre>{JSON.stringify(this.#lifecycle.events, null, 2)}</pre>;
   }
 }
 ```
+
+### Options
+
+`useLifecycleLogger(options?: LifecycleLoggerOptions)`
+
+| Option     | Type      | Default     | Purpose                                                                        |
+| ---------- | --------- | ----------- | ------------------------------------------------------------------------------ |
+| `name`     | `string`  | `undefined` | Label added to the console prefix: `[lifecycle:Name]` instead of `[lifecycle]` |
+| `disabled` | `boolean` | `false`     | When `true`, suppresses all `console.warn` output and skips event recording    |
 
 ### Value API
 

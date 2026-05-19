@@ -34,8 +34,6 @@ export function useContext<T>(key: ContextKey<T>): Ref<T> {
 	use(host => {
 		// `undefined`  → context is resolved (no cleanup needed).
 		// function ref → context is pending; call it to remove the window listener.
-		//                In SSR / stubbed-window environments this is the no-op `() => {}`
-		//                sentinel, which keeps hostWillLoad's retry path active.
 		let cleanupPending: (() => void) | undefined;
 
 		const dispatchContextRequest = (): boolean => {
@@ -69,11 +67,6 @@ export function useContext<T>(key: ContextKey<T>): Ref<T> {
 				} catch {
 					// No provider connected AND no default factory — wait for a late provider.
 				}
-				if (typeof window === "undefined" || typeof window.addEventListener !== "function") {
-					// SSR / no window: use a no-op sentinel so hostWillLoad retries via DOM event.
-					cleanupPending = () => {};
-					return;
-				}
 				// Subscribe on window so the provider notifies us synchronously when it
 				// connects — guaranteed before hostWillLoad runs, with no polling needed.
 				const listener = (event: Event): void => {
@@ -89,16 +82,15 @@ export function useContext<T>(key: ContextKey<T>): Ref<T> {
 					try {
 						host.requestUpdate();
 					} catch {
-						// Component may not be fully initialised yet; hostWillLoad will still see the resolved ref.
+						// Component may not be fully initialized yet; hostWillLoad will still see the resolved ref.
 					}
 				};
-				window.addEventListener(PROVIDER_CONNECTED_EVENT, listener);
-				cleanupPending = () => window.removeEventListener(PROVIDER_CONNECTED_EVENT, listener);
+				globalThis.addEventListener(PROVIDER_CONNECTED_EVENT, listener);
+				cleanupPending = () => globalThis.removeEventListener(PROVIDER_CONNECTED_EVENT, listener);
 			},
 			hostWillLoad() {
-				// Runs after all connectedCallbacks in the tree, so the provider's DOM
-				// listener is always registered by this point. Acts as a fallback for SSR
-				// and an edge-case safety net for when the window event fires between tasks.
+				// Edge-case safety net: if the window event fired between tasks before
+				// hostWillLoad, cleanupPending is still set — resolve via DOM event now.
 				if (!cleanupPending) {
 					return;
 				}

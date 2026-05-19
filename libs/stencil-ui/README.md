@@ -101,10 +101,9 @@ Unknown names render the **`error` slot** instead of throwing. In development, `
 
 ## Components
 
-| Tag                             | Extends      | Purpose                                                                                     |
-| ------------------------------- | ------------ | ------------------------------------------------------------------------------------------- |
-| `ssv-compose`                   | `SsvElement` | Resolves `name` in the registry and renders the matching custom element via `h(tag, props)` |
-| `ssv-compose-registry-provider` | `SsvElement` | Legacy provider — prefer `provideCompositionRegistry` on hosts                              |
+| Tag           | Extends      | Purpose                                                                                     |
+| ------------- | ------------ | ------------------------------------------------------------------------------------------- |
+| `ssv-compose` | `SsvElement` | Resolves `name` in the registry and renders the matching custom element via `h(tag, props)` |
 
 Both require a host that supports reactive controllers and context (`SsvElement` or `Mixin(SsvElementMixin)`).
 
@@ -213,9 +212,8 @@ SsvElement host  →  provideCompositionRegistry(defs | fn)
         └── ssv-compose  →  useCompositionRegistry().resolve(name)
 ```
 
-- **Global:** `registerCompositionDefs(...)` in a module imported from `global.ts`.
+- **Global:** `registerCompositionDefs(...)` in any module imported before components render.
 - **Scoped:** `provideCompositionRegistry(...)` on an `SsvElement` ancestor.
-- **Legacy:** `ssv-compose-registry-provider` (prefer `provideCompositionRegistry` for new code).
 
 ## Build
 

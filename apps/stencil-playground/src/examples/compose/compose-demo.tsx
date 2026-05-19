@@ -87,8 +87,7 @@ export class AppComposeDemo extends SsvElement {
 				<section class="demo-section global-section">
 					<h3>Global registry</h3>
 					<p class="demo-hint">
-						Uses registerCompositionDefs from compose-defs.ts (imported in global.ts) — no scoped provider on this
-						subtree.
+						Uses registerCompositionDefs from compose-defs.ts — no scoped provider on this subtree.
 					</p>
 					<div class="widget-host">
 						<ssv-compose name="timer" data={{ duration: 15 }} />

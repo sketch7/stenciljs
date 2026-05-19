@@ -9,8 +9,8 @@ export default function Page(): JSX.Element {
 				<p className="text-sm text-(--color-muted-fg)">
 					Demonstrates <code>ssv-compose</code> — render widgets by name + data. The demo uses{" "}
 					<code>provideCompositionRegistry</code> for a scoped registry and <code>registerCompositionDefs</code> in{" "}
-					<code>global.ts</code> for SSR-safe global types. Host state uses <code>CompositionNameOf</code> for typed tab
-					names; unknown <code>name</code> values show the error slot and log known types in dev.
+					<code>compose-defs.ts</code> for SSR-safe global types. Host state uses <code>CompositionNameOf</code> for
+					typed tab names; unknown <code>name</code> values show the error slot and log known types in dev.
 				</p>
 			</div>
 

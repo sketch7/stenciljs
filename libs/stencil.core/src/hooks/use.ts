@@ -97,7 +97,16 @@ function createUseHostContext(host: ReactiveControllerHost): UseHostContext {
 			return host as unknown as ReactiveHostElement;
 		},
 		isHydrating(): boolean {
-			return Boolean((getElement(host as object) as unknown as Record<string, unknown>)["s-id"]);
+			try {
+				const el = getElement(host as object);
+				if (el) {
+					return Boolean((el as unknown as Record<string, unknown>)["s-id"]);
+				}
+			} catch {
+				// Not a real Stencil component (e.g. test environment) — fall through.
+			}
+			// Fallback: check the host itself (DomTestHost IS the element; plain TestHost has no s-id).
+			return Boolean((host as unknown as Record<string, unknown>)["s-id"]);
 		},
 	});
 }

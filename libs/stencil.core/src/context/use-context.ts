@@ -69,7 +69,7 @@ export function useContext<T>(key: ContextKey<T>): Ref<T> {
 			hostConnected() {
 				const hydrating = host.isHydrating();
 				log(
-					`hostConnected  tag=${host.getElement().tagName.toLowerCase()}  contextId=${key.name}  hydrating=${hydrating}`,
+					`hostConnected  tag=${host.getElement().tagName?.toLowerCase() ?? "?"}  contextId=${key.name}  hydrating=${hydrating}`,
 				);
 
 				if (dispatchContextRequest()) {
@@ -78,9 +78,10 @@ export function useContext<T>(key: ContextKey<T>): Ref<T> {
 				}
 				if (!hydrating) {
 					// Not hydrating: init is top-down (SSR or client navigation) — provider is
-					// already connected if it exists. Fall back immediately without a listener.
-					log(`hostConnected  not hydrating → fast-path to default  contextId=${key.name}`);
-					ref.current = key.getDefault();
+					// already connected if it exists. No listener needed; defer default resolution
+					// to hostWillLoad so errors surface there rather than in connectedCallback.
+					log(`hostConnected  not hydrating → deferring to hostWillLoad  contextId=${key.name}`);
+					cleanupPending = () => {};
 					return;
 				}
 				// Hydration: Stencil removes the "s-id" attribute during connectedCallback

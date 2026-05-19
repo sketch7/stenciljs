@@ -47,7 +47,7 @@ export function provideContext<T>(key: ContextKey<T>, valueOrFactory?: T | (() =
 		hostConnected() {
 			const hydrating = host.isHydrating();
 			log(
-				`hostConnected  tag=${host.getElement().tagName.toLowerCase()}  contextId=${key.name}  hydrating=${hydrating}`,
+				`hostConnected  tag=${host.getElement().tagName?.toLowerCase() ?? "?"}  contextId=${key.name}  hydrating=${hydrating}`,
 			);
 
 			host.getElement().addEventListener(CONTEXT_EVENT, handleRequest);

@@ -41,6 +41,10 @@ const connectTopDown: ConnectFn = (provider, consumer) => {
 
 /** Consumer connects first — mirrors SSR→client DSD hydration. */
 const connectBottomUp: ConnectFn = (provider, consumer) => {
+	// Simulate SSR hydration: Stencil sets the `s-id` JS property on each component
+	// before lifecycle hooks fire (the DOM attribute is removed earlier, but the property persists).
+	(provider as unknown as Record<string, unknown>)["s-id"] = "1";
+	(consumer as unknown as Record<string, unknown>)["s-id"] = "2";
 	consumer.connect();
 	provider.connect();
 };

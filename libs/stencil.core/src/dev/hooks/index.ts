@@ -1,1 +1,1 @@
-export { type HookEvent, type HookName, useLifecycleLogger } from "./lifecycle-logger";
+export { type HookEvent, type HookName, type LifecycleLoggerOptions, useLifecycleLogger } from "./lifecycle-logger";

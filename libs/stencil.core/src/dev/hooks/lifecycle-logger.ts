@@ -1,3 +1,5 @@
+import { Build } from "@stencil/core";
+
 import { use } from "../../hooks/use";
 
 export type HookName =
@@ -37,32 +39,44 @@ const hookColors: Record<HookName, string> = {
 	hostDidUpdate: "#f472b6",
 };
 
+export type LifecycleLoggerOptions = {
+	name?: string;
+	disabled?: boolean;
+};
+
 /**
  * Logs every Stencil lifecycle hook to the console and accumulates events.
  *
  * @example
  * ```ts
- * readonly #lifecycle = useLifecycleLogger();
+ * readonly #lifecycle = useLifecycleLogger({ name: "MyComponent" });
  *
  * render() {
  *   return <pre>{JSON.stringify(this.#lifecycle.events)}</pre>;
  * }
  * ```
  */
-export function useLifecycleLogger() {
+export function useLifecycleLogger(options?: LifecycleLoggerOptions) {
 	return use(host => {
 		const events: HookEvent[] = [];
 		let count = 0;
 
 		function fire(hook: HookName): void {
+			if (options?.disabled) {
+				return;
+			}
 			const ev: HookEvent = { hook, ts: timestamp(), index: ++count };
-			// eslint-disable-next-line no-console -- intentional dev logging
-			console.warn(
-				`%c[lifecycle] %c${hook}`,
-				"color: #94a3b8; font-weight: normal",
-				`color: ${hookColors[hook]}; font-weight: bold`,
-				{ index: ev.index, ts: ev.ts },
-			);
+			const prefix = options?.name ? `[lifecycle:${options.name}]` : "[lifecycle]";
+			if (Build.isServer) {
+				console.warn(`${prefix} ${hook}`, { index: ev.index, ts: ev.ts });
+			} else {
+				console.warn(
+					`%c${prefix} %c${hook}`,
+					"color: #94a3b8; font-weight: normal",
+					`color: ${hookColors[hook]}; font-weight: bold`,
+					{ index: ev.index, ts: ev.ts },
+				);
+			}
 			events.push(ev);
 		}
 

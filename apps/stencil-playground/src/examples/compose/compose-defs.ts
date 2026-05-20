@@ -15,10 +15,10 @@ export const demoCompositionDefs = createCompositionDefs({
 		tag: "app-timer",
 		aliases: ["countdown"],
 		mapData: data => {
-			const value = data as TimerWidgetData;
+			const timerData = data as TimerWidgetData;
 			return {
-				duration: value.duration,
-				isRunning: value.isRunning ?? false,
+				duration: timerData.duration,
+				isRunning: timerData.isRunning ?? false,
 			};
 		},
 		mapOutputs: {

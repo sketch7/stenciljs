@@ -7,7 +7,7 @@ import { useCompositionRegistry } from "./registry";
 import type { ComposeEventDetail } from "./types";
 
 function toListenerProp(eventName: string): string {
-	return `on${eventName.replaceAll(/(^|-)([a-z0-9])/giu, (_match, _prefix, char: string) => char.toUpperCase())}`;
+	return `on${eventName.replaceAll(/(^|-)([a-z0-9])/giu, (_, __, char: string) => char.toUpperCase())}`;
 }
 
 @Component({
@@ -48,14 +48,14 @@ export class SsvCompose extends SsvElement {
 			}
 			return <slot name="error" />;
 		}
-		const outputListeners =
-			definition.mapOutputs &&
-			Object.fromEntries(
-				Object.entries(definition.mapOutputs).map(([eventName, mapper]) => [
-					toListenerProp(eventName),
-					(event: CustomEvent) => this.composeEvent.emit({ name: this.name, data: mapper(event) }),
-				]),
-			);
+		const outputListeners = definition.mapOutputs
+			? Object.fromEntries(
+					Object.entries(definition.mapOutputs).map(([eventName, mapper]) => [
+						toListenerProp(eventName),
+						(event: CustomEvent) => this.composeEvent.emit({ name: this.name, data: mapper(event) }),
+					]),
+				)
+			: {};
 		const props = {
 			...(definition.mapData ? definition.mapData(this.data) : { data: this.data }),
 			...outputListeners,

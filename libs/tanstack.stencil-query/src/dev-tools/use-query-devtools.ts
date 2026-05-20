@@ -1,0 +1,109 @@
+import { useLoadEffect } from "@ssv/stencil.core";
+import { onlineManager } from "@tanstack/query-core";
+import type { QueryClient } from "@tanstack/query-core";
+import type { TanstackQueryDevtools } from "@tanstack/query-devtools";
+
+import { useQueryClient } from "../query-client-context";
+
+export type DevtoolsButtonPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right" | "relative";
+export type DevtoolsPosition = "top" | "bottom" | "left" | "right";
+export type DevtoolsTheme = "light" | "dark" | "system";
+
+export type DevtoolsErrorType = {
+	name: string;
+	initializer?: (query: unknown) => unknown;
+};
+
+/**
+ * Options for {@link useQueryDevtools}.
+ *
+ * @example
+ * ```ts
+ * readonly #devtools = useQueryDevtools({ initialIsOpen: true, buttonPosition: 'bottom-left' });
+ * ```
+ */
+export type UseQueryDevtoolsOptions = {
+	/** Use an explicit `QueryClient` instead of the one from context. */
+	client?: QueryClient;
+	/** Position of the TanStack logo button. Defaults to `'bottom-right'`. */
+	buttonPosition?: DevtoolsButtonPosition;
+	/** Position of the devtools panel. Defaults to `'bottom'`. */
+	position?: DevtoolsPosition;
+	/** Open the panel by default. */
+	initialIsOpen?: boolean;
+	/** Custom error types to surface in the devtools panel. */
+	errorTypes?: DevtoolsErrorType[];
+	/** CSP nonce applied to injected `<style>` tags. */
+	styleNonce?: string;
+	/** Attach devtools styles to a specific shadow root. */
+	shadowDOMTarget?: ShadowRoot;
+	/** Hide disabled queries from the panel. */
+	hideDisabledQueries?: boolean;
+	/** Color theme. Defaults to `'system'`. */
+	theme?: DevtoolsTheme;
+};
+
+/**
+ * Mounts the TanStack Query devtools panel for the nearest `QueryClient` in the component tree.
+ *
+ * Appends a container to `document.body` on `hostWillLoad` and removes it when the host
+ * disconnects. Safe to call in SSR — exits early when `document` is not available.
+ *
+ * Import from the `dev-tools` sub-entrypoint so the `@tanstack/query-devtools` bundle is only
+ * loaded when this hook is actually used:
+ *
+ * @example
+ * ```ts
+ * import { useQueryDevtools } from '@ssv/tanstack.stencil-query/dev-tools';
+ *
+ * export class AppRoot extends SsvElement {
+ *   readonly #queryClient = provideQueryClient();
+ *   readonly #devtools = useQueryDevtools();
+ * }
+ * ```
+ */
+export function useQueryDevtools(options?: UseQueryDevtoolsOptions): void {
+	const clientRef = useQueryClient(options?.client);
+
+	useLoadEffect(
+		({ qc }) => {
+			if (typeof document === "undefined") {
+				return;
+			}
+
+			let active = true;
+			let devtools: TanstackQueryDevtools | undefined;
+			let container: HTMLDivElement | undefined;
+
+			import("@tanstack/query-devtools").then(({ TanstackQueryDevtools: DevtoolsClass }) => {
+				if (!active) {
+					return;
+				}
+				container = document.createElement("div");
+				document.body.append(container);
+				devtools = new DevtoolsClass({
+					client: qc,
+					queryFlavor: "Stencil Query",
+					version: "5",
+					onlineManager,
+					buttonPosition: options?.buttonPosition,
+					position: options?.position,
+					initialIsOpen: options?.initialIsOpen,
+					errorTypes: options?.errorTypes as never,
+					styleNonce: options?.styleNonce,
+					shadowDOMTarget: options?.shadowDOMTarget,
+					hideDisabledQueries: options?.hideDisabledQueries,
+					theme: options?.theme,
+				});
+				devtools.mount(container);
+			});
+
+			return () => {
+				active = false;
+				devtools?.unmount();
+				container?.remove();
+			};
+		},
+		{ qc: clientRef },
+	);
+}

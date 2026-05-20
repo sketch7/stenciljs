@@ -82,7 +82,6 @@ export function createContext<T>(defaultFactory?: () => T, options?: { name?: st
 	const displayName = options?.name ?? "(unnamed)";
 	let singleton: T | undefined;
 	let initialized = false;
-
 	return {
 		id: Symbol(displayName),
 		name: displayName,

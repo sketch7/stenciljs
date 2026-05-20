@@ -11,7 +11,7 @@ const PRESETS = [10, 30, 60, 120, 300] as const;
 	shadow: true,
 })
 export class AppTimer extends SsvElement {
-	@Prop() duration = 60;
+	@Prop({ reflect: true }) duration = 60;
 	@Prop({ reflect: true }) isRunning = false;
 
 	@Event() isRunningChange!: EventEmitter<boolean>;
@@ -22,7 +22,7 @@ export class AppTimer extends SsvElement {
 		isRunning: { twoWay: true },
 	});
 
-	readonly $timeRemaining = signal(60);
+	readonly $timeRemaining = signal(this.$props.duration());
 	readonly $isCompleted = computed(() => this.$timeRemaining() === 0);
 
 	#intervalId: ReturnType<typeof setInterval> | undefined;

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from "v
 
 import { createWritableRef } from "../ref";
 import { TestHost } from "../testing/test-host";
+import type { UseLoadEffectContext } from "./use-effect";
 import { useEffect, useLoadEffect } from "./use-effect";
 
 // ── useEffect — no deps (every render via hostDidRender) ──────────────────────
@@ -200,14 +201,14 @@ describe("useLoadEffect", () => {
 		expect(setup).toHaveBeenCalledOnce();
 	});
 
-	it("receives UseHostContext — host.requestUpdate is callable", async () => {
-		let capturedHost: Parameters<Parameters<typeof useLoadEffect>[0]>[0] | undefined;
-		useLoadEffect(h => {
-			capturedHost = h;
+	it("receives UseLoadEffectContext — host.requestUpdate is callable", async () => {
+		let capturedCtx: UseLoadEffectContext | undefined;
+		useLoadEffect(ctx => {
+			capturedCtx = ctx;
 		});
 		await host.willLoad();
-		expect(capturedHost).toBeDefined();
-		expectTypeOf(capturedHost!.requestUpdate).toBeFunction();
+		expect(capturedCtx).toBeDefined();
+		expectTypeOf(capturedCtx!.requestUpdate).toBeFunction();
 	});
 });
 

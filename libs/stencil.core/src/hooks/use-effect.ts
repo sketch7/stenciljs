@@ -11,6 +11,12 @@ type RefObjectValues<T extends Record<string, Ref<unknown>>> = {
 export type EffectCleanup = () => void;
 
 /**
+ * Context passed to the {@link useLoadEffect} setup callback.
+ * Exposes `requestUpdate()` and element accessors from the host.
+ */
+export type UseLoadEffectContext = UseHostContext;
+
+/**
  * Registers an effect on the component.
  *
  * **No deps** — runs after every render (`hostDidRender`). Cleanup runs before the next execution and on disconnect.
@@ -103,13 +109,14 @@ export function useEffect(setup: () => EffectCleanup | void, deps?: readonly [])
  * }, { qc: clientRef });
  * ```
  */
-export function useLoadEffect(setup: (host: UseHostContext) => EffectCleanup | void): void;
+export function useLoadEffect(setup: (ctx: UseLoadEffectContext) => EffectCleanup | void): void;
 export function useLoadEffect<T extends Record<string, Ref<unknown>>>(
-	setup: (host: UseHostContext, deps: RefObjectValues<T>) => EffectCleanup | void,
+	setup: (ctx: UseLoadEffectContext, deps: RefObjectValues<T>) => EffectCleanup | void,
 	deps: T,
 ): void;
 export function useLoadEffect(
-	setup: (host: UseHostContext, deps?: Record<string, unknown>) => EffectCleanup | void,
+	// oxlint-disable-next-line typescript/no-explicit-any
+	setup: (ctx: UseLoadEffectContext, deps?: any) => EffectCleanup | void,
 	deps?: Record<string, Ref<unknown>>,
 ): void {
 	use(host => {

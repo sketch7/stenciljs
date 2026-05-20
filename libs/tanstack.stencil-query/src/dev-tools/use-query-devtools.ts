@@ -58,7 +58,7 @@ export type UseQueryDevtoolsOptions = {
  *
  * export class AppRoot extends SsvElement {
  *   readonly #queryClient = provideQueryClient();
- *   readonly #devtools = useQueryDevtools();
+ *   _ = useQueryDevtools();
  * }
  * ```
  */

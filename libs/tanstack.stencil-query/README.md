@@ -102,6 +102,40 @@ readonly #qc = provideQueryClient({ withHydration: this.#ts });
 
 The query client hydrates from the serialized transfer-state script tag on connect, then removes the script. See [apps/stencil-playground/src/examples/ts-query/](../../apps/stencil-playground/src/examples/ts-query/) for a full SSR + client-side example.
 
+## Devtools
+
+```bash
+pnpm add @tanstack/query-devtools
+```
+
+Import from the `dev-tools` sub-entrypoint — `@tanstack/query-devtools` is only loaded when the hook runs, keeping it out of production bundles.
+
+```ts
+import { useQueryDevtools } from "@ssv/tanstack.stencil-query/dev-tools";
+
+@Component({ tag: "app-root", shadow: true })
+export class AppRoot extends SsvElement {
+  readonly #qc = provideQueryClient();
+  _ = useQueryDevtools();
+}
+```
+
+The devtools panel mounts to `document.body` and cleans up automatically when the host disconnects. No-ops during SSR.
+
+**Options** (`UseQueryDevtoolsOptions`):
+
+| Option                | Type                     | Default          | Purpose                                 |
+| --------------------- | ------------------------ | ---------------- | --------------------------------------- |
+| `client`              | `QueryClient`            | context client   | Override the client from context        |
+| `buttonPosition`      | `DevtoolsButtonPosition` | `'bottom-right'` | Position of the TanStack logo button    |
+| `position`            | `DevtoolsPosition`       | `'bottom'`       | Side the panel opens on                 |
+| `initialIsOpen`       | `boolean`                | `false`          | Open the panel on first mount           |
+| `errorTypes`          | `DevtoolsErrorType[]`    | `[]`             | Custom errors to surface in the panel   |
+| `theme`               | `DevtoolsTheme`          | `'system'`       | Color theme                             |
+| `styleNonce`          | `string`                 | —                | CSP nonce for injected `<style>` tags   |
+| `shadowDOMTarget`     | `ShadowRoot`             | —                | Attach styles to a specific shadow root |
+| `hideDisabledQueries` | `boolean`                | `false`          | Hide disabled queries from the panel    |
+
 ## Examples
 
 Full working demo: [apps/stencil-playground/src/examples/ts-query/](../../apps/stencil-playground/src/examples/ts-query/)

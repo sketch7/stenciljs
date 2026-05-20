@@ -33,6 +33,7 @@
     "oxlint": "catalog:",
     "tailwindcss": "catalog:",
     "typescript": "catalog:",
+    "rollup-plugin-visualizer": "catalog:",
     "vite": "catalog:"
   }
 }

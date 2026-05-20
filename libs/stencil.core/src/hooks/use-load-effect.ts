@@ -1,12 +1,11 @@
 import { mergeProxy } from "../internal";
-import type { Ref } from "../ref";
 import type { UseHostContext } from "./reactive-controller";
 import { use } from "./use";
 import type { EffectCleanup } from "./use-effect";
 
-/** Maps `{ key: Ref<V> }` → `{ key: NonNullable<V> }` for the deps argument of {@link useLoadEffect}. */
-type RefObjectValues<T extends Record<string, Ref<unknown>>> = {
-	[K in keyof T]: T[K] extends Ref<infer V> ? NonNullable<V> : never;
+/** Maps `{ key: { current: V } }` → `{ key: NonNullable<V> }` for the deps argument of {@link useLoadEffect}. */
+type RefObjectValues<T extends Record<string, { current: unknown }>> = {
+	[K in keyof T]: T[K] extends { current: infer V } ? NonNullable<V> : never;
 };
 
 /**
@@ -49,13 +48,13 @@ export type UseLoadEffectContext<TDeps extends object = object> = UseHostContext
  * ```
  */
 export function useLoadEffect(setup: (ctx: UseLoadEffectContext) => EffectCleanup | void): void;
-export function useLoadEffect<T extends Record<string, Ref<unknown>>>(
+export function useLoadEffect<T extends Record<string, { current: unknown }>>(
 	setup: (ctx: UseLoadEffectContext<RefObjectValues<T>>) => EffectCleanup | void,
 	deps: T,
 ): void;
 export function useLoadEffect(
 	setup: (ctx: UseLoadEffectContext) => EffectCleanup | void,
-	deps?: Record<string, Ref<unknown>>,
+	deps?: Record<string, { current: unknown }>,
 ): void {
 	use(host => {
 		let cleanup: EffectCleanup | void;

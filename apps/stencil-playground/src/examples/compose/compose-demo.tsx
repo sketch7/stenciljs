@@ -17,13 +17,13 @@ export class AppComposeDemo extends SsvElement {
 	@State() activeType: DemoCompositionName = "timer";
 	@State() lastEvent: ComposeEventDetail | null = null;
 
-	readonly #timerData = { duration: 40 };
+	readonly #timerProps = { duration: 40 };
 
 	#data(active: DemoCompositionName): unknown {
 		switch (active) {
 			case "timer":
 			case "countdown": {
-				return this.#timerData;
+				return this.#timerProps;
 			}
 			case "count": {
 				return {};

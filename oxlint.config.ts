@@ -359,6 +359,8 @@ export default defineConfig({
 			rules: {
 				"prefer-arrow-callback": "off",
 				"react/rules-of-hooks": "off",
+				// react/exhaustive-deps targets React hooks; Stencil's useEffect only accepts readonly [] — no tracked deps
+				"react/exhaustive-deps": "off",
 				"react/prefer-function-component": "off",
 				"react/no-unknown-property": "off",
 				"new-cap": "off",

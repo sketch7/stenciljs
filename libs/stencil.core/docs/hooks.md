@@ -206,12 +206,34 @@ Use when setup depends on context (e.g. a `QueryClient`) that may not be resolve
 There is no React equivalent — this hook addresses the Stencil-specific bottom-up hydration ordering where context may not be resolved at `hostConnected`.
 
 ```ts
+// No deps — manual ref unwrap
 useLoadEffect(host => {
   const qc = clientRef.current; // guaranteed resolved by hostWillLoad
   const observer = new QueryObserver(qc, opts);
   const unsub = observer.subscribe(() => host.requestUpdate());
   return () => { unsub(); observer.destroy(); };
 });
+```
+
+### Named deps
+
+Pass a `{ key: Ref<V> }` object as the second argument. Each ref's `.current` is verified non-null before setup fires; the unwrapped values are passed as `{ key: V }` to the callback. Setup is silently skipped if any dep is still null/undefined at `hostWillLoad`.
+
+```ts
+useLoadEffect((_, { qc }) => {
+  //               ^^^— QueryClient, auto-unwrapped, guaranteed non-null
+  const observer = new QueryObserver(qc, opts);
+  return () => { observer.destroy(); };
+}, { qc: clientRef });
+```
+
+`host` is available as the first argument when needed (e.g. for `requestUpdate` inside a subscription):
+
+```ts
+useLoadEffect((host, { qc }) => {
+  const unsub = observer.subscribe(() => host.requestUpdate());
+  return () => { unsub(); };
+}, { qc: clientRef });
 ```
 
 ## Host context (`getCurrentHost`)

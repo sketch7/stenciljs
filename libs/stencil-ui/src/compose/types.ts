@@ -68,6 +68,8 @@ export type ComposeRegistry = {
 export type ComposeEventDetail<TOutput = unknown> = {
 	/** The widget name string that produced the event. */
 	name: string;
-	/** The output payload from wrapper `ssvComposeOutput` or `mapOutputs`. */
+	/** Event name from the direct component (omitted for wrapper components). */
+	eventName?: string;
+	/** The output payload from wrapper `ssvComposeOutput`, `mapOutputs`, or direct component event detail. */
 	data: TOutput;
 };

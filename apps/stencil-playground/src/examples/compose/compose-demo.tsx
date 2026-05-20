@@ -3,7 +3,8 @@ import type { ComposeEventDetail } from "@ssv/stencil-ui/compose";
 import { SsvElement } from "@ssv/stencil.core";
 import { Component, State, h } from "@stencil/core";
 
-import { demoCompositionDefs, type DemoCompositionName, type TimerWidgetData } from "./compose-defs";
+import { demoCompositionDefs } from "./compose-defs";
+import type { DemoCompositionName } from "./compose-defs";
 
 @Component({
 	tag: "app-compose-demo",
@@ -16,7 +17,7 @@ export class AppComposeDemo extends SsvElement {
 	@State() activeType: DemoCompositionName = "timer";
 	@State() lastEvent: ComposeEventDetail | null = null;
 
-	readonly #timerData: TimerWidgetData = { duration: 30 };
+	readonly #timerData = { duration: 40 };
 
 	#data(active: DemoCompositionName): unknown {
 		switch (active) {

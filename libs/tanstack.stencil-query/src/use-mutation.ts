@@ -93,6 +93,7 @@ export function useMutation<TData = unknown, TError = DefaultError, TVariables =
 			if (!observer) {
 				return;
 			}
+			// TODO(perf): skip setOptions when options is static (not a function) — mirrors Lit BaseController.onHostUpdate()
 			observer.setOptions(getOpts());
 		},
 	}));

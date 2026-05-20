@@ -319,7 +319,7 @@ Use `CompositionNameOf` and a switch to build typed props objects without castin
 | `createComposeRegistry()` | function | New isolated registry instance |
 | `ComposeWidget` | class | Extend to signal wrapper mode to `ssv-compose` |
 | `CompositionNameOf<TDefs>` | type | Union of all primary keys and alias strings |
-| `ComposeDef<TData>` | type | Registry entry shape (`tag`, `mapProps?`, `mapOutputs?`, `aliases?`) |
+| `ComposeDef<TProps>` | type | Registry entry shape (`tag`, `mapProps?`, `mapOutputs?`, `aliases?`) |
 | `ComposeEventDetail<TOutput>` | type | `{ name, eventName?, data }` — emitted by `ssv-compose` |
 | `ComposeRegistry` | type | Registry interface (`register`, `registerFromDefs`, `resolve`, `listTypes`) |
 | `CompositionDefsMap` | type | `Record<string, ComposeDef>` |

@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vike dev",
     "build": "vike build",
-    "preview": "node ./dist/server/index.mjs",
+    "preview": "vike preview",
     "lint": "oxlint --type-aware src/",
     "fmt": "oxfmt src/",
     "fmt:check": "oxfmt --check src/"
@@ -19,7 +19,8 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "vike": "catalog:",
-    "vike-react": "catalog:"
+    "vike-react": "catalog:",
+    "@vikejs/hono": "catalog:"
   },
   "devDependencies": {
     "@stencil/ssr": "catalog:",

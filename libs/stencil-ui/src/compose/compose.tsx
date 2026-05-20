@@ -7,7 +7,7 @@ import { useCompositionRegistry } from "./registry";
 import type { ComposeEventDetail } from "./types";
 
 function toListenerProp(eventName: string): string {
-	return `on${eventName.replaceAll(/(^|-)([a-z0-9])/giu, (_, __, char: string) => char.toUpperCase())}`;
+	return `on${eventName.replaceAll(/(^|-)([a-z0-9])/giu, (_separator, _prefix, char: string) => char.toUpperCase())}`;
 }
 
 @Component({

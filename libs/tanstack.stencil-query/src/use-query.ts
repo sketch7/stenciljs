@@ -114,7 +114,7 @@ export function useQuery<
 
 	// hostWillLoad: context guaranteed resolved — qc is non-null and auto-unwrapped from clientRef.
 	useLoadEffect(
-		(_, { qc }) => {
+		({ qc }) => {
 			observer = new QueryObserver<TQueryFnData, TError, TData, TQueryFnData, TQueryKey>(
 				qc,
 				qc.defaultQueryOptions(getOpts()),

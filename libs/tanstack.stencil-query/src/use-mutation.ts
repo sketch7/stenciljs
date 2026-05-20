@@ -71,11 +71,11 @@ export function useMutation<TData = unknown, TError = DefaultError, TVariables =
 
 	// hostWillLoad: context guaranteed resolved — qc is non-null and auto-unwrapped from clientRef.
 	useLoadEffect(
-		(host, { qc }) => {
+		({ qc, requestUpdate }) => {
 			observer = new MutationObserver<TData, TError, TVariables, TContext>(qc, getOpts());
 			unsubscribe = observer.subscribe(
 				notifyManager.batchCalls(() => {
-					host.requestUpdate();
+					requestUpdate();
 				}),
 			);
 			return () => {

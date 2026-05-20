@@ -12,9 +12,9 @@ export type EffectCleanup = () => void;
 
 /**
  * Context passed to the {@link useLoadEffect} setup callback.
- * Exposes `requestUpdate()` and element accessors from the host.
+ * When deps are provided, the unwrapped dep values are merged into this context alongside the host methods.
  */
-export type UseLoadEffectContext = UseHostContext;
+export type UseLoadEffectContext<TDeps extends Record<string, unknown> = object> = UseHostContext & TDeps;
 
 /**
  * Registers an effect on the component.
@@ -102,8 +102,8 @@ export function useEffect(setup: () => EffectCleanup | void, deps?: readonly [])
  *
  * @example
  * ```ts
- * // Named deps — auto-unwrapped, non-null guaranteed
- * useLoadEffect((_, { qc }) => {
+ * // Named deps — deps merged into ctx alongside host methods
+ * useLoadEffect(({ qc }) => {
  *   const observer = new QueryObserver(qc, opts);
  *   return () => { observer.destroy(); };
  * }, { qc: clientRef });
@@ -111,14 +111,11 @@ export function useEffect(setup: () => EffectCleanup | void, deps?: readonly [])
  */
 export function useLoadEffect(setup: (ctx: UseLoadEffectContext) => EffectCleanup | void): void;
 export function useLoadEffect<T extends Record<string, Ref<unknown>>>(
-	setup: (ctx: UseLoadEffectContext, deps: RefObjectValues<T>) => EffectCleanup | void,
+	setup: (ctx: UseLoadEffectContext<RefObjectValues<T>>) => EffectCleanup | void,
 	deps: T,
 ): void;
-export function useLoadEffect(
-	// oxlint-disable-next-line typescript/no-explicit-any
-	setup: (ctx: UseLoadEffectContext, deps?: any) => EffectCleanup | void,
-	deps?: Record<string, Ref<unknown>>,
-): void {
+// oxlint-disable-next-line typescript/no-explicit-any -- implementation; callers see the typed overloads above
+export function useLoadEffect(setup: (ctx: any) => EffectCleanup | void, deps?: Record<string, Ref<unknown>>): void {
 	use(host => {
 		let cleanup: EffectCleanup | void;
 		return {
@@ -134,7 +131,12 @@ export function useLoadEffect(
 						}
 						values[key] = val;
 					}
-					cleanup = setup(host, values);
+					cleanup = setup({
+						requestUpdate: () => host.requestUpdate(),
+						getElement: () => host.getElement(),
+						isHydrating: () => host.isHydrating(),
+						...values,
+					});
 				}
 			},
 			hostDisconnected() {

@@ -217,21 +217,21 @@ useLoadEffect(host => {
 
 ### Named deps
 
-Pass a `{ key: Ref<V> }` object as the second argument. Each ref's `.current` is verified non-null before setup fires; the unwrapped values are passed as `{ key: V }` to the callback. Setup is silently skipped if any dep is still null/undefined at `hostWillLoad`.
+Pass a `{ key: Ref<V> }` object as the second argument. Each ref's `.current` is verified non-null before setup fires; the unwrapped values are merged into the context object alongside host methods. Setup is silently skipped if any dep is still null/undefined at `hostWillLoad`.
 
 ```ts
-useLoadEffect((_, { qc }) => {
-  //               ^^^— QueryClient, auto-unwrapped, guaranteed non-null
+useLoadEffect(({ qc }) => {
+  //            ^^^— QueryClient, auto-unwrapped, guaranteed non-null
   const observer = new QueryObserver(qc, opts);
   return () => { observer.destroy(); };
 }, { qc: clientRef });
 ```
 
-`host` is available as the first argument when needed (e.g. for `requestUpdate` inside a subscription):
+Host methods such as `requestUpdate` are available directly in the same context:
 
 ```ts
-useLoadEffect((host, { qc }) => {
-  const unsub = observer.subscribe(() => host.requestUpdate());
+useLoadEffect(({ qc, requestUpdate }) => {
+  const unsub = observer.subscribe(() => requestUpdate());
   return () => { unsub(); };
 }, { qc: clientRef });
 ```

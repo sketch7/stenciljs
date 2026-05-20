@@ -229,7 +229,7 @@ describe("useLoadEffect — named deps", () => {
 		const valRef = createWritableRef<string>("hello");
 		let captured: { val: string } | undefined;
 		useLoadEffect(
-			(_, { val }) => {
+			({ val }) => {
 				captured = { val };
 			},
 			{ val: valRef },
@@ -251,7 +251,7 @@ describe("useLoadEffect — named deps", () => {
 		const bRef = createWritableRef<string>("b");
 		let captured: { a: number; b: string } | undefined;
 		useLoadEffect(
-			(_, { a, b }) => {
+			({ a, b }) => {
 				captured = { a, b };
 			},
 			{ a: aRef, b: bRef },
@@ -282,7 +282,7 @@ describe("useLoadEffect — named deps", () => {
 		const numRef = createWritableRef<number>(7);
 		let capturedN: number | undefined;
 		useLoadEffect(
-			(_, { n }) => {
+			({ n }) => {
 				expectTypeOf(n).toBeNumber();
 				capturedN = n;
 			},

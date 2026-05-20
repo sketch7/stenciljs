@@ -1,4 +1,5 @@
 import { useLoadEffect } from "@ssv/stencil.core";
+import { Build } from "@stencil/core";
 import { onlineManager } from "@tanstack/query-core";
 import type { QueryClient } from "@tanstack/query-core";
 import type { TanstackQueryDevtools } from "@tanstack/query-devtools";
@@ -67,7 +68,7 @@ export function useQueryDevtools(options?: UseQueryDevtoolsOptions): void {
 
 	useLoadEffect(
 		({ qc }) => {
-			if (typeof document === "undefined") {
+			if (Build.isServer) {
 				return;
 			}
 
@@ -75,7 +76,8 @@ export function useQueryDevtools(options?: UseQueryDevtoolsOptions): void {
 			let devtools: TanstackQueryDevtools | undefined;
 			let container: HTMLDivElement | undefined;
 
-			import("@tanstack/query-devtools").then(({ TanstackQueryDevtools: DevtoolsClass }) => {
+			(async () => {
+				const { TanstackQueryDevtools: DevtoolsClass } = await import("@tanstack/query-devtools");
 				if (!active) {
 					return;
 				}
@@ -96,7 +98,7 @@ export function useQueryDevtools(options?: UseQueryDevtoolsOptions): void {
 					theme: options?.theme,
 				});
 				devtools.mount(container);
-			});
+			})();
 
 			return () => {
 				active = false;

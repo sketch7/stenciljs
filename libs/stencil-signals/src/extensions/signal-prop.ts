@@ -137,6 +137,9 @@ function makeStableTwoWayFacade<T>(
 					snapshotBag.values[propName] = v;
 					return;
 				}
+				if (Object.is(v, entry.inner.peek())) {
+					return;
+				}
 				entry.inner.set(v);
 				if (!entry.isSyncing.value && bundle?.controller.isActive()) {
 					dispatchChange(host, propName, v);
@@ -153,6 +156,9 @@ function makeStableTwoWayFacade<T>(
 					return;
 				}
 				const next = fn(entry.inner.peek() as T);
+				if (Object.is(next, entry.inner.peek())) {
+					return;
+				}
 				entry.inner.set(next);
 				if (!entry.isSyncing.value && bundle?.controller.isActive()) {
 					dispatchChange(host, propName, next);

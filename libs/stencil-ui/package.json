@@ -16,7 +16,7 @@
     ".": {
       "@ssv/source": "./src/index.ts",
       "types": "./dist/types/index.d.ts",
-      "import": "./dist/index.js",
+      "import": "./dist/collection/index.js",
       "require": "./dist/index.cjs.js"
     },
     "./compose": {

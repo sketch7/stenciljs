@@ -18,8 +18,14 @@ import { effect } from "../src/extensions/effect";
 import { signal, computed, createWatcher, untracked } from "../src/preact";
 
 // Helper: flush all pending microtasks
-const flush = () => new Promise<void>(r => setTimeout(r, 0));
-const tick = () => new Promise<void>(r => queueMicrotask(r));
+const flush = () =>
+	new Promise<void>(r => {
+		setTimeout(r, 0);
+	});
+const tick = () =>
+	new Promise<void>(r => {
+		queueMicrotask(r);
+	});
 
 // ─── signal() ────────────────────────────────────────────────────────────────
 

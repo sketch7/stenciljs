@@ -35,6 +35,7 @@ describe("useMutation", () => {
 	it("transitions to success after mutateAsync resolves", async () => {
 		const mutation = useMutation({ mutationFn: (v: number) => Promise.resolve(v * 2) }, qc);
 		host.connect();
+		await host.willLoad();
 
 		const result = await mutation().mutateAsync(5);
 		// notifyManager schedules notifications as microtasks — wait for them to flush
@@ -52,6 +53,7 @@ describe("useMutation", () => {
 			qc,
 		);
 		host.connect();
+		await host.willLoad();
 
 		await mutation().mutateAsync().catch(noop);
 		await vi.waitFor(() => expect(mutation().isError).toBeTruthy());
@@ -70,6 +72,7 @@ describe("useMutation", () => {
 	it("exposes variables during and after mutation", async () => {
 		const mutation = useMutation({ mutationFn: (v: string) => Promise.resolve(v.toUpperCase()) }, qc);
 		host.connect();
+		await host.willLoad();
 
 		await mutation().mutateAsync("hello");
 		await vi.waitFor(() => expect(mutation().variables).toBe("hello"));
@@ -79,6 +82,7 @@ describe("useMutation", () => {
 	it("reset() returns to idle state", async () => {
 		const mutation = useMutation({ mutationFn: (v: number) => Promise.resolve(v) }, qc);
 		host.connect();
+		await host.willLoad();
 
 		await mutation().mutateAsync(1);
 		await vi.waitFor(() => expect(mutation().isSuccess).toBeTruthy());
@@ -92,15 +96,17 @@ describe("useMutation", () => {
 	it("triggers requestUpdate when mutation state changes", async () => {
 		const mutation = useMutation({ mutationFn: (v: number) => Promise.resolve(v) }, qc);
 		host.connect();
+		await host.willLoad();
 
 		await mutation().mutateAsync(42);
 		await vi.waitFor(() => expect(host.renderCount).toBeGreaterThan(0));
 		expect(host.renderCount).toBeGreaterThan(0);
 	});
 
-	it("does not trigger requestUpdate after disconnect", () => {
+	it("does not trigger requestUpdate after disconnect", async () => {
 		const mutation = useMutation({ mutationFn: (v: number) => Promise.resolve(v) }, qc);
 		host.connect();
+		await host.willLoad();
 		host.disconnect();
 
 		const countBefore = host.renderCount;
@@ -114,6 +120,7 @@ describe("useMutation", () => {
 		const onSuccess = vi.fn<(data: number, variables: number, context: undefined, mutation: unknown) => void>();
 		const mutation = useMutation({ mutationFn: (v: number) => Promise.resolve(v + 1), onSuccess }, qc);
 		host.connect();
+		await host.willLoad();
 
 		await mutation().mutateAsync(9);
 		// TanStack Query v5 passes (data, variables, context, mutation) to onSuccess
@@ -127,6 +134,7 @@ describe("useMutation", () => {
 		}
 		const comp = new ComponentLike();
 		comp.connect();
+		await comp.willLoad();
 
 		await comp.mutation().mutateAsync("test");
 		await vi.waitFor(() => expect(comp.mutation().data).toBe("test"));

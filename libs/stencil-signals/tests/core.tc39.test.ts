@@ -17,8 +17,14 @@ import { effect } from "../src/extensions/effect";
 import { signal, computed, createWatcher, untracked } from "../src/tc39";
 
 // Helper: flush all pending microtasks
-const flush = () => new Promise<void>(r => setTimeout(r, 0));
-const tick = () => new Promise<void>(r => queueMicrotask(r));
+const flush = () =>
+	new Promise<void>(r => {
+		setTimeout(r, 0);
+	});
+const tick = () =>
+	new Promise<void>(r => {
+		queueMicrotask(r);
+	});
 
 // ─── signal() ────────────────────────────────────────────────────────────────
 
@@ -707,7 +713,7 @@ describe("host lifecycle — derivedAsync", () => {
 	it("throws without useSignalWatcher", () => {
 		const host = new TestHost();
 		derivedAsync(async () => 42);
-		expect(() => host.connect()).toThrow(/derivedAsync requires useSignalWatcher\(\) declared before this field/);
+		expect(() => host.connect()).toThrow(/derivedAsync requires useSignalWatcher\(\) declared before this field/u);
 	});
 
 	it("reinit is a no-op when watcher is still live", async () => {
@@ -754,8 +760,10 @@ describe("host lifecycle — derivedAsync", () => {
 describe("host lifecycle — effect (auto-tracking)", () => {
 	it("throws without useSignalWatcher", () => {
 		const host = new TestHost();
-		effect(() => {});
-		expect(() => host.connect()).toThrow(/effect requires useSignalWatcher\(\) declared before this field/);
+		effect(() => {
+			/* auto-tracking test */
+		});
+		expect(() => host.connect()).toThrow(/effect requires useSignalWatcher\(\) declared before this field/u);
 	});
 
 	it("disposes on disconnect and reinits on reconnect", async () => {

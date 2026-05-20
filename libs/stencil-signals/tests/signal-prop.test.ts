@@ -39,7 +39,7 @@ describe("useSignalProps", () => {
 	it("throws without useSignalWatcher on connect", () => {
 		const host = new PropTestHost();
 		useSignalProps(PropTestHost)({ duration: {} });
-		expect(() => host.connect()).toThrow(/useSignalProps requires useSignalWatcher\(\) declared before this field/);
+		expect(() => host.connect()).toThrow(/useSignalProps requires useSignalWatcher\(\) declared before this field/u);
 	});
 
 	it("syncs on hostWillLoad after connect", () => {

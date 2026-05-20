@@ -206,7 +206,8 @@ export default defineConfig({
 				"react-perf/jsx-no-new-array-as-prop": "off",
 				"react-perf/jsx-no-new-object-as-prop": "off",
 				"react-perf/jsx-no-new-function-as-prop": "off",
-				"react-perf/jsx-no-jsx-as-prop": "off",
+				"react-perf/jsx-no-jsx-as-prop": "off", // react/exhaustive-deps targets React hooks; Stencil uses custom hooks named use*
+				"react/exhaustive-deps": "off",
 			},
 		},
 		{
@@ -285,6 +286,7 @@ export default defineConfig({
 				"vitest/prefer-describe-function-title": "off", // describe title matching an imported name is fine
 				"vitest/require-mock-type-parameters": "off", // explicit type params on every vi.fn() is excessive in test files
 				"vitest/require-to-throw-message": "off", // asserting a throw happens is sufficient without requiring a specific message
+				"vitest/no-conditional-in-test": "off", // vi.fn() callbacks with conditionals are valid for testing reactive signal tracking
 			},
 		},
 		// config files - vitest/tsdown and co

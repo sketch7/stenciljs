@@ -82,7 +82,9 @@ export function useContext<T>(key: ContextKey<T>): Ref<T> {
 					// already connected if it exists. No listener needed; defer default resolution
 					// to hostWillLoad so errors surface there rather than in connectedCallback.
 					log(() => `hostConnected  not hydrating → deferring to hostWillLoad  contextId=${key.name}`);
-					cleanupPending = () => {};
+					cleanupPending = () => {
+						/* noop */
+					};
 					return;
 				}
 				// Hydration: Stencil removes the "s-id" attribute during connectedCallback

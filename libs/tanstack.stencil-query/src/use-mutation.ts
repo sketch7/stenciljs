@@ -1,4 +1,4 @@
-import { use, createRef } from "@ssv/stencil.core";
+import { use, createRef, useLoadEffect } from "@ssv/stencil.core";
 import type { Ref } from "@ssv/stencil.core";
 import { MutationObserver, notifyManager, noop } from "@tanstack/query-core";
 import type { DefaultError, QueryClient } from "@tanstack/query-core";
@@ -69,27 +69,29 @@ export function useMutation<TData = unknown, TError = DefaultError, TVariables =
 		observer?.mutate(variables, options) ??
 		Promise.reject(new Error("[ssv:query] Cannot mutate — observer not yet connected."));
 
-	use(host => ({
-		hostConnected() {
-			const qc = clientRef.current;
-			observer = new MutationObserver<TData, TError, TVariables, TContext>(qc, getOpts());
-			unsubscribe = observer.subscribe(
-				notifyManager.batchCalls(() => {
-					host.requestUpdate();
-				}),
-			);
-		},
+	// hostWillLoad: context guaranteed resolved (clientRef.current always defined here).
+	useLoadEffect(host => {
+		const qc = clientRef.current;
+		observer = new MutationObserver<TData, TError, TVariables, TContext>(qc, getOpts());
+		unsubscribe = observer.subscribe(
+			notifyManager.batchCalls(() => {
+				host.requestUpdate();
+			}),
+		);
+		return () => {
+			unsubscribe?.();
+			unsubscribe = undefined;
+			observer?.reset();
+			observer = undefined;
+		};
+	});
+
+	use(() => ({
 		hostWillRender() {
 			if (!observer) {
 				return;
 			}
 			observer.setOptions(getOpts());
-		},
-		hostDisconnected() {
-			unsubscribe?.();
-			unsubscribe = undefined;
-			observer?.reset();
-			observer = undefined;
 		},
 	}));
 

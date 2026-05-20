@@ -28,10 +28,13 @@ export class TestHost extends EventTarget implements ReactiveControllerHost {
 		this.controllers.delete(ctrl);
 	}
 
-	/** Simulates `componentWillRender` → `hostWillRender` on each controller. */
+	/** Simulates a full render cycle: `componentWillRender` → `hostWillRender`, then `componentDidRender` → `hostDidRender`. */
 	render(): void {
 		for (const ctrl of this.controllers) {
 			ctrl.hostWillRender?.();
+		}
+		for (const ctrl of this.controllers) {
+			ctrl.hostDidRender?.();
 		}
 	}
 

@@ -7,6 +7,8 @@
   "scripts": {
     "dev": "nx run vike-playground:dev",
     "build": "nx run vike-playground:build",
+    "build:analyze": "ANALYZE=true nx run vike-playground:build",
+    "cost:libs": "node --import @swc-node/register/esm scripts/bundle-cost.ts",
     "preview": "nx run vike-playground:preview",
     "test": "nx run-many -t test --if-present",
     "vitest": "vitest",
@@ -32,6 +34,7 @@
     "oxlint-tailwindcss": "catalog:",
     "tslib": "^2.8.1",
     "typescript": "catalog:",
+    "vite": "catalog:",
     "vitest": "catalog:"
   },
   "engines": {

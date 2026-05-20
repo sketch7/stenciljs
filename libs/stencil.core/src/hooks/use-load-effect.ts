@@ -3,7 +3,7 @@ import type { UseHostContext } from "./reactive-controller";
 import { use } from "./use";
 import type { EffectCleanup } from "./use-effect";
 
-/** Maps `{ key: { current: V } }` → `{ key: NonNullable<V> }` for the deps argument of {@link useLoadEffect}. */
+/** Maps `{ key: Ref<V> | WritableRef<V> }` → `{ key: NonNullable<V> }` for the deps argument of {@link useLoadEffect}. */
 type RefObjectValues<T extends Record<string, { current: unknown }>> = {
 	[K in keyof T]: T[K] extends { current: infer V } ? NonNullable<V> : never;
 };
@@ -24,7 +24,7 @@ export type UseLoadEffectContext<TDeps extends object = object> = UseHostContext
  * There is no React equivalent — this hook addresses the Stencil-specific hydration ordering
  * where context may not be resolved at `hostConnected` (bottom-up init).
  *
- * **With `deps`** — pass a named `{ key: Ref<V> }` object. Each ref's `.current` is verified
+ * **With `deps`** — pass a named `{ key: Ref<V> | WritableRef<V> }` object. Each ref's `.current` is verified
  * non-null before setup fires; the unwrapped values are passed as `{ key: V }` to the callback.
  * Setup is silently skipped if any dep is still null/undefined at `hostWillLoad`.
  *

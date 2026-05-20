@@ -217,7 +217,7 @@ useLoadEffect(host => {
 
 ### Named deps
 
-Pass a `{ key: Ref<V> }` object as the second argument. Each ref's `.current` is verified non-null before setup fires; the unwrapped values are merged into the context object alongside host methods. Setup is silently skipped if any dep is still null/undefined at `hostWillLoad`.
+Pass a `{ key: Ref<V> | WritableRef<V> }` object as the second argument — any value with a `.current` property. Each ref's `.current` is verified non-null before setup fires; the unwrapped values are merged into the context object alongside host methods. Setup is silently skipped if any dep is still null/undefined at `hostWillLoad`.
 
 ```ts
 useLoadEffect(({ qc }) => {

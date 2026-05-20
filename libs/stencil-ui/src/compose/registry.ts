@@ -1,7 +1,7 @@
 import { useContext, createContext, provideContext } from "@ssv/stencil.core";
 import type { Ref } from "@ssv/stencil.core";
 
-import type { ComposeDef, ComposeDefInternal, ComposeRegistry, CompositionDefsMap } from "../types";
+import type { ComposeDef, ComposeDefInternal, ComposeRegistry, CompositionDefsMap } from "./types";
 import { isComposeDevEnv } from "./is-compose-dev";
 
 export function createComposeRegistry(): ComposeRegistry {

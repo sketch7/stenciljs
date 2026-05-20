@@ -2,8 +2,8 @@ import { SsvElement } from "@ssv/stencil.core";
 import { Component, Event, EventEmitter, Listen, Prop, h } from "@stencil/core";
 import type { VNode } from "@stencil/core";
 
-import { isComposeDevEnv } from "./registry/is-compose-dev";
-import { useCompositionRegistry } from "./registry/registry";
+import { isComposeDevEnv } from "./is-compose-dev";
+import { useCompositionRegistry } from "./registry";
 import type { ComposeEventDetail } from "./types";
 
 @Component({

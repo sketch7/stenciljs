@@ -3,7 +3,7 @@ export {
 	provideCompositionRegistry,
 	useCompositionRegistry,
 	type CompositionRegistryRef,
-} from "./registry/registry";
+} from "./registry";
 export type {
 	AliasesOf,
 	ComposeDef,

@@ -1,16 +1,16 @@
 /**
- * Public-facing definition type. Pass TData to constrain the mapProps signature.
+ * Public-facing definition type. Pass TProps to constrain the mapProps signature.
  * TOutput is declared separately on wrapper components via @Event() ssvComposeOutput.
  */
-export type ComposeDef<TData = unknown> = {
+export type ComposeDef<TProps = unknown> = {
 	/** Custom element tag name the registry passes to h(). */
 	tag: string;
 	/**
 	 * Optional prop mapper. When provided, the mapped object is passed directly
 	 * as props to `tag`. When omitted, `{ props }` is passed verbatim — the wrapper
-	 * component is expected to accept `@Prop() props: TData`.
+	 * component is expected to accept `@Prop() props: TProps`.
 	 */
-	mapProps?: (props: TData) => Record<string, unknown>;
+	mapProps?: (props: TProps) => Record<string, unknown>;
 	/**
 	 * Optional event mapper for direct component composition without a wrapper.
 	 * Keys are event names emitted by `tag`; values map event payload to composeEvent data.
@@ -28,7 +28,7 @@ export type ComposeDef<TData = unknown> = {
  * Type-erased version stored in the registry.
  * `unknown` for mapProps's input is intentional — ssv-compose receives
  * props as unknown at runtime, and each wrapper validates the shape via its own
- * `@Prop() props: TData`.
+ * `@Prop() props: TProps`.
  * @internal
  */
 export type ComposeDefInternal = {
@@ -57,7 +57,7 @@ export function createCompositionDefs<const T extends CompositionDefsMap>(defs: 
 }
 
 export type ComposeRegistry = {
-	register<TData>(type: string, definition: ComposeDef<TData>): ComposeRegistry;
+	register<TProps>(type: string, definition: ComposeDef<TProps>): ComposeRegistry;
 	registerFromDefs(defs: CompositionDefsMap): ComposeRegistry;
 	resolve(type: string): ComposeDefInternal | undefined;
 	/** @internal Dev-only; lists registered primary keys (not every alias). */

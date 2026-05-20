@@ -1,11 +1,15 @@
 import type { Config } from "@stencil/core";
 import { reactOutputTarget } from "@stencil/react-output-target";
 
+const isDev = process.env.NODE_ENV === "development";
+
 export const config: Config = {
 	namespace: "app-playground",
 	globalScript: "src/global.ts",
-	sourceMap: true,
 	buildEs5: false,
+	minifyJs: !isDev,
+	minifyCss: !isDev,
+	sourceMap: isDev,
 	outputTargets: [
 		reactOutputTarget({
 			outDir: "src/react",

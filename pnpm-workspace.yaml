@@ -28,6 +28,7 @@ catalog:
   react-dom: ^19.2.6
   vike: ^0.4.259
   vike-react: ^0.6.23
+  "@vikejs/hono": ^0.1.0
 
   # ── UI / Styling ─────────────────────────────────────────────────────────────
   tailwindcss: ^4.3.0

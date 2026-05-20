@@ -1,6 +1,6 @@
 import { computed, signal, useSignalWatcher } from "@ssv/stencil-signals";
 import { SsvElement } from "@ssv/stencil.core";
-import { Component, h } from "@stencil/core";
+import { Component, Prop, h } from "@stencil/core";
 
 const count = signal(0);
 const additionalValue = signal(0);
@@ -13,6 +13,8 @@ const total = computed(() => count() + doubled());
 	shadow: true,
 })
 export class AppSignalsCounter extends SsvElement {
+	@Prop() step = 1;
+
 	readonly signalWatcher = useSignalWatcher();
 
 	render() {
@@ -24,10 +26,10 @@ export class AppSignalsCounter extends SsvElement {
 				</div>
 
 				<div class="controls">
-					<button type="button" class="btn btn-outline" onClick={() => count.update(c => c - 1)}>
+					<button type="button" class="btn btn-outline" onClick={() => count.update(c => c - this.step)}>
 						−
 					</button>
-					<button type="button" class="btn btn-primary" onClick={() => count.update(c => c + 1)}>
+					<button type="button" class="btn btn-primary" onClick={() => count.update(c => c + this.step)}>
 						+
 					</button>
 				</div>

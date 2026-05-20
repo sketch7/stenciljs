@@ -5,7 +5,6 @@ import { Component, State, h } from "@stencil/core";
 
 import { demoCompositionDefs } from "./compose-defs";
 import type { DemoCompositionName } from "./compose-defs";
-import type { TimerWidgetData } from "./timer/app-timer-widget";
 
 @Component({
 	tag: "app-compose-demo",
@@ -18,13 +17,13 @@ export class AppComposeDemo extends SsvElement {
 	@State() activeType: DemoCompositionName = "timer";
 	@State() lastEvent: ComposeEventDetail | null = null;
 
-	readonly #timerData: TimerWidgetData = { duration: 30 };
+	readonly #timerProps = { duration: 40 };
 
-	#data(active: DemoCompositionName): unknown {
+	#props(active: DemoCompositionName) {
 		switch (active) {
 			case "timer":
 			case "countdown": {
-				return this.#timerData;
+				return this.#timerProps;
 			}
 			case "count": {
 				return {};
@@ -64,7 +63,7 @@ export class AppComposeDemo extends SsvElement {
 					<div class="widget-host">
 						<ssv-compose
 							name={this.activeType}
-							data={this.#data(this.activeType)}
+							props={this.#props(this.activeType)}
 							onComposeEvent={(e: CustomEvent<ComposeEventDetail>) => (this.lastEvent = e.detail)}
 						/>
 					</div>
@@ -80,7 +79,7 @@ export class AppComposeDemo extends SsvElement {
 						<p>
 							<em>&quot;countdown&quot; is an alias for &quot;timer&quot;</em>
 						</p>
-						<ssv-compose name="countdown" data={{ duration: 10 }} />
+						<ssv-compose name="countdown" props={{ duration: 10 }} />
 					</div>
 				</section>
 

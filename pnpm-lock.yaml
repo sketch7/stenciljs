@@ -45,6 +45,9 @@ catalogs:
     '@types/react-dom':
       specifier: ^19.2.3
       version: 19.2.3
+    '@vikejs/hono':
+      specifier: ^0.1.0
+      version: 0.1.0
     '@vitejs/plugin-react':
       specifier: ^6.0.2
       version: 6.0.2
@@ -186,6 +189,9 @@ importers:
       '@ssv/vite-plugin-stencil-watch':
         specifier: workspace:^
         version: link:../../libs/vite-plugin-stencil-watch
+      '@vikejs/hono':
+        specifier: 'catalog:'
+        version: 0.1.0(hono@4.12.19)(srvx@0.11.15)(vike@0.4.259(hono@4.12.19)(react-streaming@0.4.17(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(srvx@0.11.15)(vite@8.0.13(@types/node@25.9.0)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.47.1)(yaml@2.8.0)))
       dotenv:
         specifier: 'catalog:'
         version: 17.4.2
@@ -2590,8 +2596,17 @@ packages:
   '@universal-middleware/express@0.4.26':
     resolution: {integrity: sha512-zPtCWn4/kObx+Rd7UMpqjb1VP9qDzJEeb/oeN96nZv2b+wHvF9KKck9tftziuzeUYazjYrQ+Ug+aKVC6C7ndUw==}
 
+  '@universal-middleware/hono@0.4.21':
+    resolution: {integrity: sha512-HvzvJ/4DIbj8z/OWzirZZGBhWbv/w/UTNUMLKt35U3wVUJRPDZVRm3SzJR55jQfoN4MBD6DvAT5jKFjdZzsPQg==}
+
   '@universal-middleware/node@0.1.0':
     resolution: {integrity: sha512-I03mkOhw0Ka28MtALkpoGJYE8YYSJxmq/iambaqKGXxlFXgLI/VXlw0LmX9iansUzbolNq4hWFMfHyNp2xb4jA==}
+
+  '@vikejs/hono@0.1.0':
+    resolution: {integrity: sha512-/yoxvMGspFg6Nxvy6Nseghg2K4VgPrVhK0n3zIz/TMZwPUjRNYlsrlV0NvbTJRZV8q2mwdtjss0Oxc3Zjnngvg==}
+    peerDependencies:
+      hono: ^4.0.0
+      vike: ^0.4.255
 
   '@vitejs/plugin-react@6.0.2':
     resolution: {integrity: sha512-DlSMqo4WhThw4vB8Mpn0Woe9J+Jfq1geJ61AKW0QEgLzGMNwtIMdxbDUzLxcun8W7NbJO0e2Jg/Nxm3cCSVzzg==}
@@ -6353,6 +6368,20 @@ snapshots:
       - hono
       - srvx
 
+  '@universal-middleware/hono@0.4.21(hono@4.12.19)(srvx@0.11.15)':
+    dependencies:
+      '@universal-middleware/core': 0.4.17(hono@4.12.19)(srvx@0.11.15)
+    transitivePeerDependencies:
+      - '@cloudflare/workers-types'
+      - '@hattip/core'
+      - '@types/express'
+      - '@webroute/route'
+      - elysia
+      - fastify
+      - h3
+      - hono
+      - srvx
+
   '@universal-middleware/node@0.1.0(hono@4.12.19)(srvx@0.11.15)':
     dependencies:
       '@universal-middleware/core': 0.4.17(hono@4.12.19)(srvx@0.11.15)
@@ -6365,6 +6394,21 @@ snapshots:
       - fastify
       - h3
       - hono
+      - srvx
+
+  '@vikejs/hono@0.1.0(hono@4.12.19)(srvx@0.11.15)(vike@0.4.259(hono@4.12.19)(react-streaming@0.4.17(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(srvx@0.11.15)(vite@8.0.13(@types/node@25.9.0)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.47.1)(yaml@2.8.0)))':
+    dependencies:
+      '@universal-middleware/hono': 0.4.21(hono@4.12.19)(srvx@0.11.15)
+      hono: 4.12.19
+      vike: 0.4.259(hono@4.12.19)(react-streaming@0.4.17(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(srvx@0.11.15)(vite@8.0.13(@types/node@25.9.0)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.47.1)(yaml@2.8.0))
+    transitivePeerDependencies:
+      - '@cloudflare/workers-types'
+      - '@hattip/core'
+      - '@types/express'
+      - '@webroute/route'
+      - elysia
+      - fastify
+      - h3
       - srvx
 
   '@vitejs/plugin-react@6.0.2(vite@8.0.13(@types/node@25.9.0)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.47.1)(yaml@2.8.0))':

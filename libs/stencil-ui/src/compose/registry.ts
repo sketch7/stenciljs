@@ -15,7 +15,7 @@ export function createComposeRegistry(): ComposeRegistry {
 	};
 
 	const registry: ComposeRegistry = {
-		register<TData>(type: string, definition: ComposeDef<TData>): ComposeRegistry {
+		register<TProps>(type: string, definition: ComposeDef<TProps>): ComposeRegistry {
 			warnOverwrite(type);
 			const internal = definition as unknown as ComposeDefInternal;
 			primaryKeys.add(type);

@@ -47,7 +47,7 @@
   },
   "scripts": {
     "build": "stencil build",
-    "dev": "stencil build --dev --watch",
+    "dev": "NODE_ENV=development stencil build --dev --watch",
     "generate": "stencil generate",
     "lint": "oxlint src/",
     "fmt": "oxfmt src/",

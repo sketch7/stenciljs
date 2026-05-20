@@ -14,3 +14,4 @@ export type {
 	CompositionNameOf,
 } from "./types";
 export { createCompositionDefs } from "./types";
+export { ComposeWidget } from "./compose-widget";

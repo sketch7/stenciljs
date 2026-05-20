@@ -7,8 +7,6 @@ import path from "node:path";
 import vike from "vike/plugin";
 import { defineConfig, loadEnv } from "vite";
 
-import { translationsApi } from "./src/api/translations";
-
 const stencilPkgDir = path.resolve(__dirname, "../stencil-playground");
 
 // Mutable reference to the current Stencil hydrate module.
@@ -27,67 +25,44 @@ const withRuntimeLogging = <T extends HydrateFn>(fn: T): T =>
 			...options,
 		})) as unknown as T;
 
-// Proxy that delegates every property access to hydrateModuleRef.
-// Passed as hydrateModule to stencilSSR — @stencil/ssr caches the resolved
-// Promise value, but because it's this proxy the cached value always forwards
-// to the current hydrateModuleRef.
-const hydrateProxy = new Proxy({} as Record<string, unknown>, {
-	get(_, prop) {
-		if (typeof prop === "symbol") {
-			return null;
-		}
-		// Prevent the proxy from being treated as a thenable.
-		if (prop === "then" || prop === "catch" || prop === "finally") {
-			return null;
-		}
+const createHydrateProxy = (enableRuntimeLogging: boolean) =>
+	new Proxy({} as Record<string, unknown>, {
+		get(_, prop) {
+			if (typeof prop === "symbol") {
+				return null;
+			}
+			// Prevent the proxy from being treated as a thenable.
+			if (prop === "then" || prop === "catch" || prop === "finally") {
+				return null;
+			}
 
-		const value = (hydrateModuleRef as Record<string, unknown>)[prop];
+			const value = (hydrateModuleRef as Record<string, unknown>)[prop];
 
-		// Apply runtime logging to hydrate functions.
-		if ((prop === "renderToString" || prop === "hydrateDocument") && typeof value === "function") {
-			return withRuntimeLogging(value as HydrateFn);
-		}
+			// Apply runtime logging to hydrate functions in dev only.
+			if (
+				enableRuntimeLogging &&
+				(prop === "renderToString" || prop === "hydrateDocument") &&
+				typeof value === "function"
+			) {
+				return withRuntimeLogging(value as HydrateFn);
+			}
 
-		return value;
-	},
-});
+			return value;
+		},
+	});
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ command, mode }) => {
 	const env = loadEnv(mode, process.cwd(), "");
 	const port = Number.parseInt(env["PORT"] ?? "3000", 10);
+	const isDev = command === "serve";
 
 	return {
 		plugins: [
-			{
-				name: "api-routes",
-				configureServer(server) {
-					server.middlewares.use(async (req, res, next) => {
-						if (!req.url?.startsWith("/api/")) {
-							next();
-							return;
-						}
-						const url = new URL(req.url, `http://localhost:${port}`);
-						const webReq = new Request(url.toString(), {
-							method: req.method ?? "GET",
-							headers: Object.fromEntries(
-								Object.entries(req.headers).flatMap(([k, v]) => (typeof v === "string" ? [[k, v]] : [])),
-							),
-						});
-						try {
-							const resp = await translationsApi.fetch(webReq);
-							res.statusCode = resp.status;
-							resp.headers.forEach((value, key) => res.setHeader(key, value));
-							res.end(Buffer.from(await resp.arrayBuffer()));
-						} catch (err) {
-							next(err);
-						}
-					});
-				},
-			},
 			vike(),
 			react(),
 			tailwindcss(),
 			stencilWatch({
+				apply: "serve",
 				packageDir: stencilPkgDir,
 				watchDirs: [path.resolve(__dirname, "../../libs/stencil.core/src")],
 				preBuildCommand: "pnpm nx run stencil-core:build",
@@ -107,7 +82,7 @@ export default defineConfig(({ mode }) => {
 				hydrateModule: import("@app/stencil-playground/hydrate").then(m => {
 					hydrateModuleRef = m as Record<string, unknown>;
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					return hydrateProxy as any;
+					return createHydrateProxy(isDev) as any;
 				}),
 				serializeShadowRoot: { default: "declarative-shadow-dom" },
 			}),
@@ -137,6 +112,13 @@ export default defineConfig(({ mode }) => {
 		},
 		build: {
 			target: "esnext",
+			...(isDev
+				? {}
+				: {
+						sourcemap: false,
+						minify: true,
+						cssMinify: true,
+					}),
 		},
 	};
 });

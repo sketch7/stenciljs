@@ -71,3 +71,11 @@
 	border-radius: 0.25rem;
 	padding: 0.1em 0.35em;
 }
+
+.stat-value--online {
+	color: var(--color-green, #a6e3a1);
+}
+
+.stat-value--offline {
+	color: var(--color-red, #f38ba8);
+}

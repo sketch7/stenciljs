@@ -69,28 +69,31 @@ export function useMutation<TData = unknown, TError = DefaultError, TVariables =
 		observer?.mutate(variables, options) ??
 		Promise.reject(new Error("[ssv:query] Cannot mutate — observer not yet connected."));
 
-	// hostWillLoad: context guaranteed resolved (clientRef.current always defined here).
-	useLoadEffect(host => {
-		const qc = clientRef.current;
-		observer = new MutationObserver<TData, TError, TVariables, TContext>(qc, getOpts());
-		unsubscribe = observer.subscribe(
-			notifyManager.batchCalls(() => {
-				host.requestUpdate();
-			}),
-		);
-		return () => {
-			unsubscribe?.();
-			unsubscribe = undefined;
-			observer?.reset();
-			observer = undefined;
-		};
-	});
+	// hostWillLoad: context guaranteed resolved — qc is non-null and auto-unwrapped from clientRef.
+	useLoadEffect(
+		({ qc, requestUpdate }) => {
+			observer = new MutationObserver<TData, TError, TVariables, TContext>(qc, getOpts());
+			unsubscribe = observer.subscribe(
+				notifyManager.batchCalls(() => {
+					requestUpdate();
+				}),
+			);
+			return () => {
+				unsubscribe?.();
+				unsubscribe = undefined;
+				observer?.reset();
+				observer = undefined;
+			};
+		},
+		{ qc: clientRef },
+	);
 
 	use(() => ({
 		hostWillRender() {
 			if (!observer) {
 				return;
 			}
+			// TODO(perf): skip setOptions when options is static (not a function) — mirrors Lit BaseController.onHostUpdate()
 			observer.setOptions(getOpts());
 		},
 	}));

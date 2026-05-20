@@ -2,9 +2,18 @@
 
 Side-effect utility with auto-tracking or explicit-dep semantics. Returns a `WatcherRef` (`{ dispose() }`).
 
-**Standalone** (no Stencil host during init): runs immediately; disposal via `getActiveOwner()` when set, otherwise call `.dispose()` manually.
+**Import:** `@ssv/stencil-signals`
 
-**Class field** (during `ReactiveControllerHost` construction): deferred until `hostConnected`; torn down with the host via `useSignalWatcher()`. Declare `useSignalWatcher()` **before** the effect field.
+**Prerequisites (class fields):** `useSignalWatcher()` declared **before** this field ([signal-watcher.md](signal-watcher.md)).
+
+**Example:** [timer](../../apps/stencil-playground/src/examples/stencil-signals/timer/) (`_durationEffect`, `_completionEffect`).
+
+## Standalone vs class field
+
+| Context                               | When it runs    | Disposal                            |
+| ------------------------------------- | --------------- | ----------------------------------- |
+| **Standalone** (module init, no host) | Immediately     | `.dispose()` or active owner if set |
+| **Class field** on `SsvElement`       | `hostConnected` | Host disconnect + active owner      |
 
 ## Auto-tracking
 
@@ -18,7 +27,7 @@ const ref = effect(onCleanup => {
   });
 });
 
-ref.dispose(); // stop manually
+ref.dispose();
 ```
 
 ## Explicit dependencies
@@ -37,48 +46,48 @@ const ref = effect(
       .then(r => r.json())
       .then(data => userStore.set(data));
   },
-  { defer: true }, // skip the initial run, fire only on first change
+  { defer: true },
 );
 ```
 
-## Stencil class-field usage
+`defer: true` skips the initial run; the effect fires on the first dependency change only.
 
-**Auto-tracking:**
+## Stencil class-field usage
 
 ```tsx
 @Component({ tag: "my-comp", shadow: false })
 export class MyComp extends SsvElement {
   readonly signalWatcher = useSignalWatcher();
 
-  readonly _titleEff = effect(_onCleanup => {
+  readonly _titleEff = effect(() => {
     document.title = `Count: ${count()}`;
   });
+
+  private readonly _userEff = effect(
+    [userId, theme],
+    ([id, t], onCleanup) => {
+      const ctrl = new AbortController();
+      onCleanup(() => ctrl.abort());
+      fetch(`/api/users/${id}?theme=${t}`, { signal: ctrl.signal })
+        .then(r => r.json())
+        .then(data => userStore.set(data));
+    },
+    { defer: true },
+  );
 }
-```
-
-**Explicit dependencies:**
-
-```tsx
-private readonly _userEff = effect([userId, theme], ([id, t], onCleanup) => {
-  const ctrl = new AbortController();
-  onCleanup(() => ctrl.abort());
-  fetch(`/api/users/${id}?theme=${t}`, { signal: ctrl.signal })
-    .then(r => r.json())
-    .then(data => userStore.set(data));
-}, { defer: true });
 ```
 
 ## Mode comparison
 
-|                            | Auto-tracking                         | Explicit deps               |
-| -------------------------- | ------------------------------------- | --------------------------- |
-| Dep declaration            | Implicit (any `sig()` call inside fn) | Explicit array              |
-| Risk of unexpected re-runs | Higher                                | None                        |
-| Values passed to fn        | No — call `sig()` manually            | Yes, typed tuple            |
-| Best for                   | Simple reactive side-effects          | Precise control, async work |
+|                    | Auto-tracking                   | Explicit deps                            |
+| ------------------ | ------------------------------- | ---------------------------------------- |
+| Dep declaration    | Implicit (`sig()` inside fn)    | Explicit array                           |
+| Unexpected re-runs | Higher if reads are broad       | Lower                                    |
+| Values in callback | Read signals manually           | Typed tuple argument                     |
+| Best for           | Document title, simple DOM sync | Fetch on id change, timers tied to props |
 
 ## Teardown
 
-Register teardown with `onCleanup(fn)` and/or return a cleanup function. On each re-run and on `dispose()`, prior `onCleanup` runs first, then return cleanup.
+Register with `onCleanup(fn)` and/or return a cleanup function. On each re-run and on `dispose()`, prior cleanups run first (host-bound effects use `flushBetweenRuns: false` between reactive re-runs; cleanups still run on dispose).
 
-Signal reads _inside_ `fn` that are not in `deps` are untracked.
+Signal reads inside `fn` that are **not** listed in `deps` (explicit mode) are untracked.

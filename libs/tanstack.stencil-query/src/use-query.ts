@@ -110,40 +110,32 @@ export function useQuery<
 	const clientRef = useQueryClient(client);
 
 	let observer: QueryObserver<TQueryFnData, TError, TData, TQueryFnData, TQueryKey> | undefined;
-	let unsubscribe: (() => void) | undefined;
 
-	// hostWillLoad: context guaranteed resolved (clientRef.current always defined here).
-	// Collapses the previous hostConnected + hostWillLoad dual-path into one place.
-	useLoadEffect(_ => {
-		const qc = clientRef.current;
-		observer = new QueryObserver<TQueryFnData, TError, TData, TQueryFnData, TQueryKey>(
-			qc,
-			qc.defaultQueryOptions(getOpts()),
-		);
-		return () => {
-			unsubscribe?.();
-			unsubscribe = undefined;
-			observer?.destroy();
-			observer = undefined;
-		};
-	});
+	// hostWillLoad: context guaranteed resolved — qc is non-null and auto-unwrapped from clientRef.
+	useLoadEffect(
+		({ qc, requestUpdate }) => {
+			observer = new QueryObserver<TQueryFnData, TError, TData, TQueryFnData, TQueryKey>(
+				qc,
+				qc.defaultQueryOptions(getOpts()),
+			);
+			const unsubscribe = observer.subscribe(notifyManager.batchCalls(() => requestUpdate()));
+			return () => {
+				unsubscribe();
+				observer?.destroy();
+				observer = undefined;
+			};
+		},
+		{ qc: clientRef },
+	);
 
-	use(host => ({
+	use(() => ({
 		hostWillRender() {
-			if (!observer) {
+			const qc = clientRef.current;
+			if (!observer || !qc) {
 				return;
 			}
-			const qc = clientRef.current;
+			// TODO(perf): skip setOptions when options is static (not a function) — mirrors Lit BaseController.onHostUpdate()
 			observer.setOptions(qc.defaultQueryOptions(getOpts()));
-			// Subscribe on the first render (after all hostWillLoad hooks complete).
-			// On subsequent renders, the subscription is already active — just refresh result.
-			if (!unsubscribe) {
-				unsubscribe = observer.subscribe(
-					notifyManager.batchCalls(() => {
-						host.requestUpdate();
-					}),
-				);
-			}
 		},
 	}));
 

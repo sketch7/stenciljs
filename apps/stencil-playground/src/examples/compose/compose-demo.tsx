@@ -79,7 +79,7 @@ export class AppComposeDemo extends SsvElement {
 						<p>
 							<em>&quot;countdown&quot; is an alias for &quot;timer&quot;</em>
 						</p>
-						<ssv-compose name="countdown" data={{ duration: 10 }} />
+						<ssv-compose name="countdown" props={{ duration: 10 }} />
 					</div>
 				</section>
 

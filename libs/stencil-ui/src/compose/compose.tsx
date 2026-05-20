@@ -20,8 +20,8 @@ export class SsvCompose extends SsvElement {
 	/** Compose name string — looked up in the registry. */
 	@Prop() name!: string;
 
-	/** Data object passed to the resolved widget component. */
-	@Prop() data: unknown = undefined;
+	/** Props object passed to the resolved widget component. */
+	@Prop() props: unknown = undefined;
 
 	/** Normalized output event from any wrapper component in this compose's subtree. */
 	@Event() composeEvent!: EventEmitter<ComposeEventDetail>;
@@ -76,13 +76,13 @@ export class SsvCompose extends SsvElement {
 			customElements === null || customElements === undefined ? undefined : customElements.get(definition.tag);
 		const isWrapper =
 			ElementClass !== undefined && (ElementClass as unknown as typeof ComposeWidget).isComposeWrapper === true;
-		let props: Record<string, unknown>;
-		if (definition.mapData) {
-			props = definition.mapData(this.data);
+		let resolvedProps: Record<string, unknown>;
+		if (definition.mapProps) {
+			resolvedProps = definition.mapProps(this.props);
 		} else if (isWrapper) {
-			props = { data: this.data };
+			resolvedProps = { props: this.props };
 		} else {
-			props = (this.data as Record<string, unknown>) ?? {};
+			resolvedProps = (this.props as Record<string, unknown>) ?? {};
 		}
 		if (definition.mapOutputs) {
 			const outputListeners = Object.fromEntries(
@@ -91,9 +91,9 @@ export class SsvCompose extends SsvElement {
 					(event: CustomEvent) => this.composeEvent.emit({ name: this.name, data: mapper(event) }),
 				]),
 			);
-			props = { ...props, ...outputListeners };
+			resolvedProps = { ...resolvedProps, ...outputListeners };
 		}
 		this.#isAutoForwarding = !isWrapper && !definition.mapOutputs;
-		return h(definition.tag, props);
+		return h(definition.tag, resolvedProps);
 	}
 }

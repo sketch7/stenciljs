@@ -1,5 +1,5 @@
 /**
- * Public-facing definition type. Pass TData to constrain the mapData signature.
+ * Public-facing definition type. Pass TData to constrain the mapProps signature.
  * TOutput is declared separately on wrapper components via @Event() ssvComposeOutput.
  */
 export type ComposeDef<TData = unknown> = {
@@ -7,10 +7,10 @@ export type ComposeDef<TData = unknown> = {
 	tag: string;
 	/**
 	 * Optional prop mapper. When provided, the mapped object is passed directly
-	 * as props to `tag`. When omitted, `{ data }` is passed verbatim — the wrapper
-	 * component is expected to accept `@Prop() data: TData`.
+	 * as props to `tag`. When omitted, `{ props }` is passed verbatim — the wrapper
+	 * component is expected to accept `@Prop() props: TData`.
 	 */
-	mapData?: (data: TData) => Record<string, unknown>;
+	mapProps?: (props: TData) => Record<string, unknown>;
 	/**
 	 * Optional event mapper for direct component composition without a wrapper.
 	 * Keys are event names emitted by `tag`; values map event payload to composeEvent data.
@@ -26,14 +26,14 @@ export type ComposeDef<TData = unknown> = {
 
 /**
  * Type-erased version stored in the registry.
- * `unknown` for mapData's input is intentional — ssv-compose receives
- * data as unknown at runtime, and each wrapper validates the shape via its own
- * `@Prop() data: TData`.
+ * `unknown` for mapProps's input is intentional — ssv-compose receives
+ * props as unknown at runtime, and each wrapper validates the shape via its own
+ * `@Prop() props: TData`.
  * @internal
  */
 export type ComposeDefInternal = {
 	tag: string;
-	mapData?: (data: unknown) => Record<string, unknown>;
+	mapProps?: (props: unknown) => Record<string, unknown>;
 	mapOutputs?: Record<string, (event: CustomEvent) => unknown>;
 };
 

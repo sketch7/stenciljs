@@ -206,6 +206,6 @@ describe("useLoadEffect", () => {
 		});
 		await host.willLoad();
 		expect(capturedHost).toBeDefined();
-		expectTypeOf(capturedHost?.requestUpdate).toBeFunction();
+		expectTypeOf(capturedHost!.requestUpdate).toBeFunction();
 	});
 });

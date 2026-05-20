@@ -13,7 +13,7 @@ function pad(n: number): string {
 	shadow: true,
 })
 export class AppTimerCounter extends SsvElement {
-	@Prop() timeRemaining = 0;
+	@Prop({ reflect: true }) timeRemaining = 0;
 
 	readonly signalWatcher = useSignalWatcher();
 	readonly $props = useSignalProps(AppTimerCounter)({

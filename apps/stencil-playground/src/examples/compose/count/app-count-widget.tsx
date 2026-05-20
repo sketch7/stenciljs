@@ -1,10 +1,10 @@
 import { Component, h } from "@stencil/core";
 
 @Component({
-	tag: "ssv-count-widget",
+	tag: "app-count-widget",
 	shadow: false,
 })
-export class SsvCountWidget {
+export class AppCountWidget {
 	render() {
 		return <app-signals-counter />;
 	}

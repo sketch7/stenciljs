@@ -16,13 +16,13 @@
     ".": {
       "@ssv/source": "./src/index.ts",
       "types": "./dist/types/index.d.ts",
-      "import": "./dist/index.js",
+      "import": "./dist/collection/index.js",
       "require": "./dist/index.cjs.js"
     },
     "./compose": {
       "@ssv/source": "./src/compose/index.ts",
       "types": "./dist/types/compose/index.d.ts",
-      "import": "./dist/index.js",
+      "import": "./dist/collection/compose/index.js",
       "require": "./dist/index.cjs.js"
     },
     "./loader": {
@@ -65,8 +65,8 @@
     "@ssv/stencil.core": "workspace:*",
     "@stencil/core": ">=4.0.0"
   },
+  "packageManager": "pnpm@9.15.0",
   "collection": "dist/collection/collection-manifest.json",
   "collection:main": "dist/collection/index.js",
-  "es2017": "dist/esm/index.mjs",
-  "packageManager": "pnpm@9.15.0"
+  "es2017": "dist/esm/index.mjs"
 }

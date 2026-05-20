@@ -15,10 +15,7 @@ pnpm add @ssv/stencil-ui @ssv/stencil.core
 Add the package to your Stencil app so its component collection is included in the build (same as any `libs/` dependency in this monorepo). Then import registry helpers where you register composes:
 
 ```ts
-import {
-  createCompositionDefs,
-  registerCompositionDefs,
-} from "@ssv/stencil-ui/compose";
+import { createCompositionDefs } from "@ssv/stencil-ui/compose";
 ```
 
 ## Quick start
@@ -29,7 +26,6 @@ import {
 // compose-defs.ts
 import {
   createCompositionDefs,
-  registerCompositionDefs,
   type CompositionNameOf,
 } from "@ssv/stencil-ui/compose";
 
@@ -42,23 +38,7 @@ export type AppCompositionName = CompositionNameOf<typeof appCompositionDefs>;
 // "timer" | "count" | "countdown"
 ```
 
-### 2. Global registry (SSR / hard refresh)
-
-Import the defs module from your Stencil **`global.ts`** so registration runs on the server and on every client load:
-
-```ts
-// global.ts
-import "./compose-defs";
-```
-
-```ts
-// compose-defs.ts (side effect at module load)
-registerCompositionDefs(appCompositionDefs);
-```
-
-Any `<ssv-compose>` without a scoped provider uses the global `composeRegistry` singleton.
-
-### 3. Scoped registry (subtree)
+### 2. Scoped registry (subtree)
 
 On an `SsvElement` host, call `provideCompositionRegistry` as a field initializer:
 
@@ -84,7 +64,7 @@ readonly #registry = provideCompositionRegistry(r =>
 );
 ```
 
-### 4. Render by name + data
+### 3. Render by name + data
 
 ```tsx
 <ssv-compose
@@ -144,10 +124,8 @@ export class SsvTimerWidget {
 | Export                                     | Description                                                                                          |
 | ------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
 | `createCompositionDefs(defs)`              | Preserves literal keys for `CompositionNameOf` inference.                                            |
-| `registerCompositionDefs(defs, registry?)` | Bulk-register a defs map. Defaults to global `composeRegistry`.                                      |
 | `provideCompositionRegistry(setup)`        | Scoped registry + `provideContext` on an `SsvElement` host.                                          |
 | `useCompositionRegistry()`                 | Consume nearest registry (or global fallback).                                                       |
-| `defineCompose(type, options, registry?)`  | Register one entry. Alias for `registry.register(...)`.                                              |
 | `createComposeRegistry()`                  | New isolated `Map`-backed registry.                                                                  |
 | `composeRegistry`                          | Global singleton used when no provider overrides context.                                            |
 | `ComposeRegistryContext`                   | Context token from `@ssv/stencil.core` (`createContext`). Default factory returns `composeRegistry`. |
@@ -167,7 +145,7 @@ All of the above are exported from `@ssv/stencil-ui/compose`.
 | `aliases?` | Extra names that resolve to the same definition (e.g. `"countdown"` → `"timer"`)              |
 
 ```ts
-defineCompose<TimerData>("timer", {
+registry.register("timer", {
   tag: "app-timer",
   mapData: d => ({ duration: d.duration, isRunning: false }),
 });
@@ -215,7 +193,6 @@ SsvElement host  →  provideCompositionRegistry(defs | fn)
         └── ssv-compose  →  useCompositionRegistry().resolve(name)
 ```
 
-- **Global:** `registerCompositionDefs(...)` in any module imported before components render.
 - **Scoped:** `provideCompositionRegistry(...)` on an `SsvElement` ancestor.
 
 ## Build
@@ -231,10 +208,10 @@ Outputs: `dist/` (collection + types), `loader/`, `hydrate/` for SSR.
 
 Full demo in the monorepo:
 
-- [compose demo](../../apps/stencil-playground/src/examples/compose/) — typed defs, scoped + global sections, dev resolve warnings
+- [compose demo](../../apps/stencil-playground/src/examples/compose/) — typed defs, scoped registry, dev resolve warnings
 - [Vike page](../../apps/vike-playground/src/pages/compose/+Page.tsx) — React host around the demo
 
-Registry setup: [compose-defs.ts](../../apps/stencil-playground/src/examples/compose/compose-defs.ts) (imported from [global.ts](../../apps/stencil-playground/src/global.ts)).
+Registry setup: [compose-defs.ts](../../apps/stencil-playground/src/examples/compose/compose-defs.ts)
 
 ## Related
 

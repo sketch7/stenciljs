@@ -16,14 +16,13 @@ export class AppComposeDemo extends SsvElement {
 
 	@State() activeType: DemoCompositionName = "timer";
 	@State() lastEvent: ComposeEventDetail | null = null;
-
-	readonly #timerProps = { duration: 40 };
+	@State() timerDuration = 40;
 
 	#props(active: DemoCompositionName) {
 		switch (active) {
 			case "timer":
 			case "countdown": {
-				return this.#timerProps;
+				return { duration: this.timerDuration };
 			}
 			case "count": {
 				return {};
@@ -59,6 +58,15 @@ export class AppComposeDemo extends SsvElement {
 							Count widget
 						</button>
 					</div>
+
+					{(this.activeType === "timer" || this.activeType === "countdown") && (
+						<div class="props-controls">
+							<span>Duration: {this.timerDuration}s</span>
+							<button class="btn btn-outline" type="button" onClick={() => (this.timerDuration += 10)}>
+								+10s
+							</button>
+						</div>
+					)}
 
 					<div class="widget-host">
 						<ssv-compose

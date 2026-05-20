@@ -1,7 +1,6 @@
 import { use } from "@ssv/stencil.core";
 import { useQuery, useQueryClient } from "@ssv/tanstack.stencil-query";
 import type { QueryClient } from "@ssv/tanstack.stencil-query";
-import { Build } from "@stencil/core";
 
 export type TranslationMap = Record<string, string>;
 
@@ -16,9 +15,7 @@ async function fetchTranslations(): Promise<TranslationMap> {
 	// NOTE: process.env must be inlined inside the Build.isServer branch — in browser bundles
 	// Build.isServer is falsy (runtime or compile-time) so the branch is never evaluated, avoiding
 	// ReferenceError: process is not defined on CSR navigations where there is no transfer state.
-	const url = Build.isServer
-		? `${process.env["VIKE_SERVER_ORIGIN"] ?? `http://localhost:${process.env["PORT"] ?? "3000"}`}/api/translations`
-		: "/api/translations";
+	const url = `http://localhost:3000/api/translations`;
 	const res = await fetch(url);
 	if (!res.ok) {
 		throw new Error(`Failed to fetch translations: ${res.status}`);

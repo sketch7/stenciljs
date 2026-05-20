@@ -2,9 +2,14 @@ import type { Config } from "@stencil/core";
 
 import { externalizePeerDeps } from "../../scripts/stencil-external-deps";
 
+const isDev = process.env.NODE_ENV === "development";
+
 export const config: Config = {
 	namespace: "ssv-stencil-ui",
 	buildEs5: false,
+	minifyJs: !isDev,
+	minifyCss: !isDev,
+	sourceMap: isDev,
 	rollupConfig: {
 		inputOptions: {
 			external: externalizePeerDeps(),

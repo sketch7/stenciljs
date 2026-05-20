@@ -1,4 +1,3 @@
-import type { UseHostContext } from "./reactive-controller";
 import { use } from "./use";
 
 /** Cleanup function returned from a {@link useEffect} or {@link useLoadEffect} setup. */
@@ -62,39 +61,4 @@ export function useEffect(setup: () => EffectCleanup | void, deps?: readonly [])
 			};
 		});
 	}
-}
-
-/**
- * Registers an effect that runs in `hostWillLoad` — after all context providers have connected.
- *
- * Use when setup depends on context (e.g. a `QueryClient` resolved via `useContext`).
- * Exposes `host` for calling `host.requestUpdate()` inside subscriptions.
- * Cleanup runs on `hostDisconnected`.
- *
- * There is no React equivalent — this hook addresses the Stencil-specific hydration ordering
- * where context may not be resolved at `hostConnected` (bottom-up init).
- *
- * @example
- * ```ts
- * useLoadEffect(host => {
- *   const qc = clientRef.current; // guaranteed resolved by hostWillLoad
- *   const observer = new QueryObserver(qc, opts);
- *   const unsub = observer.subscribe(() => host.requestUpdate());
- *   return () => { unsub(); observer.destroy(); };
- * });
- * ```
- */
-export function useLoadEffect(setup: (host: UseHostContext) => EffectCleanup | void): void {
-	use(host => {
-		let cleanup: EffectCleanup | void;
-		return {
-			hostWillLoad() {
-				cleanup = setup(host);
-			},
-			hostDisconnected() {
-				cleanup?.();
-				cleanup = undefined;
-			},
-		};
-	});
 }

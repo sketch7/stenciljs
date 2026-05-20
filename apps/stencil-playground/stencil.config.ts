@@ -4,8 +4,9 @@ import { reactOutputTarget } from "@stencil/react-output-target";
 export const config: Config = {
 	namespace: "app-playground",
 	globalScript: "src/global.ts",
-	sourceMap: true,
 	buildEs5: false,
+	minifyJs: true,
+	minifyCss: true,
 	outputTargets: [
 		reactOutputTarget({
 			outDir: "src/react",

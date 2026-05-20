@@ -5,6 +5,8 @@ import { externalizePeerDeps } from "../../scripts/stencil-external-deps";
 export const config: Config = {
 	namespace: "ssv-stencil-ui",
 	buildEs5: false,
+	minifyJs: true,
+	minifyCss: true,
 	rollupConfig: {
 		inputOptions: {
 			external: externalizePeerDeps(),

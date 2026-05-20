@@ -5,8 +5,9 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "nx run-many -p vike-playground -t dev --parallel",
-    "build": "nx run-many -t build",
+    "dev": "nx run vike-playground:dev",
+    "build": "nx run vike-playground:build",
+    "preview": "nx run vike-playground:preview",
     "test": "nx run-many -t test --if-present",
     "vitest": "vitest",
     "lint": "nx run-many -t lint",

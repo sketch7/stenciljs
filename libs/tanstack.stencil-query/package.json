@@ -14,6 +14,11 @@
       "@ssv/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./dev-tools": {
+      "@ssv/source": "./src/dev-tools/index.ts",
+      "types": "./dist/dev-tools/index.d.ts",
+      "import": "./dist/dev-tools/index.js"
     }
   },
   "scripts": {
@@ -24,6 +29,9 @@
     "lint": "oxlint src/",
     "fmt": "oxfmt src/",
     "fmt:check": "oxfmt --check src/"
+  },
+  "dependencies": {
+    "@tanstack/query-devtools": "catalog:"
   },
   "devDependencies": {
     "@ssv/stencil.core": "workspace:*",

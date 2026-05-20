@@ -337,12 +337,12 @@ Use `CompositionNameOf` and a switch to build typed props objects without castin
 |---|---|---|
 | `composeEvent` | `ComposeEventDetail` | Normalized output from any registered widget |
 
-### `ComposeDef<TData>` fields
+### `ComposeDef<TProps>` fields
 
 | Field | Type | Description |
 |---|---|---|
 | `tag` | `string` | Custom element tag passed to `h()` |
-| `mapProps?` | `(props: TData) => Record<string, unknown>` | Maps props to explicit child props; bypasses default spreading |
+| `mapProps?` | `(props: TProps) => Record<string, unknown>` | Maps props to explicit child props; bypasses default spreading |
 | `mapOutputs?` | `Record<eventName, (e: CustomEvent) => unknown>` | Maps direct component events to `composeEvent.data` |
 | `aliases?` | `string[]` | Additional names that resolve to this same definition |
 

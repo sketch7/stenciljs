@@ -2,58 +2,20 @@
 
 Auto-tracks signal reads during `render()` and re-renders the component whenever a tracked signal changes.
 
-Two integration patterns:
+**Prerequisites:** extend [`SsvElement`](../../stencil.core/README.md) (or apply `SsvElementMixin`) and register the adapter in `globalScript` ([README](../README.md#installation)).
 
-|                              | `Mixin(SignalWatcherMixin, SsvElementMixin)` | `SsvElement` + `useSignalWatcher()`  |
-| ---------------------------- | -------------------------------------------- | ------------------------------------ |
-| Inheritance                  | Mixin chain                                  | Single base class                    |
-| API collisions               | Possible                                     | None                                 |
-| Extra boilerplate            | None                                         | None (`SsvElement` already provided) |
-| Works with other controllers | Via `Mixin()`                                | Via `addController()`                |
-| Multiple controllers         | `Mixin(A, B, C)`                             | `addController(a); addController(b)` |
+**Examples:** [counter](../../apps/stencil-playground/src/examples/stencil-signals/counter/), [todo](../../apps/stencil-playground/src/examples/stencil-signals/todo/).
 
-## `SignalWatcherMixin`
+## Integration patterns
 
-**Direct extension** (no other mixins, or Stencil < 4.37):
+|                     | `Mixin(SignalWatcherMixin, SsvElementMixin)` | `SsvElement` + `useSignalWatcher()` |
+| ------------------- | -------------------------------------------- | ----------------------------------- |
+| Inheritance         | Mixin chain                                  | Single base class                   |
+| API collisions      | Possible with other mixins                   | None                                |
+| Other controllers   | Via `Mixin()`                                | Via `use()` / `addController()`     |
+| Recommended default | When mixin stack is required                 | **Yes** for new components          |
 
-```tsx
-@Component({ tag: "my-comp", shadow: true })
-export class MyComp extends SignalWatcher(class {}) {
-  render() {
-    return <p>{mySignal()}</p>;
-  }
-}
-```
-
-**`Mixin()` composition** (Stencil v4.37+, when combining with other mixins):
-
-```tsx
-import { Component, Mixin } from "@stencil/core";
-import { SignalWatcherMixin } from "@ssv/stencil-signals";
-import { SsvElementMixin } from "@ssv/stencil.core";
-import { LoggingMixin } from "./mixins/logging-mixin";
-
-@Component({ tag: "my-comp", shadow: true })
-export class MyComp extends Mixin(
-  SignalWatcherMixin,
-  LoggingMixin,
-  SsvElementMixin,
-) {
-  componentDidLoad() {
-    super.componentDidLoad?.();
-  }
-
-  render() {
-    return <p>{mySignal()}</p>;
-  }
-}
-```
-
-Put `SignalWatcherMixin` first in `Mixin()` so it wraps the outermost `render()`.
-
-## `SignalWatcherController` (composition alternative)
-
-Extend `SsvElement` and use `useSignalWatcher()` as a class-property initializer:
+## `useSignalWatcher()` (recommended)
 
 ```tsx
 import { Component } from "@stencil/core";
@@ -71,18 +33,54 @@ export class MyCounter extends SsvElement {
         <p>
           {count()} (doubled: {doubled()})
         </p>
-        <button onClick={() => count.update(n => n + 1)}>+1</button>
+        <button type="button" onClick={() => count.update(n => n + 1)}>
+          +1
+        </button>
       </div>
     );
   }
 }
 ```
 
+## `SignalWatcherMixin`
+
+**Direct extension** (no other mixins, or Stencil before 4.37):
+
+```tsx
+@Component({ tag: "my-comp", shadow: true })
+export class MyComp extends SignalWatcher(class {}) {
+  render() {
+    return <p>{mySignal()}</p>;
+  }
+}
+```
+
+**`Mixin()` composition** (Stencil v4.37+, multiple mixins):
+
+```tsx
+import { Component, Mixin } from "@stencil/core";
+import { SignalWatcherMixin } from "@ssv/stencil-signals";
+import { SsvElementMixin } from "@ssv/stencil.core";
+
+@Component({ tag: "my-comp", shadow: true })
+export class MyComp extends Mixin(SignalWatcherMixin, SsvElementMixin) {
+  componentDidLoad() {
+    super.componentDidLoad?.();
+  }
+
+  render() {
+    return <p>{mySignal()}</p>;
+  }
+}
+```
+
+Put `SignalWatcherMixin` **first** in `Mixin()` so it wraps the outermost `render()`.
+
 ## Owner scope and auto-disposal
 
-When the component connects, `SignalWatcherController` activates a shared owner scope for one microtask. Any `effect` or `derivedAsync` created during that window registers its dispose function automatically. On disconnect, all registered cleanups flush in one pass.
+On `hostConnected`, `SignalWatcherController` opens an active-owner list for one microtask. `effect`, `derivedAsync`, `useSignalProps`, and `signalFromEvent` register dispose functions there. On `hostDisconnected`, all registered cleanups run.
 
-`effect` and `derivedAsync` used as **class fields** start on `hostConnected`, snapshot state on `hostDisconnected`, and recreate on reconnect. **Declare `useSignalWatcher()` before any such field.**
+Host-bound class fields also snapshot state on disconnect and recreate on reconnect. **Declare `useSignalWatcher()` before any such field.**
 
 ```tsx
 readonly signalWatcher = useSignalWatcher();
@@ -94,13 +92,13 @@ readonly _titleEff = effect(() => {
 readonly $props = useSignalProps(MyComp)({ count: {} });
 ```
 
-`computedPrevious` is a plain derived signal and does not need this ordering.
+`computedPrevious` and module-level `computed()` do not require this ordering.
 
 ## How re-rendering works
 
-`SignalWatcherController` (installed by both patterns):
+`SignalWatcherController`:
 
-- Wraps `render()` in a persistent `Computed` that tracks all signal reads as dependencies
-- Arms a `Watcher` that calls `requestUpdate()` whenever any tracked signal changes
-- Bumps a version signal each `hostWillRender` so prop/state-triggered renders also execute correctly
-- Disposes the watcher on `disconnectedCallback`
+- Wraps `render()` in a persistent computed that tracks signal reads
+- Arms a watcher that schedules `requestUpdate()` when the computed becomes dirty
+- Bumps a version signal on each `hostWillRender` so prop/`@State` updates still re-run JSX even when no signal changed
+- Disposes the watcher on disconnect (deferred microtask so DOM moves in the same task do not leak)

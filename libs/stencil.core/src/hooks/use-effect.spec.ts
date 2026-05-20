@@ -1,7 +1,7 @@
-import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { TestHost } from "../testing/test-host";
-import { useEffect, useLoadEffect } from "./use-effect";
+import { useEffect } from "./use-effect";
 
 // ── useEffect — no deps (every render via hostDidRender) ──────────────────────
 
@@ -148,64 +148,5 @@ describe("useEffect — [] deps (mount-only)", () => {
 		host.disconnect();
 		host.connect();
 		expect(order).toStrictEqual(["setup", "cleanup", "setup"]);
-	});
-});
-
-// ── useLoadEffect ─────────────────────────────────────────────────────────────
-
-describe("useLoadEffect", () => {
-	let host: TestHost;
-
-	beforeEach(() => {
-		host = new TestHost();
-	});
-
-	afterEach(() => {
-		host.dispose();
-	});
-
-	it("registers exactly one controller with the host", () => {
-		useLoadEffect(vi.fn());
-		expect(host.controllers.size).toBe(1);
-	});
-
-	it("setup does NOT run on hostConnected", () => {
-		const setup = vi.fn<() => void>();
-		useLoadEffect(setup);
-		host.connect();
-		expect(setup).not.toHaveBeenCalled();
-	});
-
-	it("setup runs on hostWillLoad", async () => {
-		const setup = vi.fn<() => void>();
-		useLoadEffect(setup);
-		await host.willLoad();
-		expect(setup).toHaveBeenCalledOnce();
-	});
-
-	it("cleanup runs on hostDisconnected", async () => {
-		const cleanup = vi.fn<() => void>();
-		useLoadEffect(() => cleanup);
-		await host.willLoad();
-		host.disconnect();
-		expect(cleanup).toHaveBeenCalledOnce();
-	});
-
-	it("cleanup is NOT called when setup returns void", async () => {
-		const setup = vi.fn<() => void>();
-		useLoadEffect(setup);
-		await host.willLoad();
-		host.disconnect();
-		expect(setup).toHaveBeenCalledOnce();
-	});
-
-	it("receives UseHostContext — host.requestUpdate is callable", async () => {
-		let capturedHost: Parameters<Parameters<typeof useLoadEffect>[0]>[0] | undefined;
-		useLoadEffect(h => {
-			capturedHost = h;
-		});
-		await host.willLoad();
-		expect(capturedHost).toBeDefined();
-		expectTypeOf(capturedHost!.requestUpdate).toBeFunction();
 	});
 });

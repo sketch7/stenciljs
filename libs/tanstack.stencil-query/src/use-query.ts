@@ -112,21 +112,22 @@ export function useQuery<
 	let observer: QueryObserver<TQueryFnData, TError, TData, TQueryFnData, TQueryKey> | undefined;
 	let unsubscribe: (() => void) | undefined;
 
-	// hostWillLoad: context guaranteed resolved (clientRef.current always defined here).
-	// Collapses the previous hostConnected + hostWillLoad dual-path into one place.
-	useLoadEffect(_ => {
-		const qc = clientRef.current;
-		observer = new QueryObserver<TQueryFnData, TError, TData, TQueryFnData, TQueryKey>(
-			qc,
-			qc.defaultQueryOptions(getOpts()),
-		);
-		return () => {
-			unsubscribe?.();
-			unsubscribe = undefined;
-			observer?.destroy();
-			observer = undefined;
-		};
-	});
+	// hostWillLoad: context guaranteed resolved — qc is non-null and auto-unwrapped from clientRef.
+	useLoadEffect(
+		({ qc }) => {
+			observer = new QueryObserver<TQueryFnData, TError, TData, TQueryFnData, TQueryKey>(
+				qc,
+				qc.defaultQueryOptions(getOpts()),
+			);
+			return () => {
+				unsubscribe?.();
+				unsubscribe = undefined;
+				observer?.destroy();
+				observer = undefined;
+			};
+		},
+		{ qc: clientRef },
+	);
 
 	use(host => ({
 		hostWillRender() {

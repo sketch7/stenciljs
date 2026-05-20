@@ -80,6 +80,12 @@ export type ReactiveHostElement = ReactiveControllerHost & HTMLElement;
 export type UseHostContext = ReactiveControllerHost & {
 	/** Returns the host's underlying DOM element. Call during lifecycle hooks — not at construction time. */
 	getElement(): ReactiveHostElement;
+	/**
+	 * Returns `true` when the component is being client-side hydrated from SSR-rendered HTML.
+	 * Stencil stores the `s-id` hydration marker as a JS property (removing the DOM attribute
+	 * early in `connectedCallback`), so this is safe to call inside any lifecycle hook.
+	 */
+	isHydrating(): boolean;
 };
 
 /**

@@ -80,21 +80,31 @@ export function use<T>(
 
 /** @internal Extends `host` in-place with a lazy DOM element resolver, returning it as {@link UseHostContext}. */
 function createUseHostContext(host: ReactiveControllerHost): UseHostContext {
-	return Object.assign(host, {
-		getElement(): ReactiveHostElement {
-			try {
-				const el = getElement(host as object);
-				if (el) {
-					return el as unknown as ReactiveHostElement;
-				}
-			} catch {
-				// SSR — getElement is unavailable at construction time; falls through to host cast.
-				// The component instance IS the mock DOM element in the hydrate bundle.
-				console.error(
-					"use() called outside of lifecycle hook; getElement() is unavailable. Returning host as fallback.",
-				);
+	let cachedEl: ReactiveHostElement | undefined;
+
+	// Resolves the host's underlying DOM element, caching the result on the first successful lookup.
+	// The fallback (host itself) is intentionally not cached so subsequent calls inside lifecycle
+	// hooks can re-try after Stencil registers the component in its internal WeakMap.
+	const resolveElement = (): ReactiveHostElement => {
+		if (cachedEl !== undefined) {
+			return cachedEl;
+		}
+		try {
+			const el = getElement(host as object);
+			if (el) {
+				return (cachedEl = el as unknown as ReactiveHostElement);
 			}
-			return host as unknown as ReactiveHostElement;
+		} catch (error) {
+			// Thrown when called outside a lifecycle hook or in a non-Stencil environment.
+			console.error("getElement() failed — ensure use() is called inside a lifecycle hook.", error);
+		}
+		return host as unknown as ReactiveHostElement;
+	};
+
+	return Object.assign(host, {
+		getElement: resolveElement,
+		isHydrating(): boolean {
+			return Boolean((resolveElement() as unknown as Record<string, unknown>)["s-id"]);
 		},
 	});
 }

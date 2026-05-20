@@ -1,6 +1,6 @@
 # Context
 
-Tree-scoped dependency injection via DOM events. A consumer dispatches a `__ssv:context-request` event that bubbles up the DOM; the nearest ancestor `provideContext()` intercepts and responds. No provider → singleton fallback from `createContext`'s `defaultFactory`.
+Tree-scoped dependency injection via DOM events. A consumer dispatches a `__ssv:context-request` event that bubbles up the DOM; the nearest ancestor `provideContext()` intercepts and responds. No provider → singleton fallback from `createContext`'s `defaultFactory`. SSR→client hydration (bottom-up init) is handled transparently.
 
 ## API
 
@@ -10,27 +10,32 @@ Tree-scoped dependency injection via DOM events. A consumer dispatches a `__ssv:
 | `provideContext` | fn   | Registers the host as a provider; returns the context value           |
 | `useContext`     | fn   | Consumes the nearest ancestor provider; returns a `ContextRef`        |
 | `ContextKey<T>`  | type | Opaque token that pairs a provider with its consumers                 |
-| `ContextRef<T>`  | type | Stable ref: `.current` holds the resolved value after `hostConnected` |
+| `ContextRef<T>`  | type | Stable ref: `.current` holds the resolved value before the first render |
 
 ## Resolution
 
 ```mermaid
 flowchart TD
-    A["useContext called<br/>in hostConnected"] --> B["dispatch __ssv:context-request<br/>bubbles + composed"]
-    B --> C{"nearest ancestor<br/>provideContext?"}
+    A["hostConnected — dispatch __ssv:context-request<br/>bubbles + composed"] --> C{"nearest ancestor<br/>provideContext?"}
     C -- yes --> D["ref.current =<br/>provider value"]
-    C -- no --> E{"defaultFactory<br/>in createContext?"}
+    C -- no --> WL["hostWillLoad — retry dispatch"]
+    WL --> C2{"nearest ancestor<br/>provideContext?"}
+    C2 -- yes --> D
+    C2 -- no --> E{"defaultFactory<br/>in createContext?"}
     E -- yes --> F["ref.current =<br/>singleton"]
-    E -- no --> G[throw Error]
+    E -- no --> G["throws [ssv:context]"]
 
     style A fill:#d4e9ff,stroke:#7aaddd,color:#1a1a1a
-    style B fill:#d4e9ff,stroke:#7aaddd,color:#1a1a1a
+    style WL fill:#d4e9ff,stroke:#7aaddd,color:#1a1a1a
     style C fill:#ffefd4,stroke:#ddaa66,color:#1a1a1a
+    style C2 fill:#ffefd4,stroke:#ddaa66,color:#1a1a1a
     style D fill:#d4f0d4,stroke:#7acc7a,color:#1a1a1a
     style E fill:#ffefd4,stroke:#ddaa66,color:#1a1a1a
     style F fill:#d4f0d4,stroke:#7acc7a,color:#1a1a1a
     style G fill:#ffd4d4,stroke:#dd7a7a,color:#1a1a1a
 ```
+
+`hostWillLoad` is a safety net for SSR bottom-up hydration — when the provider connects after the consumer, the retry finds it. Missing-provider errors surface as a rejected `componentWillLoad` (not a crash in `connectedCallback`).
 
 ## Define a context
 
@@ -80,7 +85,7 @@ export class AppCtxCounter extends SsvElement {
 }
 ```
 
-`.current` is always set by the time `render()` runs — resolution happens in `hostConnected`, before the first render.
+`.current` is always set by the time `render()` runs — resolution spans `hostConnected` through `hostWillLoad`, both before the first render.
 
 ## Compose into a hook
 

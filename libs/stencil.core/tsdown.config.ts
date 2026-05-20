@@ -12,4 +12,8 @@ export default defineConfig({
 	platform: "neutral",
 	hash: false,
 	tsconfig: "tsconfig.lib.json",
+	// Replace DEBUG with `false` at build time so the bundler can fold away all
+	// logging branches (createContextLogger returns noop → entire log(...) calls
+	// become dead code and are removed).
+	define: { DEBUG: "false" },
 });

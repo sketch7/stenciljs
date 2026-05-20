@@ -104,11 +104,13 @@ The query client hydrates from the serialized transfer-state script tag on conne
 
 ## Devtools
 
+Install the peer dependency:
+
 ```bash
-pnpm add @tanstack/query-devtools
+pnpm add -D @tanstack/query-devtools
 ```
 
-Import from the `dev-tools` sub-entrypoint — `@tanstack/query-devtools` is only loaded when the hook runs, keeping it out of production bundles.
+Import from the `dev-tools` sub-entrypoint and call the hook in any component that has a `QueryClient` in context:
 
 ```ts
 import { useQueryDevtools } from "@ssv/tanstack.stencil-query/dev-tools";
@@ -120,21 +122,20 @@ export class AppRoot extends SsvElement {
 }
 ```
 
-The devtools panel mounts to `document.body` and cleans up automatically when the host disconnects. No-ops during SSR.
+Devtools are **disabled by default in non-development environments** (`process.env.NODE_ENV !== 'development'`), matching the React Query convention. Pass `enabled: true` to force them on in any environment.
 
-**Options** (`UseQueryDevtoolsOptions`):
-
-| Option                | Type                     | Default          | Purpose                                 |
-| --------------------- | ------------------------ | ---------------- | --------------------------------------- |
-| `client`              | `QueryClient`            | context client   | Override the client from context        |
-| `buttonPosition`      | `DevtoolsButtonPosition` | `'bottom-right'` | Position of the TanStack logo button    |
-| `position`            | `DevtoolsPosition`       | `'bottom'`       | Side the panel opens on                 |
-| `initialIsOpen`       | `boolean`                | `false`          | Open the panel on first mount           |
-| `errorTypes`          | `DevtoolsErrorType[]`    | `[]`             | Custom errors to surface in the panel   |
-| `theme`               | `DevtoolsTheme`          | `'system'`       | Color theme                             |
-| `styleNonce`          | `string`                 | —                | CSP nonce for injected `<style>` tags   |
-| `shadowDOMTarget`     | `ShadowRoot`             | —                | Attach styles to a specific shadow root |
-| `hideDisabledQueries` | `boolean`                | `false`          | Hide disabled queries from the panel    |
+| Option                | Type                     | Default                                  | Description                             |
+| --------------------- | ------------------------ | ---------------------------------------- | --------------------------------------- |
+| `enabled`             | `boolean`                | `process.env.NODE_ENV === 'development'` | Mount the devtools panel                |
+| `client`              | `QueryClient`            | context                                  | Override the QueryClient from context   |
+| `buttonPosition`      | `DevtoolsButtonPosition` | `'bottom-right'`                         | Position of the TanStack logo button    |
+| `position`            | `DevtoolsPosition`       | `'bottom'`                               | Position of the devtools panel          |
+| `initialIsOpen`       | `boolean`                | `false`                                  | Open the panel by default               |
+| `errorTypes`          | `DevtoolsErrorType[]`    | —                                        | Custom error types shown in the panel   |
+| `styleNonce`          | `string`                 | —                                        | CSP nonce for injected `<style>` tags   |
+| `shadowDOMTarget`     | `ShadowRoot`             | —                                        | Attach devtools styles to a shadow root |
+| `hideDisabledQueries` | `boolean`                | `false`                                  | Hide disabled queries from the panel    |
+| `theme`               | `DevtoolsTheme`          | `'system'`                               | Color theme                             |
 
 ## Examples
 

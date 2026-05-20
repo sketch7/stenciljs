@@ -1,7 +1,7 @@
 {
   "name": "@ssv/stencil-signals",
   "version": "0.0.0-PLACEHOLDER",
-  "description": "TC39 and Preact Signals integration for StencilJS",
+  "description": "Signals-based reactive state for StencilJS — TC39 and Preact Signals backends with auto-tracking render() and lifecycle-bound effects.",
   "license": "MIT",
   "repository": {
     "type": "git",

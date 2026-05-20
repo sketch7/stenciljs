@@ -31,6 +31,7 @@ pnpm nx run <project>:<target>      # run a task (build, test, lint, etc.)
 pnpm nx run-many -t build           # build all projects
 pnpm nx affected -t build           # build only affected projects
 pnpm nx graph                       # visualise project dependency graph
+pnpm test                           # run all tests (Vitest)
 pnpm lint                           # lint all projects (oxlint)
 pnpm fmt                            # format all projects (oxfmt)
 pnpm fmt:check                      # check formatting (CI)
@@ -62,8 +63,18 @@ pnpm nx g @nx/js:app apps/<name>
 
 | Package                                                                                                 | Purpose                                                                                                                                                         |
 | ------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`@ssv/stencil.core`](libs/stenciljs.core/src/index.ts)                                                 | `ReactiveController`/`ReactiveControllerHost` for lifecycle-aware controllers; `SsvElement` and `SsvElementMixin` for hosting controllers in Stencil components |
+| [`@ssv/stencil.core`](libs/stencil.core/src/index.ts)                                                   | `ReactiveController`/`ReactiveControllerHost` for lifecycle-aware controllers; `SsvElement` and `SsvElementMixin` for hosting controllers in Stencil components |
+| [`@ssv/stencil-signals`](libs/stencil-signals/src/index.ts)                                             | TC39 / Preact Signals integration — activate ONE adapter in `globalScript`, then use `useSignalWatcher()` in components                                         |
+| [`@ssv/stencil-ui`](libs/stencil-ui/src/index.ts)                                                       | Registry-driven composition system; `ssv-compose` dispatches to named component variants via a shared registry                                                  |
+| [`@ssv/tanstack.stencil-store`](libs/tanstack.stencil-store/src/index.ts)                               | TanStack Store bindings — `useSelector` / `useAtom` with reactive re-render                                                                                     |
+| [`@ssv/tanstack.stencil-query`](libs/tanstack.stencil-query/src/index.ts)                               | TanStack Query bindings — `useQuery` / `useMutation`; requires a `QueryClient` in context                                                                       |
 | [`@ssv/vite-plugin-stencil-watch`](libs/vite-plugin-stencil-watch/src/lib/vite-plugin-stencil-watch.ts) | Vite plugin that watches Stencil sources, triggers rebuilds, and invalidates the Vite module graph for HMR in consuming apps                                    |
+
+## Testing
+
+- Framework: **Vitest** — run with `pnpm nx run <project>:test` or `pnpm test` for all
+- Use `TestHost` from `@ssv/stencil.core/testing` to simulate the Stencil lifecycle without the full runtime
+- Keep lifecycle tests (controllers) separate from pure logic tests — see [testing instructions](.github/instructions/testing.instructions.md)
 
 ## Dev Workflow
 
@@ -72,10 +83,12 @@ pnpm nx g @nx/js:app apps/<name>
 ## Skills Available
 
 - `stenciljs-component-development` — StencilJS patterns: vertical slices, @stencil/store, ReactiveController, output targets
+- `stenciljs-init-order` — Initialization order across SSR / client nav / hydration; context timing; `globalThis` vs `window`
 - `nx-generate` — Scaffold libs/apps via NX generators (use this first for any scaffolding)
 - `nx-workspace` — Explore projects, targets, and dependencies
 - `link-workspace-packages` — Wire up workspace package dependencies
 - `oxlint` — Run and configure oxlint after making code changes
+- `vitest` — Vitest patterns: `it.each`, mocking, coverage
 
 <!-- nx configuration start-->
 <!-- Leave the start & end comments to automatically receive updates. -->

@@ -39,7 +39,7 @@ export type StencilWatchOptions = {
 	/**
 	 * String used to identify Vite module-graph entries that belong to the
 	 * Stencil package. After a rebuild, every cached module whose ID contains
-	 * this string is invalidated so Vite fetches fresh artefacts on the next
+	 * this string is invalidated so Vite fetches fresh artifacts on the next
 	 * request.
 	 *
 	 * Defaults to `path.basename(packageDir)`.
@@ -96,7 +96,7 @@ export type StencilWatchOptions = {
 	 * Use this to refresh in-process module references that bypass the Vite
 	 * module graph. The primary use-case is refreshing a `hydrateModule` proxy
 	 * used by `@stencil/ssr` so that server-side rendering picks up the rebuilt
-	 * artefacts on the next request.
+	 * artifacts on the next request.
 	 *
 	 * @example
 	 * ```ts

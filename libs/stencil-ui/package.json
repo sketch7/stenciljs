@@ -1,7 +1,7 @@
 {
   "name": "@ssv/stencil-ui",
   "version": "0.0.0-PLACEHOLDER",
-  "description": "Registry-driven Stencil UI components — render by name + data with a context-scoped compose registry",
+  "description": "Registry-driven composition for StencilJS — render components by name via a context-scoped registry.",
   "license": "MIT",
   "files": [
     "dist",

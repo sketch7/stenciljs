@@ -30,7 +30,7 @@ pnpm install                        # install all deps
 pnpm nx run <project>:<target>      # run a task (build, test, lint, etc.)
 pnpm nx run-many -t build           # build all projects
 pnpm nx affected -t build           # build only affected projects
-pnpm nx graph                       # visualise project dependency graph
+pnpm nx graph                       # visualize project dependency graph
 pnpm lint                           # lint all projects (oxlint)
 pnpm fmt                            # format all projects (oxfmt)
 pnpm fmt:check                      # check formatting (CI)

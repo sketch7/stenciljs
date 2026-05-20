@@ -24,6 +24,11 @@ export type DevtoolsErrorType = {
  * ```
  */
 export type UseQueryDevtoolsOptions = {
+	/**
+	 * Mount the devtools panel. Defaults to `process.env.NODE_ENV === 'development'` —
+	 * disabled in production (and any non-development environment) unless explicitly set.
+	 */
+	enabled?: boolean;
 	/** Use an explicit `QueryClient` instead of the one from context. */
 	client?: QueryClient;
 	/** Position of the TanStack logo button. Defaults to `'bottom-right'`. */
@@ -48,7 +53,8 @@ export type UseQueryDevtoolsOptions = {
  * Mounts the TanStack Query devtools panel for the nearest `QueryClient` in the component tree.
  *
  * Appends a container to `document.body` on `hostWillLoad` and removes it when the host
- * disconnects. Safe to call in SSR — exits early when `document` is not available.
+ * disconnects. Disabled by default in non-development environments (`process.env.NODE_ENV !== 'development'`).
+ * Safe to call in SSR — skipped entirely when running server-side (`Build.isServer`).
  *
  * Import from the `dev-tools` sub-entrypoint so the `@tanstack/query-devtools` bundle is only
  * loaded when this hook is actually used:
@@ -64,14 +70,19 @@ export type UseQueryDevtoolsOptions = {
  * ```
  */
 export function useQueryDevtools(options?: UseQueryDevtoolsOptions): void {
+	if (Build.isServer) {
+		return;
+	}
+
+	const enabled = options?.enabled ?? process.env.NODE_ENV === "development";
+	if (!enabled) {
+		return;
+	}
+
 	const clientRef = useQueryClient(options?.client);
 
 	useLoadEffect(
 		({ qc }) => {
-			if (Build.isServer) {
-				return;
-			}
-
 			let active = true;
 			let devtools: TanstackQueryDevtools | undefined;
 			let container: HTMLDivElement | undefined;

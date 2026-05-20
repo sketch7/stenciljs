@@ -54,7 +54,7 @@ const stencilPkgDir = path.resolve(__dirname, "../stencil-playground");
 
 // Mutable reference to the current Stencil hydrate module.
 // Updated after each Stencil rebuild so @stencil/ssr always server-renders
-// with the latest artefacts instead of the stale module it resolved at startup.
+// with the latest artifacts instead of the stale module it resolved at startup.
 let hydrateModuleRef: Record<string, unknown> = {};
 
 type HydrateFn = typeof renderToString | typeof hydrateDocument;
@@ -113,7 +113,7 @@ export default defineConfig(({ command, mode }) => {
 				preBuildCommandCwd: path.resolve(__dirname, "../.."),
 				onRebuildDone: async server => {
 					// Reload the hydrate module through Vite's SSR pipeline so the
-					// proxy picks up the freshly rebuilt artefacts before the
+					// proxy picks up the freshly rebuilt artifacts before the
 					// browser full-reload triggers the next SSR request.
 					hydrateModuleRef = await server.ssrLoadModule("@app/stencil-playground/hydrate");
 				},

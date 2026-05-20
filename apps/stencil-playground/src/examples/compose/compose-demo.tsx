@@ -19,7 +19,7 @@ export class AppComposeDemo extends SsvElement {
 
 	readonly #timerProps = { duration: 40 };
 
-	#data(active: DemoCompositionName): unknown {
+	#props(active: DemoCompositionName) {
 		switch (active) {
 			case "timer":
 			case "countdown": {
@@ -63,7 +63,7 @@ export class AppComposeDemo extends SsvElement {
 					<div class="widget-host">
 						<ssv-compose
 							name={this.activeType}
-							data={this.#data(this.activeType)}
+							props={this.#props(this.activeType)}
 							onComposeEvent={(e: CustomEvent<ComposeEventDetail>) => (this.lastEvent = e.detail)}
 						/>
 					</div>

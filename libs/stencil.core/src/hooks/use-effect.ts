@@ -11,10 +11,26 @@ type RefObjectValues<T extends Record<string, Ref<unknown>>> = {
 export type EffectCleanup = () => void;
 
 /**
+ * Creates a Proxy where `primary` own-props take precedence; any miss falls back to `base`
+ * with functions auto-bound to `base` so destructuring preserves `this`.
+ */
+function mergeProxy<TBase extends object, TPrimary extends object>(base: TBase, primary: TPrimary): TBase & TPrimary {
+	return new Proxy(primary as unknown as TBase & TPrimary, {
+		get(target, prop, receiver) {
+			if (Object.hasOwn(target, prop)) {
+				return Reflect.get(target, prop, receiver);
+			}
+			const val = Reflect.get(base as object, prop, base);
+			return typeof val === "function" ? val.bind(base) : val;
+		},
+	});
+}
+
+/**
  * Context passed to the {@link useLoadEffect} setup callback.
  * When deps are provided, the unwrapped dep values are merged into this context alongside the host methods.
  */
-export type UseLoadEffectContext<TDeps extends Record<string, unknown> = object> = UseHostContext & TDeps;
+export type UseLoadEffectContext<TDeps extends object = object> = UseHostContext & TDeps;
 
 /**
  * Registers an effect on the component.
@@ -114,8 +130,10 @@ export function useLoadEffect<T extends Record<string, Ref<unknown>>>(
 	setup: (ctx: UseLoadEffectContext<RefObjectValues<T>>) => EffectCleanup | void,
 	deps: T,
 ): void;
-// oxlint-disable-next-line typescript/no-explicit-any -- implementation; callers see the typed overloads above
-export function useLoadEffect(setup: (ctx: any) => EffectCleanup | void, deps?: Record<string, Ref<unknown>>): void {
+export function useLoadEffect(
+	setup: (ctx: UseLoadEffectContext) => EffectCleanup | void,
+	deps?: Record<string, Ref<unknown>>,
+): void {
 	use(host => {
 		let cleanup: EffectCleanup | void;
 		return {
@@ -131,12 +149,7 @@ export function useLoadEffect(setup: (ctx: any) => EffectCleanup | void, deps?: 
 						}
 						values[key] = val;
 					}
-					cleanup = setup({
-						requestUpdate: () => host.requestUpdate(),
-						getElement: () => host.getElement(),
-						isHydrating: () => host.isHydrating(),
-						...values,
-					});
+					cleanup = setup(mergeProxy(host, values));
 				}
 			},
 			hostDisconnected() {

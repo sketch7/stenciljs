@@ -69,7 +69,7 @@ export class UserCard extends SsvElement {
 - `()` / `.get()` rethrow on error; `.peek()` returns `undefined` instead of throwing
 - `whenSettled` — first success or failure (SSR `hostWillLoad` uses this)
 
-## SSR (Stencil hydrate / Vike)
+## SSR (Stencil hydrate)
 
 On the server (`Build.isServer`), `hostWillLoad` returns `whenSettled` so Stencil can include the first resolved value in SSR output. The async effect also starts at field init (`eager`), not only on `hostConnected`.
 

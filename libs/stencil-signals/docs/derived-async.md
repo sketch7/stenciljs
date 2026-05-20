@@ -75,8 +75,6 @@ On the server (`Build.isServer`), `hostWillLoad` returns `whenSettled` so Stenci
 
 In the browser, `hostWillLoad` does not block — use loading UI or `initialValue` from route data.
 
-For no-JS fallbacks, seed `initialValue` from server loaders (e.g. Vike `+data`) and optionally [`transfer-state`](../../stencil.core/docs/transfer-state.md).
-
 ## Options
 
 | Option         | Type                | Default     | Description                                    |

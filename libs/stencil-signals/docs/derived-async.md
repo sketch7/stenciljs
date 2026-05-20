@@ -1,10 +1,19 @@
 # derivedAsync
 
-Async derived signal whose value comes from a promise. Re-runs whenever any tracked signal inside `fn` changes; prior in-flight work is cancelled via `AbortSignal` (switch semantics).
+Async derived signal whose value comes from a promise. Re-runs when tracked signals inside `fn` change; prior in-flight work is cancelled via `AbortSignal` (switch semantics).
 
-**Standalone**: runs immediately; call `.dispose()` when there is no active owner.
+**Import:** `@ssv/stencil-signals` or `@ssv/stencil-signals/extensions`
 
-**Class field**: starts eagerly at field init (before `hostConnected`). On the server (`Build.isServer`), `hostWillLoad` awaits the first settlement so SSR HTML can include resolved data. Disposal via `useSignalWatcher()`. Declare `useSignalWatcher()` **before** this field.
+**Prerequisites (class fields):** `useSignalWatcher()` declared **before** this field ([signal-watcher.md](signal-watcher.md)).
+
+**Examples:** [derived-async](../../apps/stencil-playground/src/examples/stencil-signals/derived-async/), Vike [`+Page.tsx`](../../apps/vike-playground/src/pages/stencil-signals/derived-async/+Page.tsx).
+
+## Standalone vs class field
+
+| Context         | Behaviour                                                                      |
+| --------------- | ------------------------------------------------------------------------------ |
+| **Standalone**  | Runs immediately; call `.dispose()` when done                                  |
+| **Class field** | Eager create at field init; `hostWillLoad` awaits `whenSettled` on server only |
 
 ## Basic usage
 
@@ -20,12 +29,10 @@ const user = derivedAsync(
   { initialValue: null },
 );
 
-user.dispose(); // stop when done (standalone only)
+user.dispose();
 ```
 
 ## Stencil class-field usage
-
-Host binding is automatic when used as a class field:
 
 ```tsx
 @Component({ tag: "user-card", shadow: false })
@@ -55,24 +62,22 @@ export class UserCard extends SsvElement {
 
 ## Return value
 
-Returns `DisposableSignal<T>` (read-only `Signal<T>` + `dispose()` + `whenSettled`):
+`DisposableSignal<T>` — read-only signal plus `.dispose()` and `.whenSettled`:
 
-- `undefined` until the first successful resolve when `initialValue` is omitted
-- `initialValue` fills that gap; latest resolved value stays visible during refetch (stale-while-revalidate)
-- `get()` / `()` rethrow on error; `peek()` returns `undefined` instead of throwing
-- `whenSettled` — `Promise` that resolves after the first success or failure (used for SSR `hostWillLoad`)
+- `undefined` until first resolve when `initialValue` is omitted
+- `initialValue` covers loading and stale-while-revalidate during refetch
+- `()` / `.get()` rethrow on error; `.peek()` returns `undefined` instead of throwing
+- `whenSettled` — first success or failure (SSR `hostWillLoad` uses this)
 
 ## SSR (Stencil hydrate)
 
-On the server, `derivedAsync` registers `hostWillLoad` that returns `whenSettled`, so Stencil waits for the first async result before the initial render. The async effect also starts at field init (`eager`), not only on `hostConnected`.
+On the server (`Build.isServer`), `hostWillLoad` returns `whenSettled` so Stencil can include the first resolved value in SSR output. The async effect also starts at field init (`eager`), not only on `hostConnected`.
 
-In the browser, `hostWillLoad` does not block — you still get loader-then-data unless you provide `initialValue`.
-
-For no-JavaScript fallbacks, `initialValue` from Vike `+data` remains a good complement.
+In the browser, `hostWillLoad` does not block — use loading UI or `initialValue` from route data.
 
 ## Options
 
-| Option         | Type                | Default     | Description                                           |
-| -------------- | ------------------- | ----------- | ----------------------------------------------------- |
-| `initialValue` | `T`                 | `undefined` | Value before first resolution / stable during refetch |
-| `equal`        | `(a, b) => boolean` | `Object.is` | Skip update when resolved value is unchanged          |
+| Option         | Type                | Default     | Description                                    |
+| -------------- | ------------------- | ----------- | ---------------------------------------------- |
+| `initialValue` | `T`                 | `undefined` | Value before first resolution / during refetch |
+| `equal`        | `(a, b) => boolean` | `Object.is` | Skip update when resolved value unchanged      |

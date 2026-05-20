@@ -3,9 +3,7 @@ import type { ComposeEventDetail } from "@ssv/stencil-ui/compose";
 import { SsvElement } from "@ssv/stencil.core";
 import { Component, State, h } from "@stencil/core";
 
-import { demoCompositionDefs } from "./compose-defs";
-import type { DemoCompositionName } from "./compose-defs";
-import type { TimerWidgetData } from "./timer/app-timer-widget";
+import { demoCompositionDefs, type DemoCompositionName, type TimerWidgetData } from "./compose-defs";
 
 @Component({
 	tag: "app-compose-demo",

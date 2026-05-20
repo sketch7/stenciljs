@@ -30,8 +30,15 @@ import {
 } from "@ssv/stencil-ui/compose";
 
 export const appCompositionDefs = createCompositionDefs({
-  timer: { tag: "app-timer-widget", aliases: ["countdown"] },
-  count: { tag: "app-count-widget" },
+  timer: {
+    tag: "app-timer",
+    aliases: ["countdown"],
+    mapData: d => ({ duration: d.duration, isRunning: d.isRunning ?? false }),
+    mapOutputs: {
+      isRunningChange: (e: CustomEvent<boolean>) => ({ isRunning: e.detail }),
+    },
+  },
+  count: { tag: "app-signals-counter" },
 });
 
 export type AppCompositionName = CompositionNameOf<typeof appCompositionDefs>;
@@ -92,11 +99,11 @@ Both require a host that supports reactive controllers and context (`SsvElement`
 
 ## Wrapper components (your widgets)
 
-Each registry entry points at a **wrapper** custom element you own (`ssv-*` in `libs/`, `app-*` in apps per monorepo conventions).
+Each registry entry can point at a **wrapper** custom element you own (`ssv-*` in `libs/`, `app-*` in apps per monorepo conventions) or at a direct component tag with `mapData`/`mapOutputs`.
 
 **Input:** pass data with `@Prop() data` (default) or custom props via `mapData` (see below).
 
-**Output:** bubble a single normalized event so parents do not listen to every inner tag:
+**Output (wrapper mode):** bubble a single normalized event so parents do not listen to every inner tag:
 
 ```tsx
 @Component({ tag: "app-timer-widget", shadow: false })
@@ -118,6 +125,17 @@ export class SsvTimerWidget {
 ```
 
 `ssv-compose` listens for `ssvComposeOutput`, stops propagation, and re-emits **`composeEvent`** with `{ name, data }` where `name` is the registry key and `data` is the wrapper's payload.
+
+**Output (direct mode):** map inner component events directly in registry defs:
+
+```ts
+registry.register("timer", {
+  tag: "app-timer",
+  mapOutputs: {
+    isRunningChange: (e: CustomEvent<boolean>) => ({ isRunning: e.detail }),
+  },
+});
+```
 
 ## Registry API
 
@@ -142,6 +160,7 @@ All of the above are exported from `@ssv/stencil-ui/compose`.
 | ---------- | --------------------------------------------------------------------------------------------- |
 | `tag`      | Custom element tag passed to Stencil's `h()`                                                  |
 | `mapData?` | `(data: TData) => Record<string, unknown>` — return value becomes props instead of `{ data }` |
+| `mapOutputs?` | `Record<eventName, (event: CustomEvent) => unknown>` — emits `composeEvent` from direct tags |
 | `aliases?` | Extra names that resolve to the same definition (e.g. `"countdown"` → `"timer"`)              |
 
 ```ts

@@ -6,6 +6,10 @@ import { isComposeDevEnv } from "./is-compose-dev";
 import { useCompositionRegistry } from "./registry";
 import type { ComposeEventDetail } from "./types";
 
+function toListenerProp(eventName: string): string {
+	return `on${eventName.replaceAll(/(^|-)([a-z0-9])/giu, (_match, _prefix, char: string) => char.toUpperCase())}`;
+}
+
 @Component({
 	tag: "ssv-compose",
 	styleUrl: "compose.css",
@@ -44,7 +48,18 @@ export class SsvCompose extends SsvElement {
 			}
 			return <slot name="error" />;
 		}
-		const props = definition.mapData ? definition.mapData(this.data) : { data: this.data };
+		const outputListeners =
+			definition.mapOutputs &&
+			Object.fromEntries(
+				Object.entries(definition.mapOutputs).map(([eventName, mapper]) => [
+					toListenerProp(eventName),
+					(event: CustomEvent) => this.composeEvent.emit({ name: this.name, data: mapper(event) }),
+				]),
+			);
+		const props = {
+			...(definition.mapData ? definition.mapData(this.data) : { data: this.data }),
+			...outputListeners,
+		};
 		return h(definition.tag, props);
 	}
 }

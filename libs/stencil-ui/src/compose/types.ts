@@ -12,6 +12,11 @@ export type ComposeDef<TData = unknown> = {
 	 */
 	mapData?: (data: TData) => Record<string, unknown>;
 	/**
+	 * Optional event mapper for direct component composition without a wrapper.
+	 * Keys are event names emitted by `tag`; values map event payload to composeEvent data.
+	 */
+	mapOutputs?: Record<string, (event: CustomEvent) => unknown>;
+	/**
 	 * Optional aliases that resolve to this same definition.
 	 * Useful to decouple consumer type strings from tag names.
 	 * @example aliases: ["countdown", "kitchen-timer"]
@@ -29,6 +34,7 @@ export type ComposeDef<TData = unknown> = {
 export type ComposeDefInternal = {
 	tag: string;
 	mapData?: (data: unknown) => Record<string, unknown>;
+	mapOutputs?: Record<string, (event: CustomEvent) => unknown>;
 };
 
 /** Static catalog of compose types keyed by primary name. */
@@ -62,6 +68,6 @@ export type ComposeRegistry = {
 export type ComposeEventDetail<TOutput = unknown> = {
 	/** The widget name string that produced the event. */
 	name: string;
-	/** The output payload from the wrapper component. */
+	/** The output payload from wrapper `ssvComposeOutput` or `mapOutputs`. */
 	data: TOutput;
 };

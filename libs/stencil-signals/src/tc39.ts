@@ -2,6 +2,7 @@
 // Must be the very first side-effect so all utilities see the adapter.
 import { _setAdapter } from "./adapters/active";
 import { tc39Adapter } from "./adapters/tc39";
+
 _setAdapter(tc39Adapter);
 
 // ─── TC39-specific raw namespace ─────────────────────────────────────────────

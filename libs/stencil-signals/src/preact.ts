@@ -2,6 +2,7 @@
 // Must be the very first side-effect so all utilities see the adapter.
 import { _setAdapter } from "./adapters/active";
 import { preactAdapter } from "./adapters/preact";
+
 _setAdapter(preactAdapter);
 
 // ─── Primitives ───────────────────────────────────────────────────────────────

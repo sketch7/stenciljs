@@ -1,5 +1,6 @@
 import { getAdapter } from "../adapters/active";
 import type { AdapterWatcher, ComputedOptions, Signal, WritableSignal } from "../adapters/types";
+
 export type { WritableSignal, Signal, SignalOptions, ComputedOptions, AdapterWatcher } from "../adapters/types";
 
 // ─── Scheduler ────────────────────────────────────────────────────────────────

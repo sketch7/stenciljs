@@ -78,6 +78,9 @@ catalogs:
     rollup-plugin-visualizer:
       specifier: ^5.14.0
       version: 5.14.0
+    shiki:
+      specifier: ^4.1.0
+      version: 4.1.0
     signal-polyfill:
       specifier: ^0.2.2
       version: 0.2.2
@@ -208,7 +211,7 @@ importers:
         specifier: 'catalog:'
         version: 19.2.6(react@19.2.6)
       shiki:
-        specifier: ^4.1.0
+        specifier: 'catalog:'
         version: 4.1.0
       vike:
         specifier: 'catalog:'

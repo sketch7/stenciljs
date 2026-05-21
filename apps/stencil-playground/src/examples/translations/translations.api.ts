@@ -16,20 +16,11 @@ async function fetchTranslations(): Promise<TranslationMap> {
 	// Build.isServer is falsy (runtime or compile-time) so the branch is never evaluated, avoiding
 	// ReferenceError: process is not defined on CSR navigations where there is no transfer state.
 	const url = `http://localhost:3000/api/translations`;
-	console.warn(">>>>> fetchTranslations url", url);
-	try {
-		const res = await fetch(url);
-		console.warn(">>>>> fetchTranslations response status", res.status, res.ok);
-		if (!res.ok) {
-			throw new Error(`Failed to fetch translations: ${res.status}`);
-		}
-		const data = (await res.json()) as TranslationMap;
-		console.warn(">>>>> fetchTranslations data keys", Object.keys(data).length);
-		return data;
-	} catch (error) {
-		console.error(">>>>> fetchTranslations error", error);
-		throw error;
+	const res = await fetch(url);
+	if (!res.ok) {
+		throw new Error(`Failed to fetch translations: ${res.status}`);
 	}
+	return res.json() as Promise<TranslationMap>;
 }
 
 export function useTranslations(queryClient?: QueryClient) {

@@ -33,7 +33,13 @@
 	left: 0;
 	right: 0;
 	height: 1px;
-	background: linear-gradient(90deg, transparent, rgba(201, 162, 39, 0.3) 20%, rgba(201, 162, 39, 0.3) 80%, transparent);
+	background: linear-gradient(
+		90deg,
+		transparent,
+		rgba(201, 162, 39, 0.3) 20%,
+		rgba(201, 162, 39, 0.3) 80%,
+		transparent
+	);
 }
 
 .header-brand {

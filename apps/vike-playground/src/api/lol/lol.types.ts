@@ -1,7 +1,7 @@
 export type ChampionRole = "top" | "jungle" | "mid" | "bot" | "support";
 export type ChampionTag = "tank" | "fighter" | "assassin" | "mage" | "marksman" | "support" | "slayer";
 
-export interface Champion {
+export type Champion = {
 	id: string;
 	name: string;
 	roles: ChampionRole[];
@@ -9,19 +9,19 @@ export interface Champion {
 	iconUrl: string;
 	tags: ChampionTag[];
 	lore: string;
-}
+};
 
 export type Team = "blue" | "red";
 export type DraftAction = "pick" | "ban";
 export type DraftPhase = "banning" | "picking" | "finished";
 
-export interface DraftTurn {
+export type DraftTurn = {
 	team: Team;
 	action: DraftAction;
 	slot: number;
-}
+};
 
-export interface DraftSession {
+export type DraftSession = {
 	id: string;
 	phase: DraftPhase;
 	currentTurnIndex: number;
@@ -32,4 +32,4 @@ export interface DraftSession {
 	redPicks: (string | null)[];
 	redBans: (string | null)[];
 	createdAt: string;
-}
+};

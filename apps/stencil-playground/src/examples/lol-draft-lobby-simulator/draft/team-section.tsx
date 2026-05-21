@@ -12,7 +12,7 @@ export class AppLolTeamSection extends SsvElement {
 	@Prop() team!: Team;
 	@Prop() picks: (string | null)[] = [null, null, null, null, null];
 	@Prop() bans: (string | null)[] = [null, null, null, null, null];
-	@Prop() champions: Map<string, Champion> = new Map();
+	@Prop() champions = new Map<string, Champion>();
 	@Prop() session: DraftSession | null = null;
 	@Prop({ reflect: true }) isActive = false;
 	@Prop() isPendingPick = false;

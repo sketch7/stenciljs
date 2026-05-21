@@ -1,10 +1,10 @@
 import { createAtom } from "@ssv/tanstack.stencil-store";
 
-export interface LolNotification {
+export type LolNotification = {
 	id: string;
 	message: string;
 	type: "error" | "success" | "info";
-}
+};
 
 export const notificationAtom = createAtom<LolNotification | null>(null);
 

@@ -1,5 +1,6 @@
 import { SsvElement } from "@ssv/stencil.core";
-import { Component, Event, type EventEmitter, Prop, h } from "@stencil/core";
+import { Component, Event, Prop, h } from "@stencil/core";
+import type { EventEmitter } from "@stencil/core";
 
 import type { Champion } from "../shared/lol.types";
 

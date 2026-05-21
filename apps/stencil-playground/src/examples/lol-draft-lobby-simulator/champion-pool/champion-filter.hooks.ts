@@ -2,11 +2,11 @@ import { computed, signal, useSignalWatcher } from "@ssv/stencil-signals";
 
 import type { Champion, ChampionRole } from "../shared/lol.types";
 
-export interface ChampionFilter {
+export type ChampionFilter = {
 	search: string;
 	roles: ChampionRole[];
 	difficulty: [number, number];
-}
+};
 
 export function useChampionFilter() {
 	// Installs the signal watcher on the current host so signal changes trigger re-render

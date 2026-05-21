@@ -40,9 +40,13 @@ const sseClients = new Map<string, Set<SseSendFn>>();
 
 function broadcastSession(sessionId: string): void {
 	const session = sessions.get(sessionId);
-	if (!session) return;
+	if (!session) {
+		return;
+	}
 	const clients = sseClients.get(sessionId);
-	if (!clients || clients.size === 0) return;
+	if (!clients || clients.size === 0) {
+		return;
+	}
 	const payload = JSON.stringify(session);
 	for (const send of clients) {
 		send(payload).catch(() => {
@@ -64,7 +68,9 @@ function removeSseClient(sessionId: string, send: SseSendFn): void {
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function derivePhase(session: DraftSession): DraftSession["phase"] {
-	if (session.currentTurnIndex >= TURN_ORDER.length) return "finished";
+	if (session.currentTurnIndex >= TURN_ORDER.length) {
+		return "finished";
+	}
 	const turn = TURN_ORDER[session.currentTurnIndex];
 	return turn.action === "ban" ? "banning" : "picking";
 }
@@ -72,7 +78,9 @@ function derivePhase(session: DraftSession): DraftSession["phase"] {
 function getPickedAndBannedIds(session: DraftSession): Set<string> {
 	const ids = new Set<string>();
 	for (const id of [...session.bluePicks, ...session.redPicks, ...session.blueBans, ...session.redBans]) {
-		if (id) ids.add(id);
+		if (id) {
+			ids.add(id);
+		}
 	}
 	return ids;
 }
@@ -105,14 +113,18 @@ export const draftApi = new Hono()
 	// Get a draft session
 	.get("/api/lol/drafts/:id", c => {
 		const session = sessions.get(c.req.param("id"));
-		if (!session) return c.json({ error: "Session not found" }, 404);
+		if (!session) {
+			return c.json({ error: "Session not found" }, 404);
+		}
 		return c.json(session);
 	})
 
 	// Pick a champion
 	.post("/api/lol/drafts/:id/pick", async c => {
 		const session = sessions.get(c.req.param("id"));
-		if (!session) return c.json({ error: "Session not found" }, 404);
+		if (!session) {
+			return c.json({ error: "Session not found" }, 404);
+		}
 
 		if (session.currentTurnIndex >= TURN_ORDER.length) {
 			return c.json({ error: "Draft is finished" }, 400);
@@ -148,7 +160,9 @@ export const draftApi = new Hono()
 	// Ban a champion
 	.post("/api/lol/drafts/:id/ban", async c => {
 		const session = sessions.get(c.req.param("id"));
-		if (!session) return c.json({ error: "Session not found" }, 404);
+		if (!session) {
+			return c.json({ error: "Session not found" }, 404);
+		}
 
 		if (session.currentTurnIndex >= TURN_ORDER.length) {
 			return c.json({ error: "Draft is finished" }, 400);
@@ -184,7 +198,9 @@ export const draftApi = new Hono()
 	// Simulate the opponent's next action with a random available champion
 	.post("/api/lol/drafts/:id/simulate-opponent", c => {
 		const session = sessions.get(c.req.param("id"));
-		if (!session) return c.json({ error: "Session not found" }, 404);
+		if (!session) {
+			return c.json({ error: "Session not found" }, 404);
+		}
 
 		if (session.currentTurnIndex >= TURN_ORDER.length) {
 			return c.json({ error: "Draft is finished" }, 400);

@@ -98,10 +98,10 @@ export function useDraftSession(getDraftId: () => string | null, queryClient?: Q
 
 // ── useDraftMutations ──────────────────────────────────────────────────────────
 
-export interface PickArgs {
+export type PickArgs = {
 	championId: string;
 	team: Team;
-}
+};
 
 export function useDraftMutations(getDraftId: () => string | null, queryClient?: QueryClient) {
 	const client = useQueryClient(queryClient);

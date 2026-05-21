@@ -45,7 +45,7 @@ export class AppLolDraftInfo extends SsvElement {
 			return <div class="info info--loading">Waiting for session…</div>;
 		}
 
-		const currentTurn = session.phase !== "finished" ? session.turnOrder[session.currentTurnIndex] : null;
+		const currentTurn = session.phase === "finished" ? null : session.turnOrder[session.currentTurnIndex];
 
 		const isMyTurn = currentTurn?.team === this.myTeam;
 		const isOpponentTurn = currentTurn && !isMyTurn;

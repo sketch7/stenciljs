@@ -115,15 +115,13 @@ export function useDraftMutations(getDraftId: () => string | null, queryClient?:
 				}
 				return apiPick(id, championId, team);
 			},
-			onSuccess: (session, { championId }) => {
+			onSuccess: session => {
 				client.current?.setQueryData(queryKey(session.id), session);
-				// Optimistic cache is already replaced with confirmed server data
-				void championId;
 			},
 			onSettled: () => {
 				const id = getDraftId();
 				if (id) {
-					void client.current?.invalidateQueries({ queryKey: queryKey(id) });
+					client.current?.invalidateQueries({ queryKey: queryKey(id) });
 				}
 			},
 		},
@@ -145,7 +143,7 @@ export function useDraftMutations(getDraftId: () => string | null, queryClient?:
 			onSettled: () => {
 				const id = getDraftId();
 				if (id) {
-					void client.current?.invalidateQueries({ queryKey: queryKey(id) });
+					client.current?.invalidateQueries({ queryKey: queryKey(id) });
 				}
 			},
 		},
@@ -167,7 +165,7 @@ export function useDraftMutations(getDraftId: () => string | null, queryClient?:
 			onSettled: () => {
 				const id = getDraftId();
 				if (id) {
-					void client.current?.invalidateQueries({ queryKey: queryKey(id) });
+					client.current?.invalidateQueries({ queryKey: queryKey(id) });
 				}
 			},
 		},

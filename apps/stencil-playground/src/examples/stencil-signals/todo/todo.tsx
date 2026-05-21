@@ -13,6 +13,16 @@ export class AppSignalsTodo extends SsvElement {
 	readonly signalWatcher = useSignalWatcher();
 	@State() inputValue = "";
 
+	#renderCount = 0;
+
+	override componentDidRender() {
+		super.componentDidRender();
+		this.#renderCount++;
+		console.warn(
+			`[app-signals-todo] render #${this.#renderCount} — hiddenTick: ${todoStore.hiddenTick} | todos: ${todoStore.todos.length} | ✅ hiddenTick is NOT read in render() so mutating it does NOT cause a rerender`,
+		);
+	}
+
 	private handleInput(event: Event) {
 		this.inputValue = (event.target as HTMLInputElement).value;
 	}
@@ -42,6 +52,13 @@ export class AppSignalsTodo extends SsvElement {
 		todoStore.todos = todoStore.todos.filter(t => t.id !== id);
 	}
 
+	private mutateHiddenOnly() {
+		todoStore.hiddenTick++;
+		console.warn(
+			`[app-signals-todo] button click mutated hiddenTick to ${todoStore.hiddenTick} — this does NOT cause a rerender because hiddenTick is not read in render()`,
+		);
+	}
+
 	render() {
 		const todos = todoStore.todos;
 		const completed = todoStore.completedCount;
@@ -60,6 +77,9 @@ export class AppSignalsTodo extends SsvElement {
 					/>
 					<button type="button" class="btn btn-primary" onClick={() => this.addTodo()}>
 						Add
+					</button>
+					<button type="button" class="btn btn-secondary" onClick={() => this.mutateHiddenOnly()}>
+						Mutate hidden (check console)
 					</button>
 				</div>
 

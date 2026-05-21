@@ -10,6 +10,25 @@ import { todoStore } from "./todo.store";
 export class AppTodo {
 	@State() todos = todoStore.todos;
 	@State() inputValue = "";
+	/** Mirrored from store but intentionally NOT rendered — proves store mutations outside UI still cause rerenders. */
+	@State() hiddenTick = todoStore.hiddenTick;
+
+	#renderCount = 0;
+
+	componentDidRender() {
+		this.#renderCount++;
+		console.warn(
+			`[app-todo] render #${this.#renderCount} — hiddenTick: ${this.hiddenTick} | todos: ${this.todos.length} | ⚠️ hiddenTick is NOT rendered in JSX`,
+		);
+	}
+
+	private mutateHiddenOnly() {
+		todoStore.hiddenTick++;
+		this.hiddenTick = todoStore.hiddenTick;
+		console.warn(
+			`[app-signals-todo] button click mutated hiddenTick to ${todoStore.hiddenTick} — this does NOT cause a rerender because hiddenTick is not read in render()`,
+		);
+	}
 
 	private handleInput(event: Event) {
 		this.inputValue = (event.target as HTMLInputElement).value;
@@ -67,6 +86,9 @@ export class AppTodo {
 					/>
 					<button type="button" class="btn btn-primary" onClick={() => this.addTodo()}>
 						Add
+					</button>
+					<button type="button" class="btn btn-secondary" onClick={() => this.mutateHiddenOnly()}>
+						Mutate hidden (check console)
 					</button>
 				</div>
 

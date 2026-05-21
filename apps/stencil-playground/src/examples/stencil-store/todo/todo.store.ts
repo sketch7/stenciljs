@@ -6,9 +6,10 @@ export type Todo = {
 	completed: boolean;
 };
 
-const { state } = createStore<{ todos: Todo[]; nextId: number }>({
+const { state } = createStore<{ todos: Todo[]; nextId: number; hiddenTick: number }>({
 	todos: [],
 	nextId: 1,
+	hiddenTick: 0,
 });
 
 export const todoStore = state;

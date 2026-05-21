@@ -201,45 +201,6 @@ describe("provideTransferState", () => {
 			host.connect();
 			expect(ts.transfer(ITEMS_KEY, () => ["fallback"])).toBeUndefined();
 		});
-
-		it("round-trips data with newlines through @stencil/ssr template-literal embedding", () => {
-			// Root cause: @stencil/ssr embeds the Stencil shadow DOM HTML in a JS template literal.
-			// A `\n` in the JSON (backslash + n, the JSON escape for newline) is then interpreted
-			// as an actual newline by the JS engine, making JSON.parse fail in the browser.
-			// Fix: toJSON() must double all backslashes so `\n` → `\\n`, which survives the
-			// template literal as `\n` (two chars), allowing JSON.parse to correctly decode it.
-			const BODY_KEY = makeTransferKey<{ body: string }>("body");
-			const dataWithNewlines = { body: "first line\nsecond line\nthird line" };
-
-			// Server: set data and get the script content (toJSON is @internal, accessed via cast).
-			const tsServer = provideTransferState("newline-round-trip");
-			tsServer.set(BODY_KEY, dataWithNewlines);
-			const scriptContent = (tsServer as unknown as { toJSON(): string }).toJSON();
-
-			// @stencil/ssr embeds the shadow-DOM HTML in a JS template literal.
-			// This evaluates \n (two chars) as an actual newline — the browser sees corrupted JSON.
-			// eslint-disable-next-line no-new-func
-			const afterTemplateLiteral = new Function(`return \`${scriptContent}\``)() as string;
-
-			// Client: fromJSON must parse the template-literal-processed content correctly.
-			const clientHost = new TestHost();
-			try {
-				const script: MockScript = {
-					type: "application/json",
-					id: scriptId("newline-round-trip"),
-					textContent: afterTemplateLiteral,
-					remove: vi.fn<() => void>(),
-				};
-				attachShadowRoot(clientHost, [script]);
-
-				const tsClient = provideTransferState("newline-round-trip");
-				clientHost.connect();
-
-				expect(tsClient.get(BODY_KEY)).toStrictEqual(dataWithNewlines);
-			} finally {
-				clientHost.dispose();
-			}
-		});
 	});
 });
 

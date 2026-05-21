@@ -16,6 +16,10 @@ type NavSection = { title: string; items: NavItem[] };
 
 const navSections: NavSection[] = [
 	{
+		title: "Overview",
+		items: [{ href: "/overview", label: "Presentation" }],
+	},
+	{
 		title: "@ssv / Core / Hooks",
 		items: [
 			{ href: "/ssv-stencil/core/hooks/lifecycle", label: "Lifecycle Explorer" },

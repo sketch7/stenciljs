@@ -21,7 +21,19 @@
     },
     "./react": {
       "types": "./src/react/components.ts",
-      "import": "./src/react/components.ts"
+      "node": "./src/react/components.server.ts",
+      "import": "./src/react/components.ts",
+      "default": "./src/react/components.ts"
+    },
+    "./react/server": {
+      "types": "./src/react/components.server.ts",
+      "import": "./src/react/components.server.ts",
+      "default": "./src/react/components.server.ts"
+    },
+    "./react-client": {
+      "types": "./src/react/components.ts",
+      "import": "./src/react/components.ts",
+      "default": "./src/react/components.ts"
     },
     "./loader": {
       "import": "./loader/index.js"
@@ -54,8 +66,8 @@
     "fmt:check": "oxfmt --check src/"
   },
   "dependencies": {
-    "@ssv/stencil-ui": "workspace:*",
     "@ssv/stencil-signals": "workspace:*",
+    "@ssv/stencil-ui": "workspace:*",
     "@ssv/stencil.core": "workspace:*",
     "@ssv/tanstack.stencil-query": "workspace:*",
     "@ssv/tanstack.stencil-store": "workspace:*",

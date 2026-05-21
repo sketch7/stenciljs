@@ -8,8 +8,6 @@ const QUERY_KEY = ["translations"] as const;
 const STALE_TIME = Infinity;
 
 async function fetchTranslations(): Promise<TranslationMap> {
-	console.warn(">>>>> fetchTranslations");
-
 	// Build.isServer is a Stencil compile-time constant: true in the hydrate bundle, false in
 	// browser bundles. The module-level code runs inside Stencil's hydrateFactory closure where
 	// `window` is already present in globalThis (mock DOM), so globalThis.window checks are
@@ -36,7 +34,6 @@ async function fetchTranslations(): Promise<TranslationMap> {
 
 export function useTranslations(queryClient?: QueryClient) {
 	const client = useQueryClient(queryClient);
-	console.warn(">>>>> useTranslations");
 
 	use({
 		async hostWillLoad() {
@@ -51,7 +48,6 @@ export function useTranslations(queryClient?: QueryClient) {
 
 	function tr(key: string, params?: Record<string, string>): string {
 		const map = translationsRef().data ?? {};
-		console.warn(">>>>> tr map", map);
 		let value = map[key] ?? key;
 		if (params) {
 			value = value.replaceAll(/\{\{(\w+)\}\}/gu, (_, p) => params[p] ?? `{{${p}}}`);

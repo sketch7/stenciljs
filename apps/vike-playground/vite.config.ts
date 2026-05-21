@@ -1,3 +1,4 @@
+import type { SerializeDocumentOptions, hydrateDocument, renderToString } from "@app/stencil-playground/hydrate";
 import { stencilWatch } from "@ssv/vite-plugin-stencil-watch";
 import { stencilSSR } from "@stencil/ssr";
 import tailwindcss from "@tailwindcss/vite";
@@ -64,6 +65,48 @@ function formatBytes(bytes: number): string {
 
 const stencilPkgDir = path.resolve(__dirname, "../stencil-playground");
 
+// Mutable reference to the current Stencil hydrate module.
+// Updated after each Stencil rebuild so @stencil/ssr always server-renders
+// with the latest artifacts instead of the stale module it resolved at startup.
+let hydrateModuleRef: Record<string, unknown> = {};
+
+type HydrateFn = typeof renderToString | typeof hydrateDocument;
+
+// Wraps a hydrate function to forward component logs to the Node.js console.
+const withRuntimeLogging = <T extends HydrateFn>(fn: T): T =>
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	((input: any, options?: SerializeDocumentOptions) =>
+		(fn as typeof renderToString)(input, {
+			runtimeLogging: true,
+			...options,
+		})) as unknown as T;
+
+const createHydrateProxy = (enableRuntimeLogging: boolean) =>
+	new Proxy({} as Record<string, unknown>, {
+		get(_, prop) {
+			if (typeof prop === "symbol") {
+				return null;
+			}
+			// Prevent the proxy from being treated as a thenable.
+			if (prop === "then" || prop === "catch" || prop === "finally") {
+				return null;
+			}
+
+			const value = (hydrateModuleRef as Record<string, unknown>)[prop];
+
+			// Apply runtime logging to hydrate functions in dev only.
+			if (
+				enableRuntimeLogging &&
+				(prop === "renderToString" || prop === "hydrateDocument") &&
+				typeof value === "function"
+			) {
+				return withRuntimeLogging(value as HydrateFn);
+			}
+
+			return value;
+		},
+	});
+
 export default defineConfig(({ command, mode }) => {
 	const env = loadEnv(mode, process.cwd(), "");
 	const port = Number.parseInt(env["PORT"] ?? "3000", 10);
@@ -99,7 +142,11 @@ export default defineConfig(({ command, mode }) => {
 				// conditions.
 				module: import("@app/stencil-playground/react"),
 				from: "@app/stencil-playground/react/server",
-				hydrateModule: import("@app/stencil-playground/hydrate"),
+				hydrateModule: import("@app/stencil-playground/hydrate").then(m => {
+					hydrateModuleRef = m as Record<string, unknown>;
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					return createHydrateProxy(isDev) as any;
+				}),
 				serializeShadowRoot: { default: "declarative-shadow-dom" },
 			}),
 		],

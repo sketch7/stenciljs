@@ -1,3 +1,4 @@
+// oxlint-disable tailwindcss/no-unknown-classes
 import type { JSX } from "react";
 import { useData } from "vike-react/useData";
 
@@ -48,7 +49,7 @@ function SubHeading({ id, children }: { id: string; children: React.ReactNode })
 	);
 }
 
-// oxlint-disable-next-line react/no-danger -- trusted Shiki server-generated HTML
+// oxlint-disable react/no-danger, react-perf/jsx-no-new-object-as-prop -- trusted Shiki server-generated HTML
 function CodeBlock({ html }: { html: string }): JSX.Element {
 	const inner = { __html: html };
 	return (
@@ -71,7 +72,7 @@ function BeforeAfter({
 	afterLabel?: string;
 }): JSX.Element {
 	return (
-		// oxlint-disable react/no-danger -- trusted Shiki server-generated HTML
+		// oxlint-disable react/no-danger, react-perf/jsx-no-new-object-as-prop -- trusted Shiki server-generated HTML
 		<div className="grid gap-3 sm:grid-cols-2">
 			<div className="flex flex-col gap-1.5">
 				<span className="text-[0.65rem] font-semibold tracking-widest text-rose-400 uppercase">{beforeLabel}</span>

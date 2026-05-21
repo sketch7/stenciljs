@@ -1,11 +1,11 @@
-import { SsvElement, use } from "@ssv/stencil.core";
+import { SsvElement } from "@ssv/stencil.core";
 import { provideTransferState } from "@ssv/stencil.core/transfer-state";
 import { provideQueryClient } from "@ssv/tanstack.stencil-query";
-import { Component, State, h, Build } from "@stencil/core";
+import { Component, State, h } from "@stencil/core";
 
 import { useDraftSSE } from "../draft/draft-sse.hooks";
-import { useCreateDraft } from "../draft/draft.api";
-import { showNotification } from "../notification/notification.store";
+import type { LobbyJoinEvent } from "../lobby/lol-lobby-list";
+import type { Team } from "../shared/lol.types";
 
 @Component({
 	tag: "app-lol-draft-lobby-host",
@@ -17,41 +17,26 @@ export class AppLolDraftLobbyHost extends SsvElement {
 	readonly #ts = provideTransferState("lol-draft");
 	readonly #queryClient = provideQueryClient({ withHydration: this.#ts });
 
+	@State() view: "lobby" | "draft" = "lobby";
 	@State() draftId: string | null = null;
-	@State() createError: string | null = null;
+	@State() myTeam: Team | null = null;
 
-	readonly #create = useCreateDraft(this.#queryClient);
-
-	// Subscribe to SSE once we have a draftId
+	// Subscribe to per-session SSE once we have a draftId
 	readonly _ = useDraftSSE(() => this.draftId, this.#queryClient);
 
-	// Trigger draft creation after the first render (hydration complete).
-	// hostDidLoad fires in componentDidLoad — client-only, safe for DOM state changes.
-	// Arrow function captures `this` (the component instance) from the class field initializer.
-	readonly _mount = use(() => ({
-		hostDidLoad: () => {
-			if (Build.isServer) {
-				return;
-			}
-			if (!this.draftId) {
-				this.#create.create.mutate(undefined, {
-					onSuccess: session => {
-						this.draftId = session.id;
-						this.createError = null;
-					},
-					onError: (err: unknown) => {
-						const msg = err instanceof Error ? err.message : "Failed to create session";
-						this.createError = msg;
-						showNotification(msg, "error");
-					},
-				});
-			}
-		},
-	}));
+	private handleCreate(e: CustomEvent<LobbyJoinEvent>) {
+		this.draftId = e.detail.session.id;
+		this.myTeam = e.detail.team;
+		this.view = "draft";
+	}
+
+	private handleJoin(e: CustomEvent<LobbyJoinEvent>) {
+		this.draftId = e.detail.session.id;
+		this.myTeam = e.detail.team;
+		this.view = "draft";
+	}
 
 	render() {
-		const isCreating = this.#create.create.isPending;
-
 		return (
 			<div class="host">
 				{this.#ts.toScriptElement()}
@@ -59,43 +44,18 @@ export class AppLolDraftLobbyHost extends SsvElement {
 				{/* Global notification overlay */}
 				<app-lol-notification />
 
-				{isCreating && !this.draftId && (
-					<div class="host-loading">
-						<div class="loading-card">
-							<span class="spinner" />
-							<span>Starting draft session…</span>
-						</div>
-					</div>
+				{this.view === "lobby" && (
+					<app-lol-lobby-list
+						onAppCreate={(e: CustomEvent<LobbyJoinEvent>) => this.handleCreate(e)}
+						onAppJoin={(e: CustomEvent<LobbyJoinEvent>) => this.handleJoin(e)}
+					/>
 				)}
 
-				{this.createError && !this.draftId && (
-					<div class="host-error">
-						<p>Failed to start session: {this.createError}</p>
-						<button
-							type="button"
-							class="btn-retry"
-							onClick={() => {
-								this.createError = null;
-								this.#create.create.mutate(undefined, {
-									onSuccess: s => {
-										this.draftId = s.id;
-									},
-									onError: (err: unknown) => {
-										const msg = err instanceof Error ? err.message : "Failed";
-										this.createError = msg;
-									},
-								});
-							}}>
-							Retry
-						</button>
-					</div>
-				)}
-
-				{this.draftId && (
+				{this.view === "draft" && this.draftId && this.myTeam && (
 					<app-lol-draft-layout session-id={this.draftId}>
-						<app-lol-champion-pool slot="champion-pool" draft-id={this.draftId} team="blue" />
-						<app-lol-draft-area slot="draft-area" draft-id={this.draftId} my-team="blue" />
-						<app-lol-draft-info slot="draft-info" draft-id={this.draftId} my-team="blue" />
+						<app-lol-champion-pool slot="champion-pool" draft-id={this.draftId} team={this.myTeam} />
+						<app-lol-draft-area slot="draft-area" draft-id={this.draftId} my-team={this.myTeam} />
+						<app-lol-draft-info slot="draft-info" draft-id={this.draftId} my-team={this.myTeam} />
 					</app-lol-draft-layout>
 				)}
 			</div>

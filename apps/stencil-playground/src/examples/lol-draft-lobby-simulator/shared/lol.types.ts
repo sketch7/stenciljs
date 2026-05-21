@@ -13,7 +13,7 @@ export type Champion = {
 
 export type Team = "blue" | "red";
 export type DraftAction = "pick" | "ban";
-export type DraftPhase = "banning" | "picking" | "finished";
+export type DraftPhase = "waiting" | "banning" | "picking" | "finished";
 
 export type DraftTurn = {
 	team: Team;
@@ -23,7 +23,10 @@ export type DraftTurn = {
 
 export type DraftSession = {
 	id: string;
+	name: string;
 	phase: DraftPhase;
+	playerCount: number;
+	simulationMode: boolean;
 	currentTurnIndex: number;
 	turnOrder: DraftTurn[];
 	/** Champion IDs, null = empty slot */

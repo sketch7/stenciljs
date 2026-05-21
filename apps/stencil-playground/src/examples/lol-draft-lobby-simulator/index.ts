@@ -8,4 +8,5 @@ export * from "./draft/draft-hero-card";
 export * from "./draft/draft-slot";
 export * from "./draft/team-section";
 export * from "./draft-info/draft-info";
+export * from "./lobby/lol-lobby-list";
 export * from "./notification/lol-notification";

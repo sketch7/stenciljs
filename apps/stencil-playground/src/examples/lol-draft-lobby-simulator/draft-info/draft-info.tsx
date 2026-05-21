@@ -1,10 +1,12 @@
+// oxlint-disable complexity -- draft-info render has many conditional display states
 import { SsvElement } from "@ssv/stencil.core";
 import { Component, Prop, h } from "@stencil/core";
 
-import { useDraftMutations, useDraftSession } from "../draft/draft.api";
+import { useDraftMutations, useDraftSession, useEnableSimulation } from "../draft/draft.api";
 import { showNotification } from "../notification/notification.store";
 
 const PHASE_LABELS: Record<string, string> = {
+	waiting: "Waiting for Player",
 	banning: "Banning Phase",
 	picking: "Pick Phase",
 	finished: "Draft Complete",
@@ -21,6 +23,7 @@ export class AppLolDraftInfo extends SsvElement {
 
 	readonly #session = useDraftSession(() => this.draftId);
 	readonly #mutations = useDraftMutations(() => this.draftId);
+	readonly #simulation = useEnableSimulation();
 
 	private handleSimulate() {
 		if (this.#mutations.simulate.isPending) {
@@ -33,9 +36,21 @@ export class AppLolDraftInfo extends SsvElement {
 		});
 	}
 
+	private handleEnableSimulation() {
+		if (!this.draftId) {
+			return;
+		}
+		this.#simulation.enable.mutate(this.draftId, {
+			onError: (err: unknown) => {
+				showNotification(err instanceof Error ? err.message : "Could not enable simulation", "error");
+			},
+		});
+	}
+
 	render() {
 		const { data: session, isPending } = this.#session.session;
 		const isSimulating = this.#mutations.simulate.isPending;
+		const isEnabling = this.#simulation.enable.isPending;
 
 		if (isPending && !session) {
 			return <div class="info info--loading">Starting draft…</div>;
@@ -45,7 +60,9 @@ export class AppLolDraftInfo extends SsvElement {
 			return <div class="info info--loading">Waiting for session…</div>;
 		}
 
-		const currentTurn = session.phase === "finished" ? null : session.turnOrder[session.currentTurnIndex];
+		const isSolo = session.playerCount < 2;
+		const currentTurn =
+			session.phase === "finished" || session.phase === "waiting" ? null : session.turnOrder[session.currentTurnIndex];
 
 		const isMyTurn = currentTurn?.team === this.myTeam;
 		const isOpponentTurn = currentTurn && !isMyTurn;
@@ -58,13 +75,33 @@ export class AppLolDraftInfo extends SsvElement {
 				{/* Phase badge */}
 				<div class={`phase-badge phase-badge--${session.phase}`}>{PHASE_LABELS[session.phase] ?? session.phase}</div>
 
-				{/* Progress bar */}
-				<div class="progress-wrap" title={`Turn ${progress} of ${total}`}>
-					<div class="progress-bar" style={{ width: `${progressPct}%` }} />
-				</div>
-				<p class="progress-label">
-					{progress}/{total} turns
-				</p>
+				{/* Waiting for opponent */}
+				{session.phase === "waiting" && (
+					<div class="waiting-wrap">
+						<p class="waiting-msg">⏳ Waiting for opponent to join…</p>
+						<p class="waiting-hint">Share the URL with a friend, or play solo:</p>
+						<button
+							type="button"
+							class="btn-simulate-enable"
+							disabled={isEnabling}
+							onClick={() => this.handleEnableSimulation()}>
+							{isEnabling ? <span class="spinner" /> : null}
+							{isEnabling ? "Starting…" : "⚡ Play Solo (Simulate Opponent)"}
+						</button>
+					</div>
+				)}
+
+				{/* Progress bar — only when draft is active */}
+				{session.phase !== "waiting" && (
+					<div class="progress-wrap" title={`Turn ${progress} of ${total}`}>
+						<div class="progress-bar" style={{ width: `${progressPct}%` }} />
+					</div>
+				)}
+				{session.phase !== "waiting" && (
+					<p class="progress-label">
+						{progress}/{total} turns
+					</p>
+				)}
 
 				{/* Current turn */}
 				{currentTurn && (
@@ -84,11 +121,16 @@ export class AppLolDraftInfo extends SsvElement {
 					</div>
 				)}
 
-				{/* Simulate opponent button */}
-				{isOpponentTurn && session.phase !== "finished" && (
+				{/* Simulation mode active indicator */}
+				{session.simulationMode && session.phase !== "finished" && session.phase !== "waiting" && (
+					<div class="sim-active">⚡ Simulation Mode Active</div>
+				)}
+
+				{/* Manual simulate button — dev fallback when simulation is on and it's opponent's turn */}
+				{isSolo && isOpponentTurn && session.phase !== "finished" && session.simulationMode && (
 					<button type="button" class="btn-simulate" disabled={isSimulating} onClick={() => this.handleSimulate()}>
 						{isSimulating ? <span class="spinner" /> : <span class="simulate-icon">⚡</span>}
-						{isSimulating ? "Simulating…" : "Simulate Opponent"}
+						{isSimulating ? "Simulating…" : "Simulate Next"}
 					</button>
 				)}
 

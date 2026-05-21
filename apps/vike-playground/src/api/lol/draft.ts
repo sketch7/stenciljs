@@ -34,9 +34,21 @@ const TURN_ORDER: DraftTurn[] = [
 
 // ── In-memory store ────────────────────────────────────────────────────────────
 const sessions = new Map<string, DraftSession>();
+let roomCounter = 0;
 
 type SseSendFn = (data: string) => Promise<void>;
 const sseClients = new Map<string, Set<SseSendFn>>();
+const lobbyClients = new Set<SseSendFn>();
+
+function broadcastLobby(): void {
+	const open = [...sessions.values()].filter(s => s.phase !== "finished");
+	const payload = JSON.stringify(open);
+	for (const send of lobbyClients) {
+		send(payload).catch(() => {
+			/* client disconnected */
+		});
+	}
+}
 
 function broadcastSession(sessionId: string): void {
 	const session = sessions.get(sessionId);
@@ -68,6 +80,9 @@ function removeSseClient(sessionId: string, send: SseSendFn): void {
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function derivePhase(session: DraftSession): DraftSession["phase"] {
+	if (session.playerCount < 2 && !session.simulationMode) {
+		return "waiting";
+	}
 	if (session.currentTurnIndex >= TURN_ORDER.length) {
 		return "finished";
 	}
@@ -90,6 +105,27 @@ function getAvailableChampions(session: DraftSession): string[] {
 	return championsData.map(c => c.id).filter(id => !excluded.has(id));
 }
 
+function autoSimulate(session: DraftSession): void {
+	while (session.phase !== "finished" && session.phase !== "waiting") {
+		const turn = TURN_ORDER[session.currentTurnIndex];
+		if (!turn || turn.team !== "red") {
+			break;
+		}
+		const available = getAvailableChampions(session);
+		if (available.length === 0) {
+			break;
+		}
+		const championId = available[Math.floor(Math.random() * available.length)]!;
+		if (turn.action === "ban") {
+			session.redBans[turn.slot] = championId;
+		} else {
+			session.redPicks[turn.slot] = championId;
+		}
+		session.currentTurnIndex += 1;
+		session.phase = derivePhase(session);
+	}
+}
+
 // ── Route handlers ─────────────────────────────────────────────────────────────
 export const draftApi = new Hono()
 	// Create a new draft session
@@ -97,7 +133,10 @@ export const draftApi = new Hono()
 		const id = crypto.randomUUID();
 		const session: DraftSession = {
 			id,
-			phase: "banning",
+			name: `Room #${++roomCounter}`,
+			phase: "waiting",
+			playerCount: 1,
+			simulationMode: false,
 			currentTurnIndex: 0,
 			turnOrder: TURN_ORDER,
 			bluePicks: [null, null, null, null, null],
@@ -107,7 +146,14 @@ export const draftApi = new Hono()
 			createdAt: new Date().toISOString(),
 		};
 		sessions.set(id, session);
+		broadcastLobby();
 		return c.json(session, 201);
+	})
+
+	// List all open draft sessions
+	.get("/api/lol/drafts", c => {
+		const open = [...sessions.values()].filter(s => s.phase !== "finished");
+		return c.json(open);
 	})
 
 	// Get a draft session
@@ -124,6 +170,10 @@ export const draftApi = new Hono()
 		const session = sessions.get(c.req.param("id"));
 		if (!session) {
 			return c.json({ error: "Session not found" }, 404);
+		}
+
+		if (session.phase === "waiting") {
+			return c.json({ error: "Draft has not started yet" }, 400);
 		}
 
 		if (session.currentTurnIndex >= TURN_ORDER.length) {
@@ -153,7 +203,13 @@ export const draftApi = new Hono()
 		session.currentTurnIndex += 1;
 		session.phase = derivePhase(session);
 
+		if (session.simulationMode) {
+			autoSimulate(session);
+		}
 		broadcastSession(session.id);
+		if (session.phase === "finished") {
+			broadcastLobby();
+		}
 		return c.json(session);
 	})
 
@@ -162,6 +218,10 @@ export const draftApi = new Hono()
 		const session = sessions.get(c.req.param("id"));
 		if (!session) {
 			return c.json({ error: "Session not found" }, 404);
+		}
+
+		if (session.phase === "waiting") {
+			return c.json({ error: "Draft has not started yet" }, 400);
 		}
 
 		if (session.currentTurnIndex >= TURN_ORDER.length) {
@@ -191,7 +251,13 @@ export const draftApi = new Hono()
 		session.currentTurnIndex += 1;
 		session.phase = derivePhase(session);
 
+		if (session.simulationMode) {
+			autoSimulate(session);
+		}
 		broadcastSession(session.id);
+		if (session.phase === "finished") {
+			broadcastLobby();
+		}
 		return c.json(session);
 	})
 
@@ -200,6 +266,10 @@ export const draftApi = new Hono()
 		const session = sessions.get(c.req.param("id"));
 		if (!session) {
 			return c.json({ error: "Session not found" }, 404);
+		}
+
+		if (session.phase === "waiting") {
+			return c.json({ error: "Draft has not started yet" }, 400);
 		}
 
 		if (session.currentTurnIndex >= TURN_ORDER.length) {
@@ -226,6 +296,9 @@ export const draftApi = new Hono()
 		session.phase = derivePhase(session);
 
 		broadcastSession(session.id);
+		if (session.phase === "finished") {
+			broadcastLobby();
+		}
 		return c.json(session);
 	})
 
@@ -257,4 +330,57 @@ export const draftApi = new Hono()
 
 			removeSseClient(sessionId, send);
 		});
-	});
+	})
+
+	// Join an existing draft session as the red-side player
+	.post("/api/lol/drafts/:id/join", c => {
+		const session = sessions.get(c.req.param("id"));
+		if (!session) {
+			return c.json({ error: "Session not found" }, 404);
+		}
+		if (session.playerCount >= 2) {
+			return c.json({ error: "Session is full" }, 409);
+		}
+		session.playerCount = 2;
+		session.simulationMode = false;
+		session.phase = derivePhase(session);
+		broadcastSession(session.id);
+		broadcastLobby();
+		return c.json(session);
+	})
+
+	// Enable simulation mode — auto-plays all red-side turns
+	.post("/api/lol/drafts/:id/simulation/enable", c => {
+		const session = sessions.get(c.req.param("id"));
+		if (!session) {
+			return c.json({ error: "Session not found" }, 404);
+		}
+		if (session.playerCount >= 2) {
+			return c.json({ error: "Cannot enable simulation with a second player present" }, 409);
+		}
+		session.simulationMode = true;
+		session.phase = derivePhase(session);
+		autoSimulate(session);
+		broadcastSession(session.id);
+		broadcastLobby();
+		return c.json(session);
+	})
+
+	// SSE stream for lobby list updates
+	.get("/api/lol/lobby/events", c =>
+		streamSSE(c, async stream => {
+			const send: SseSendFn = async data => {
+				await stream.writeSSE({ data, event: "lobby-updated" });
+			};
+			lobbyClients.add(send);
+
+			const open = [...sessions.values()].filter(s => s.phase !== "finished");
+			await stream.writeSSE({ data: JSON.stringify(open), event: "connected" });
+
+			await new Promise<void>(resolve => {
+				c.req.signal.addEventListener("abort", resolve, { once: true });
+			});
+
+			lobbyClients.delete(send);
+		}),
+	);

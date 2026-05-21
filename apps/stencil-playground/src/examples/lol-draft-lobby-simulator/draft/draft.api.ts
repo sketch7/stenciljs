@@ -184,3 +184,61 @@ export function useDraftMutations(getDraftId: () => string | null, queryClient?:
 		},
 	};
 }
+
+// ── useJoinDraft ───────────────────────────────────────────────────────────────
+
+async function apiJoinDraft(draftId: string): Promise<DraftSession> {
+	const res = await fetch(`${BASE_URL}/api/lol/drafts/${draftId}/join`, { method: "POST" });
+	if (!res.ok) {
+		const err = (await res.json().catch(() => ({}))) as { error?: string };
+		throw new Error(err.error ?? `Join failed: ${res.status}`);
+	}
+	return res.json() as Promise<DraftSession>;
+}
+
+export function useJoinDraft(queryClient?: QueryClient) {
+	const client = useQueryClient(queryClient);
+	const mutation = useMutation(
+		{
+			mutationFn: (draftId: string) => apiJoinDraft(draftId),
+			onSuccess: session => {
+				client.current?.setQueryData(queryKey(session.id), session);
+			},
+		},
+		queryClient,
+	);
+	return {
+		get join() {
+			return mutation();
+		},
+	};
+}
+
+// ── useEnableSimulation ────────────────────────────────────────────────────────
+
+async function apiEnableSimulation(draftId: string): Promise<DraftSession> {
+	const res = await fetch(`${BASE_URL}/api/lol/drafts/${draftId}/simulation/enable`, { method: "POST" });
+	if (!res.ok) {
+		const err = (await res.json().catch(() => ({}))) as { error?: string };
+		throw new Error(err.error ?? `Enable simulation failed: ${res.status}`);
+	}
+	return res.json() as Promise<DraftSession>;
+}
+
+export function useEnableSimulation(queryClient?: QueryClient) {
+	const client = useQueryClient(queryClient);
+	const mutation = useMutation(
+		{
+			mutationFn: (draftId: string) => apiEnableSimulation(draftId),
+			onSuccess: session => {
+				client.current?.setQueryData(queryKey(session.id), session);
+			},
+		},
+		queryClient,
+	);
+	return {
+		get enable() {
+			return mutation();
+		},
+	};
+}

@@ -20,6 +20,12 @@
 	letter-spacing: 0.1em;
 }
 
+.phase-badge--waiting {
+	background: rgba(91, 113, 153, 0.15);
+	color: #8899bb;
+	border: 1px solid rgba(91, 113, 153, 0.3);
+}
+
 .phase-badge--banning {
 	background: rgba(239, 68, 68, 0.15);
 	color: #fca5a5;
@@ -208,4 +214,67 @@
 	font-family: monospace;
 	font-size: 0.65rem;
 	color: var(--color-muted-fg, #64748b);
+}
+
+/* ── Waiting state ────────────────────────────────────────────────── */
+.waiting-wrap {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	padding: 0.75rem;
+	background: rgba(91, 113, 153, 0.08);
+	border: 1px solid rgba(91, 113, 153, 0.2);
+	border-radius: var(--radius, 0.5rem);
+}
+
+.waiting-msg {
+	margin: 0;
+	font-size: 0.72rem;
+	font-weight: 600;
+	color: #8899bb;
+	text-align: center;
+}
+
+.waiting-hint {
+	margin: 0;
+	font-size: 0.65rem;
+	color: var(--color-muted-fg, #64748b);
+	text-align: center;
+}
+
+.btn-simulate-enable {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.375rem;
+	width: 100%;
+	padding: 0.5rem;
+	background: linear-gradient(135deg, rgba(201, 162, 39, 0.15), rgba(201, 162, 39, 0.06));
+	border: 1px solid rgba(201, 162, 39, 0.35);
+	border-radius: var(--radius, 0.5rem);
+	color: var(--lol-gold, #c9a227);
+	font-size: 0.7rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.15s;
+}
+
+.btn-simulate-enable:hover:not(:disabled) {
+	background: linear-gradient(135deg, rgba(201, 162, 39, 0.25), rgba(201, 162, 39, 0.1));
+	border-color: rgba(201, 162, 39, 0.55);
+}
+
+.btn-simulate-enable:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+/* ── Simulation mode active ───────────────────────────────────────── */
+.sim-active {
+	text-align: center;
+	font-size: 0.65rem;
+	font-weight: 600;
+	color: var(--lol-gold, #c9a227);
+	letter-spacing: 0.06em;
+	opacity: 0.7;
 }

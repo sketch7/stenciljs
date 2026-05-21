@@ -14,7 +14,7 @@ export const config: Config = {
 		reactOutputTarget({
 			outDir: "src/react",
 			hydrateModule: "@app/stencil-playground/hydrate",
-			clientModule: "@app/stencil-playground/react",
+			clientModule: "@app/stencil-playground/react-client",
 		}),
 		{
 			type: "dist",

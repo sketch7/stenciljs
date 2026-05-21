@@ -1,98 +1,84 @@
-# sketch7.stenciljs
+# @ssv/stenciljs
 
-StencilJS component library monorepo. `libs/` holds publishable web-component libraries; `apps/` holds example/demo applications that consume them.
+Fills the gaps in StencilJS for building real applications — composable lifecycle hooks, typed context, SSR transfer state, signals, and TanStack Query/Store bindings.
 
-## Structure
+```ts
+// Extract reusable logic into a controller — no connectedCallback boilerplate
+function useMouseTracker() {
+  return use(host => {
+    let pos = { x: 0, y: 0 };
+    const onMove = ({ clientX, clientY }: MouseEvent) => {
+      pos = { x: clientX, y: clientY };
+      host.requestUpdate();
+    };
+    return {
+      hooks: {
+        hostConnected() { globalThis.addEventListener('mousemove', onMove); },
+        hostDisconnected() { globalThis.removeEventListener('mousemove', onMove); },
+      },
+      value: { get pos() { return pos; } },
+    };
+  });
+}
 
+@Component({ tag: 'ssv-tracker', shadow: true })
+export class SsvTracker extends SsvElement {
+  #mouse = useMouseTracker();   // reusable across any component
+  render() {
+    const { x, y } = this.#mouse.pos;
+    return <span>{x}, {y}</span>;
+  }
+}
 ```
-apps/
-  stencil-playground/        # StencilJS components (counter, todo, mouse, timer) — non-published
-  vike-playground/           # Vike SSR app consuming stencil-playground via @stencil/ssr
-libs/
-  stencil.core/              # @ssv/stencil.core — ReactiveController host utilities
-  stencil-signals/           # @ssv/stencil-signals — TC39 & Preact Signals integration for StencilJS
-  stencil-ui/                # @ssv/stencil-ui — registry-driven composition system
-  tanstack.stencil-query/    # @ssv/tanstack.stencil-query — TanStack Query bindings for Stencil
-  tanstack.stencil-store/    # @ssv/tanstack.stencil-store — TanStack Store bindings for Stencil
-  vite-plugin-stencil-watch/ # @ssv/vite-plugin-stencil-watch — HMR plugin for Stencil in Vite
-```
 
-## Libraries
+## Packages
 
-| Package                                                                      | Description                                                                                                       |
-| ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| [`@ssv/stencil.core`](libs/stencil.core/README.md)                           | `ReactiveController` / `ReactiveControllerHost` — lifecycle-aware controllers for Stencil components              |
-| [`@ssv/stencil-signals`](libs/stencil-signals/README.md)                     | TC39 & Preact Signals for Stencil — `useSignalWatcher`, `effect`, `derivedAsync`, `useSignalProps`, `createStore` |
-| [`@ssv/stencil-ui`](libs/stencil-ui/README.md)                               | Registry-driven composition system — `ssv-compose` dispatches to named component variants via a shared registry   |
-| [`@ssv/tanstack.stencil-query`](libs/tanstack.stencil-query/README.md)       | TanStack Query bindings for Stencil — `useQuery` / `useMutation` with SSR hydration support                       |
-| [`@ssv/tanstack.stencil-store`](libs/tanstack.stencil-store/README.md)       | TanStack Store bindings for Stencil — `useSelector` and `useAtom` with lifecycle-aware subscriptions              |
-| [`@ssv/vite-plugin-stencil-watch`](libs/vite-plugin-stencil-watch/README.md) | Vite plugin that watches Stencil sources and triggers HMR in consuming apps                                       |
+| Package                                                                      | Description                                                                                        |
+| ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| [`@ssv/stencil.core`](libs/stencil.core/README.md)                           | Composable lifecycle hooks (`use`, `useEffect`), typed context, and SSR transfer state             |
+| [`@ssv/stencil-signals`](libs/stencil-signals/README.md)                     | TC39 / Preact Signals integration — `useSignalWatcher`, `effect`, `computed`, `createStore`        |
+| [`@ssv/stencil-ui`](libs/stencil-ui/README.md)                               | Registry-driven composition — `ssv-compose` dispatches to named variants without touching the host |
+| [`@ssv/tanstack.stencil-query`](libs/tanstack.stencil-query/README.md)       | TanStack Query for Stencil — `useQuery` / `useMutation` with SSR prefetch and cache hydration      |
+| [`@ssv/tanstack.stencil-store`](libs/tanstack.stencil-store/README.md)       | TanStack Store for Stencil — `useSelector` / `useAtom` with granular re-render                     |
+| [`@ssv/vite-plugin-stencil-watch`](libs/vite-plugin-stencil-watch/README.md) | Vite plugin — watches Stencil sources and invalidates the Vite module graph for HMR                |
 
-## Tech stack
+## Tooling
 
-| Tool                                                                  | Role                                             |
-| --------------------------------------------------------------------- | ------------------------------------------------ |
-| [StencilJS](https://stenciljs.com/)                                   | Web-component authoring                          |
-| [Vike](https://vike.dev/) + [vike-react](https://vike.dev/vike-react) | SSR framework (`vike-playground`)                |
-| [@stencil/ssr](https://github.com/ionic-team/stencil-ssr)             | Compile-time SSR with Declarative Shadow DOM     |
-| [@stencil/store](https://stenciljs.com/docs/stencil-store)            | Reactive state management for Stencil components |
-| [Tailwind CSS v4](https://tailwindcss.com/)                           | Utility-first CSS (dark theme by default)        |
-| [NX](https://nx.dev/)                                                 | Monorepo task runner                             |
-| [pnpm](https://pnpm.io/) workspaces                                   | Package manager with catalog                     |
-| [Oxlint](https://oxc.rs/docs/guide/usage/linter.html)                 | Linter                                           |
-| [Oxfmt](https://oxc.rs/docs/guide/usage/formatter.html)               | Formatter                                        |
-| TypeScript 6                                                          | Strict mode                                      |
-
-## Prerequisites
-
-- Node.js ≥ 24.15.0
-- pnpm ≥ 9.0.0
+| Tool                                                    | Role                                                |
+| ------------------------------------------------------- | --------------------------------------------------- |
+| [NX](https://nx.dev/)                                   | Monorepo task runner                                |
+| [pnpm](https://pnpm.io/) workspaces                     | Package manager with `catalog:` for shared versions |
+| TypeScript 6                                            | Strict, `es2022`, `nodenext` resolution             |
+| [Oxlint](https://oxc.rs/docs/guide/usage/linter.html)   | Linter (`oxlint.config.ts`)                         |
+| [Oxfmt](https://oxc.rs/docs/guide/usage/formatter.html) | Formatter (`.oxfmtrc.json`)                         |
 
 ## Getting started
 
+Requires Node.js ≥ 24 and pnpm ≥ 9.
+
 ```bash
 pnpm install
+pnpm dev        # vike-playground on :3000 with Stencil HMR
+pnpm preview    # build + serve for production preview
 ```
 
-## Development
-
-```bash
-pnpm dev      # start vike-playground dev server (port 3000) with Stencil HMR
-pnpm preview  # build + serve vike-playground for production preview
-```
-
-### Run individual packages
-
-```bash
-pnpm nx run stencil-playground:build   # build Stencil components once
-pnpm nx run stencil-playground:dev     # Stencil watch mode only
-pnpm nx run vike-playground:dev        # Vike dev server only (stencil must be built first)
-```
-
-## Common tasks
+## Tasks
 
 ```bash
 pnpm build          # build all projects
-pnpm test           # run unit tests
-pnpm lint           # lint all projects
-pnpm fmt            # format all projects
-pnpm fmt:check      # check formatting (CI)
-```
+pnpm test           # run all tests
+pnpm lint           # lint
+pnpm fmt            # format
+pnpm fmt:check      # format check (CI)
 
-NX-scoped commands:
-
-```bash
-pnpm nx run <project>:<target>   # run a single target
-pnpm nx run-many -t build        # build all
+pnpm nx run <project>:<target>   # single target
 pnpm nx affected -t build        # build only affected
-pnpm nx graph                    # visualize project dependency graph
-pnpm nx:reset                    # clear NX cache
+pnpm nx graph                    # dependency graph
 ```
 
 ## Conventions
 
-- **Naming:** library packages use `@ssv/<name>`; component tags follow `<prefix>-<name>` (e.g. `ssv-button`)
-- **Exports:** named exports only in `libs/`; avoid default exports
-- **Formatter:** Oxfmt — config at `.oxfmtrc.json`
-- **Linter:** Oxlint — config at `oxlint.config.ts`
-- **Catalog:** shared dependency versions are pinned in `pnpm-workspace.yaml` under `catalog:` — use `catalog:` references in new `package.json` files
+- Library packages: `@ssv/<name>` — component tags: `ssv-<name>`
+- App packages: `@app/<name>` — component tags: `app-<name>`
+- Named exports only in `libs/`; no default exports
+- New `package.json` files use `catalog:` for shared dependency versions

@@ -180,7 +180,6 @@ export default function Page(): JSX.Element {
 			{/* ── Hero ── */}
 			<section className="flex flex-col gap-4">
 				<div className="flex flex-wrap items-center gap-2">
-					<Badge label="INTERNAL" variant="warning" />
 					<Badge label="TEAM PRESENTATION" />
 					<Badge label="2026" variant="info" />
 				</div>

@@ -110,10 +110,10 @@ class TransferStateImpl implements TransferState {
 	/** @internal */
 	toJSON(): string {
 		const raw = JSON.stringify(Object.fromEntries(this.#map));
-		// Double every backslash so `\n` (JSON escape for newline) survives JS template-literal
-		// embedding — @stencil/ssr wraps the shadow-DOM HTML in a backtick template literal,
-		// which would otherwise interpret `\n` as an actual newline and break JSON.parse.
-		return raw.replaceAll(/<\/script/giu, String.raw`<\/script`);
+		// Escape script tag to avoid break out of <script> tag in serialized output.
+		// Encoding of `<` is the same behavior as G3 script_builders.
+		// Encoding of `/` prevents crawlers from incorrectly indexing relative URLs in inline JSON.
+		return raw.replaceAll("<", String.raw`\u003C`).replaceAll("/", String.raw`\u002F`);
 	}
 
 	/** @internal */

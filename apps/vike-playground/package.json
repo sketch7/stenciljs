@@ -15,12 +15,13 @@
   "dependencies": {
     "@app/stencil-playground": "workspace:*",
     "@ssv/vite-plugin-stencil-watch": "workspace:^",
+    "@vikejs/hono": "catalog:",
     "dotenv": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
+    "shiki": "catalog:",
     "vike": "catalog:",
-    "vike-react": "catalog:",
-    "@vikejs/hono": "catalog:"
+    "vike-react": "catalog:"
   },
   "devDependencies": {
     "@stencil/ssr": "catalog:",
@@ -31,9 +32,9 @@
     "@vitejs/plugin-react": "catalog:",
     "hono": "^4.0.0",
     "oxlint": "catalog:",
+    "rollup-plugin-visualizer": "catalog:",
     "tailwindcss": "catalog:",
     "typescript": "catalog:",
-    "rollup-plugin-visualizer": "catalog:",
     "vite": "catalog:"
   }
 }

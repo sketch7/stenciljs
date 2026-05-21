@@ -25,6 +25,7 @@
     },
     "preview": {
       "executor": "nx:run-commands",
+      "continuous": true,
       "options": {
         "command": "pnpm preview",
         "cwd": "apps/vike-playground"

@@ -6,7 +6,7 @@ export default function Layout({ children }: { children: React.ReactNode }): JSX
 	return (
 		<div className="flex min-h-screen bg-(--color-bg) text-(--color-fg)">
 			<Sidebar />
-			<main className="max-w-3xl min-w-0 flex-1 px-6 py-8">{children}</main>
+			<main className="max-w-5xl min-w-0 flex-1 px-6 py-8">{children}</main>
 		</div>
 	);
 }
@@ -15,6 +15,10 @@ type NavItem = { href: string; label: string };
 type NavSection = { title: string; items: NavItem[] };
 
 const navSections: NavSection[] = [
+	{
+		title: "Overview",
+		items: [{ href: "/overview", label: "Presentation" }],
+	},
 	{
 		title: "@ssv / Core / Hooks",
 		items: [

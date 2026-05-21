@@ -124,6 +124,12 @@ export default defineConfig(({ command, mode }) => {
 				watchDirs: [path.resolve(__dirname, "../../libs/stencil.core/src")],
 				preBuildCommand: "pnpm nx run stencil-core:build",
 				preBuildCommandCwd: path.resolve(__dirname, "../.."),
+				onRebuildDone: async server => {
+					// Reload the hydrate module through Vite's SSR pipeline so the
+					// proxy picks up the freshly rebuilt artifacts before the
+					// browser full-reload triggers the next SSR request.
+					hydrateModuleRef = await server.ssrLoadModule("@app/stencil-playground/hydrate");
+				},
 			}),
 			...(isAnalyze
 				? [

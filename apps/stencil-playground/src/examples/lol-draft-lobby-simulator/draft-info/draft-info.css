@@ -1,0 +1,211 @@
+:host {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	padding: 1rem 0.75rem;
+	background: var(--color-surface, #0e1828);
+	border-left: 1px solid var(--color-border, #1e2d42);
+	height: 100%;
+	overflow-y: auto;
+}
+
+/* ── Phase badge ──────────────────────────────────────────────────── */
+.phase-badge {
+	text-align: center;
+	padding: 0.375rem 0.75rem;
+	border-radius: var(--radius, 0.5rem);
+	font-size: 0.7rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+}
+
+.phase-badge--banning {
+	background: rgba(239, 68, 68, 0.15);
+	color: #fca5a5;
+	border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.phase-badge--picking {
+	background: rgba(99, 102, 241, 0.15);
+	color: #a5b4fc;
+	border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.phase-badge--finished {
+	background: rgba(201, 162, 39, 0.15);
+	color: #fde68a;
+	border: 1px solid rgba(201, 162, 39, 0.3);
+}
+
+/* ── Progress ─────────────────────────────────────────────────────── */
+.progress-wrap {
+	height: 4px;
+	background: var(--color-border, #1e2d42);
+	border-radius: 2px;
+	overflow: hidden;
+}
+
+.progress-bar {
+	height: 100%;
+	background: var(--color-primary, #6366f1);
+	border-radius: 2px;
+	transition: width 0.3s ease;
+}
+
+.progress-label {
+	margin: 0;
+	font-size: 0.6rem;
+	color: var(--color-muted-fg, #64748b);
+	text-align: center;
+}
+
+/* ── Turn info ────────────────────────────────────────────────────── */
+.turn-info {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.5rem 0.625rem;
+	border-radius: var(--radius, 0.375rem);
+}
+
+.turn-info--blue {
+	background: rgba(37, 99, 235, 0.12);
+	border: 1px solid rgba(37, 99, 235, 0.25);
+}
+
+.turn-info--red {
+	background: rgba(220, 38, 38, 0.12);
+	border: 1px solid rgba(220, 38, 38, 0.25);
+}
+
+.turn-team-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+
+.turn-info--blue .turn-team-dot {
+	background: #2563eb;
+	box-shadow: 0 0 5px #2563eb;
+}
+
+.turn-info--red .turn-team-dot {
+	background: #dc2626;
+	box-shadow: 0 0 5px #dc2626;
+}
+
+.turn-label {
+	font-size: 0.7rem;
+	font-weight: 600;
+	color: var(--color-fg, #f1f5f9);
+	text-transform: capitalize;
+	flex: 1;
+}
+
+.your-turn-badge {
+	font-size: 0.55rem;
+	font-weight: 700;
+	color: var(--color-primary, #6366f1);
+	letter-spacing: 0.06em;
+}
+
+/* ── Simulate button ──────────────────────────────────────────────── */
+.btn-simulate {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.375rem;
+	width: 100%;
+	padding: 0.625rem;
+	background: linear-gradient(135deg, rgba(201, 162, 39, 0.2), rgba(201, 162, 39, 0.08));
+	border: 1px solid rgba(201, 162, 39, 0.4);
+	border-radius: var(--radius, 0.5rem);
+	color: var(--lol-gold, #c9a227);
+	font-size: 0.72rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.15s;
+}
+
+.btn-simulate:hover:not(:disabled) {
+	background: linear-gradient(135deg, rgba(201, 162, 39, 0.3), rgba(201, 162, 39, 0.12));
+	border-color: rgba(201, 162, 39, 0.6);
+}
+
+.btn-simulate:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.simulate-icon {
+	font-size: 0.9rem;
+}
+
+/* ── Spinner ──────────────────────────────────────────────────────── */
+.spinner {
+	display: block;
+	width: 12px;
+	height: 12px;
+	border: 2px solid rgba(201, 162, 39, 0.3);
+	border-top-color: var(--lol-gold, #c9a227);
+	border-radius: 50%;
+	animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+/* ── Finished ─────────────────────────────────────────────────────── */
+.finished-msg {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	padding: 0.75rem;
+	background: rgba(201, 162, 39, 0.1);
+	border: 1px solid rgba(201, 162, 39, 0.25);
+	border-radius: var(--radius, 0.5rem);
+	font-size: 0.75rem;
+	font-weight: 700;
+	color: var(--lol-gold, #c9a227);
+}
+
+.finished-trophy {
+	font-size: 1.25rem;
+}
+
+/* ── Loading ──────────────────────────────────────────────────────── */
+.info--loading {
+	padding: 1rem;
+	text-align: center;
+	color: var(--color-muted-fg, #64748b);
+	font-size: 0.8rem;
+}
+
+/* ── Session meta ─────────────────────────────────────────────────── */
+.session-meta {
+	margin-top: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	padding-top: 0.75rem;
+	border-top: 1px solid var(--color-border, #1e2d42);
+}
+
+.session-label {
+	font-size: 0.55rem;
+	color: var(--color-muted-fg, #64748b);
+	text-transform: uppercase;
+	letter-spacing: 0.07em;
+}
+
+.session-id {
+	font-family: monospace;
+	font-size: 0.65rem;
+	color: var(--color-muted-fg, #64748b);
+}

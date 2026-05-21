@@ -6,3 +6,4 @@ export * from "./translations";
 export * from "./ts-query";
 export * from "./ts-store";
 export * from "./stencil-store";
+export * from "./lol-draft-lobby-simulator";

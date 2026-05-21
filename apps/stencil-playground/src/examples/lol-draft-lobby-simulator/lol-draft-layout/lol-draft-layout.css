@@ -1,0 +1,130 @@
+:host {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	background: var(--color-bg, #09101f);
+	font-family: inherit;
+
+	/* LoL-specific tokens */
+	--lol-blue: #1a3a6b;
+	--lol-blue-glow: #2563eb;
+	--lol-red: #6b1a1a;
+	--lol-red-glow: #dc2626;
+	--lol-gold: #c9a227;
+	--lol-gold-dim: rgba(201, 162, 39, 0.5);
+}
+
+/* ── Header ───────────────────────────────────────────────────────── */
+.layout-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0.625rem 1rem;
+	background: var(--color-surface, #0e1828);
+	border-bottom: 1px solid var(--color-border, #1e2d42);
+	flex-shrink: 0;
+	position: relative;
+}
+
+.layout-header::after {
+	content: "";
+	position: absolute;
+	bottom: -1px;
+	left: 0;
+	right: 0;
+	height: 1px;
+	background: linear-gradient(90deg, transparent, rgba(201, 162, 39, 0.3) 20%, rgba(201, 162, 39, 0.3) 80%, transparent);
+}
+
+.header-brand {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.header-logo {
+	font-size: 1.1rem;
+	color: var(--lol-gold, #c9a227);
+}
+
+.header-title {
+	font-size: 0.9rem;
+	font-weight: 700;
+	color: var(--color-fg, #f1f5f9);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.header-session {
+	display: flex;
+	align-items: center;
+	gap: 0.375rem;
+	font-size: 0.65rem;
+	color: var(--color-muted-fg, #64748b);
+}
+
+.session-dot {
+	display: block;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: #22c55e;
+	box-shadow: 0 0 5px #22c55e;
+	animation: blink 2s ease-in-out infinite;
+}
+
+.session-live {
+	font-weight: 700;
+	font-size: 0.6rem;
+	letter-spacing: 0.08em;
+	color: #22c55e;
+}
+
+.header-session--loading {
+	color: var(--color-muted-fg, #64748b);
+}
+
+.spinner-sm {
+	display: block;
+	width: 10px;
+	height: 10px;
+	border: 1.5px solid rgba(99, 102, 241, 0.3);
+	border-top-color: var(--color-primary, #6366f1);
+	border-radius: 50%;
+	animation: spin 0.7s linear infinite;
+}
+
+@keyframes blink {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.4;
+	}
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+/* ── Body (3-column grid) ─────────────────────────────────────────── */
+.layout-body {
+	flex: 1;
+	display: grid;
+	grid-template-columns: 360px 1fr 200px;
+	grid-template-rows: 1fr;
+	overflow: hidden;
+	min-height: 0;
+}
+
+/* ── Panels ───────────────────────────────────────────────────────── */
+.layout-champion-pool,
+.layout-draft-area,
+.layout-draft-info {
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}

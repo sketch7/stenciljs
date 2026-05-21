@@ -1,0 +1,83 @@
+:host {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	background: var(--color-surface, #0e1828);
+	border-right: 1px solid var(--color-border, #1e2d42);
+	overflow: hidden;
+}
+
+/* ── Header ───────────────────────────────────────────────────────── */
+.pool-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0.75rem 0.875rem 0.5rem;
+	border-bottom: 1px solid var(--color-border, #1e2d42);
+	flex-shrink: 0;
+}
+
+.pool-title {
+	margin: 0;
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: var(--color-fg, #f1f5f9);
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+}
+
+.turn-badge {
+	font-size: 0.65rem;
+	font-weight: 600;
+	padding: 0.2rem 0.5rem;
+	border-radius: 9999px;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.turn-badge--blue {
+	background: rgba(37, 99, 235, 0.2);
+	color: #93c5fd;
+	border: 1px solid rgba(37, 99, 235, 0.4);
+}
+
+.turn-badge--red {
+	background: rgba(220, 38, 38, 0.2);
+	color: #fca5a5;
+	border: 1px solid rgba(220, 38, 38, 0.4);
+}
+
+/* ── Grid wrapper ─────────────────────────────────────────────────── */
+.pool-grid-wrap {
+	flex: 1;
+	overflow-y: auto;
+	padding: 0.75rem;
+}
+
+.pool-grid-wrap::-webkit-scrollbar {
+	width: 4px;
+}
+
+.pool-grid-wrap::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.pool-grid-wrap::-webkit-scrollbar-thumb {
+	background: var(--color-border, #1e2d42);
+	border-radius: 2px;
+}
+
+/* ── Grid ─────────────────────────────────────────────────────────── */
+.pool-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+	gap: 0.5rem;
+}
+
+/* ── Status text ──────────────────────────────────────────────────── */
+.pool-status {
+	padding: 2rem 1rem;
+	text-align: center;
+	color: var(--color-muted-fg, #64748b);
+	font-size: 0.8rem;
+}

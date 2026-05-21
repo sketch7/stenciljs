@@ -6,7 +6,8 @@ import react from "@vitejs/plugin-react";
 import path from "node:path";
 import { visualizer } from "rollup-plugin-visualizer";
 import vike from "vike/plugin";
-import { defineConfig, loadEnv, type Plugin } from "vite";
+import { defineConfig, loadEnv } from "vite";
+import type { Plugin } from "vite";
 
 function packageSizeReporter(): Plugin {
 	return {
@@ -14,14 +15,16 @@ function packageSizeReporter(): Plugin {
 		generateBundle(_, bundle) {
 			const sizes = new Map<string, number>();
 			for (const chunk of Object.values(bundle)) {
-				if (chunk.type !== "chunk") continue;
+				if (chunk.type !== "chunk") {
+					continue;
+				}
 				for (const [id, mod] of Object.entries(chunk.modules)) {
 					const pkg = resolvePackageName(id);
 					sizes.set(pkg, (sizes.get(pkg) ?? 0) + mod.renderedLength);
 				}
 			}
 			const rows = [...sizes.entries()]
-				.sort((a, b) => b[1] - a[1])
+				.toSorted((a, b) => b[1] - a[1])
 				.map(([pkg, bytes]) => ({ pkg, size: formatBytes(bytes) }));
 			console.table(rows);
 		},
@@ -31,22 +34,32 @@ function packageSizeReporter(): Plugin {
 function resolvePackageName(id: string): string {
 	// pnpm stores packages as: /node_modules/.pnpm/<encoded>/node_modules/<pkg>/...
 	// Split on all node_modules segments and take the last non-virtual one.
-	const nmParts = id.split(/[\/]node_modules[\/]/);
+	const nmParts = id.split(/[/]node_modules[/]/);
 	if (nmParts.length > 1) {
-		const last = nmParts[nmParts.length - 1].match(/^(@[^\/]+[\/][^\/]+|[^\/]+)/);
-		if (last && !last[1].startsWith(".")) return last[1];
+		const last = nmParts.at(-1).match(/^(@[^/]+[/][^/]+|[^/]+)/);
+		if (last && !last[1].startsWith(".")) {
+			return last[1];
+		}
 	}
 	// workspace libs resolve via @ssv/source condition to libs/<name>/src/...
-	const lib = id.match(/[\/]libs[\/]([^\/]+)[\/]/);
-	if (lib) return `@ssv/${lib[1]}`;
-	const app = id.match(/[\/]apps[\/]([^\/]+)[\/]/);
-	if (app) return `@app/${app[1]}`;
+	const lib = id.match(/[/]libs[/]([^/]+)[/]/);
+	if (lib) {
+		return `@ssv/${lib[1]}`;
+	}
+	const app = id.match(/[/]apps[/]([^/]+)[/]/);
+	if (app) {
+		return `@app/${app[1]}`;
+	}
 	return "(other)";
 }
 
 function formatBytes(bytes: number): string {
-	if (bytes < 1024) return `${bytes} B`;
-	if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} kB`;
+	if (bytes < 1024) {
+		return `${bytes} B`;
+	}
+	if (bytes < 1024 * 1024) {
+		return `${(bytes / 1024).toFixed(1)} kB`;
+	}
 	return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
 }
 
@@ -99,6 +112,7 @@ export default defineConfig(({ command, mode }) => {
 	const port = Number.parseInt(env["PORT"] ?? "3000", 10);
 	const isDev = command === "serve";
 	const isAnalyze = env["ANALYZE"] === "true";
+	const debugSsr = isDev || env["DEBUG_SSR"] === "true";
 
 	return {
 		plugins: [
@@ -129,18 +143,19 @@ export default defineConfig(({ command, mode }) => {
 						packageSizeReporter(),
 					]
 				: []),
-				stencilSSR({
-					module: import("@app/stencil-playground/react"),
+			stencilSSR({
+				module: import("@app/stencil-playground/react"),
 				from: "@app/stencil-playground/react",
 				// Resolve to hydrateProxy so @stencil/ssr always uses the current
 				// _hydrateModule, not the one that was resolved at startup.
 				hydrateModule: import("@app/stencil-playground/hydrate").then(m => {
 					hydrateModuleRef = m as Record<string, unknown>;
+					console.log(`[stencil-ssr] hydrateModule loaded — runtimeLogging: ${debugSsr}`);
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					return createHydrateProxy(isDev) as any;
+					return createHydrateProxy(debugSsr) as any;
 				}),
 				serializeShadowRoot: { default: "declarative-shadow-dom" },
-				}),
+			}),
 		],
 
 		resolve: {

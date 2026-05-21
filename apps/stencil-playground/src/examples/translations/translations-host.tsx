@@ -23,6 +23,7 @@ export class AppTranslationsHost extends SsvElement {
 			query: { isPending, isError, error },
 			tr,
 		} = this.#tr;
+		console.warn(">>>>> translations-host render", { isPending, isError, error });
 
 		return (
 			<div class="host">

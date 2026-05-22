@@ -91,7 +91,8 @@ export function useDraftSession(getDraftId: () => string | null, queryClient?: Q
 		if (!id) {
 			return { queryKey: ["lol-draft", "__none__"] as const, enabled: false, queryFn: () => null };
 		}
-		return { queryKey: queryKey(id), queryFn: () => fetchDraftSession(id), staleTime: 0 };
+		// SSE (useDraftSSE) drives all invalidations — treat cached data as always fresh.
+		return { queryKey: queryKey(id), queryFn: () => fetchDraftSession(id), staleTime: Infinity };
 	}, queryClient);
 
 	return {

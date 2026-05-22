@@ -9,12 +9,13 @@ import type { DraftSession } from "../shared/lol.types";
 
 const logger = getLogger(["lol", "lobby"]);
 
-export const LOBBY_QUERY_KEY = ["lol-lobby"] as const;
+export const DRAFTS_QUERY_KEY = ["lol-drafts"] as const;
 
-async function fetchLobbyList(): Promise<DraftSession[]> {
+async function fetchDraftList(): Promise<DraftSession[]> {
+	logger.info("Fetching draft list...");
 	const res = await fetch(`${BASE_URL}/api/lol/drafts`);
 	if (!res.ok) {
-		throw new Error(`Failed to fetch lobby: ${res.status}`);
+		throw new Error(`Failed to fetch draft list: ${res.status}`);
 	}
 	return res.json() as Promise<DraftSession[]>;
 }
@@ -22,10 +23,12 @@ async function fetchLobbyList(): Promise<DraftSession[]> {
 export function useListDrafts(queryClient?: QueryClient) {
 	const listRef = useQuery(
 		() => ({
-			queryKey: LOBBY_QUERY_KEY,
-			queryFn: fetchLobbyList,
-			staleTime: 0,
-			refetchInterval: 5000,
+			queryKey: DRAFTS_QUERY_KEY,
+			queryFn: fetchDraftList,
+			// SSE (useLobbySSE) drives all invalidations — treat cached data as always fresh.
+			staleTime: Infinity,
+			// staleTime: 0,
+			// refetchInterval: 5000,
 		}),
 		queryClient,
 	);
@@ -57,7 +60,7 @@ export function useLobbySSE(queryClient?: QueryClient) {
 					es.addEventListener("lobby-updated", e => {
 						const sessions = JSON.parse((e as MessageEvent<string>).data) as DraftSession[];
 						logger.debug("Lobby updated: {count} sessions", { count: sessions.length });
-						client.current?.invalidateQueries({ queryKey: LOBBY_QUERY_KEY });
+						client.current?.invalidateQueries({ queryKey: DRAFTS_QUERY_KEY });
 					});
 				},
 				hostDisconnected() {

@@ -16,9 +16,9 @@
       "import": "./dist/index.js"
     },
     "./signals": {
-      "@ssv/source": "./src/signals.ts",
-      "types": "./dist/signals.d.ts",
-      "import": "./dist/signals.js"
+      "@ssv/source": "./src/signals/index.ts",
+      "types": "./dist/signals/index.d.ts",
+      "import": "./dist/signals/index.js"
     },
     "./dev-tools": {
       "@ssv/source": "./src/dev-tools/index.ts",

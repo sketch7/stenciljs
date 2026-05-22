@@ -386,9 +386,6 @@ importers:
 
   libs/tanstack.stencil-store:
     devDependencies:
-      '@ssv/stencil-signals':
-        specifier: workspace:*
-        version: link:../stencil-signals
       '@ssv/stencil.core':
         specifier: workspace:*
         version: link:../stencil.core

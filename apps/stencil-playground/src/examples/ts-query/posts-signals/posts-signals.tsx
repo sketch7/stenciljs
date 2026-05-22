@@ -43,11 +43,11 @@ export class AppTsQueryPostsSignals extends SsvElement {
 		this.inputValue.set("");
 	}
 
-	private renderCreateSuccess = computed(() => {
+	readonly #renderCreateSuccess = computed(() => {
 		if (!this.#api.create.isSuccess()) {
 			return null;
 		}
-		console.warn(">>>> success");
+		console.warn(">>>> [renderCreateSuccess] render");
 		const data = this.#api.create.data();
 		if (!data) {
 			return null;
@@ -59,7 +59,7 @@ export class AppTsQueryPostsSignals extends SsvElement {
 		);
 	});
 
-	private renderPostsList = computed(() => {
+	readonly #renderPostsList = computed(() => {
 		const postsApi = this.#api.posts;
 		if (postsApi.isPending() || postsApi.isError()) {
 			return null;
@@ -68,8 +68,7 @@ export class AppTsQueryPostsSignals extends SsvElement {
 		if (!posts) {
 			return null;
 		}
-		console.warn(">>>> posts");
-
+		console.warn(">>>> [renderPostsList] render");
 		return (
 			<ul class="list">
 				{posts.map((post: Post) => (
@@ -103,12 +102,12 @@ export class AppTsQueryPostsSignals extends SsvElement {
 					</button>
 				</div>
 
-				{this.renderCreateSuccess()}
+				{this.#renderCreateSuccess()}
 
 				{postsApi.isPending() && <p class="status">Loading posts…</p>}
 				{postsApi.isError() && <p class="status status--error">Error: {String(postsApi.error())}</p>}
 
-				{this.renderPostsList()}
+				{this.#renderPostsList()}
 			</div>
 		);
 	}

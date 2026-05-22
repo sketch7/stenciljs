@@ -45,7 +45,7 @@ export class AppTsQueryPosts extends SsvElement {
 		if (!created || !newPost) {
 			return null;
 		}
-		console.warn(">>>> success");
+		console.warn(">>>> [renderCreateSuccess] render");
 		return (
 			<p class="notice notice--success">
 				Created: <strong>{newPost.title}</strong> (id: {newPost.id})
@@ -61,7 +61,7 @@ export class AppTsQueryPosts extends SsvElement {
 		if (!posts) {
 			return null;
 		}
-		console.warn(">>>> posts");
+		console.warn(">>>> [renderPostsList] render");
 		return (
 			<ul class="list">
 				{posts.map((post: Post) => (

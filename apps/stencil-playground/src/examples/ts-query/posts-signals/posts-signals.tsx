@@ -17,8 +17,8 @@ export class AppTsQueryPostsSignals extends SsvElement {
 	readonly #ts = provideTransferState("ts-query-posts-signals");
 	readonly #queryClient = provideQueryClient({ withHydration: this.#ts });
 	readonly #api = usePostsSignals(this.#queryClient);
-	readonly signalWatcher = useSignalWatcher();
-	_ = useQueryDevtools();
+	readonly _ = useSignalWatcher();
+	readonly __ = useQueryDevtools();
 
 	readonly inputValue = signal("");
 
@@ -43,7 +43,7 @@ export class AppTsQueryPostsSignals extends SsvElement {
 		this.inputValue.set("");
 	}
 
-	private renderCreateSuccess() {
+	private renderCreateSuccess = computed(() => {
 		if (!this.#api.create.isSuccess()) {
 			return null;
 		}
@@ -57,9 +57,9 @@ export class AppTsQueryPostsSignals extends SsvElement {
 				Created: <strong>{data.title}</strong> (id: {data.id})
 			</p>
 		);
-	}
+	});
 
-	private renderPostsList() {
+	private renderPostsList = computed(() => {
 		const postsApi = this.#api.posts;
 		if (postsApi.isPending() || postsApi.isError()) {
 			return null;
@@ -68,7 +68,6 @@ export class AppTsQueryPostsSignals extends SsvElement {
 		if (!posts) {
 			return null;
 		}
-
 		console.warn(">>>> posts");
 
 		return (
@@ -81,7 +80,7 @@ export class AppTsQueryPostsSignals extends SsvElement {
 				))}
 			</ul>
 		);
-	}
+	});
 
 	render() {
 		const { posts: postsApi, create: createPostsApi } = this.#api;

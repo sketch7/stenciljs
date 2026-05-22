@@ -95,6 +95,7 @@ export class AppTsQueryPosts extends SsvElement {
 						{isCreating ? "Creating…" : "Create"}
 					</button>
 				</div>
+				<div>{this.inputValue}</div>
 
 				{this.renderCreateSuccess()}
 

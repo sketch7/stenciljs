@@ -40,9 +40,43 @@ export class AppTsQueryPosts extends SsvElement {
 		this.inputValue = "";
 	}
 
+	private renderCreateSuccess() {
+		const { isSuccess: created, data: newPost } = this.#api.create;
+		if (!created || !newPost) {
+			return null;
+		}
+		console.warn(">>>> success");
+		return (
+			<p class="notice notice--success">
+				Created: <strong>{newPost.title}</strong> (id: {newPost.id})
+			</p>
+		);
+	}
+
+	private renderPostsList() {
+		const { data: posts, isPending, isError } = this.#api.posts;
+		if (isPending || isError) {
+			return null;
+		}
+		if (!posts) {
+			return null;
+		}
+		console.warn(">>>> posts");
+		return (
+			<ul class="list">
+				{posts.map((post: Post) => (
+					<li key={post.id} class="item">
+						<span class="item-id">#{post.id}</span>
+						<span class="item-title">{post.title}</span>
+					</li>
+				))}
+			</ul>
+		);
+	}
+
 	render() {
-		const { data: posts, isPending, isError, error } = this.#api.posts;
-		const { isPending: isCreating, isSuccess: created, data: newPost } = this.#api.create;
+		const { isPending, isError, error } = this.#api.posts;
+		const { isPending: isCreating } = this.#api.create;
 
 		return (
 			<div class="posts">
@@ -62,26 +96,12 @@ export class AppTsQueryPosts extends SsvElement {
 					</button>
 				</div>
 
-				{created && newPost && (
-					<p class="notice notice--success">
-						Created: <strong>{newPost.title}</strong> (id: {newPost.id})
-					</p>
-				)}
+				{this.renderCreateSuccess()}
 
 				{isPending && <p class="status">Loading posts…</p>}
-
 				{isError && <p class="status status--error">Error: {String(error)}</p>}
 
-				{!isPending && !isError && posts && (
-					<ul class="list">
-						{posts.map((post: Post) => (
-							<li key={post.id} class="item">
-								<span class="item-id">#{post.id}</span>
-								<span class="item-title">{post.title}</span>
-							</li>
-						))}
-					</ul>
-				)}
+				{this.renderPostsList()}
 			</div>
 		);
 	}

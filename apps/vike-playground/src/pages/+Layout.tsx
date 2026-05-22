@@ -47,6 +47,7 @@ const navSections: NavSection[] = [
 		title: "@ssv / TanStack Query",
 		items: [
 			{ href: "/ssv-stencil/ts-query/posts", label: "Posts" },
+			{ href: "/ssv-stencil/ts-query/posts-signals", label: "Posts (Signals)" },
 			{ href: "/ssv-stencil/translations", label: "Translations" },
 		],
 	},

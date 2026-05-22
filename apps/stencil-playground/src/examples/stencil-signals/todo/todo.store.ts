@@ -8,6 +8,6 @@ export type Todo = {
 };
 
 export const todoStore = createStore({ todos: [] as Todo[], nextId: 1 }, s => ({
-	completedCount: computed(() => s.todos.filter(t => t.completed).length),
-	pendingCount: computed(() => s.todos.filter(t => !t.completed).length),
+	completedCount: computed(() => s.todos().filter(t => t.completed).length),
+	pendingCount: computed(() => s.todos().filter(t => !t.completed).length),
 }));

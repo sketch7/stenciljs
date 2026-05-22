@@ -29,8 +29,12 @@ export function usePosts() {
 
   // Getter properties absorb the () call — component accesses plain properties
   return {
-    get posts() { return postsRef(); },
-    get create() { return createRef(); },
+    get posts() {
+      return postsRef();
+    },
+    get create() {
+      return createRef();
+    },
   };
 }
 ```
@@ -136,6 +140,93 @@ Devtools are **disabled by default in non-development environments** (`process.e
 | `shadowDOMTarget`     | `ShadowRoot`             | —                                        | Attach devtools styles to a shadow root |
 | `hideDisabledQueries` | `boolean`                | `false`                                  | Hide disabled queries from the panel    |
 | `theme`               | `DevtoolsTheme`          | `'system'`                               | Color theme                             |
+
+## Signals sub-entry (`/signals`)
+
+Import from `@ssv/tanstack.stencil-query/signals` for fine-grained, per-field signals instead of a single `Ref`. Requires `useSignalWatcher()` and `@ssv/stencil-signals`.
+
+```ts
+import { $useQuery, $useMutation } from "@ssv/tanstack.stencil-query/signals";
+import { computed, useSignalWatcher } from "@ssv/stencil-signals";
+
+@Component({ tag: "app-posts", shadow: true })
+export class AppPosts extends SsvElement {
+  readonly signalWatcher = useSignalWatcher();
+
+  readonly #posts = $useQuery(() => ({
+    queryKey: ["posts"],
+    queryFn: fetchPosts,
+  }));
+
+  readonly #create = $useMutation({
+    mutationFn: (title: string) => apiCreatePost(title),
+  });
+
+  // Derived signal — recomputes only when the two source signals change
+  readonly canSubmit = computed(() => !!this.inputValue() && !this.#create.isPending());
+
+  render() {
+    return (
+      <button disabled={!this.canSubmit()} onClick={() => this.#create.mutate("New post")}>
+        {this.#create.isPending() ? "Creating…" : "Create"}
+      </button>
+    );
+  }
+}
+```
+
+### Signals API
+
+| Export                 | Kind | Purpose                                                     |
+| ---------------------- | ---- | ----------------------------------------------------------- |
+| `$useQuery`            | fn   | Per-field signal store + `refetch`                          |
+| `$useMutation`         | fn   | Per-field signal store + `mutate` / `mutateAsync` / `reset` |
+| `QuerySignalResult`    | type | `Store<QueryStateData> & { refetch }`                       |
+| `MutationSignalResult` | type | `Store<MutationStateData> & { mutate, mutateAsync, reset }` |
+
+### `$useQuery` vs `useQuery`
+
+|                             | `useQuery`                               | `$useQuery`                                               |
+| --------------------------- | ---------------------------------------- | --------------------------------------------------------- |
+| Return                      | `Ref<UseQueryResult>` — single ref       | `Store<QueryStateData> & { refetch }` — per-field signals |
+| Read                        | `ref()` or `ref.current`                 | `store.data()`, `store.isPending()`                       |
+| Re-render granularity       | Any field change re-renders              | Only fields read during last render                       |
+| Requires `useSignalWatcher` | No                                       | Yes                                                       |
+| Reactive options            | Getter function: `$useQuery(() => opts)` | Same                                                      |
+
+### Reactive options
+
+Pass a getter function to recompute options when a signal changes:
+
+```ts
+readonly #userId = signal(1);
+
+readonly #user = $useQuery(() => {
+    const userId = this.#userId();
+    return {
+      queryKey: ["user", userId] as const,
+      queryFn: ({ signal }) => fetchUser(userId, { signal }),
+    };
+});
+```
+
+### Derived signals with `computed`
+
+Fine-grained signals compose cleanly with `computed`:
+
+```ts
+readonly #isLoading = computed(() => this.#posts.isPending() || this.#posts.isFetching());
+readonly #hasError = computed(() => this.#posts.isError());
+readonly #canRetry = computed(() => this.#hasError() && !this.#posts.isFetching());
+```
+
+Use `peek` for untracked reads in handlers or helper functions:
+
+```ts
+const hasDataNow = this.#posts.data.peek() !== undefined;
+```
+
+See the full example: [apps/stencil-playground/src/examples/ts-query/posts-signals/](../../apps/stencil-playground/src/examples/ts-query/posts-signals/)
 
 ## Examples
 

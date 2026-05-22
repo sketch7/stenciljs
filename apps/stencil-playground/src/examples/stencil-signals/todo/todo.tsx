@@ -29,22 +29,22 @@ export class AppSignalsTodo extends SsvElement {
 			return;
 		}
 
-		todoStore.todos = [...todoStore.todos, { id: todoStore.nextId, text, completed: false }];
-		todoStore.nextId++;
+		todoStore.todos.update(todos => [...todos, { id: todoStore.nextId(), text, completed: false }]);
+		todoStore.nextId.update(id => id + 1);
 		this.inputValue = "";
 	}
 
 	private toggleTodo(id: number) {
-		todoStore.todos = todoStore.todos.map(t => (t.id === id ? { ...t, completed: !t.completed } : t));
+		todoStore.todos.update(todos => todos.map(t => (t.id === id ? { ...t, completed: !t.completed } : t)));
 	}
 
 	private deleteTodo(id: number) {
-		todoStore.todos = todoStore.todos.filter(t => t.id !== id);
+		todoStore.todos.update(todos => todos.filter(t => t.id !== id));
 	}
 
 	render() {
-		const todos = todoStore.todos;
-		const completed = todoStore.completedCount;
+		const todos = todoStore.todos();
+		const completed = todoStore.completedCount();
 		const total = todos.length;
 
 		return (

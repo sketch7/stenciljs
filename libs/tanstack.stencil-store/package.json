@@ -14,6 +14,11 @@
       "@ssv/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./signals": {
+      "@ssv/source": "./src/signals.ts",
+      "types": "./dist/signals.d.ts",
+      "import": "./dist/signals.js"
     }
   },
   "scripts": {
@@ -26,6 +31,7 @@
     "fmt:check": "oxfmt --check src/"
   },
   "devDependencies": {
+    "@ssv/stencil-signals": "workspace:*",
     "@ssv/stencil.core": "workspace:*",
     "@stencil/core": "catalog:",
     "@tanstack/store": "catalog:",
@@ -38,8 +44,14 @@
     "vitest": "catalog:"
   },
   "peerDependencies": {
+    "@ssv/stencil-signals": "workspace:*",
     "@ssv/stencil.core": "workspace:*",
     "@stencil/core": ">=4.0.0",
     "@tanstack/store": "^0.11.0"
+  },
+  "peerDependenciesMeta": {
+    "@ssv/stencil-signals": {
+      "optional": true
+    }
   }
 }

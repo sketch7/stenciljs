@@ -35,14 +35,14 @@ async function apiCreatePost(title: string): Promise<Post> {
  *
  * @example
  * ```ts
- * readonly #api = usePostsSignals(this.#queryClient);
+ * readonly #api = $usePosts(this.#queryClient);
  * render() {
  *   const data = this.#api.posts.data();
  *   const isPending = this.#api.posts.isPending();
  * }
  * ```
  */
-export function usePostsSignals(queryClient?: QueryClient) {
+export function $usePosts(queryClient?: QueryClient) {
 	const client = useQueryClient(queryClient);
 
 	use({

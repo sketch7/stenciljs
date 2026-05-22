@@ -5,7 +5,7 @@ import { provideQueryClient } from "@ssv/tanstack.stencil-query";
 import { useQueryDevtools } from "@ssv/tanstack.stencil-query/dev-tools";
 import { Component, h } from "@stencil/core";
 
-import { usePostsSignals } from "./posts-signals.api";
+import { $usePosts } from "./posts-signals.api";
 import type { Post } from "./posts-signals.api";
 
 @Component({
@@ -16,7 +16,7 @@ import type { Post } from "./posts-signals.api";
 export class AppTsQueryPostsSignals extends SsvElement {
 	readonly #ts = provideTransferState("ts-query-posts-signals");
 	readonly #queryClient = provideQueryClient({ withHydration: this.#ts });
-	readonly #api = usePostsSignals(this.#queryClient);
+	readonly #api = $usePosts(this.#queryClient);
 	readonly _ = useSignalWatcher();
 	readonly __ = useQueryDevtools();
 

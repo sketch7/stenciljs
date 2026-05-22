@@ -1,11 +1,10 @@
-import { batch, createStore } from "@ssv/stencil-signals";
-import type { Store } from "@ssv/stencil-signals";
-import { use, useLoadEffect } from "@ssv/stencil.core";
-import { MutationObserver, notifyManager, noop } from "@tanstack/query-core";
+import { signal } from "@ssv/stencil-signals";
 import type { DefaultError, MutationObserverResult, QueryClient } from "@tanstack/query-core";
 
-import { useQueryClient } from "../query-client-context";
+import { idleMutationState, useMutationObserver } from "../mutation-observer";
 import type { UseMutateAsyncFunction, UseMutateFunction, UseMutationOptions } from "../types";
+import { createSignalResult } from "./signal-result";
+import type { SignalFields } from "./signal-result";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -15,54 +14,16 @@ type MutationStateData<TData, TError, TVariables, TContext> = Omit<
 >;
 
 /** Return type of {@link $useMutation} — per-field signals with plain action functions. */
-export type MutationSignalResult<TData = unknown, TError = DefaultError, TVariables = void, TContext = unknown> = Store<
-	MutationStateData<TData, TError, TVariables, TContext>
-> & {
+export type MutationSignalResult<
+	TData = unknown,
+	TError = DefaultError,
+	TVariables = void,
+	TContext = unknown,
+> = SignalFields<MutationStateData<TData, TError, TVariables, TContext>> & {
 	mutate: UseMutateFunction<TData, TError, TVariables, TContext>;
 	mutateAsync: UseMutateAsyncFunction<TData, TError, TVariables, TContext>;
 	reset: MutationObserverResult<TData, TError, TVariables, TContext>["reset"];
 };
-
-// ─── Initial state ────────────────────────────────────────────────────────────
-
-/** State returned while the mutation observer is not yet connected. */
-const idleMutationState = {
-	data: undefined,
-	variables: undefined,
-	context: undefined,
-	isIdle: true,
-	isPending: false,
-	isSuccess: false,
-	isError: false,
-	isPaused: false,
-	status: "idle" as const,
-	error: null,
-	failureReason: null,
-	failureCount: 0,
-	submittedAt: 0,
-};
-
-const MUTATION_STATE_KEYS = Object.keys(idleMutationState) as (keyof typeof idleMutationState)[];
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function wrapWithExtra<TStore extends object, TExtra extends object>(store: TStore, extra: TExtra): TStore & TExtra {
-	const extraKeys = new Set(Object.keys(extra));
-	return new Proxy(store, {
-		get(target, prop, receiver) {
-			if (typeof prop === "string" && extraKeys.has(prop)) {
-				return (extra as Record<string, unknown>)[prop];
-			}
-			return Reflect.get(target, prop, receiver);
-		},
-		set(target, prop, value, receiver) {
-			if (typeof prop === "string" && extraKeys.has(prop)) {
-				return true; // plain extra properties are managed by closures
-			}
-			return Reflect.set(target, prop, value, receiver);
-		},
-	}) as TStore & TExtra;
-}
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 
@@ -90,70 +51,14 @@ export function $useMutation<TData = unknown, TError = DefaultError, TVariables 
 		| (() => UseMutationOptions<TData, TError, TVariables, TContext>),
 	client?: QueryClient,
 ): MutationSignalResult<TData, TError, TVariables, TContext> {
-	const getOpts =
-		typeof getOptions === "function"
-			? getOptions
-			: () => getOptions as UseMutationOptions<TData, TError, TVariables, TContext>;
+	const state = signal(idleMutationState as unknown as MutationStateData<TData, TError, TVariables, TContext>);
 
-	const clientRef = useQueryClient(client);
-
-	const store = createStore(idleMutationState as unknown as MutationStateData<TData, TError, TVariables, TContext>);
-
-	let observer: MutationObserver<TData, TError, TVariables, TContext> | undefined;
-
-	const mutate: UseMutateFunction<TData, TError, TVariables, TContext> = (variables, options) => {
-		observer?.mutate(variables, options).catch(noop);
-	};
-
-	const mutateAsync: UseMutateAsyncFunction<TData, TError, TVariables, TContext> = (variables, options) =>
-		observer?.mutate(variables, options) ??
-		Promise.reject(new Error("[ssv:query] Cannot mutate — observer not yet connected."));
-
-	const result = wrapWithExtra(store, {
-		mutate,
-		mutateAsync,
-		get reset() {
-			return () => observer?.reset();
-		},
-	}) as MutationSignalResult<TData, TError, TVariables, TContext>;
-
-	useLoadEffect(
-		({ qc }) => {
-			observer = new MutationObserver<TData, TError, TVariables, TContext>(qc, getOpts());
-
-			const unsubscribe = observer.subscribe(
-				notifyManager.batchCalls(() => {
-					const r = observer?.getCurrentResult();
-					if (!r) {
-						return;
-					}
-					batch(() => {
-						for (const key of MUTATION_STATE_KEYS) {
-							store
-								.$signal(key)
-								.set(r[key as keyof typeof r] as MutationStateData<TData, TError, TVariables, TContext>[typeof key]);
-						}
-					});
-				}),
-			);
-
-			return () => {
-				unsubscribe?.();
-				observer?.reset();
-				observer = undefined;
-			};
-		},
-		{ qc: clientRef },
+	const { mutate, mutateAsync, reset } = useMutationObserver<TData, TError, TVariables, TContext>(
+		getOptions,
+		client,
+		result => state.set(result),
+		() => state.set(idleMutationState as unknown as MutationStateData<TData, TError, TVariables, TContext>),
 	);
 
-	use(() => ({
-		hostWillRender(): void {
-			if (!observer) {
-				return;
-			}
-			observer.setOptions(getOpts());
-		},
-	}));
-
-	return result;
+	return createSignalResult(state, { mutate, mutateAsync, reset });
 }

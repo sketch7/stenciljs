@@ -244,7 +244,7 @@ Incremental migration is supported: new features can use signals while existing 
 | `computedPrevious`                  | [`computed-previous/`](../../apps/stencil-playground/src/examples/stencil-signals/computed-previous/) | [`+Page.tsx`](../../apps/vike-playground/src/pages/stencil-signals/computed-previous/+Page.tsx) |
 | `signalFromEvent`                   | [`mouse-event/`](../../apps/stencil-playground/src/examples/stencil-signals/mouse-event/)             | [`+Page.tsx`](../../apps/vike-playground/src/pages/stencil-signals/mouse-event/+Page.tsx)       |
 
-Run the dev stack from the repo root: `pnpm dev` (Stencil watch + Vike on port 3000).
+Run the dev stack from the repo root: `pnpm dev` (Stencil watch + Vike on port 3100).
 
 ## API reference
 

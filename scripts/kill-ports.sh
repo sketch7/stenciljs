@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 # Kill all processes listening on the dev/preview port ranges:
-#   3000–3002  apps
-#   3100–3102  apps api
+#   3100–3102  apps
 
-RANGES=("3000-3002" "3100-3102" )
+RANGES=("3100-3102" )
 # RANGES=("3000-3002" "3100-3102" )
 
 killed=0

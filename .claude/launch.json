@@ -5,7 +5,7 @@
       "name": "vike",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "@app/vike-playground", "dev"],
-      "port": 3000
+      "port": 3100
     }
   ]
 }

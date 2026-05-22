@@ -1,3 +1,4 @@
+import { getLogger } from "@logtape/logtape";
 // oxlint-disable react/only-export-components -- Stencil component file with co-located event type
 import { SsvElement } from "@ssv/stencil.core";
 import { Component, Event, h } from "@stencil/core";
@@ -7,6 +8,8 @@ import { useCreateDraft, useJoinDraft } from "../draft/draft.api";
 import { showNotification } from "../notification/notification.store";
 import type { DraftSession, Team } from "../shared/lol.types";
 import { useListDrafts, useLobbySSE } from "./lobby.api";
+
+const logger = getLogger(["lol", "lobby"]);
 
 export type LobbyJoinEvent = { session: DraftSession; team: Team };
 
@@ -34,9 +37,11 @@ export class AppLolLobbyList extends SsvElement {
 	private handleCreate() {
 		this.#create.create.mutate(undefined, {
 			onSuccess: session => {
+				logger.info("Draft created: id={id} name={name}", { id: session.id, name: session.name });
 				this.appCreate.emit({ session, team: "blue" });
 			},
 			onError: (err: unknown) => {
+				logger.error("Create draft failed: {error}", { error: String(err) });
 				showNotification(err instanceof Error ? err.message : "Failed to create draft", "error");
 			},
 		});
@@ -45,9 +50,11 @@ export class AppLolLobbyList extends SsvElement {
 	private handleJoin(draftId: string) {
 		this.#join.join.mutate(draftId, {
 			onSuccess: session => {
+				logger.info("Joined draft: id={id}", { id: session.id });
 				this.appJoin.emit({ session, team: "red" });
 			},
 			onError: (err: unknown) => {
+				logger.error("Join draft failed: {error}", { error: String(err) });
 				showNotification(err instanceof Error ? err.message : "Failed to join draft", "error");
 			},
 		});

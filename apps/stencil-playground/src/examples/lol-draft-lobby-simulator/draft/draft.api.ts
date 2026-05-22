@@ -1,8 +1,11 @@
+import { getLogger } from "@logtape/logtape";
 import { useMutation, useQuery, useQueryClient } from "@ssv/tanstack.stencil-query";
 import type { QueryClient } from "@ssv/tanstack.stencil-query";
 
 import { BASE_URL } from "../shared/lol.constants";
 import type { DraftSession, Team } from "../shared/lol.types";
+
+const logger = getLogger(["lol", "draft"]);
 
 const queryKey = (draftId: string) => ["lol-draft", draftId] as const;
 
@@ -24,6 +27,7 @@ async function apiCreateDraft(): Promise<DraftSession> {
 }
 
 async function apiPick(draftId: string, championId: string, team: Team): Promise<DraftSession> {
+	logger.debug("Sending pick: {championId} ({team})", { draftId, championId, team });
 	const res = await fetch(`${BASE_URL}/api/lol/drafts/${draftId}/pick`, {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
@@ -37,6 +41,7 @@ async function apiPick(draftId: string, championId: string, team: Team): Promise
 }
 
 async function apiBan(draftId: string, championId: string, team: Team): Promise<DraftSession> {
+	logger.debug("Sending ban: {championId} ({team})", { draftId, championId, team });
 	const res = await fetch(`${BASE_URL}/api/lol/drafts/${draftId}/ban`, {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
@@ -116,7 +121,11 @@ export function useDraftMutations(getDraftId: () => string | null, queryClient?:
 				return apiPick(id, championId, team);
 			},
 			onSuccess: session => {
+				logger.info("Pick OK: phase={phase} turn={turn}", { phase: session.phase, turn: session.currentTurnIndex });
 				client.current?.setQueryData(queryKey(session.id), session);
+			},
+			onError: (err: unknown) => {
+				logger.error("Pick failed: {error}", { error: String(err) });
 			},
 			onSettled: () => {
 				const id = getDraftId();
@@ -138,7 +147,11 @@ export function useDraftMutations(getDraftId: () => string | null, queryClient?:
 				return apiBan(id, championId, team);
 			},
 			onSuccess: session => {
+				logger.info("Ban OK: phase={phase} turn={turn}", { phase: session.phase, turn: session.currentTurnIndex });
 				client.current?.setQueryData(queryKey(session.id), session);
+			},
+			onError: (err: unknown) => {
+				logger.error("Ban failed: {error}", { error: String(err) });
 			},
 			onSettled: () => {
 				const id = getDraftId();
@@ -160,7 +173,14 @@ export function useDraftMutations(getDraftId: () => string | null, queryClient?:
 				return apiSimulateOpponent(id);
 			},
 			onSuccess: session => {
+				logger.info("Simulate-opponent OK: phase={phase} turn={turn}", {
+					phase: session.phase,
+					turn: session.currentTurnIndex,
+				});
 				client.current?.setQueryData(queryKey(session.id), session);
+			},
+			onError: (err: unknown) => {
+				logger.error("Simulate-opponent failed: {error}", { error: String(err) });
 			},
 			onSettled: () => {
 				const id = getDraftId();
@@ -231,7 +251,11 @@ export function useEnableSimulation(queryClient?: QueryClient) {
 		{
 			mutationFn: (draftId: string) => apiEnableSimulation(draftId),
 			onSuccess: session => {
+				logger.info("Simulation enabled: id={id}", { id: session.id });
 				client.current?.setQueryData(queryKey(session.id), session);
+			},
+			onError: (err: unknown) => {
+				logger.error("Enable simulation failed: {error}", { error: String(err) });
 			},
 		},
 		queryClient,

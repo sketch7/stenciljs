@@ -1,3 +1,4 @@
+import { getLogger } from "@logtape/logtape";
 import { use } from "@ssv/stencil.core";
 import { useQuery, useQueryClient } from "@ssv/tanstack.stencil-query";
 import type { QueryClient } from "@ssv/tanstack.stencil-query";
@@ -5,6 +6,8 @@ import { Build } from "@stencil/core";
 
 import { BASE_URL } from "../shared/lol.constants";
 import type { DraftSession } from "../shared/lol.types";
+
+const logger = getLogger(["lol", "lobby"]);
 
 export const LOBBY_QUERY_KEY = ["lol-lobby"] as const;
 
@@ -45,8 +48,15 @@ export function useLobbySSE(queryClient?: QueryClient) {
 					if (Build.isServer) {
 						return;
 					}
+					logger.info("Creating Lobby SSE connection...");
 					es = new EventSource(`${BASE_URL}/api/lol/lobby/events`);
-					es.addEventListener("lobby-updated", () => {
+					es.addEventListener("connected", e => {
+						const sessions = JSON.parse((e as MessageEvent<string>).data) as DraftSession[];
+						logger.info("Lobby SSE connected: {count} open sessions", { count: sessions.length });
+					});
+					es.addEventListener("lobby-updated", e => {
+						const sessions = JSON.parse((e as MessageEvent<string>).data) as DraftSession[];
+						logger.debug("Lobby updated: {count} sessions", { count: sessions.length });
 						client.current?.invalidateQueries({ queryKey: LOBBY_QUERY_KEY });
 					});
 				},

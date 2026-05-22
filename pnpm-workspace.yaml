@@ -50,6 +50,10 @@ catalog:
   "@types/react": ^19.2.14
   "@types/react-dom": ^19.2.3
 
+  # ── Logging ─────────────────────────────────────────────────────────────────
+  "@logtape/logtape": "^2.1.1"
+  "@logtape/hono": "^2.1.1"
+
   # ── Signals ────────────────────────────────────────────────────────────────────
   signal-polyfill: ^0.2.2
   "@preact/signals-core": ^1.14.2

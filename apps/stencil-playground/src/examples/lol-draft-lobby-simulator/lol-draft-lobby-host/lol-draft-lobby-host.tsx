@@ -1,3 +1,6 @@
+// oxlint-disable-next-line import/no-unassigned-import -- side-effect: runs configureSync before any component lifecycle
+import "../shared/logging";
+import { getLogger } from "@logtape/logtape";
 import { SsvElement } from "@ssv/stencil.core";
 import { provideTransferState } from "@ssv/stencil.core/transfer-state";
 import { provideQueryClient } from "@ssv/tanstack.stencil-query";
@@ -7,6 +10,8 @@ import { Component, State, h } from "@stencil/core";
 import { useDraftSSE } from "../draft/draft-sse.hooks";
 import type { LobbyJoinEvent } from "../lobby/lol-lobby-list";
 import type { Team } from "../shared/lol.types";
+
+const logger = getLogger(["lol"]);
 
 @Component({
 	tag: "app-lol-draft-lobby-host",
@@ -30,12 +35,20 @@ export class AppLolDraftLobbyHost extends SsvElement {
 		this.draftId = e.detail.session.id;
 		this.myTeam = e.detail.team;
 		this.view = "draft";
+		logger.info("View \u2192 draft (create): draftId={draftId} team={team}", {
+			draftId: this.draftId,
+			team: this.myTeam,
+		});
 	}
 
 	private handleJoin(e: CustomEvent<LobbyJoinEvent>) {
 		this.draftId = e.detail.session.id;
 		this.myTeam = e.detail.team;
 		this.view = "draft";
+		logger.info("View \u2192 draft (join): draftId={draftId} team={team}", {
+			draftId: this.draftId,
+			team: this.myTeam,
+		});
 	}
 
 	render() {

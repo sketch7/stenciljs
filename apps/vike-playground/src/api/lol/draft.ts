@@ -1,8 +1,11 @@
+import { getLogger } from "@logtape/logtape";
 import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
 
 import { championsData } from "./champions.data";
 import type { DraftSession, DraftTurn, Team } from "./lol.types";
+
+const logger = getLogger(["lol", "draft"]);
 
 // ── Turn order: full competitive LoL draft (10 bans + 10 picks) ────────────────
 const TURN_ORDER: DraftTurn[] = [
@@ -116,6 +119,7 @@ function autoSimulate(session: DraftSession): void {
 			break;
 		}
 		const championId = available[Math.floor(Math.random() * available.length)]!;
+		const turnIdx = session.currentTurnIndex;
 		if (turn.action === "ban") {
 			session.redBans[turn.slot] = championId;
 		} else {
@@ -123,6 +127,15 @@ function autoSimulate(session: DraftSession): void {
 		}
 		session.currentTurnIndex += 1;
 		session.phase = derivePhase(session);
+		logger.debug("Auto-sim {id}: {team} {action} {championId} (slot {slot}, turn {turn}) \u2192 {phase}", {
+			id: session.id,
+			team: turn.team,
+			action: turn.action,
+			championId,
+			slot: turn.slot,
+			turn: turnIdx,
+			phase: session.phase,
+		});
 	}
 }
 
@@ -146,6 +159,7 @@ export const draftApi = new Hono()
 			createdAt: new Date().toISOString(),
 		};
 		sessions.set(id, session);
+		logger.info("Session created: {id} ({name})", { id, name: session.name });
 		broadcastLobby();
 		return c.json(session, 201);
 	})
@@ -167,41 +181,60 @@ export const draftApi = new Hono()
 
 	// Pick a champion
 	.post("/api/lol/drafts/:id/pick", async c => {
-		const session = sessions.get(c.req.param("id"));
+		const id = c.req.param("id");
+		const session = sessions.get(id);
 		if (!session) {
+			logger.warn("Pick rejected: session not found {id}", { id });
 			return c.json({ error: "Session not found" }, 404);
 		}
 
 		if (session.phase === "waiting") {
+			logger.warn("Pick rejected: draft not started {id}", { id });
 			return c.json({ error: "Draft has not started yet" }, 400);
 		}
 
 		if (session.currentTurnIndex >= TURN_ORDER.length) {
+			logger.warn("Pick rejected: draft finished {id}", { id });
 			return c.json({ error: "Draft is finished" }, 400);
 		}
 
 		const currentTurn = TURN_ORDER[session.currentTurnIndex];
 		if (currentTurn.action !== "pick") {
-			return c.json({ error: `Not a pick turn — expected ${currentTurn.action}` }, 400);
+			logger.warn("Pick rejected: wrong action {id} (expected pick, got {action})", { id, action: currentTurn.action });
+			return c.json({ error: `Not a pick turn \u2014 expected ${currentTurn.action}` }, 400);
 		}
 
 		const body = await c.req.json<{ championId: string; team: Team }>();
 		const { championId, team } = body;
 
 		if (currentTurn.team !== team) {
+			logger.warn("Pick rejected: wrong team {id} (expected {expected}, got {team})", {
+				id,
+				expected: currentTurn.team,
+				team,
+			});
 			return c.json({ error: `Not ${team}'s pick turn` }, 400);
 		}
 
 		const excluded = getPickedAndBannedIds(session);
 		if (excluded.has(championId)) {
+			logger.warn("Pick rejected: champion unavailable {id} championId={championId}", { id, championId });
 			return c.json({ error: "Champion already picked or banned" }, 409);
 		}
 
 		const picks = team === "blue" ? session.bluePicks : session.redPicks;
 		picks[currentTurn.slot] = championId;
-
+		const turnIdx = session.currentTurnIndex;
 		session.currentTurnIndex += 1;
 		session.phase = derivePhase(session);
+		logger.info("Pick {id}: {team} picked {championId} (slot {slot}, turn {turn}) \u2192 {phase}", {
+			id,
+			team,
+			championId,
+			slot: currentTurn.slot,
+			turn: turnIdx,
+			phase: session.phase,
+		});
 
 		if (session.simulationMode) {
 			autoSimulate(session);
@@ -215,41 +248,60 @@ export const draftApi = new Hono()
 
 	// Ban a champion
 	.post("/api/lol/drafts/:id/ban", async c => {
-		const session = sessions.get(c.req.param("id"));
+		const id = c.req.param("id");
+		const session = sessions.get(id);
 		if (!session) {
+			logger.warn("Ban rejected: session not found {id}", { id });
 			return c.json({ error: "Session not found" }, 404);
 		}
 
 		if (session.phase === "waiting") {
+			logger.warn("Ban rejected: draft not started {id}", { id });
 			return c.json({ error: "Draft has not started yet" }, 400);
 		}
 
 		if (session.currentTurnIndex >= TURN_ORDER.length) {
+			logger.warn("Ban rejected: draft finished {id}", { id });
 			return c.json({ error: "Draft is finished" }, 400);
 		}
 
 		const currentTurn = TURN_ORDER[session.currentTurnIndex];
 		if (currentTurn.action !== "ban") {
-			return c.json({ error: `Not a ban turn — expected ${currentTurn.action}` }, 400);
+			logger.warn("Ban rejected: wrong action {id} (expected ban, got {action})", { id, action: currentTurn.action });
+			return c.json({ error: `Not a ban turn \u2014 expected ${currentTurn.action}` }, 400);
 		}
 
 		const body = await c.req.json<{ championId: string; team: Team }>();
 		const { championId, team } = body;
 
 		if (currentTurn.team !== team) {
+			logger.warn("Ban rejected: wrong team {id} (expected {expected}, got {team})", {
+				id,
+				expected: currentTurn.team,
+				team,
+			});
 			return c.json({ error: `Not ${team}'s ban turn` }, 400);
 		}
 
 		const excluded = getPickedAndBannedIds(session);
 		if (excluded.has(championId)) {
+			logger.warn("Ban rejected: champion unavailable {id} championId={championId}", { id, championId });
 			return c.json({ error: "Champion already picked or banned" }, 409);
 		}
 
 		const bans = team === "blue" ? session.blueBans : session.redBans;
 		bans[currentTurn.slot] = championId;
-
+		const turnIdx = session.currentTurnIndex;
 		session.currentTurnIndex += 1;
 		session.phase = derivePhase(session);
+		logger.info("Ban {id}: {team} banned {championId} (slot {slot}, turn {turn}) \u2192 {phase}", {
+			id,
+			team,
+			championId,
+			slot: currentTurn.slot,
+			turn: turnIdx,
+			phase: session.phase,
+		});
 
 		if (session.simulationMode) {
 			autoSimulate(session);
@@ -263,26 +315,32 @@ export const draftApi = new Hono()
 
 	// Simulate the opponent's next action with a random available champion
 	.post("/api/lol/drafts/:id/simulate-opponent", c => {
-		const session = sessions.get(c.req.param("id"));
+		const id = c.req.param("id");
+		const session = sessions.get(id);
 		if (!session) {
+			logger.warn("Simulate rejected: session not found {id}", { id });
 			return c.json({ error: "Session not found" }, 404);
 		}
 
 		if (session.phase === "waiting") {
+			logger.warn("Simulate rejected: draft not started {id}", { id });
 			return c.json({ error: "Draft has not started yet" }, 400);
 		}
 
 		if (session.currentTurnIndex >= TURN_ORDER.length) {
+			logger.warn("Simulate rejected: draft finished {id}", { id });
 			return c.json({ error: "Draft is finished" }, 400);
 		}
 
 		const currentTurn = TURN_ORDER[session.currentTurnIndex];
 		const available = getAvailableChampions(session);
 		if (available.length === 0) {
+			logger.warn("Simulate rejected: no champions available {id}", { id });
 			return c.json({ error: "No available champions" }, 400);
 		}
 
 		const championId = available[Math.floor(Math.random() * available.length)]!;
+		const turnIdx = session.currentTurnIndex;
 
 		if (currentTurn.action === "ban") {
 			const bans = currentTurn.team === "blue" ? session.blueBans : session.redBans;
@@ -294,6 +352,15 @@ export const draftApi = new Hono()
 
 		session.currentTurnIndex += 1;
 		session.phase = derivePhase(session);
+		logger.info("Simulate {id}: {team} {action} {championId} (slot {slot}, turn {turn}) \u2192 {phase}", {
+			id,
+			team: currentTurn.team,
+			action: currentTurn.action,
+			championId,
+			slot: currentTurn.slot,
+			turn: turnIdx,
+			phase: session.phase,
+		});
 
 		broadcastSession(session.id);
 		if (session.phase === "finished") {
@@ -316,6 +383,8 @@ export const draftApi = new Hono()
 			};
 
 			addSseClient(sessionId, send);
+			const clientCount = sseClients.get(sessionId)?.size ?? 0;
+			logger.debug("SSE connected: sessionId={sessionId} clients={clientCount}", { sessionId, clientCount });
 
 			// Send current state immediately on connect
 			const session = sessions.get(sessionId);
@@ -325,25 +394,31 @@ export const draftApi = new Hono()
 
 			// Keep alive until client disconnects
 			await new Promise<void>(resolve => {
-				c.req.signal.addEventListener("abort", resolve, { once: true });
+				stream.onAbort(resolve);
 			});
 
 			removeSseClient(sessionId, send);
+			const remainingCount = sseClients.get(sessionId)?.size ?? 0;
+			logger.debug("SSE disconnected: sessionId={sessionId} clients={remainingCount}", { sessionId, remainingCount });
 		});
 	})
 
 	// Join an existing draft session as the red-side player
 	.post("/api/lol/drafts/:id/join", c => {
-		const session = sessions.get(c.req.param("id"));
+		const id = c.req.param("id");
+		const session = sessions.get(id);
 		if (!session) {
+			logger.warn("Join rejected: session not found {id}", { id });
 			return c.json({ error: "Session not found" }, 404);
 		}
 		if (session.playerCount >= 2) {
+			logger.warn("Join rejected: session full {id}", { id });
 			return c.json({ error: "Session is full" }, 409);
 		}
 		session.playerCount = 2;
 		session.simulationMode = false;
 		session.phase = derivePhase(session);
+		logger.info("Player joined: {id} \u2192 {phase}", { id, phase: session.phase });
 		broadcastSession(session.id);
 		broadcastLobby();
 		return c.json(session);
@@ -351,15 +426,19 @@ export const draftApi = new Hono()
 
 	// Enable simulation mode — auto-plays all red-side turns
 	.post("/api/lol/drafts/:id/simulation/enable", c => {
-		const session = sessions.get(c.req.param("id"));
+		const id = c.req.param("id");
+		const session = sessions.get(id);
 		if (!session) {
+			logger.warn("Enable simulation rejected: session not found {id}", { id });
 			return c.json({ error: "Session not found" }, 404);
 		}
 		if (session.playerCount >= 2) {
+			logger.warn("Enable simulation rejected: second player present {id}", { id });
 			return c.json({ error: "Cannot enable simulation with a second player present" }, 409);
 		}
 		session.simulationMode = true;
 		session.phase = derivePhase(session);
+		logger.info("Simulation enabled: {id}", { id });
 		autoSimulate(session);
 		broadcastSession(session.id);
 		broadcastLobby();
@@ -378,7 +457,7 @@ export const draftApi = new Hono()
 			await stream.writeSSE({ data: JSON.stringify(open), event: "connected" });
 
 			await new Promise<void>(resolve => {
-				c.req.signal.addEventListener("abort", resolve, { once: true });
+				stream.onAbort(resolve);
 			});
 
 			lobbyClients.delete(send);

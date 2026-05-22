@@ -1,3 +1,4 @@
+import { getLogger } from "@logtape/logtape";
 import { SsvElement } from "@ssv/stencil.core";
 import { Component, Listen, Prop, h } from "@stencil/core";
 
@@ -6,6 +7,8 @@ import type { Champion, ChampionRole, DraftSession, Team } from "../shared/lol.t
 import type { ChampionCardStatus } from "./champion-card";
 import { useChampionFilter } from "./champion-filter.hooks";
 import { useChampions } from "./champion-pool.api";
+
+const logger = getLogger(["lol", "champion"]);
 
 @Component({
 	tag: "app-lol-champion-pool",
@@ -92,8 +95,10 @@ export class AppLolChampionPool extends SsvElement {
 		}
 
 		if (currentTurn.action === "pick") {
+			logger.debug("Champion action: pick {championId} ({team})", { championId, team: this.team });
 			this.#mutations.pick.mutate({ championId, team: this.team });
 		} else {
+			logger.debug("Champion action: ban {championId} ({team})", { championId, team: this.team });
 			this.#mutations.ban.mutate({ championId, team: this.team });
 		}
 	}

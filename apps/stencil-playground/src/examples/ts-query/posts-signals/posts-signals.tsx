@@ -101,6 +101,7 @@ export class AppTsQueryPostsSignals extends SsvElement {
 						{createPostsApi.isPending() ? "Creating…" : "Create"}
 					</button>
 				</div>
+				<div>{this.inputValue()}</div>
 
 				{this.#renderCreateSuccess()}
 

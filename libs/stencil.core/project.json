@@ -51,7 +51,7 @@
     "fmt:check": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm oxfmt --check src/",
+        "command": "pnpm oxfmt --check src/ tests/",
         "cwd": "libs/stencil.core"
       }
     }

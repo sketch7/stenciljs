@@ -150,6 +150,47 @@ describe("useQuery", () => {
 		expect(query().isFetched).toBeTruthy();
 	});
 
+	it("delivers updated data when queryFn returns a new value for the same key", async () => {
+		let value = "initial";
+		// oxlint-disable-next-line vitest/prefer-mock-promise-shorthand -- closure must re-read `value` at call time; mockResolvedValue captures it once at setup
+		const queryFn = vi.fn<() => Promise<string>>().mockImplementation(() => Promise.resolve(value));
+
+		const query = useQuery({ queryKey: ["test"], queryFn }, qc);
+		host.connect();
+		await host.willLoad();
+		host.render();
+
+		await vi.waitFor(() => expect(query().isSuccess).toBeTruthy());
+		expect(query().data).toBe("initial");
+
+		value = "updated";
+		await query().refetch();
+
+		expect(query().data).toBe("updated");
+		expect(queryFn).toHaveBeenCalledTimes(2);
+	});
+
+	it("re-requests and delivers new data from queryFn when queryKey changes", async () => {
+		let key = "a";
+		// oxlint-disable-next-line vitest/prefer-mock-promise-shorthand -- closure must re-read `key` at call time; mockResolvedValue captures it once at setup
+		const queryFn = vi.fn<() => Promise<string>>().mockImplementation(() => Promise.resolve(`data-for-${key}`));
+
+		const query = useQuery(() => ({ queryKey: [key], queryFn }), qc);
+		host.connect();
+		await host.willLoad();
+		host.render();
+
+		await vi.waitFor(() => expect(query().isSuccess).toBeTruthy());
+		expect(query().data).toBe("data-for-a");
+
+		key = "b";
+		host.render(); // switches observer to key "b" → triggers new fetch
+
+		await vi.waitFor(() => expect(query().data).toBe("data-for-b"));
+		expect(query().isSuccess).toBeTruthy();
+		expect(queryFn).toHaveBeenCalledTimes(2);
+	});
+
 	it("exposes isRefetching — true while a background refetch is in-flight", async () => {
 		let resolve!: (v: string) => void;
 		qc.setQueryData(["refetch"], "initial");

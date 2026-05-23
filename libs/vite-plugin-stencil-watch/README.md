@@ -34,7 +34,7 @@ When a Stencil lib depends on a local workspace package (e.g. `@ssv/stencil.core
 ```ts
 stencilWatch({
   packageDir: path.resolve(__dirname, "../stencil-playground"),
-  watchDirs: [path.resolve(__dirname, "../../libs/stenciljs.core/src")],
+  watchDirs: [path.resolve(__dirname, "../../libs/stencil.core/src")],
   preBuildCommand: "pnpm --filter @ssv/stencil.core build",
 }),
 ```

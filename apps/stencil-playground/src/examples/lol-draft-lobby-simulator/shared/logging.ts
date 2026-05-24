@@ -13,7 +13,7 @@ const DEFAULTS: Record<LolLogCategory, LolLogLevel> = {
 	root: "info",
 	draft: "debug",
 	"draft-sse": "debug",
-	lobby: "info",
+	lobby: "debug",
 	champion: "warning",
 };
 
@@ -35,6 +35,7 @@ function readLevel(key: LolLogCategory): LolLogLevel {
 
 type LoggerEntry =
 	| { category: string[]; sinks: "console"[]; parentSinks: "override"; lowestLevel: "fatal" }
+	| { category: string[]; sinks: "console"[]; parentSinks: "override"; lowestLevel: LogLevel }
 	| { category: string[]; sinks: "console"[]; lowestLevel: LogLevel }
 	| { category: string[]; lowestLevel: LogLevel };
 
@@ -45,11 +46,13 @@ function buildLoggerEntry(key: LolLogCategory): LoggerEntry {
 		// Empty sinks + override prevents inheriting the parent console sink
 		return { category, sinks: [], parentSinks: "override", lowestLevel: "fatal" };
 	}
-	// The root ["lol"] category must own the console sink; sub-categories inherit from their parent.
+	// The root ["lol"] category owns the console sink for direct ["lol"] calls.
+	// Sub-categories own their sink directly with parentSinks: "override" to prevent the
+	// root's lowestLevel from silently dropping messages at levels lower than root's level.
 	if (CATEGORIES[key].length === 1) {
 		return { category, sinks: ["console"], lowestLevel: level };
 	}
-	return { category, lowestLevel: level };
+	return { category, sinks: ["console"], parentSinks: "override", lowestLevel: level };
 }
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────

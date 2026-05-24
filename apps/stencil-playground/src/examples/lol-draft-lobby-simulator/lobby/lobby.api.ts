@@ -64,6 +64,7 @@ export function useLobbySSE(queryClient?: QueryClient) {
 					});
 				},
 				hostDisconnected() {
+					logger.debug("SSE disconnected");
 					es?.close();
 					es = undefined;
 				},

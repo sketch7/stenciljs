@@ -2,11 +2,10 @@ import { getLogger } from "@logtape/logtape";
 import { SsvElement } from "@ssv/stencil.core";
 import { Component, Listen, Prop, h } from "@stencil/core";
 
-import { useDraftMutations, useDraftSession } from "../draft/draft.hooks";
+import { useDraftView } from "../draft/draft.hooks";
 import type { Champion, ChampionRole, DraftSession, Team } from "../lol.types";
 import type { ChampionCardStatus } from "./champion-card";
-import { useChampionFilter } from "./champion-filter.hooks";
-import { useChampions } from "./champion.hooks";
+import { useChampion } from "./champion.hooks";
 
 const logger = getLogger(["lol", "champion"]);
 
@@ -20,32 +19,32 @@ export class AppLolChampionPool extends SsvElement {
 	/** Which team's actions this pool is acting for (blue or red). */
 	@Prop() team: Team = "blue";
 
-	readonly #champions = useChampions();
-	readonly #filter = useChampionFilter();
-	readonly #session = useDraftSession(() => this.draftId);
-	readonly #mutations = useDraftMutations(() => this.draftId);
+	readonly #champion = useChampion();
+	readonly #draft = useDraftView(() => this.draftId);
 
 	@Listen("searchChange")
 	onSearchChange(e: CustomEvent<string>) {
-		this.#filter.setSearch(e.detail);
+		this.#champion.filter.setSearch(e.detail);
 	}
 
 	@Listen("roleToggle")
 	onRoleToggle(e: CustomEvent<ChampionRole>) {
-		this.#filter.toggleRole(e.detail);
+		this.#champion.filter.toggleRole(e.detail);
 	}
 
 	@Listen("clearFilters")
 	onClearFilters() {
-		this.#filter.clearFilters();
+		this.#champion.filter.clearFilters();
 	}
 
 	private getChampionStatus(championId: string, session: DraftSession | null | undefined): ChampionCardStatus {
 		if (!session) {
 			return "available";
 		}
-		const pendingId = this.#mutations.pick.variables?.championId ?? this.#mutations.ban.variables?.championId;
-		const isPending = (this.#mutations.pick.isPending || this.#mutations.ban.isPending) && pendingId === championId;
+		const pendingId =
+			this.#draft.mutations.pick.variables?.championId ?? this.#draft.mutations.ban.variables?.championId;
+		const isPending =
+			(this.#draft.mutations.pick.isPending || this.#draft.mutations.ban.isPending) && pendingId === championId;
 		if (isPending) {
 			return "pending";
 		}
@@ -68,7 +67,7 @@ export class AppLolChampionPool extends SsvElement {
 		);
 
 		// Also disable if a mutation is in-flight
-		if (this.#mutations.pick.isPending || this.#mutations.ban.isPending) {
+		if (this.#draft.mutations.pick.isPending || this.#draft.mutations.ban.isPending) {
 			return true;
 		}
 		return excluded.has(championId);
@@ -84,7 +83,7 @@ export class AppLolChampionPool extends SsvElement {
 	}
 
 	private handleChampionSelect(championId: string) {
-		const session = this.#session.session.data;
+		const session = this.#draft.session.session.data;
 		if (!session || session.phase === "finished") {
 			return;
 		}
@@ -96,18 +95,18 @@ export class AppLolChampionPool extends SsvElement {
 
 		if (currentTurn.action === "pick") {
 			logger.debug("Champion action: pick {championId} ({team})", { championId, team: this.team });
-			this.#mutations.pick.mutate({ championId, team: this.team });
+			this.#draft.mutations.pick.mutate({ championId, team: this.team });
 		} else {
 			logger.debug("Champion action: ban {championId} ({team})", { championId, team: this.team });
-			this.#mutations.ban.mutate({ championId, team: this.team });
+			this.#draft.mutations.ban.mutate({ championId, team: this.team });
 		}
 	}
 
 	render() {
-		const { data: champions, isPending: isLoadingChampions } = this.#champions.query;
-		const session = this.#session.session.data;
+		const { data: champions, isPending: isLoadingChampions } = this.#champion.champions.query;
+		const session = this.#draft.session.session.data;
 		const excludedIds = this.getExcludedIds(session);
-		const filteredChampions: Champion[] = champions ? this.#filter.filterFn(champions, excludedIds) : [];
+		const filteredChampions: Champion[] = champions ? this.#champion.filter.filterFn(champions, excludedIds) : [];
 
 		const currentTurn = session?.turnOrder[session.currentTurnIndex ?? -1];
 		const isMyTurn = currentTurn?.team === this.team && session?.phase !== "finished";
@@ -121,9 +120,9 @@ export class AppLolChampionPool extends SsvElement {
 				</div>
 
 				<app-lol-champion-filter
-					search={this.#filter.search}
-					activeRoles={this.#filter.roles}
-					difficulty={this.#filter.difficulty}
+					search={this.#champion.filter.search}
+					activeRoles={this.#champion.filter.roles}
+					difficulty={this.#champion.filter.difficulty}
 				/>
 
 				<div class="pool-grid-wrap">

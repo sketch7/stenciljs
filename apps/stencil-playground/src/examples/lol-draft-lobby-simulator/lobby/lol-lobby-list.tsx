@@ -4,7 +4,7 @@ import { SsvElement } from "@ssv/stencil.core";
 import { Component, Event, h } from "@stencil/core";
 import type { EventEmitter } from "@stencil/core";
 
-import { useCreateDraft, useJoinDraft, useListDrafts } from "../draft/draft.hooks";
+import { useDraftLobby } from "../draft/draft.hooks";
 import { useDraftsSSE } from "../draft/drafts-sse.hooks";
 import type { DraftSession, Team } from "../lol.types";
 import { showNotification } from "../notification/notification.store";
@@ -26,16 +26,14 @@ const PHASE_LABELS: Record<string, string> = {
 	shadow: true,
 })
 export class AppLolLobbyList extends SsvElement {
-	readonly #list = useListDrafts();
-	readonly #create = useCreateDraft();
-	readonly #join = useJoinDraft();
+	readonly #lobby = useDraftLobby();
 	readonly _ = useDraftsSSE();
 
 	@Event() appCreate!: EventEmitter<LobbyJoinEvent>;
 	@Event() appJoin!: EventEmitter<LobbyJoinEvent>;
 
 	private handleCreate() {
-		this.#create.create.mutate(undefined, {
+		this.#lobby.create.create.mutate(undefined, {
 			onSuccess: session => {
 				logger.info("Draft created: id={id} name={name}", { id: session.id, name: session.name });
 				this.appCreate.emit({ session, team: "blue" });
@@ -48,7 +46,7 @@ export class AppLolLobbyList extends SsvElement {
 	}
 
 	private handleJoin(draftId: string) {
-		this.#join.join.mutate(draftId, {
+		this.#lobby.join.join.mutate(draftId, {
 			onSuccess: session => {
 				logger.info("Joined draft: id={id}", { id: session.id });
 				this.appJoin.emit({ session, team: "red" });
@@ -61,9 +59,9 @@ export class AppLolLobbyList extends SsvElement {
 	}
 
 	render() {
-		const { data: sessions, isPending, isError } = this.#list.list;
-		const isCreating = this.#create.create.isPending;
-		const joiningId = this.#join.join.isPending ? (this.#join.join.variables as string | undefined) : null;
+		const { data: sessions, isPending, isError } = this.#lobby.list.list;
+		const isCreating = this.#lobby.create.create.isPending;
+		const joiningId = this.#lobby.join.join.isPending ? (this.#lobby.join.join.variables as string | undefined) : null;
 
 		return (
 			<div class="lobby">

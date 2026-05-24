@@ -2,7 +2,7 @@
 import { SsvElement } from "@ssv/stencil.core";
 import { Component, Prop, h } from "@stencil/core";
 
-import { useDraftMutations, useDraftSession, useEnableSimulation } from "../draft/draft.hooks";
+import { useDraftView } from "../draft/draft.hooks";
 import { showNotification } from "../notification/notification.store";
 
 const PHASE_LABELS: Record<string, string> = {
@@ -21,15 +21,13 @@ export class AppLolDraftInfo extends SsvElement {
 	@Prop() draftId: string | null = null;
 	@Prop() myTeam: "blue" | "red" = "blue";
 
-	readonly #session = useDraftSession(() => this.draftId);
-	readonly #mutations = useDraftMutations(() => this.draftId);
-	readonly #simulation = useEnableSimulation();
+	readonly #draft = useDraftView(() => this.draftId);
 
 	private handleSimulate() {
-		if (this.#mutations.simulate.isPending) {
+		if (this.#draft.mutations.simulate.isPending) {
 			return;
 		}
-		this.#mutations.simulate.mutate(undefined, {
+		this.#draft.mutations.simulate.mutate(undefined, {
 			onError: (err: unknown) => {
 				showNotification(err instanceof Error ? err.message : "Simulate failed", "error");
 			},
@@ -40,7 +38,7 @@ export class AppLolDraftInfo extends SsvElement {
 		if (!this.draftId) {
 			return;
 		}
-		this.#simulation.enable.mutate(this.draftId, {
+		this.#draft.enableSim.enable.mutate(this.draftId, {
 			onError: (err: unknown) => {
 				showNotification(err instanceof Error ? err.message : "Could not enable simulation", "error");
 			},
@@ -48,9 +46,9 @@ export class AppLolDraftInfo extends SsvElement {
 	}
 
 	render() {
-		const { data: session, isPending } = this.#session.session;
-		const isSimulating = this.#mutations.simulate.isPending;
-		const isEnabling = this.#simulation.enable.isPending;
+		const { data: session, isPending } = this.#draft.session.session;
+		const isSimulating = this.#draft.mutations.simulate.isPending;
+		const isEnabling = this.#draft.enableSim.enable.isPending;
 
 		if (isPending && !session) {
 			return <div class="info info--loading">Starting draft…</div>;

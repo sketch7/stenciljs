@@ -10,7 +10,7 @@ import { Component, State, h } from "@stencil/core";
 import { useDraftSSE } from "../draft/draft-sse.hooks";
 import type { LobbyJoinEvent } from "../lobby/lol-lobby-list";
 
-import type { Team } from "#/api";
+import type { Team } from "../lol.types";
 
 const logger = getLogger(["lol"]);
 

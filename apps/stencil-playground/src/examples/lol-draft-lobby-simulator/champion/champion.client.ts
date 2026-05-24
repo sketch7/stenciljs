@@ -1,6 +1,5 @@
+import type { Champion } from "../lol.types";
 import { BASE_URL } from "../shared/lol.constants";
-
-import type { Champion } from "#/api";
 
 export const CHAMPIONS_QUERY_KEY = ["lol-champions"] as const;
 

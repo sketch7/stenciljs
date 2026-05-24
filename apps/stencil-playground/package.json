@@ -13,9 +13,6 @@
   "main": "dist/index.cjs.js",
   "module": "dist/index.js",
   "types": "dist/types/index.d.ts",
-  "imports": {
-    "#/api": "./src/examples/lol-draft-lobby-simulator/shared/lol.types.ts"
-  },
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",

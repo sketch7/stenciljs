@@ -6,9 +6,8 @@ import type { EventEmitter } from "@stencil/core";
 
 import { useCreateDraft, useJoinDraft, useListDrafts } from "../draft/draft.hooks";
 import { useDraftsSSE } from "../draft/drafts-sse.hooks";
+import type { DraftSession, Team } from "../lol.types";
 import { showNotification } from "../notification/notification.store";
-
-import type { DraftSession, Team } from "#/api";
 
 const logger = getLogger(["lol", "lobby"]);
 

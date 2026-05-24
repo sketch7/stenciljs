@@ -18,10 +18,7 @@
     "strict": true,
     "jsx": "react",
     "jsxFactory": "h",
-    "jsxFragmentFactory": "h.Fragment",
-    "paths": {
-      "#/api": ["./src/examples/lol-draft-lobby-simulator/shared/lol.types.ts"]
-    }
+    "jsxFragmentFactory": "h.Fragment"
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist", "loader", "hydrate", "www", "src/react"]

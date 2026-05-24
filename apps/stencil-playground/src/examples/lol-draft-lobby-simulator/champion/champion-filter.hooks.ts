@@ -1,6 +1,6 @@
 import { computed, signal, useSignalWatcher } from "@ssv/stencil-signals";
 
-import type { Champion, ChampionRole } from "#/api";
+import type { Champion, ChampionRole } from "../lol.types";
 
 export type ChampionFilter = {
 	search: string;

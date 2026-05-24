@@ -2,7 +2,7 @@ import { SsvElement } from "@ssv/stencil.core";
 import { Component, Event, Prop, h } from "@stencil/core";
 import type { EventEmitter } from "@stencil/core";
 
-import type { ChampionRole } from "#/api";
+import type { ChampionRole } from "../lol.types";
 
 const ROLES: ChampionRole[] = ["top", "jungle", "mid", "bot", "support"];
 

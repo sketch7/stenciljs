@@ -2,7 +2,7 @@ import { SsvElement } from "@ssv/stencil.core";
 import { Component, Event, Prop, h } from "@stencil/core";
 import type { EventEmitter } from "@stencil/core";
 
-import type { Champion } from "#/api";
+import type { Champion } from "../lol.types";
 
 export type ChampionCardStatus = "available" | "picked" | "banned" | "pending";
 

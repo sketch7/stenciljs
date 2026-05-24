@@ -1,8 +1,7 @@
 import { getLogger } from "@logtape/logtape";
 
+import type { DraftSession, Team } from "../lol.types";
 import { BASE_URL } from "../shared/lol.constants";
-
-import type { DraftSession, Team } from "#/api";
 
 const logger = getLogger(["lol", "draft"]);
 

@@ -3,14 +3,14 @@ import "../shared/logging";
 import { getLogger } from "@logtape/logtape";
 import { SsvElement } from "@ssv/stencil.core";
 import { provideTransferState } from "@ssv/stencil.core/transfer-state";
-import { QueryClient, provideQueryClient } from "@ssv/tanstack.stencil-query";
+import { QueryClient } from "@ssv/tanstack.stencil-query";
 import { useQueryDevtools } from "@ssv/tanstack.stencil-query/dev-tools";
 import { Component, State, h } from "@stencil/core";
 
 import { useDraftSSE } from "../draft/draft-sse.hooks";
 import type { LobbyJoinEvent } from "../lobby/lol-lobby-list";
-
 import type { Team } from "../lol.types";
+import { provideLolDraftQueryClient } from "../shared/lol-query-client";
 
 const logger = getLogger(["lol"]);
 
@@ -20,9 +20,9 @@ const logger = getLogger(["lol"]);
 	shadow: true,
 })
 export class AppLolDraftLobbyHost extends SsvElement {
-	// Transfer state must be declared before provideQueryClient.
+	// Transfer state must be declared before provideLolDraftQueryClient.
 	readonly #ts = provideTransferState("lol-draft");
-	readonly #queryClient = provideQueryClient({
+	readonly _queryClient = provideLolDraftQueryClient({
 		// SSE drives real-time invalidation — disable window-focus refetching to avoid noise.
 		client: new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } }),
 		withHydration: this.#ts,
@@ -34,7 +34,7 @@ export class AppLolDraftLobbyHost extends SsvElement {
 	@State() myTeam: Team | null = null;
 
 	// Subscribe to per-session SSE once we have a draftId
-	readonly _ = useDraftSSE(() => this.draftId, this.#queryClient);
+	readonly _ = useDraftSSE(() => this.draftId);
 
 	private handleCreate(e: CustomEvent<LobbyJoinEvent>) {
 		this.draftId = e.detail.session.id;

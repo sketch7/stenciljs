@@ -1,15 +1,14 @@
 import { getLogger } from "@logtape/logtape";
 import { use } from "@ssv/stencil.core";
-import { useQueryClient } from "@ssv/tanstack.stencil-query";
-import type { QueryClient } from "@ssv/tanstack.stencil-query";
 import { Build } from "@stencil/core";
 
+import { useLolDraftQueryClient } from "../shared/lol-query-client";
 import { BASE_URL } from "../shared/lol.constants";
 
 const logger = getLogger(["lol", "draft", "sse"]);
 
-export function useDraftSSE(getDraftId: () => string | null, queryClient?: QueryClient) {
-	const client = useQueryClient(queryClient);
+export function useDraftSSE(getDraftId: () => string | null) {
+	const client = useLolDraftQueryClient();
 
 	return use(() => {
 		let es: EventSource | undefined;

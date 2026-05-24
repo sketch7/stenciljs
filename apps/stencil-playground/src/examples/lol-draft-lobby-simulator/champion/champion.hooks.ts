@@ -1,12 +1,12 @@
 import { use } from "@ssv/stencil.core";
-import { useQuery, useQueryClient } from "@ssv/tanstack.stencil-query";
-import type { QueryClient } from "@ssv/tanstack.stencil-query";
+import { useQuery } from "@ssv/tanstack.stencil-query";
 
+import { useLolDraftQueryClient } from "../shared/lol-query-client";
 import { useChampionFilter } from "./champion-filter.hooks";
 import { CHAMPIONS_QUERY_KEY, fetchChampions } from "./champion.client";
 
-export function useChampions(queryClient?: QueryClient) {
-	const client = useQueryClient(queryClient);
+export function useChampions() {
+	const client = useLolDraftQueryClient();
 
 	use({
 		async hostWillLoad() {
@@ -18,10 +18,11 @@ export function useChampions(queryClient?: QueryClient) {
 		},
 	});
 
-	const championsRef = useQuery(
-		() => ({ queryKey: CHAMPIONS_QUERY_KEY, staleTime: Infinity, queryFn: fetchChampions }),
-		queryClient,
-	);
+	const championsRef = useQuery(() => ({
+		queryKey: CHAMPIONS_QUERY_KEY,
+		staleTime: Infinity,
+		queryFn: fetchChampions,
+	}));
 
 	return {
 		get query() {
@@ -31,9 +32,9 @@ export function useChampions(queryClient?: QueryClient) {
 }
 
 /** Main champion hook — combines data fetching and filter state. */
-export function useChampion(queryClient?: QueryClient) {
+export function useChampion() {
 	return {
-		champions: useChampions(queryClient),
+		champions: useChampions(),
 		filter: useChampionFilter(),
 	};
 }

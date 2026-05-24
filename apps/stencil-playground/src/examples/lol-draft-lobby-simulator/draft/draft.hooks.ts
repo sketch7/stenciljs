@@ -1,8 +1,8 @@
 import { getLogger } from "@logtape/logtape";
-import { useMutation, useQuery, useQueryClient } from "@ssv/tanstack.stencil-query";
-import type { QueryClient } from "@ssv/tanstack.stencil-query";
+import { useMutation, useQuery } from "@ssv/tanstack.stencil-query";
 
 import type { DraftSession, Team } from "../lol.types";
+import { useLolDraftQueryClient } from "../shared/lol-query-client";
 import {
 	apiCreateDraft,
 	apiBan,
@@ -23,16 +23,13 @@ export { DRAFTS_QUERY_KEY };
 
 // ── useListDrafts ──────────────────────────────────────────────────────────────
 
-export function useListDrafts(queryClient?: QueryClient) {
-	const listRef = useQuery(
-		() => ({
-			queryKey: DRAFTS_QUERY_KEY,
-			queryFn: fetchDraftList,
-			// SSE (useLobbySSE) drives all invalidations — treat cached data as always fresh.
-			staleTime: Infinity,
-		}),
-		queryClient,
-	);
+export function useListDrafts() {
+	const listRef = useQuery(() => ({
+		queryKey: DRAFTS_QUERY_KEY,
+		queryFn: fetchDraftList,
+		// SSE (useLobbySSE) drives all invalidations — treat cached data as always fresh.
+		staleTime: Infinity,
+	}));
 	return {
 		get list() {
 			return listRef();
@@ -42,17 +39,14 @@ export function useListDrafts(queryClient?: QueryClient) {
 
 // ── useCreateDraft ─────────────────────────────────────────────────────────────
 
-export function useCreateDraft(queryClient?: QueryClient) {
-	const client = useQueryClient(queryClient);
-	const mutation = useMutation(
-		{
-			mutationFn: apiCreateDraft,
-			onSuccess: (session: DraftSession) => {
-				client.current?.setQueryData(draftQueryKey(session.id), session);
-			},
+export function useCreateDraft() {
+	const client = useLolDraftQueryClient();
+	const mutation = useMutation({
+		mutationFn: apiCreateDraft,
+		onSuccess: (session: DraftSession) => {
+			client.current?.setQueryData(draftQueryKey(session.id), session);
 		},
-		queryClient,
-	);
+	});
 	return {
 		get create() {
 			return mutation();
@@ -62,7 +56,7 @@ export function useCreateDraft(queryClient?: QueryClient) {
 
 // ── useDraftSession ────────────────────────────────────────────────────────────
 
-export function useDraftSession(getDraftId: () => string | null, queryClient?: QueryClient) {
+export function useDraftSession(getDraftId: () => string | null) {
 	const sessionRef = useQuery(() => {
 		const id = getDraftId();
 		if (!id) {
@@ -70,7 +64,7 @@ export function useDraftSession(getDraftId: () => string | null, queryClient?: Q
 		}
 		// SSE (useDraftSSE) drives all invalidations — treat cached data as always fresh.
 		return { queryKey: draftQueryKey(id), queryFn: () => fetchDraftSession(id), staleTime: Infinity };
-	}, queryClient);
+	});
 
 	return {
 		get session() {
@@ -88,89 +82,80 @@ export type PickArgs = {
 
 // ── useDraftMutations ──────────────────────────────────────────────────────────
 
-export function useDraftMutations(getDraftId: () => string | null, queryClient?: QueryClient) {
-	const client = useQueryClient(queryClient);
+export function useDraftMutations(getDraftId: () => string | null) {
+	const client = useLolDraftQueryClient();
 
-	const pickRef = useMutation(
-		{
-			mutationFn: ({ championId, team }: PickArgs) => {
-				const id = getDraftId();
-				if (!id) {
-					throw new Error("No active draft session");
-				}
-				return apiPick(id, championId, team);
-			},
-			onSuccess: session => {
-				logger.info("Pick OK: phase={phase} turn={turn}", { phase: session.phase, turn: session.currentTurnIndex });
-				client.current?.setQueryData(draftQueryKey(session.id), session);
-			},
-			onError: (err: unknown) => {
-				logger.error("Pick failed: {error}", { error: String(err) });
-			},
-			onSettled: () => {
-				const id = getDraftId();
-				if (id) {
-					client.current?.invalidateQueries({ queryKey: draftQueryKey(id) });
-				}
-			},
+	const pickRef = useMutation({
+		mutationFn: ({ championId, team }: PickArgs) => {
+			const id = getDraftId();
+			if (!id) {
+				throw new Error("No active draft session");
+			}
+			return apiPick(id, championId, team);
 		},
-		queryClient,
-	);
+		onSuccess: session => {
+			logger.info("Pick OK: phase={phase} turn={turn}", { phase: session.phase, turn: session.currentTurnIndex });
+			client.current?.setQueryData(draftQueryKey(session.id), session);
+		},
+		onError: (err: unknown) => {
+			logger.error("Pick failed: {error}", { error: String(err) });
+		},
+		onSettled: () => {
+			const id = getDraftId();
+			if (id) {
+				client.current?.invalidateQueries({ queryKey: draftQueryKey(id) });
+			}
+		},
+	});
 
-	const banRef = useMutation(
-		{
-			mutationFn: ({ championId, team }: PickArgs) => {
-				const id = getDraftId();
-				if (!id) {
-					throw new Error("No active draft session");
-				}
-				return apiBan(id, championId, team);
-			},
-			onSuccess: session => {
-				logger.info("Ban OK: phase={phase} turn={turn}", { phase: session.phase, turn: session.currentTurnIndex });
-				client.current?.setQueryData(draftQueryKey(session.id), session);
-			},
-			onError: (err: unknown) => {
-				logger.error("Ban failed: {error}", { error: String(err) });
-			},
-			onSettled: () => {
-				const id = getDraftId();
-				if (id) {
-					client.current?.invalidateQueries({ queryKey: draftQueryKey(id) });
-				}
-			},
+	const banRef = useMutation({
+		mutationFn: ({ championId, team }: PickArgs) => {
+			const id = getDraftId();
+			if (!id) {
+				throw new Error("No active draft session");
+			}
+			return apiBan(id, championId, team);
 		},
-		queryClient,
-	);
+		onSuccess: session => {
+			logger.info("Ban OK: phase={phase} turn={turn}", { phase: session.phase, turn: session.currentTurnIndex });
+			client.current?.setQueryData(draftQueryKey(session.id), session);
+		},
+		onError: (err: unknown) => {
+			logger.error("Ban failed: {error}", { error: String(err) });
+		},
+		onSettled: () => {
+			const id = getDraftId();
+			if (id) {
+				client.current?.invalidateQueries({ queryKey: draftQueryKey(id) });
+			}
+		},
+	});
 
-	const simulateRef = useMutation(
-		{
-			mutationFn: () => {
-				const id = getDraftId();
-				if (!id) {
-					throw new Error("No active draft session");
-				}
-				return apiSimulateOpponent(id);
-			},
-			onSuccess: session => {
-				logger.info("Simulate-opponent OK: phase={phase} turn={turn}", {
-					phase: session.phase,
-					turn: session.currentTurnIndex,
-				});
-				client.current?.setQueryData(draftQueryKey(session.id), session);
-			},
-			onError: (err: unknown) => {
-				logger.error("Simulate-opponent failed: {error}", { error: String(err) });
-			},
-			onSettled: () => {
-				const id = getDraftId();
-				if (id) {
-					client.current?.invalidateQueries({ queryKey: draftQueryKey(id) });
-				}
-			},
+	const simulateRef = useMutation({
+		mutationFn: () => {
+			const id = getDraftId();
+			if (!id) {
+				throw new Error("No active draft session");
+			}
+			return apiSimulateOpponent(id);
 		},
-		queryClient,
-	);
+		onSuccess: session => {
+			logger.info("Simulate-opponent OK: phase={phase} turn={turn}", {
+				phase: session.phase,
+				turn: session.currentTurnIndex,
+			});
+			client.current?.setQueryData(draftQueryKey(session.id), session);
+		},
+		onError: (err: unknown) => {
+			logger.error("Simulate-opponent failed: {error}", { error: String(err) });
+		},
+		onSettled: () => {
+			const id = getDraftId();
+			if (id) {
+				client.current?.invalidateQueries({ queryKey: draftQueryKey(id) });
+			}
+		},
+	});
 
 	return {
 		get pick() {
@@ -187,17 +172,14 @@ export function useDraftMutations(getDraftId: () => string | null, queryClient?:
 
 // ── useJoinDraft ───────────────────────────────────────────────────────────────
 
-export function useJoinDraft(queryClient?: QueryClient) {
-	const client = useQueryClient(queryClient);
-	const mutation = useMutation(
-		{
-			mutationFn: (draftId: string) => apiJoinDraft(draftId),
-			onSuccess: (session: DraftSession) => {
-				client.current?.setQueryData(draftQueryKey(session.id), session);
-			},
+export function useJoinDraft() {
+	const client = useLolDraftQueryClient();
+	const mutation = useMutation({
+		mutationFn: (draftId: string) => apiJoinDraft(draftId),
+		onSuccess: (session: DraftSession) => {
+			client.current?.setQueryData(draftQueryKey(session.id), session);
 		},
-		queryClient,
-	);
+	});
 	return {
 		get join() {
 			return mutation();
@@ -207,21 +189,18 @@ export function useJoinDraft(queryClient?: QueryClient) {
 
 // ── useEnableSimulation ────────────────────────────────────────────────────────
 
-export function useEnableSimulation(queryClient?: QueryClient) {
-	const client = useQueryClient(queryClient);
-	const mutation = useMutation(
-		{
-			mutationFn: (draftId: string) => apiEnableSimulation(draftId),
-			onSuccess: session => {
-				logger.info("Simulation enabled: id={id}", { id: session.id });
-				client.current?.setQueryData(draftQueryKey(session.id), session);
-			},
-			onError: (err: unknown) => {
-				logger.error("Enable simulation failed: {error}", { error: String(err) });
-			},
+export function useEnableSimulation() {
+	const client = useLolDraftQueryClient();
+	const mutation = useMutation({
+		mutationFn: (draftId: string) => apiEnableSimulation(draftId),
+		onSuccess: session => {
+			logger.info("Simulation enabled: id={id}", { id: session.id });
+			client.current?.setQueryData(draftQueryKey(session.id), session);
 		},
-		queryClient,
-	);
+		onError: (err: unknown) => {
+			logger.error("Enable simulation failed: {error}", { error: String(err) });
+		},
+	});
 	return {
 		get enable() {
 			return mutation();
@@ -232,19 +211,19 @@ export function useEnableSimulation(queryClient?: QueryClient) {
 // ── Main hooks ─────────────────────────────────────────────────────────────────
 
 /** Main lobby hook — combines listing, creating, and joining drafts. */
-export function useDraftLobby(queryClient?: QueryClient) {
+export function useDraftLobby() {
 	return {
-		list: useListDrafts(queryClient),
-		create: useCreateDraft(queryClient),
-		join: useJoinDraft(queryClient),
+		list: useListDrafts(),
+		create: useCreateDraft(),
+		join: useJoinDraft(),
 	};
 }
 
 /** Main draft-session hook — combines session data, mutations, and simulation. */
-export function useDraftView(getDraftId: () => string | null, queryClient?: QueryClient) {
+export function useDraftView(getDraftId: () => string | null) {
 	return {
-		session: useDraftSession(getDraftId, queryClient),
-		mutations: useDraftMutations(getDraftId, queryClient),
-		enableSim: useEnableSimulation(queryClient),
+		session: useDraftSession(getDraftId),
+		mutations: useDraftMutations(getDraftId),
+		enableSim: useEnableSimulation(),
 	};
 }

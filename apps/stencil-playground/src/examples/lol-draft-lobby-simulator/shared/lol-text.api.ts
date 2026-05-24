@@ -1,7 +1,7 @@
 import { use } from "@ssv/stencil.core";
-import { useQuery, useQueryClient } from "@ssv/tanstack.stencil-query";
-import type { QueryClient } from "@ssv/tanstack.stencil-query";
+import { useQuery } from "@ssv/tanstack.stencil-query";
 
+import { useLolDraftQueryClient } from "./lol-query-client";
 import { BASE_URL } from "./lol.constants";
 
 export type LolTextMap = Record<string, string>;
@@ -17,8 +17,8 @@ async function fetchLolText(): Promise<LolTextMap> {
 	return res.json() as Promise<LolTextMap>;
 }
 
-export function useLoLText(queryClient?: QueryClient) {
-	const client = useQueryClient(queryClient);
+export function useLoLText() {
+	const client = useLolDraftQueryClient();
 
 	use({
 		async hostWillLoad() {
@@ -26,7 +26,7 @@ export function useLoLText(queryClient?: QueryClient) {
 		},
 	});
 
-	const textRef = useQuery(() => ({ queryKey: QUERY_KEY, staleTime: Infinity, queryFn: fetchLolText }), queryClient);
+	const textRef = useQuery(() => ({ queryKey: QUERY_KEY, staleTime: Infinity, queryFn: fetchLolText }));
 
 	function t(key: string, fallback?: string): string {
 		const map = textRef().data ?? {};

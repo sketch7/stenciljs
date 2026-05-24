@@ -1,7 +1,7 @@
 import { SsvElement } from "@ssv/stencil.core";
 import { Component, Prop, h } from "@stencil/core";
 
-import type { Champion } from "../shared/lol.types";
+import type { Champion } from "#/api";
 
 @Component({
 	tag: "app-lol-draft-hero-card",

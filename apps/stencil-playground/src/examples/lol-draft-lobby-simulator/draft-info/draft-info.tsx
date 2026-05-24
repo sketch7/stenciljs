@@ -2,7 +2,7 @@
 import { SsvElement } from "@ssv/stencil.core";
 import { Component, Prop, h } from "@stencil/core";
 
-import { useDraftMutations, useDraftSession, useEnableSimulation } from "../draft/draft.api";
+import { useDraftMutations, useDraftSession, useEnableSimulation } from "../draft/draft.hooks";
 import { showNotification } from "../notification/notification.store";
 
 const PHASE_LABELS: Record<string, string> = {

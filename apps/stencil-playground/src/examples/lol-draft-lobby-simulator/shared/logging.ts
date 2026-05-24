@@ -2,7 +2,7 @@ import type { LogLevel } from "@logtape/logtape";
 import { configureSync, getConsoleSink } from "@logtape/logtape";
 
 /** Per-feature log categories for the LoL draft simulator. */
-export type LolLogCategory = "root" | "draft" | "draft-sse" | "lobby" | "champion";
+export type LolLogCategory = "root" | "draft" | "draft-sse" | "drafts-sse" | "lobby" | "champion";
 
 /** LogTape levels plus "off" to silence a category entirely. */
 export type LolLogLevel = LogLevel | "off";
@@ -13,6 +13,7 @@ const DEFAULTS: Record<LolLogCategory, LolLogLevel> = {
 	root: "info",
 	draft: "debug",
 	"draft-sse": "debug",
+	"drafts-sse": "debug",
 	lobby: "debug",
 	champion: "warning",
 };
@@ -21,6 +22,7 @@ const CATEGORIES: Record<LolLogCategory, readonly string[]> = {
 	root: ["lol"],
 	draft: ["lol", "draft"],
 	"draft-sse": ["lol", "draft", "sse"],
+	"drafts-sse": ["lol", "draft", "drafts-sse"],
 	lobby: ["lol", "lobby"],
 	champion: ["lol", "champion"],
 };
@@ -68,6 +70,7 @@ if (globalThis.window !== undefined) {
 			buildLoggerEntry("root"),
 			buildLoggerEntry("draft"),
 			buildLoggerEntry("draft-sse"),
+			buildLoggerEntry("drafts-sse"),
 			buildLoggerEntry("lobby"),
 			buildLoggerEntry("champion"),
 		],

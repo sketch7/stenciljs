@@ -1,7 +1,7 @@
 import { SsvElement } from "@ssv/stencil.core";
 import { Component, Prop, h } from "@stencil/core";
 
-import type { Champion, DraftSession, Team } from "../shared/lol.types";
+import type { Champion, DraftSession, Team } from "#/api";
 
 @Component({
 	tag: "app-lol-team-section",

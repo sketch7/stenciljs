@@ -2,11 +2,12 @@ import { getLogger } from "@logtape/logtape";
 import { SsvElement } from "@ssv/stencil.core";
 import { Component, Listen, Prop, h } from "@stencil/core";
 
-import { useDraftMutations, useDraftSession } from "../draft/draft.api";
-import type { Champion, ChampionRole, DraftSession, Team } from "../shared/lol.types";
+import { useDraftMutations, useDraftSession } from "../draft/draft.hooks";
 import type { ChampionCardStatus } from "./champion-card";
 import { useChampionFilter } from "./champion-filter.hooks";
-import { useChampions } from "./champion-pool.api";
+import { useChampions } from "./champion.hooks";
+
+import type { Champion, ChampionRole, DraftSession, Team } from "#/api";
 
 const logger = getLogger(["lol", "champion"]);
 

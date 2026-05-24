@@ -4,10 +4,11 @@ import { SsvElement } from "@ssv/stencil.core";
 import { Component, Event, h } from "@stencil/core";
 import type { EventEmitter } from "@stencil/core";
 
-import { useCreateDraft, useJoinDraft } from "../draft/draft.api";
+import { useCreateDraft, useJoinDraft, useListDrafts } from "../draft/draft.hooks";
+import { useDraftsSSE } from "../draft/drafts-sse.hooks";
 import { showNotification } from "../notification/notification.store";
-import type { DraftSession, Team } from "../shared/lol.types";
-import { useListDrafts, useLobbySSE } from "./lobby.api";
+
+import type { DraftSession, Team } from "#/api";
 
 const logger = getLogger(["lol", "lobby"]);
 
@@ -29,7 +30,7 @@ export class AppLolLobbyList extends SsvElement {
 	readonly #list = useListDrafts();
 	readonly #create = useCreateDraft();
 	readonly #join = useJoinDraft();
-	readonly _ = useLobbySSE();
+	readonly _ = useDraftsSSE();
 
 	@Event() appCreate!: EventEmitter<LobbyJoinEvent>;
 	@Event() appJoin!: EventEmitter<LobbyJoinEvent>;

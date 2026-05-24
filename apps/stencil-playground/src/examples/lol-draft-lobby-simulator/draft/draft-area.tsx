@@ -2,9 +2,10 @@
 import { SsvElement } from "@ssv/stencil.core";
 import { Component, Prop, h } from "@stencil/core";
 
-import { useChampions } from "../champion-pool/champion-pool.api";
-import type { Champion, DraftSession } from "../shared/lol.types";
-import { useDraftSession } from "./draft.api";
+import { useChampions } from "../champion/champion.hooks";
+import { useDraftSession } from "./draft.hooks";
+
+import type { Champion, DraftSession } from "#/api";
 
 function buildChampionMap(champions: Champion[] | undefined): Map<string, Champion> {
 	const map = new Map<string, Champion>();

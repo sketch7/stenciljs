@@ -11,5 +11,5 @@
   "[jsonc]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"
   },
-  "cSpell.words": ["unsub", "vike"]
+  "cSpell.words": ["logtape", "unsub", "vike"]
 }

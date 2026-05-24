@@ -7,5 +7,7 @@
 			"path": "../external-libs",
 		},
 	],
-	"settings": {},
+	"settings": {
+		"cSpell.words": ["logtape"],
+	},
 }

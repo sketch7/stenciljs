@@ -1,11 +1,11 @@
-# @ssv/stencil.core
+# @ssv/stencil-core
 
 Core utilities for hosting lifecycle-aware controllers and tree-scoped context in [StencilJS](https://stenciljs.com/) components.
 
 ## Install
 
 ```bash
-pnpm add @ssv/stencil.core
+pnpm add @ssv/stencil-core
 ```
 
 **Peer dependency:** `@stencil/core >=4`
@@ -27,8 +27,8 @@ pnpm add @ssv/stencil.core
 
 See [docs/hooks.md](docs/hooks.md) for the full `use()` guide — forms, examples, and host context internals.
 See [docs/context.md](docs/context.md) for the tree-scoped context API — `createContext`, `provideContext`, `useContext`, and composing into hooks.
-See [docs/transfer-state.md](docs/transfer-state.md) for SSR state serialization — `provideTransferState`, `useTransferState`, and shadow DOM hydration. Import from `@ssv/stencil.core/transfer-state`.
-See [docs/dev.md](docs/dev.md) for development utilities — `useLifecycleLogger` and related types. Import from `@ssv/stencil.core/dev`.
+See [docs/transfer-state.md](docs/transfer-state.md) for SSR state serialization — `provideTransferState`, `useTransferState`, and shadow DOM hydration. Import from `@ssv/stencil-core/transfer-state`.
+See [docs/dev.md](docs/dev.md) for development utilities — `useLifecycleLogger` and related types. Import from `@ssv/stencil-core/dev`.
 
 ## Examples
 

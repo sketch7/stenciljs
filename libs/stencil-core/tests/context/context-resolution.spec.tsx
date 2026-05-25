@@ -1,4 +1,4 @@
-import { DomTestHost } from "@ssv/stencil.core/testing/dom";
+import { DomTestHost } from "@ssv/stencil-core/testing/dom";
 /**
  * Context resolution order tests.
  *

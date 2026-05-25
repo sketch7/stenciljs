@@ -17,7 +17,7 @@ export default defineProject({
 		},
 	},
 	test: {
-		name: "stencil.core/integration",
+		name: "stencil-core/integration",
 		include: ["tests/**/*.spec.tsx"],
 		environment: stencilEnv,
 		setupFiles: ["./vitest-setup.ts"],

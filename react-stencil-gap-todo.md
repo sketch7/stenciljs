@@ -72,7 +72,7 @@
 
 ---
 
-## Planned improvements to `@ssv/stencil.core`
+## Planned improvements to `@ssv/stencil-core`
 
 - [ ] **`useId()`** — stable, SSR-safe ID generator hook
 - [ ] **`ErrorController`** — `ReactiveController` for error boundaries at the Stencil level

@@ -1,4 +1,4 @@
-import { TestHost } from "@ssv/stencil.core/testing";
+import { TestHost } from "@ssv/stencil-core/testing";
 import { QueryClient, noop } from "@tanstack/query-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 

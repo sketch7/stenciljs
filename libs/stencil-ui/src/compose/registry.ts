@@ -1,5 +1,5 @@
-import { useContext, createContext, provideContext } from "@ssv/stencil.core";
-import type { Ref } from "@ssv/stencil.core";
+import { useContext, createContext, provideContext } from "@ssv/stencil-core";
+import type { Ref } from "@ssv/stencil-core";
 
 import { isComposeDevEnv } from "./is-compose-dev";
 import type { ComposeDef, ComposeDefInternal, ComposeRegistry, CompositionDefsMap } from "./types";

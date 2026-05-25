@@ -1,5 +1,5 @@
-import { getCurrentHost, peekCurrentHost, use } from "@ssv/stencil.core";
-import type { ReactiveControllerHost } from "@ssv/stencil.core";
+import { getCurrentHost, peekCurrentHost, use } from "@ssv/stencil-core";
+import type { ReactiveControllerHost } from "@ssv/stencil-core";
 import { getElement } from "@stencil/core";
 import type { ListenOptions } from "@stencil/core";
 

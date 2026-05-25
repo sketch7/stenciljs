@@ -8,7 +8,7 @@ TanStack Query bindings for [StencilJS](https://stenciljs.com/) — reactive ser
 pnpm add @ssv/tanstack.stencil-query @tanstack/query-core
 ```
 
-**Peer dependencies:** `@ssv/stencil.core`, `@stencil/core >=4`
+**Peer dependencies:** `@ssv/stencil-core`, `@stencil/core >=4`
 
 ## Quick start
 
@@ -98,7 +98,7 @@ export class AppRoot extends SsvElement {
 ### SSR hydration
 
 ```ts
-import { provideTransferState } from "@ssv/stencil.core/transfer-state";
+import { provideTransferState } from "@ssv/stencil-core/transfer-state";
 
 readonly #ts = provideTransferState("my-scope");
 readonly #qc = provideQueryClient({ withHydration: this.#ts });

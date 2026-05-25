@@ -3,7 +3,7 @@
 Serializes server-computed values into the component's shadow DOM as a `<script type="application/json">` tag. The client reads and removes it before the first render — no duplicate network requests.
 
 ```ts
-import { provideTransferState, useTransferState, makeTransferKey } from "@ssv/stencil.core/transfer-state";
+import { provideTransferState, useTransferState, makeTransferKey } from "@ssv/stencil-core/transfer-state";
 ```
 
 ## API

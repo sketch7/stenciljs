@@ -1,5 +1,5 @@
-import { createRef } from "@ssv/stencil.core";
-import type { Ref } from "@ssv/stencil.core";
+import { createRef } from "@ssv/stencil-core";
+import type { Ref } from "@ssv/stencil-core";
 import { noop } from "@tanstack/query-core";
 import type { DefaultError, QueryClient } from "@tanstack/query-core";
 

@@ -1,5 +1,5 @@
+import { use } from "@ssv/stencil-core";
 import { signal } from "@ssv/stencil-signals";
-import { use } from "@ssv/stencil.core";
 import { Build } from "@stencil/core";
 
 import type { SSEController, SSEEventHandler, SSEEventMap, SSELastEvent, SSEOptions, SSEStatus } from "./sse.types";

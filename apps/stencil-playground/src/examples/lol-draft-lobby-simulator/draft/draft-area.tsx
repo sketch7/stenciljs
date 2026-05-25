@@ -1,5 +1,5 @@
 // oxlint-disable complexity
-import { SsvElement } from "@ssv/stencil.core";
+import { SsvElement } from "@ssv/stencil-core";
 import { Component, Prop, h } from "@stencil/core";
 
 import { useChampions } from "../champion/champion.hooks";

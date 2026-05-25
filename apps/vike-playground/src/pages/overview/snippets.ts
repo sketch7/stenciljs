@@ -19,7 +19,7 @@ export class MyTooltip {
   render() { /* ... */ }
 }`,
 
-	hooksAfter: `// @ssv/stencil.core — composable, reusable, no boilerplate
+	hooksAfter: `// @ssv/stencil-core — composable, reusable, no boilerplate
 function useClickOutside(onOutside: () => void) {
   useEffect(() => {
     const handler = () => onOutside();
@@ -107,7 +107,7 @@ export class CtxConsumer {
   render() { return <div>{this.store?.count}</div>; }
 }`,
 
-	contextAfter: `// @ssv/stencil.core — typed, tree-scoped, one line each
+	contextAfter: `// @ssv/stencil-core — typed, tree-scoped, one line each
 export const CounterContext =
   createContext<CounterStore>(() => createCounterStore(), { name: 'counter' });
 
@@ -137,7 +137,7 @@ export class MyData {
   render() { return <ul>{this.data?.map(...)}</ul>; }
 }`,
 
-	transferAfter: `// @ssv/stencil.core/transfer-state — server fetches once, client rehydrates
+	transferAfter: `// @ssv/stencil-core/transfer-state — server fetches once, client rehydrates
 const ITEMS_KEY = makeTransferKey<Item[]>('items');
 
 @Component({ tag: 'my-data', shadow: true })

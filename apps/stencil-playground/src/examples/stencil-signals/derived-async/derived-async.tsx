@@ -1,6 +1,6 @@
+import { SsvElement } from "@ssv/stencil-core";
 import { signal, useSignalWatcher } from "@ssv/stencil-signals";
 import { derivedAsync } from "@ssv/stencil-signals/extensions";
-import { SsvElement } from "@ssv/stencil.core";
 import { Component, h } from "@stencil/core";
 
 export type ApiUser = {

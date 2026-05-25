@@ -1,7 +1,7 @@
-import type { HookName } from "@ssv/stencil.core/dev";
+import type { HookName } from "@ssv/stencil-core/dev";
 
-export { useLifecycleLogger } from "@ssv/stencil.core/dev";
-export type { HookEvent, HookName } from "@ssv/stencil.core/dev";
+export { useLifecycleLogger } from "@ssv/stencil-core/dev";
+export type { HookEvent, HookName } from "@ssv/stencil-core/dev";
 
 export const hookMeta: Record<HookName, { badge: string; desc: string }> = {
 	hostConnected: { badge: "connected", desc: "Element connected to the DOM" },

@@ -1,4 +1,4 @@
-import { use, useLoadEffect } from "@ssv/stencil.core";
+import { use, useLoadEffect } from "@ssv/stencil-core";
 import { MutationObserver, notifyManager, noop } from "@tanstack/query-core";
 import type { MutationObserverResult, QueryClient } from "@tanstack/query-core";
 

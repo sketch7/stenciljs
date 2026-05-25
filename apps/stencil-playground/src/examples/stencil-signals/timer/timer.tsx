@@ -1,6 +1,6 @@
+import { SsvElement } from "@ssv/stencil-core";
 import { computed, signal, useSignalWatcher, effect } from "@ssv/stencil-signals";
 import { useSignalProps } from "@ssv/stencil-signals/extensions";
-import { SsvElement } from "@ssv/stencil.core";
 import { Component, Event, EventEmitter, Prop, h } from "@stencil/core";
 
 const PRESETS = [10, 30, 60, 120, 300] as const;

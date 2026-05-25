@@ -1,5 +1,5 @@
-import { SsvElement } from "@ssv/stencil.core";
-import { useLifecycleLogger } from "@ssv/stencil.core/dev";
+import { SsvElement } from "@ssv/stencil-core";
+import { useLifecycleLogger } from "@ssv/stencil-core/dev";
 import { Component, State, h } from "@stencil/core";
 
 import { useTranslations } from "./translations.api";

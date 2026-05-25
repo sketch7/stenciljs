@@ -1,4 +1,4 @@
-import { SsvElement } from "@ssv/stencil.core";
+import { SsvElement } from "@ssv/stencil-core";
 import { Component, State, h } from "@stencil/core";
 
 import { hookMeta, useLifecycleLogger } from "./lifecycle-logger";

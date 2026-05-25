@@ -26,7 +26,7 @@
     "fmt:check": "oxfmt --check src/"
   },
   "devDependencies": {
-    "@ssv/stencil.core": "workspace:*",
+    "@ssv/stencil-core": "workspace:*",
     "@stencil/core": "catalog:",
     "@tanstack/store": "catalog:",
     "@types/node": "catalog:",
@@ -38,7 +38,7 @@
     "vitest": "catalog:"
   },
   "peerDependencies": {
-    "@ssv/stencil.core": "workspace:*",
+    "@ssv/stencil-core": "workspace:*",
     "@stencil/core": ">=4.0.0",
     "@tanstack/store": "^0.11.0"
   }

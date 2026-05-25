@@ -1,5 +1,5 @@
 {
-  "name": "@ssv/stencil.core",
+  "name": "@ssv/stencil-core",
   "version": "0.0.0-PLACEHOLDER",
   "description": "Core utilities for hosting lifecycle-aware controllers and tree-scoped context in StencilJS components.",
   "license": "MIT",

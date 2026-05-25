@@ -55,14 +55,14 @@
     "fmt:check": "oxfmt --check src/"
   },
   "devDependencies": {
-    "@ssv/stencil.core": "workspace:*",
+    "@ssv/stencil-core": "workspace:*",
     "@stencil/core": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "typescript": "catalog:"
   },
   "peerDependencies": {
-    "@ssv/stencil.core": "workspace:*",
+    "@ssv/stencil-core": "workspace:*",
     "@stencil/core": ">=4.0.0"
   },
   "packageManager": "pnpm@9.15.0",

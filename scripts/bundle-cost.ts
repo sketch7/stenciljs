@@ -96,7 +96,7 @@ type LibConfig = {
 // Ordered so deps appear before dependents.
 // stencil-signals runs twice: once per signal implementation flavor.
 const LIB_ORDER: LibConfig[] = [
-	{ dir: "stencil.core" },
+	{ dir: "stencil-core" },
 	{
 		dir: "stencil-signals",
 		label: "@ssv/stencil-signals [tc39]",

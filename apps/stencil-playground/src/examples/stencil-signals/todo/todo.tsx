@@ -1,5 +1,5 @@
+import { SsvElement } from "@ssv/stencil-core";
 import { useSignalWatcher } from "@ssv/stencil-signals";
-import { SsvElement } from "@ssv/stencil.core";
 import { Component, h, State } from "@stencil/core";
 
 import { todoStore } from "./todo.store";

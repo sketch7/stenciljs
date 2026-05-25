@@ -41,13 +41,13 @@ Avoid `it.each` when cases differ in setup or require different assertions — s
 
 ## Test utilities — avoid boilerplate, keep it simple
 
-### `TestHost` from `@ssv/stencil.core/testing`
+### `TestHost` from `@ssv/stencil-core/testing`
 
-Use the shared `TestHost` from `@ssv/stencil.core/testing` — do **not** redefine it inline.
+Use the shared `TestHost` from `@ssv/stencil-core/testing` — do **not** redefine it inline.
 It simulates the Stencil component lifecycle (render, requestUpdate, disconnect) without the runtime.
 
 ```ts
-import { TestHost } from "@ssv/stencil.core/testing";
+import { TestHost } from "@ssv/stencil-core/testing";
 
 let host: TestHost;
 beforeEach(() => {

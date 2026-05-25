@@ -1,6 +1,6 @@
 import { getLogger } from "@logtape/logtape";
 // oxlint-disable react/only-export-components -- Stencil component file with co-located event type
-import { SsvElement } from "@ssv/stencil.core";
+import { SsvElement } from "@ssv/stencil-core";
 import { Component, Event, h } from "@stencil/core";
 import type { EventEmitter } from "@stencil/core";
 

@@ -1,5 +1,5 @@
-import { createContext, provideContext, useContext } from "@ssv/stencil.core";
-import type { Ref } from "@ssv/stencil.core";
+import { createContext, provideContext, useContext } from "@ssv/stencil-core";
+import type { Ref } from "@ssv/stencil-core";
 import { provideQueryClient } from "@ssv/tanstack.stencil-query";
 import type { ProvideQueryClientOptions, QueryClient } from "@ssv/tanstack.stencil-query";
 

@@ -1,9 +1,9 @@
 # Dev Utilities
 
-Development-only helpers for debugging Stencil components. Import from `@ssv/stencil.core/dev` — never ship in production bundles.
+Development-only helpers for debugging Stencil components. Import from `@ssv/stencil-core/dev` — never ship in production bundles.
 
 ```ts
-import { useLifecycleLogger } from "@ssv/stencil.core/dev";
+import { useLifecycleLogger } from "@ssv/stencil-core/dev";
 ```
 
 ## API
@@ -19,8 +19,8 @@ import { useLifecycleLogger } from "@ssv/stencil.core/dev";
 Registers a controller that fires a `console.warn` on every lifecycle hook and keeps a read-only log of events.
 
 ```ts
-import { SsvElement } from "@ssv/stencil.core";
-import { useLifecycleLogger } from "@ssv/stencil.core/dev";
+import { SsvElement } from "@ssv/stencil-core";
+import { useLifecycleLogger } from "@ssv/stencil-core/dev";
 import { Component, h } from "@stencil/core";
 
 @Component({ tag: "app-demo", shadow: true })

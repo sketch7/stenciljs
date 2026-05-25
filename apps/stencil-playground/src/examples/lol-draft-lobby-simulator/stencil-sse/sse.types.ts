@@ -1,4 +1,4 @@
-import type { ContextKey, Ref } from "@ssv/stencil.core";
+import type { ContextKey, Ref } from "@ssv/stencil-core";
 
 // ─── Event map ────────────────────────────────────────────────────────────────
 
@@ -124,7 +124,7 @@ export type SSELastEvent = {
  * Create with {@link createSSEContext}; pass to {@link provideSSE} and {@link useSSEContext}.
  */
 export type SSEContext<TEvents extends object = SSEEventMap> = {
-	/** @internal The underlying stencil.core context key. */
+	/** @internal The underlying stencil-core context key. */
 	readonly _key: ContextKey<SSEController<TEvents>>;
 };
 

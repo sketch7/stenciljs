@@ -236,7 +236,7 @@ export default function Page(): JSX.Element {
 │   @ssv/tanstack.stencil-query   @ssv/tanstack.stencil-store             │
 │   @ssv/stencil-signals          @ssv/stencil-ui                         │
 ├─────────────────────────────────────────────────────────────────────────┤
-│                     Foundation (@ssv/stencil.core)                      │
+│                     Foundation (@ssv/stencil-core)                      │
 │   ReactiveController  ·  use() / useEffect()  ·  context  ·  transfer   │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                         @stencil/core (peer)                            │
@@ -271,7 +271,7 @@ export default function Page(): JSX.Element {
 			{/* ── Core ── */}
 			<section className="flex flex-col gap-6" id="core">
 				<SectionHeading id="core">
-					<code className="text-base">@ssv/stencil.core</code>
+					<code className="text-base">@ssv/stencil-core</code>
 					<Badge label="foundation" variant="info" />
 				</SectionHeading>
 				<p className="text-sm text-(--color-muted-fg)">
@@ -560,7 +560,7 @@ AppTranslationProfile
 					/>
 					<FeatureCard
 						title="Gradual adoption"
-						desc="Add @ssv/stencil.core first, then signals or query as needed. Nothing forces a big-bang rewrite."
+						desc="Add @ssv/stencil-core first, then signals or query as needed. Nothing forces a big-bang rewrite."
 						badge="low risk"
 					/>
 					<FeatureCard
@@ -588,12 +588,12 @@ AppTranslationProfile
 						{`
 @ssv/tanstack.stencil-query  ──┐
 @ssv/tanstack.stencil-store  ──┤
-@ssv/stencil-signals         ──┤──▶  @ssv/stencil.core  ──▶  @stencil/core
+@ssv/stencil-signals         ──┤──▶  @ssv/stencil-core  ──▶  @stencil/core
 @ssv/stencil-ui              ──┘
 `.trim()}
 					</pre>
 					<p className="mt-3 text-xs text-(--color-muted-fg)">
-						All higher-level packages depend only on <code>@ssv/stencil.core</code> and <code>@stencil/core</code>. No
+						All higher-level packages depend only on <code>@ssv/stencil-core</code> and <code>@stencil/core</code>. No
 						circular dependencies. Each can be updated independently.
 					</p>
 				</div>
@@ -607,7 +607,7 @@ AppTranslationProfile
 					{[
 						{
 							q: "Do we have to switch everything at once?",
-							a: "No. Each library is independent. Start with useEffect / use() from @ssv/stencil.core in one component. Add signals or query later. No breaking changes to existing components.",
+							a: "No. Each library is independent. Start with useEffect / use() from @ssv/stencil-core in one component. Add signals or query later. No breaking changes to existing components.",
 						},
 						{
 							q: "Does it work with existing @State / @Prop components?",
@@ -619,7 +619,7 @@ AppTranslationProfile
 						},
 						{
 							q: "What's the bundle cost?",
-							a: "@ssv/stencil.core is tiny (ReactiveController, context, hooks). Signals and TanStack bindings add their respective peer libraries. Everything is treeshakeable — unused APIs are eliminated.",
+							a: "@ssv/stencil-core is tiny (ReactiveController, context, hooks). Signals and TanStack bindings add their respective peer libraries. Everything is treeshakeable — unused APIs are eliminated.",
 						},
 						{
 							q: "Is SSR/hydration production-tested?",

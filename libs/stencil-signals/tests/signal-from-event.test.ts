@@ -1,4 +1,4 @@
-import { TestHost } from "@ssv/stencil.core/testing";
+import { TestHost } from "@ssv/stencil-core/testing";
 // oxlint-disable-next-line import/no-unassigned-import
 import "../src/tc39";
 // oxlint-disable-next-line import/no-namespace -- namespace required for vi.spyOn module mock

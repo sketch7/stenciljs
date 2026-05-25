@@ -7,7 +7,7 @@ export default function Page(): JSX.Element {
 			<div>
 				<h1 className="mb-1 text-2xl font-semibold">Transfer State</h1>
 				<p className="text-sm text-(--color-muted)">
-					Demonstrates <code>useTransferState</code> from <code>@ssv/stencil.core</code>. The server injects a{" "}
+					Demonstrates <code>useTransferState</code> from <code>@ssv/stencil-core</code>. The server injects a{" "}
 					<code>{'<script type="application/json">'}</code> tag into the page for each key; the client reads and removes
 					it before the first render, avoiding a duplicate network request.
 				</p>

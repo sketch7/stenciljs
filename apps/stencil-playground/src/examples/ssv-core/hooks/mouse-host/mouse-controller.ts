@@ -1,4 +1,4 @@
-import { use } from "@ssv/stencil.core";
+import { use } from "@ssv/stencil-core";
 
 export function useMouseController() {
 	return use(host => {

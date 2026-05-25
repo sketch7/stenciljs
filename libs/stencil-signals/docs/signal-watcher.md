@@ -2,7 +2,7 @@
 
 Auto-tracks signal reads during `render()` and re-renders the component whenever a tracked signal changes.
 
-**Prerequisites:** extend [`SsvElement`](../../stencil.core/README.md) (or apply `SsvElementMixin`) and register the adapter in `globalScript` ([README](../README.md#installation)).
+**Prerequisites:** extend [`SsvElement`](../../stencil-core/README.md) (or apply `SsvElementMixin`) and register the adapter in `globalScript` ([README](../README.md#installation)).
 
 **Examples:** [counter](../../apps/stencil-playground/src/examples/stencil-signals/counter/), [todo](../../apps/stencil-playground/src/examples/stencil-signals/todo/).
 
@@ -20,7 +20,7 @@ Auto-tracks signal reads during `render()` and re-renders the component whenever
 ```tsx
 import { Component } from "@stencil/core";
 import { useSignalWatcher } from "@ssv/stencil-signals";
-import { SsvElement } from "@ssv/stencil.core";
+import { SsvElement } from "@ssv/stencil-core";
 import { count, doubled } from "./store";
 
 @Component({ tag: "my-counter", shadow: false })
@@ -60,7 +60,7 @@ export class MyComp extends SignalWatcher(class {}) {
 ```tsx
 import { Component, Mixin } from "@stencil/core";
 import { SignalWatcherMixin } from "@ssv/stencil-signals";
-import { SsvElementMixin } from "@ssv/stencil.core";
+import { SsvElementMixin } from "@ssv/stencil-core";
 
 @Component({ tag: "my-comp", shadow: true })
 export class MyComp extends Mixin(SignalWatcherMixin, SsvElementMixin) {

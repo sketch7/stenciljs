@@ -1,4 +1,4 @@
-import { SsvElement, useEffect } from "@ssv/stencil.core";
+import { SsvElement, useEffect } from "@ssv/stencil-core";
 import { Component, State, h } from "@stencil/core";
 
 /**

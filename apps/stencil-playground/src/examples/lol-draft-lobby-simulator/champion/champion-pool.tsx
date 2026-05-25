@@ -1,5 +1,5 @@
 import { getLogger } from "@logtape/logtape";
-import { SsvElement } from "@ssv/stencil.core";
+import { SsvElement } from "@ssv/stencil-core";
 import { Component, Listen, Prop, h } from "@stencil/core";
 
 import { useDraftView } from "../draft/draft.hooks";

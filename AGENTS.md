@@ -63,7 +63,7 @@ pnpm nx g @nx/js:app apps/<name>
 
 | Package                                                                                                 | Purpose                                                                                                                                                         |
 | ------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`@ssv/stencil.core`](libs/stencil.core/src/index.ts)                                                   | `ReactiveController`/`ReactiveControllerHost` for lifecycle-aware controllers; `SsvElement` and `SsvElementMixin` for hosting controllers in Stencil components |
+| [`@ssv/stencil-core`](libs/stencil-core/src/index.ts)                                                   | `ReactiveController`/`ReactiveControllerHost` for lifecycle-aware controllers; `SsvElement` and `SsvElementMixin` for hosting controllers in Stencil components |
 | [`@ssv/stencil-signals`](libs/stencil-signals/src/index.ts)                                             | TC39 / Preact Signals integration — activate ONE adapter in `globalScript`, then use `useSignalWatcher()` in components                                         |
 | [`@ssv/stencil-ui`](libs/stencil-ui/src/index.ts)                                                       | Registry-driven composition system; `ssv-compose` dispatches to named component variants via a shared registry                                                  |
 | [`@ssv/tanstack.stencil-store`](libs/tanstack.stencil-store/src/index.ts)                               | TanStack Store bindings — `useSelector` / `useAtom` with reactive re-render                                                                                     |
@@ -73,7 +73,7 @@ pnpm nx g @nx/js:app apps/<name>
 ## Testing
 
 - Framework: **Vitest** — run with `pnpm nx run <project>:test` or `pnpm test` for all
-- Use `TestHost` from `@ssv/stencil.core/testing` to simulate the Stencil lifecycle without the full runtime
+- Use `TestHost` from `@ssv/stencil-core/testing` to simulate the Stencil lifecycle without the full runtime
 - Keep lifecycle tests (controllers) separate from pure logic tests — see [testing instructions](.github/instructions/testing.instructions.md)
 
 ## Dev Workflow

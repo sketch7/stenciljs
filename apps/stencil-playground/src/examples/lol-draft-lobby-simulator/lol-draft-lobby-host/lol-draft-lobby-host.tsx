@@ -1,8 +1,8 @@
 // oxlint-disable-next-line import/no-unassigned-import -- side-effect: runs configureSync before any component lifecycle
 import "../shared/logging";
 import { getLogger } from "@logtape/logtape";
-import { SsvElement } from "@ssv/stencil.core";
-import { provideTransferState } from "@ssv/stencil.core/transfer-state";
+import { SsvElement } from "@ssv/stencil-core";
+import { provideTransferState } from "@ssv/stencil-core/transfer-state";
 import { QueryClient } from "@ssv/tanstack.stencil-query";
 import { useQueryDevtools } from "@ssv/tanstack.stencil-query/dev-tools";
 import { Component, State, h } from "@stencil/core";

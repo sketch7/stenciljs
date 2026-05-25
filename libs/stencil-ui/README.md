@@ -3,10 +3,10 @@
 [![license](https://img.shields.io/npm/l/@ssv/stencil-ui.svg)](LICENSE)
 
 ```bash
-pnpm add @ssv/stencil-ui @ssv/stencil.core
+pnpm add @ssv/stencil-ui @ssv/stencil-core
 ```
 
-**Peer deps:** `@stencil/core >=4.0.0`, `@ssv/stencil.core`
+**Peer deps:** `@stencil/core >=4.0.0`, `@ssv/stencil-core`
 
 ```ts
 import {
@@ -379,5 +379,5 @@ pnpm nx run stencil-ui:dev    # watch
 
 ## Related
 
-- [@ssv/stencil.core](../stencil.core/README.md) — `SsvElement`, `useContext`, `provideContext`
+- [@ssv/stencil-core](../stencil-core/README.md) — `SsvElement`, `useContext`, `provideContext`
 - [Stencil component development skill](../../.github/skills/stenciljs-component-development/SKILL.md) — tag prefixes (`ssv-` / `app-`), vertical slices

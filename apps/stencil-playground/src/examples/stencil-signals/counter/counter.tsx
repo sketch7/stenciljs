@@ -1,5 +1,5 @@
+import { SsvElement } from "@ssv/stencil-core";
 import { computed, signal, useSignalWatcher } from "@ssv/stencil-signals";
-import { SsvElement } from "@ssv/stencil.core";
 import { Component, Prop, h } from "@stencil/core";
 
 const count = signal(0);

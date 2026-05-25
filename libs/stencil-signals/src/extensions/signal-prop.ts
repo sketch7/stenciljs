@@ -1,5 +1,5 @@
-import { createWritableRef, getCurrentHost } from "@ssv/stencil.core";
-import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
+import { createWritableRef, getCurrentHost } from "@ssv/stencil-core";
+import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil-core";
 import { getElement } from "@stencil/core";
 
 import type { Signal, WritableSignal } from "../adapters/types";

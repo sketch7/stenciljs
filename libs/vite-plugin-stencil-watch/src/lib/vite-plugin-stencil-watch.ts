@@ -49,7 +49,7 @@ export type StencilWatchOptions = {
 	/**
 	 * Additional source directories to watch. Changes in these directories also
 	 * trigger a Stencil rebuild AND the `preBuildCommand`. Use this to watch
-	 * workspace peer-dependency sources (e.g. `libs/stencil.core/src`) so the
+	 * workspace peer-dependency sources (e.g. `libs/stencil-core/src`) so the
 	 * dependency is rebuilt before Stencil bundles it.
 	 *
 	 * Changes in `srcDir` (the main Stencil source) do NOT run `preBuildCommand` —

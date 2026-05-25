@@ -35,7 +35,7 @@ export class SsvTracker extends SsvElement {
 
 | Package                                                                      | Description                                                                                        |
 | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| [`@ssv/stencil.core`](libs/stencil.core/README.md)                           | Composable lifecycle hooks (`use`, `useEffect`), typed context, and SSR transfer state             |
+| [`@ssv/stencil-core`](libs/stencil-core/README.md)                           | Composable lifecycle hooks (`use`, `useEffect`), typed context, and SSR transfer state             |
 | [`@ssv/stencil-signals`](libs/stencil-signals/README.md)                     | TC39 / Preact Signals integration — `useSignalWatcher`, `effect`, `computed`, `createStore`        |
 | [`@ssv/stencil-ui`](libs/stencil-ui/README.md)                               | Registry-driven composition — `ssv-compose` dispatches to named variants without touching the host |
 | [`@ssv/tanstack.stencil-query`](libs/tanstack.stencil-query/README.md)       | TanStack Query for Stencil — `useQuery` / `useMutation` with SSR prefetch and cache hydration      |

@@ -1,4 +1,4 @@
-import { TestHost } from "@ssv/stencil.core/testing";
+import { TestHost } from "@ssv/stencil-core/testing";
 /**
  * tests/core.test.ts
  *

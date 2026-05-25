@@ -1,6 +1,6 @@
+import { SsvElement } from "@ssv/stencil-core";
 import { computed, useSignalWatcher } from "@ssv/stencil-signals";
 import { useSignalProps } from "@ssv/stencil-signals/extensions";
-import { SsvElement } from "@ssv/stencil.core";
 import { Component, Prop, h } from "@stencil/core";
 
 function pad(n: number): string {

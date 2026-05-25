@@ -4,12 +4,12 @@ import type { WritableSignal, Signal } from "../adapters/types";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type StateMap<T extends object> = { [K in keyof T]: WritableSignal<T[K]> };
-type ComputedValueMap<C extends Record<string, Signal<unknown>>> = {
-	[K in keyof C]: C[K] extends Signal<infer V> ? V : never;
+type ComputedMap<C extends Record<string, Signal<unknown>>> = {
+	[K in keyof C]: C[K];
 };
 
-export type Store<T extends object, C extends Record<string, Signal<unknown>> = Record<never, never>> = T &
-	ComputedValueMap<C> & {
+export type Store<T extends object, C extends Record<string, Signal<unknown>> = Record<never, never>> = StateMap<T> &
+	ComputedMap<C> & {
 		$signal<K extends keyof T>(key: K): WritableSignal<T[K]>;
 		$reset(): void;
 	};
@@ -17,9 +17,14 @@ export type Store<T extends object, C extends Record<string, Signal<unknown>> = 
 // ─── Implementation ───────────────────────────────────────────────────────────
 
 /** Wrap a plain object in per-key signals and expose it as a reactive Proxy. */
+export function createStore<T extends object>(initialState: T): Store<T>;
+export function createStore<T extends object, C extends Record<string, Signal<unknown>>>(
+	initialState: T,
+	computedFactory: (state: Store<T>) => C,
+): Store<T, C>;
 export function createStore<T extends object, C extends Record<string, Signal<unknown>> = Record<never, never>>(
 	initialState: T,
-	computedFactory?: (state: T) => C,
+	computedFactory?: (state: Store<T>) => C,
 ): Store<T, C> {
 	const adapter = getAdapter();
 
@@ -53,12 +58,14 @@ export function createStore<T extends object, C extends Record<string, Signal<un
 			}
 
 			if (prop in signals) {
-				return (signals as Record<string | symbol, WritableSignal<unknown>>)[prop]();
+				return (signals as Record<string | symbol, WritableSignal<unknown>>)[prop];
 			}
 
 			if (computedSignals && prop in computedSignals) {
-				return (computedSignals as Record<string | symbol, Signal<unknown>>)[prop]();
+				return (computedSignals as Record<string | symbol, Signal<unknown>>)[prop];
 			}
+
+			return Reflect.get({}, prop);
 		},
 
 		set(_target, prop: string | symbol, value: unknown): boolean {
@@ -89,9 +96,9 @@ export function createStore<T extends object, C extends Record<string, Signal<un
 		},
 	});
 
-	// Populate computed signals after proxy is built so factory can read proxy.price etc.
+	// Populate computed signals after proxy is built so factory can read proxy.price() etc.
 	if (computedFactory) {
-		computedSignals = computedFactory(proxy as unknown as T);
+		computedSignals = computedFactory(proxy as Store<T>);
 	}
 
 	return proxy;

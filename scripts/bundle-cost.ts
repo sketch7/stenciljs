@@ -1,9 +1,10 @@
-import { brotliCompressSync, gzipSync } from "node:zlib";
+import { execSync } from "node:child_process";
 import { readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { execSync } from "node:child_process";
-import { build, type InlineConfig } from "vite";
+import { brotliCompressSync, gzipSync } from "node:zlib";
+import { build } from "vite";
+import type { InlineConfig } from "vite";
 
 const rootDir = fileURLToPath(new URL("..", import.meta.url));
 const libsDir = join(rootDir, "libs");
@@ -11,32 +12,40 @@ const libsDir = join(rootDir, "libs");
 // Always-external: provided by the host Stencil app, never bundled.
 const HOST_EXTERNALS = new Set(["@stencil/core"]);
 
-const SKIP_EXPORT_SEGMENTS = ["testing", "dev"];
+const SKIP_EXPORT_SEGMENTS = new Set(["testing", "dev"]);
 
 function formatBytes(bytes: number): string {
-	if (bytes < 1024) return `${bytes} B`;
-	if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} kB`;
+	if (bytes < 1024) {
+		return `${bytes} B`;
+	}
+	if (bytes < 1024 * 1024) {
+		return `${(bytes / 1024).toFixed(1)} kB`;
+	}
 	return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
 }
 
-interface PkgJson {
+type PkgJson = {
 	name: string;
 	exports?: Record<string, unknown>;
 	peerDependencies?: Record<string, string>;
-}
+};
 
 function resolveImportPath(condition: unknown): string | null {
-	if (typeof condition === "string") return condition.endsWith(".js") ? condition : null;
-	if (typeof condition !== "object" || condition === null) return null;
+	if (typeof condition === "string") {
+		return condition.endsWith(".js") ? condition : null;
+	}
+	if (typeof condition !== "object" || condition === null) {
+		return null;
+	}
 	const obj = condition as Record<string, unknown>;
 	return resolveImportPath(obj["import"] ?? obj["default"] ?? null);
 }
 
-interface SizeResult {
+type SizeResult = {
 	raw: number;
 	gzip: number;
 	brotli: number;
-}
+};
 
 function isExternal(id: string, externals: Set<string>): boolean {
 	return externals.has(id) || [...externals].some(e => id.startsWith(`${e}/`));
@@ -60,7 +69,7 @@ async function measureEntry(entryFile: string, external: (id: string) => boolean
 	};
 
 	const result = await build(config);
-	const output = (Array.isArray(result) ? result[0] : result) as { output: Array<{ type: string; code?: string }> };
+	const output = (Array.isArray(result) ? result[0] : result) as { output: { type: string; code?: string }[] };
 	const code = output.output
 		.filter(c => c.type === "chunk")
 		.map(c => c.code ?? "")
@@ -74,7 +83,7 @@ async function measureEntry(entryFile: string, external: (id: string) => boolean
 	};
 }
 
-interface LibConfig {
+type LibConfig = {
 	dir: string;
 	/** Override the display name shown in the table. */
 	label?: string;
@@ -82,7 +91,7 @@ interface LibConfig {
 	peerExternal?: string[];
 	/** Skip these export keys for this config (e.g. to isolate a signal flavor). */
 	skipExports?: string[];
-}
+};
 
 // Ordered so deps appear before dependents.
 // stencil-signals runs twice: once per signal implementation flavor.
@@ -135,19 +144,27 @@ for (const cfg of LIB_ORDER) {
 
 	const label = cfg.label ?? pkg.name;
 	const peerDeps = Object.keys(pkg.peerDependencies ?? {});
-		const displayPeerDeps = peerDeps.filter(p => !(cfg.peerExternal ?? []).includes(p));
-		const allPeerIds = new Set([...peerDeps, ...HOST_EXTERNALS, ...(cfg.peerExternal ?? [])]);
+	const displayPeerDeps = peerDeps.filter(p => !(cfg.peerExternal ?? []).includes(p));
+	const allPeerIds = new Set([...peerDeps, ...HOST_EXTERNALS, ...(cfg.peerExternal ?? [])]);
 	// For +peers: keep HOST_EXTERNALS + scenario-specific externals out.
 	const withPeersExternalIds = new Set([...HOST_EXTERNALS, ...(cfg.peerExternal ?? [])]);
 
 	for (const [exportKey, condition] of Object.entries(pkg.exports ?? {})) {
 		const segments = exportKey.split("/").slice(1);
-		if (segments.some(s => SKIP_EXPORT_SEGMENTS.includes(s))) continue;
-		if (exportKey.includes("*")) continue;
-		if (cfg.skipExports?.includes(exportKey)) continue;
+		if (segments.some(s => SKIP_EXPORT_SEGMENTS.has(s))) {
+			continue;
+		}
+		if (exportKey.includes("*")) {
+			continue;
+		}
+		if (cfg.skipExports?.includes(exportKey)) {
+			continue;
+		}
 
 		const rel = resolveImportPath(condition);
-		if (!rel) continue;
+		if (!rel) {
+			continue;
+		}
 
 		const abs = join(libDir, rel);
 		try {
@@ -206,7 +223,9 @@ function sizeCell(s: SizeResult, cls: string): string {
 }
 
 function htmlTable(rows: (LibRow | EntryRow)[], withExport: boolean): string {
-	if (!rows.length) return "<p>No data.</p>";
+	if (rows.length === 0) {
+		return "<p>No data.</p>";
+	}
 	const exportCol = withExport ? "<th>export</th>" : "";
 	const header = `<tr><th>lib</th>${exportCol}<th>self</th><th>peers</th><th>total</th><th>peer deps</th></tr>`;
 	const trs = rows
@@ -281,11 +300,13 @@ function setMode(m) {
   document.querySelectorAll('.switcher button').forEach(b => b.classList.toggle('active', b.textContent === labels[m]));
   document.querySelectorAll('td[data-gz]').forEach(td => { td.textContent = td.dataset[m]; });
 }
-<\/script>
+</script>
 </body></html>`;
 
 const outFile = join(rootDir, "dist", "bundle-cost.html");
-try { execSync(`mkdir -p "${join(rootDir, "dist")}"`) } catch {}
+try {
+	execSync(`mkdir -p "${join(rootDir, "dist")}"`);
+} catch {}
 writeFileSync(outFile, html, "utf8");
 console.log(`\n  report → ${outFile}`);
 execSync(`open "${outFile}"`);
@@ -294,9 +315,9 @@ console.log("\n── Bundle cost per lib ────────────�
 console.table(
 	libRows.map(r => ({
 		lib: r.lib,
-		"self·gz": formatBytes(r.self.gzip),
-		"peers·gz": formatBytes(Math.max(0, r.total.gzip - r.self.gzip)),
-		"total·gz": formatBytes(r.total.gzip),
+		self·gz: formatBytes(r.self.gzip),
+		peers·gz: formatBytes(Math.max(0, r.total.gzip - r.self.gzip)),
+		total·gz: formatBytes(r.total.gzip),
 		peerDeps: r.peerDeps,
 	})),
 );
@@ -306,8 +327,8 @@ console.table(
 	entryRows.map(r => ({
 		lib: r.lib,
 		export: r.export,
-		"self·gz": formatBytes(r.self.gzip),
-		"peers·gz": formatBytes(Math.max(0, r.total.gzip - r.self.gzip)),
-		"total·gz": formatBytes(r.total.gzip),
+		self·gz: formatBytes(r.self.gzip),
+		peers·gz: formatBytes(Math.max(0, r.total.gzip - r.self.gzip)),
+		total·gz: formatBytes(r.total.gzip),
 	})),
 );

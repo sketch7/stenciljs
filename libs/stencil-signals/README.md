@@ -199,11 +199,11 @@ import { computed } from "@ssv/stencil-signals";
 import { createStore } from "@ssv/stencil-signals"; // or "/extensions"
 
 export const todoStore = createStore({ todos: [] as Todo[], nextId: 1 }, s => ({
-  completedCount: computed(() => s.todos.filter(t => t.completed).length),
+  completedCount: computed(() => s.todos().filter(t => t.completed).length),
 }));
 ```
 
-Mutate with assignment (`store.count++`); read in `render()` as `todoStore.completedCount`. Escape hatches: `$signal(key)`, `$reset()`.
+Read with invocation (`store.count()`, `store.completedCount()`). Mutate with `set`/`update` (`store.count.set(1)`, `store.count.update(v => v + 1)`) or assignment (`store.count = 1`). Escape hatches: `$signal(key)`, `$reset()`.
 
 ## Migration from `@stencil/store`
 

@@ -1,28 +1,10 @@
-import { use, createRef, useLoadEffect } from "@ssv/stencil.core";
+import { createRef } from "@ssv/stencil.core";
 import type { Ref } from "@ssv/stencil.core";
-import { MutationObserver, notifyManager, noop } from "@tanstack/query-core";
+import { noop } from "@tanstack/query-core";
 import type { DefaultError, QueryClient } from "@tanstack/query-core";
 
-import { useQueryClient } from "./query-client-context";
-import type { UseMutationOptions, UseMutationResult, UseMutateFunction, UseMutateAsyncFunction } from "./types";
-
-/** State returned while the observer is not yet connected to the host. */
-const idleState = {
-	data: undefined,
-	variables: undefined,
-	context: undefined,
-	isIdle: true,
-	isPending: false,
-	isSuccess: false,
-	isError: false,
-	isPaused: false,
-	status: "idle" as const,
-	error: null,
-	failureReason: null,
-	failureCount: 0,
-	submittedAt: 0,
-	reset: noop,
-};
+import { idleMutationState, useMutationObserver } from "./mutation-observer";
+import type { UseMutationOptions, UseMutationResult } from "./types";
 
 /**
  * Subscribes to a mutation and schedules a re-render whenever the mutation state changes.
@@ -51,57 +33,16 @@ export function useMutation<TData = unknown, TError = DefaultError, TVariables =
 		| (() => UseMutationOptions<TData, TError, TVariables, TContext>),
 	client?: QueryClient,
 ): Ref<UseMutationResult<TData, TError, TVariables, TContext>> {
-	const getOpts =
-		typeof getOptions === "function"
-			? getOptions
-			: () => getOptions as UseMutationOptions<TData, TError, TVariables, TContext>;
-
-	const clientRef = useQueryClient(client);
-
-	let observer: MutationObserver<TData, TError, TVariables, TContext> | undefined;
-	let unsubscribe: (() => void) | undefined;
-
-	const mutate: UseMutateFunction<TData, TError, TVariables, TContext> = (variables, options) => {
-		observer?.mutate(variables, options).catch(noop);
-	};
-
-	const mutateAsync: UseMutateAsyncFunction<TData, TError, TVariables, TContext> = (variables, options) =>
-		observer?.mutate(variables, options) ??
-		Promise.reject(new Error("[ssv:query] Cannot mutate — observer not yet connected."));
-
-	// hostWillLoad: context guaranteed resolved — qc is non-null and auto-unwrapped from clientRef.
-	useLoadEffect(
-		({ qc, requestUpdate }) => {
-			observer = new MutationObserver<TData, TError, TVariables, TContext>(qc, getOpts());
-			unsubscribe = observer.subscribe(
-				notifyManager.batchCalls(() => {
-					requestUpdate();
-				}),
-			);
-			return () => {
-				unsubscribe?.();
-				unsubscribe = undefined;
-				observer?.reset();
-				observer = undefined;
-			};
-		},
-		{ qc: clientRef },
+	const { mutate, mutateAsync, getObserver } = useMutationObserver<TData, TError, TVariables, TContext>(
+		getOptions,
+		client,
+		(_result, requestUpdate) => requestUpdate(),
 	);
-
-	use(() => ({
-		hostWillRender() {
-			if (!observer) {
-				return;
-			}
-			// TODO(perf): skip setOptions when options is static (not a function) — mirrors Lit BaseController.onHostUpdate()
-			observer.setOptions(getOpts());
-		},
-	}));
 
 	return createRef(
 		() =>
 			({
-				...(observer?.getCurrentResult() ?? idleState),
+				...(getObserver()?.getCurrentResult() ?? { ...idleMutationState, reset: noop }),
 				mutate,
 				mutateAsync,
 			}) as UseMutationResult<TData, TError, TVariables, TContext>,

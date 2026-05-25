@@ -20,6 +20,10 @@ const navSections: NavSection[] = [
 		items: [{ href: "/overview", label: "Presentation" }],
 	},
 	{
+		title: "Demos",
+		items: [{ href: "/demos/lol-draft-lobby-simulator", label: "LoL Draft Lobby" }],
+	},
+	{
 		title: "@ssv / Core / Hooks",
 		items: [
 			{ href: "/ssv-stencil/core/hooks/lifecycle", label: "Lifecycle Explorer" },

@@ -58,7 +58,7 @@ Requires Node.js ≥ 24 and pnpm ≥ 9.
 
 ```bash
 pnpm install
-pnpm dev        # vike-playground on :3000 with Stencil HMR
+pnpm dev        # vike-playground on :3100 with Stencil HMR
 pnpm preview    # build + serve for production preview
 ```
 

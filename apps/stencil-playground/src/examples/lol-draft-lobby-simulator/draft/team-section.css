@@ -1,0 +1,89 @@
+:host {
+	display: block;
+}
+
+.team {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+/* ── Header ───────────────────────────────────────────────────────── */
+.team-header {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.375rem 0.5rem;
+	border-radius: var(--radius, 0.375rem);
+	transition: background 0.2s;
+}
+
+.team-header--active {
+	background: rgba(99, 102, 241, 0.08);
+}
+
+.team-dot {
+	display: block;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+
+.team--blue .team-dot {
+	background: #2563eb;
+	box-shadow: 0 0 6px #2563eb;
+}
+
+.team--red .team-dot {
+	background: #dc2626;
+	box-shadow: 0 0 6px #dc2626;
+}
+
+.team-label {
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: var(--color-fg, #f1f5f9);
+	text-transform: uppercase;
+	letter-spacing: 0.07em;
+}
+
+.team--blue .team-label {
+	color: #93c5fd;
+}
+.team--red .team-label {
+	color: #fca5a5;
+}
+
+.team-turn-indicator {
+	margin-left: auto;
+	font-size: 0.6rem;
+	color: var(--color-primary, #6366f1);
+	font-weight: 600;
+	letter-spacing: 0.05em;
+}
+
+/* ── Picks row ────────────────────────────────────────────────────── */
+.picks-row {
+	display: flex;
+	gap: 0.375rem;
+	padding: 0.25rem 0.5rem;
+}
+
+/* ── Bans row ─────────────────────────────────────────────────────── */
+.bans-row {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+	padding: 0.25rem 0.5rem 0.5rem;
+}
+
+.bans-label {
+	font-size: 0.55rem;
+	color: var(--color-muted-fg, #64748b);
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	font-weight: 500;
+	width: 2rem;
+	flex-shrink: 0;
+}

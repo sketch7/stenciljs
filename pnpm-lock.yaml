@@ -6,6 +6,12 @@ settings:
 
 catalogs:
   default:
+    '@logtape/hono':
+      specifier: ^2.1.1
+      version: 2.1.1
+    '@logtape/logtape':
+      specifier: ^2.1.1
+      version: 2.1.1
     '@preact/signals-core':
       specifier: ^1.14.2
       version: 1.14.2
@@ -152,6 +158,9 @@ importers:
 
   apps/stencil-playground:
     dependencies:
+      '@logtape/logtape':
+        specifier: 'catalog:'
+        version: 2.1.1
       '@ssv/stencil-signals':
         specifier: workspace:*
         version: link:../../libs/stencil-signals
@@ -195,6 +204,12 @@ importers:
       '@app/stencil-playground':
         specifier: workspace:*
         version: link:../stencil-playground
+      '@logtape/hono':
+        specifier: 'catalog:'
+        version: 2.1.1(@logtape/logtape@2.1.1)(hono@4.12.19)
+      '@logtape/logtape':
+        specifier: 'catalog:'
+        version: 2.1.1
       '@ssv/vite-plugin-stencil-watch':
         specifier: workspace:^
         version: link:../../libs/vite-plugin-stencil-watch
@@ -1536,6 +1551,15 @@ packages:
     resolution: {integrity: sha512-p2+YcF+JE67SRX3mMlJ1TKCSTsgyOVdAwd/nxp3NuV1+Cb6MWALbN6nT7Ld4tpmYofcE5kcaSY1YBB9erY+6fw==}
     peerDependencies:
       '@types/react': 17 || 18 || 19
+
+  '@logtape/hono@2.1.1':
+    resolution: {integrity: sha512-U6bU0MscH3b8DHyrlJhPgnu2XpFwwf0qnd8xPNh9/DXmVG/YF3ITWiB6rqk/2dCOdLdrHq3GtKGrtoRQJg20Qw==}
+    peerDependencies:
+      '@logtape/logtape': ^2.1.1
+      hono: ^4.0.0
+
+  '@logtape/logtape@2.1.1':
+    resolution: {integrity: sha512-aULbCqUQGerfOsZ3CMvcKtueKzmdchluXYUd3bIHKmOIS93fx1ko0+hyRQ4flloGZ8EiyRPydZXiy8n1J/eAQA==}
 
   '@napi-rs/wasm-runtime@0.2.4':
     resolution: {integrity: sha512-9zESzOO5aDByvhIAsOy9TbpZ0Ur2AJbUI7UT73kcUTS2mxAMHOBaa1st/jAymNoCtvrit99kkzT1FZuXVcgfIQ==}
@@ -5750,6 +5774,13 @@ snapshots:
   '@lit/react@1.0.8(@types/react@19.2.14)':
     dependencies:
       '@types/react': 19.2.14
+
+  '@logtape/hono@2.1.1(@logtape/logtape@2.1.1)(hono@4.12.19)':
+    dependencies:
+      '@logtape/logtape': 2.1.1
+      hono: 4.12.19
+
+  '@logtape/logtape@2.1.1': {}
 
   '@napi-rs/wasm-runtime@0.2.4':
     dependencies:

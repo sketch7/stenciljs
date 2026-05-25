@@ -1,0 +1,113 @@
+:host {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	background: var(--color-bg, #09101f);
+	overflow-y: auto;
+}
+
+/* ── Turn bar ─────────────────────────────────────────────────────── */
+.turn-bar {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.75rem 1rem;
+	border-bottom: 1px solid var(--color-border, #1e2d42);
+	flex-shrink: 0;
+}
+
+.turn-bar--blue {
+	background: linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, transparent 60%);
+	border-bottom-color: rgba(37, 99, 235, 0.2);
+}
+
+.turn-bar--red {
+	background: linear-gradient(135deg, rgba(220, 38, 38, 0.12) 0%, transparent 60%);
+	border-bottom-color: rgba(220, 38, 38, 0.2);
+}
+
+.turn-bar-text {
+	font-size: 0.8rem;
+	font-weight: 700;
+	color: var(--color-fg, #f1f5f9);
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+}
+
+/* ── Turn progress dots ───────────────────────────────────────────── */
+.turn-dots {
+	display: flex;
+	gap: 3px;
+	flex-wrap: wrap;
+	justify-content: center;
+	max-width: 280px;
+}
+
+.turn-dot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--color-border, #1e2d42);
+	transition: background 0.2s;
+}
+
+.turn-dot--done {
+	background: var(--color-muted-fg, #64748b);
+}
+
+.turn-dot--active {
+	background: var(--color-primary, #6366f1);
+	box-shadow: 0 0 4px var(--color-primary, #6366f1);
+	animation: dot-pulse 1s ease-in-out infinite;
+}
+
+@keyframes dot-pulse {
+	0%,
+	100% {
+		transform: scale(1);
+	}
+	50% {
+		transform: scale(1.4);
+	}
+}
+
+/* ── Finished bar ─────────────────────────────────────────────────── */
+.finished-bar {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	padding: 0.75rem;
+	background: linear-gradient(135deg, rgba(201, 162, 39, 0.12) 0%, transparent 60%);
+	border-bottom: 1px solid rgba(201, 162, 39, 0.25);
+	flex-shrink: 0;
+}
+
+.finished-icon {
+	font-size: 1rem;
+}
+
+.finished-text {
+	font-size: 0.8rem;
+	font-weight: 700;
+	color: var(--lol-gold, #c9a227);
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+}
+
+/* ── Loading ──────────────────────────────────────────────────────── */
+.draft-loading {
+	padding: 2rem;
+	text-align: center;
+	color: var(--color-muted-fg, #64748b);
+	font-size: 0.8rem;
+}
+
+/* ── Divider ──────────────────────────────────────────────────────── */
+.teams-divider {
+	height: 1px;
+	background: var(--color-border, #1e2d42);
+	margin: 0.5rem 0;
+	flex-shrink: 0;
+}

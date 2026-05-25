@@ -109,7 +109,7 @@ const createHydrateProxy = (enableRuntimeLogging: boolean) =>
 
 export default defineConfig(({ command, mode }) => {
 	const env = loadEnv(mode, process.cwd(), "");
-	const port = Number.parseInt(env["PORT"] ?? "3000", 10);
+	const port = Number.parseInt(env["PORT"] ?? "3100", 10);
 	const isDev = command === "serve";
 	const isAnalyze = env["ANALYZE"] === "true";
 

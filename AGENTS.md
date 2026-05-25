@@ -78,7 +78,7 @@ pnpm nx g @nx/js:app apps/<name>
 
 ## Dev Workflow
 
-`pnpm dev` starts `vike-playground` on port 3000. [`vite-plugin-stencil-watch`](apps/vike-playground/vite.config.ts) watches `stencil-playground/src` (and peer libs via `watchDirs`), rebuilds Stencil on change, then hot-reloads the Vike app. React wrappers are auto-generated to `apps/stencil-playground/src/react/` on each Stencil build via `@stencil/react-output-target`.
+`pnpm dev` starts `vike-playground` on port 3100. [`vite-plugin-stencil-watch`](apps/vike-playground/vite.config.ts) watches `stencil-playground/src` (and peer libs via `watchDirs`), rebuilds Stencil on change, then hot-reloads the Vike app. React wrappers are auto-generated to `apps/stencil-playground/src/react/` on each Stencil build via `@stencil/react-output-target`.
 
 ## Skills Available
 

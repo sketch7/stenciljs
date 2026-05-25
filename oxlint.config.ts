@@ -361,7 +361,9 @@ export default defineConfig({
 				"react/rules-of-hooks": "off",
 				// react/exhaustive-deps targets React hooks; Stencil's useEffect only accepts readonly [] — no tracked deps
 				"react/exhaustive-deps": "off",
+				"react/no-array-index-key": "off",
 				"react/prefer-function-component": "off",
+				"react/only-export-components": "off",
 				"react/no-unknown-property": "off",
 				"new-cap": "off",
 				"class-methods-use-this": "off",

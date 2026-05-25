@@ -1,0 +1,138 @@
+:host {
+	display: block;
+}
+
+.filter {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	padding: 0.75rem;
+	background: var(--color-surface, #0e1828);
+	border-bottom: 1px solid var(--color-border, #1e2d42);
+}
+
+/* ── Search ───────────────────────────────────────────────────────── */
+.filter-search-row {
+	display: flex;
+	gap: 0.375rem;
+}
+
+.search-wrap {
+	position: relative;
+	flex: 1;
+}
+
+.search-icon {
+	position: absolute;
+	left: 0.5rem;
+	top: 50%;
+	transform: translateY(-50%);
+	font-size: 0.75rem;
+	color: var(--color-muted-fg, #64748b);
+	pointer-events: none;
+}
+
+.search-input {
+	width: 100%;
+	padding: 0.4rem 0.5rem 0.4rem 1.75rem;
+	background: var(--color-bg, #09101f);
+	border: 1px solid var(--color-border, #1e2d42);
+	border-radius: var(--radius, 0.5rem);
+	color: var(--color-fg, #f1f5f9);
+	font-size: 0.75rem;
+	box-sizing: border-box;
+}
+
+.search-input::placeholder {
+	color: var(--color-muted-fg, #64748b);
+}
+
+.search-input:focus {
+	outline: none;
+	border-color: var(--color-primary, #6366f1);
+}
+
+.btn-clear {
+	padding: 0.4rem 0.6rem;
+	background: transparent;
+	border: 1px solid var(--color-border, #1e2d42);
+	border-radius: var(--radius, 0.5rem);
+	color: var(--color-muted-fg, #64748b);
+	font-size: 0.7rem;
+	cursor: pointer;
+	transition:
+		color 0.15s,
+		border-color 0.15s;
+}
+
+.btn-clear:hover {
+	color: var(--color-danger, #f87171);
+	border-color: var(--color-danger, #f87171);
+}
+
+/* ── Role buttons ─────────────────────────────────────────────────── */
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border-width: 0;
+}
+
+.filter-roles {
+	flex-wrap: wrap;
+	gap: 0.25rem;
+	border: none;
+	padding: 0;
+	margin: 0;
+}
+
+.role-btn {
+	padding: 0.25rem 0.625rem;
+	background: transparent;
+	border: 1px solid var(--color-border, #1e2d42);
+	border-radius: 9999px;
+	color: var(--color-muted-fg, #64748b);
+	font-size: 0.65rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.15s;
+	text-transform: capitalize;
+}
+
+.role-btn:hover {
+	border-color: var(--color-border-hover, #2d4461);
+	color: var(--color-fg, #f1f5f9);
+}
+
+.role-btn--active {
+	background: var(--color-primary, #6366f1);
+	border-color: var(--color-primary, #6366f1);
+	color: #fff;
+}
+
+/* Role accent colours */
+.role-btn--top.role-btn--active {
+	background: #e67e22;
+	border-color: #e67e22;
+}
+.role-btn--jungle.role-btn--active {
+	background: #27ae60;
+	border-color: #27ae60;
+}
+.role-btn--mid.role-btn--active {
+	background: #8e44ad;
+	border-color: #8e44ad;
+}
+.role-btn--bot.role-btn--active {
+	background: #2980b9;
+	border-color: #2980b9;
+}
+.role-btn--support.role-btn--active {
+	background: #c0392b;
+	border-color: #c0392b;
+}

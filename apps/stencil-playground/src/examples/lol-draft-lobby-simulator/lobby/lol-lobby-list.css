@@ -1,0 +1,327 @@
+:host {
+	display: block;
+}
+
+.lobby {
+	height: 100%;
+	background: #0a0e1a;
+	color: #c8aa6e;
+	display: flex;
+	flex-direction: column;
+	font-family: "Beaufort for LOL", "Trajan Pro", Georgia, serif;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────────── */
+
+.lobby-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 2rem 2.5rem 1.5rem;
+	border-bottom: 1px solid #1e2a3a;
+	background: linear-gradient(180deg, #0d1322 0%, #0a0e1a 100%);
+	flex-shrink: 0;
+}
+
+.lobby-title-row {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+}
+
+.lobby-icon {
+	font-size: 2rem;
+	filter: drop-shadow(0 0 8px #c8aa6e88);
+}
+
+.lobby-title {
+	margin: 0 0 0.2rem;
+	font-size: 1.75rem;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: #c8aa6e;
+	text-shadow: 0 0 20px #c8aa6e44;
+}
+
+.lobby-subtitle {
+	margin: 0;
+	font-size: 0.8rem;
+	color: #5b7199;
+	font-family: system-ui, sans-serif;
+	text-transform: none;
+	letter-spacing: 0;
+}
+
+/* ── Create button ───────────────────────────────────────────────────────────── */
+
+.btn-create {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.65rem 1.4rem;
+	background: linear-gradient(135deg, #c8aa6e 0%, #a08040 100%);
+	color: #0a0e1a;
+	border: none;
+	border-radius: 3px;
+	font-size: 0.875rem;
+	font-weight: 700;
+	font-family: inherit;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	cursor: pointer;
+	transition:
+		opacity 0.15s,
+		transform 0.1s;
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+.btn-create:hover:not(:disabled) {
+	opacity: 0.9;
+	transform: translateY(-1px);
+}
+
+.btn-create:active:not(:disabled) {
+	transform: translateY(0);
+}
+
+.btn-create:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.btn-icon {
+	font-size: 1.1rem;
+	line-height: 1;
+}
+
+/* ── Sessions area ───────────────────────────────────────────────────────────── */
+
+.sessions-wrap {
+	flex: 1;
+	overflow-y: auto;
+	padding: 1.5rem 2.5rem 2rem;
+}
+
+.sessions-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 1rem;
+}
+
+/* ── Session card ────────────────────────────────────────────────────────────── */
+
+.session-card {
+	background: #0d1322;
+	border: 1px solid #1e2a3a;
+	border-radius: 4px;
+	padding: 1.1rem 1.25rem 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.8rem;
+	transition:
+		border-color 0.15s,
+		box-shadow 0.15s;
+}
+
+.session-card:hover {
+	border-color: #2e3f5a;
+	box-shadow: 0 4px 16px #00000066;
+}
+
+.session-card--waiting {
+	border-left: 3px solid #5b7199;
+}
+
+.session-card--banning {
+	border-left: 3px solid #c84b4b;
+}
+
+.session-card--picking {
+	border-left: 3px solid #4b9fc8;
+}
+
+.session-card--finished {
+	opacity: 0.6;
+}
+
+.session-top {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+}
+
+.session-name {
+	font-size: 1rem;
+	font-weight: 700;
+	color: #c8aa6e;
+	letter-spacing: 0.04em;
+}
+
+/* ── Phase badge ─────────────────────────────────────────────────────────────── */
+
+.phase-badge {
+	padding: 0.15rem 0.55rem;
+	border-radius: 2px;
+	font-size: 0.65rem;
+	font-family: system-ui, sans-serif;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.phase-badge--waiting {
+	background: #1e2a3a;
+	color: #5b7199;
+}
+
+.phase-badge--banning {
+	background: #3d1a1a;
+	color: #c84b4b;
+}
+
+.phase-badge--picking {
+	background: #1a2e3d;
+	color: #4b9fc8;
+}
+
+.phase-badge--finished {
+	background: #1a1e2e;
+	color: #4a4e6e;
+}
+
+/* ── Player slots ────────────────────────────────────────────────────────────── */
+
+.session-players {
+	display: flex;
+	gap: 0.75rem;
+	font-size: 0.8rem;
+	font-family: system-ui, sans-serif;
+}
+
+.player-slot {
+	color: #3a4a5a;
+}
+
+.player-slot--filled {
+	color: #8899aa;
+}
+
+/* ── Session footer ──────────────────────────────────────────────────────────── */
+
+.session-footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+}
+
+.session-id {
+	font-size: 0.7rem;
+	color: #2e3f5a;
+	font-family: monospace;
+}
+
+.badge-full {
+	font-size: 0.7rem;
+	font-family: system-ui, sans-serif;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: #4a4e6e;
+	padding: 0.2rem 0.6rem;
+	border: 1px solid #2a2e4e;
+	border-radius: 2px;
+}
+
+.btn-join {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.4rem 0.9rem;
+	background: transparent;
+	color: #c8aa6e;
+	border: 1px solid #c8aa6e55;
+	border-radius: 3px;
+	font-size: 0.75rem;
+	font-weight: 700;
+	font-family: inherit;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	cursor: pointer;
+	transition:
+		background 0.15s,
+		border-color 0.15s;
+}
+
+.btn-join:hover:not(:disabled) {
+	background: #c8aa6e18;
+	border-color: #c8aa6eaa;
+}
+
+.btn-join:disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+
+/* ── States ──────────────────────────────────────────────────────────────────── */
+
+.lobby-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 1rem;
+	padding: 4rem 2rem;
+	color: #3a4a5a;
+	font-family: system-ui, sans-serif;
+	font-size: 0.9rem;
+}
+
+.lobby-state--error {
+	color: #c84b4b;
+}
+
+.lobby-state--empty {
+	color: #5b7199;
+}
+
+.empty-icon {
+	font-size: 3rem;
+	filter: grayscale(0.5);
+}
+
+/* ── Spinner ─────────────────────────────────────────────────────────────────── */
+
+.spinner {
+	display: inline-block;
+	width: 1rem;
+	height: 1rem;
+	border: 2px solid #c8aa6e44;
+	border-top-color: #c8aa6e;
+	border-radius: 50%;
+	animation: spin 0.7s linear infinite;
+}
+
+.spinner--lg {
+	width: 2rem;
+	height: 2rem;
+	border-width: 3px;
+}
+
+.spinner--sm {
+	width: 0.75rem;
+	height: 0.75rem;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}

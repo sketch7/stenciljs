@@ -66,6 +66,7 @@
     "fmt:check": "oxfmt --check src/"
   },
   "dependencies": {
+    "@logtape/logtape": "catalog:",
     "@ssv/stencil-signals": "workspace:*",
     "@ssv/stencil-ui": "workspace:*",
     "@ssv/stencil.core": "workspace:*",

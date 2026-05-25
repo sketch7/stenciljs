@@ -1,4 +1,4 @@
-import { use } from "@ssv/stencil.core";
+import { use } from "@ssv/stencil-core";
 import { useQueryClient } from "@ssv/tanstack.stencil-query";
 import type { QueryClient } from "@ssv/tanstack.stencil-query";
 import { $useMutation, $useQuery } from "@ssv/tanstack.stencil-query/signals";

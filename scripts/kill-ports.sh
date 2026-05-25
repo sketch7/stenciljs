@@ -2,7 +2,7 @@
 # Kill all processes listening on the dev/preview port ranges:
 #   3100–3102  apps
 
-RANGES=("3100-3102" )
+RANGES=("3000-3005" )
 # RANGES=("3000-3002" "3100-3102" )
 
 killed=0

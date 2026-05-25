@@ -26,7 +26,7 @@
 
 ```ts
 // mouse-controller.ts
-import { use } from "@ssv/stencil.core";
+import { use } from "@ssv/stencil-core";
 
 export function useMouseController() {
   return use(host => {
@@ -87,11 +87,11 @@ The class constructor must **not** call `addController` — `use()` handles regi
 
 ```ts
 // timer-controller.ts
-import { use } from "@ssv/stencil.core";
+import { use } from "@ssv/stencil-core";
 import type {
   ReactiveController,
   ReactiveControllerHost,
-} from "@ssv/stencil.core";
+} from "@ssv/stencil-core";
 
 class TimerController implements ReactiveController {
   #elapsed = 0;
@@ -135,7 +135,7 @@ export function useTimerController(intervalMs?: number) {
 ### `SsvElement` — single inheritance
 
 ```ts
-import { SsvElement } from "@ssv/stencil.core";
+import { SsvElement } from "@ssv/stencil-core";
 import { Component, h } from "@stencil/core";
 import { useMouseController } from "./mouse-controller";
 
@@ -154,7 +154,7 @@ export class SsvMouseHost extends SsvElement {
 Use when you need to extend another base class alongside the mixin.
 
 ```ts
-import { SsvElementMixin } from "@ssv/stencil.core";
+import { SsvElementMixin } from "@ssv/stencil-core";
 import { Component, Mixin, h } from "@stencil/core";
 import { useTimerController } from "./timer-controller";
 
@@ -243,7 +243,7 @@ useLoadEffect(({ qc, requestUpdate }) => {
 `ReactiveControllerHostMixin` constructors call `setCurrentHost(this)` and queue `clearCurrentHost()` as a microtask. Both are internal — not part of the public API. Any `use()` call during field initialization reads the active host via `getCurrentHost()`.
 
 ```ts
-import { getCurrentHost } from "@ssv/stencil.core";
+import { getCurrentHost } from "@ssv/stencil-core";
 
 export function useMyHook() {
   const host = getCurrentHost(); // host available during field initialization

@@ -1,4 +1,4 @@
-import { peekCurrentHost } from "@ssv/stencil.core";
+import { peekCurrentHost } from "@ssv/stencil-core";
 
 import { getAdapter } from "../adapters/active";
 import type { WritableSignal, Signal } from "../adapters/types";

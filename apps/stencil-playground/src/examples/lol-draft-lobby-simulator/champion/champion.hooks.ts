@@ -1,4 +1,4 @@
-import { use } from "@ssv/stencil.core";
+import { use } from "@ssv/stencil-core";
 import { useQuery } from "@ssv/tanstack.stencil-query";
 
 import { useLolDraftQueryClient } from "../shared/lol-query-client";

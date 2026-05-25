@@ -1,6 +1,6 @@
-import { SsvElement } from "@ssv/stencil.core";
-import { useLifecycleLogger } from "@ssv/stencil.core/dev";
-import { provideTransferState } from "@ssv/stencil.core/transfer-state";
+import { SsvElement } from "@ssv/stencil-core";
+import { useLifecycleLogger } from "@ssv/stencil-core/dev";
+import { provideTransferState } from "@ssv/stencil-core/transfer-state";
 import { provideQueryClient } from "@ssv/tanstack.stencil-query";
 import { Component, h } from "@stencil/core";
 

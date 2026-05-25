@@ -1,5 +1,5 @@
-import { createContext, provideContext, useContext } from "@ssv/stencil.core";
-import type { Ref } from "@ssv/stencil.core";
+import { createContext, provideContext, useContext } from "@ssv/stencil-core";
+import type { Ref } from "@ssv/stencil-core";
 
 import { useSSE } from "./sse.hooks";
 import type { SSEContext, SSEController, SSEEventMap, SSEOptions } from "./sse.types";

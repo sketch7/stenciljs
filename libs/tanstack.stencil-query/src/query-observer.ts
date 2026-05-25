@@ -1,4 +1,4 @@
-import { use, useLoadEffect } from "@ssv/stencil.core";
+import { use, useLoadEffect } from "@ssv/stencil-core";
 import { QueryObserver, notifyManager } from "@tanstack/query-core";
 import type { QueryClient, QueryKey, QueryObserverResult, RefetchOptions } from "@tanstack/query-core";
 

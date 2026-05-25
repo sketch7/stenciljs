@@ -1,4 +1,4 @@
-import { SsvElementMixin } from "@ssv/stencil.core";
+import { SsvElementMixin } from "@ssv/stencil-core";
 import { Component, Mixin, h } from "@stencil/core";
 
 import { useTimerController } from "./timer-controller";

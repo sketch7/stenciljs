@@ -1,4 +1,4 @@
-import { SsvElement } from "@ssv/stencil.core";
+import { SsvElement } from "@ssv/stencil-core";
 import { Component, Event, Prop, h } from "@stencil/core";
 import type { EventEmitter } from "@stencil/core";
 

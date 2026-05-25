@@ -1,4 +1,4 @@
-import { SsvElement, provideContext } from "@ssv/stencil.core";
+import { SsvElement, provideContext } from "@ssv/stencil-core";
 import { Component, h } from "@stencil/core";
 
 import { CounterContext } from "./counter.context";

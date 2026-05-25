@@ -8,7 +8,7 @@ export default function Page(): JSX.Element {
 				<h1 className="text-2xl font-bold text-(--color-fg)">Context Counter</h1>
 				<p className="text-sm text-(--color-muted-fg)">
 					Demonstrates tree-scoped context via <code>createContext</code> / <code>provideContext</code> /{" "}
-					<code>useContext</code> from <code>@ssv/stencil.core</code>. Each group shares its own counter state; counters
+					<code>useContext</code> from <code>@ssv/stencil-core</code>. Each group shares its own counter state; counters
 					outside any group fall back to a global singleton.
 				</p>
 			</div>

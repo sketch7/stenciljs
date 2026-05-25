@@ -16,7 +16,7 @@ Part of the [stenciljs](https://github.com/sketch7/stenciljs) monorepo. Designed
 
 **Adoption checklist**
 
-1. Add peers: `@ssv/stencil-signals`, `@ssv/stencil.core`, one signal backend, `@stencil/core` (4.43+ recommended for passive listener parity in `signalFromEvent`).
+1. Add peers: `@ssv/stencil-signals`, `@ssv/stencil-core`, one signal backend, `@stencil/core` (4.43+ recommended for passive listener parity in `signalFromEvent`).
 2. Register **one** adapter in `globalScript` before any component code runs ([Installation](#installation)).
 3. Standardise on `SsvElement` + `useSignalWatcher()` (or `SignalWatcherMixin` when composing mixins).
 4. Document field order: `useSignalWatcher()` before `effect`, `derivedAsync`, `useSignalProps`, `signalFromEvent`.
@@ -49,12 +49,12 @@ flowchart LR
   W --> E
 ```
 
-**Dependency:** [`@ssv/stencil.core`](../stencil.core/README.md) provides `SsvElement`, `use()`, and `ReactiveControllerHost` — the same foundation used by TanStack bindings and context APIs.
+**Dependency:** [`@ssv/stencil-core`](../stencil-core/README.md) provides `SsvElement`, `use()`, and `ReactiveControllerHost` — the same foundation used by TanStack bindings and context APIs.
 
 ## Installation
 
 ```bash
-pnpm add @ssv/stencil-signals @ssv/stencil.core
+pnpm add @ssv/stencil-signals @ssv/stencil-core
 ```
 
 Choose **one** signal backend (peer dependency):
@@ -67,7 +67,7 @@ pnpm add signal-polyfill
 pnpm add @preact/signals-core
 ```
 
-**Peers:** `@stencil/core >=4` (4.43+ recommended), `@ssv/stencil.core`, and exactly one of `signal-polyfill` or `@preact/signals-core`.
+**Peers:** `@stencil/core >=4` (4.43+ recommended), `@ssv/stencil-core`, and exactly one of `signal-polyfill` or `@preact/signals-core`.
 
 Activate the adapter once in a [global script](https://stenciljs.com/docs/config#globalscript) **before** components load:
 
@@ -116,7 +116,7 @@ export const doubled = computed(() => count() * 2);
 ```tsx
 import { Component } from "@stencil/core";
 import { useSignalWatcher } from "@ssv/stencil-signals";
-import { SsvElement } from "@ssv/stencil.core";
+import { SsvElement } from "@ssv/stencil-core";
 import { count, doubled } from "./counter.store";
 
 @Component({ tag: "my-counter", shadow: true })
@@ -142,7 +142,7 @@ export class MyCounter extends SsvElement {
 
 | Pattern                                         | When to use                          | Notes                                                                        |
 | ----------------------------------------------- | ------------------------------------ | ---------------------------------------------------------------------------- |
-| `SsvElement` + `useSignalWatcher()`             | Default for new components           | No mixin ordering issues; works with `use()` hooks from `@ssv/stencil.core`  |
+| `SsvElement` + `useSignalWatcher()`             | Default for new components           | No mixin ordering issues; works with `use()` hooks from `@ssv/stencil-core`  |
 | `Mixin(SignalWatcherMixin, SsvElementMixin, …)` | Legacy bases or multiple mixins      | Put `SignalWatcherMixin` **first** in `Mixin()`                              |
 | Module-level `signal()` / `createStore()`       | Cross-component shared state         | Import store modules; avoid storing signals on `this` unless instance-scoped |
 | `useSignalProps`                                | Prop-driven logic without `@Watch`   | Import from `/extensions`; requires watcher first                            |
@@ -265,7 +265,7 @@ Run the dev stack from the repo root: `pnpm dev` (Stencil watch + Vike on port 3
 
 | Export                     | Description                                                                                 |
 | -------------------------- | ------------------------------------------------------------------------------------------- |
-| `useSignalWatcher()`       | Class-field initializer; installs `SignalWatcherController` via `@ssv/stencil.core` `use()` |
+| `useSignalWatcher()`       | Class-field initializer; installs `SignalWatcherController` via `@ssv/stencil-core` `use()` |
 | `SignalWatcherMixin(Base)` | Mixin factory; calls `useSignalWatcher()` in constructor                                    |
 | `SignalWatcherController`  | Low-level controller (usually via `useSignalWatcher`)                                       |
 

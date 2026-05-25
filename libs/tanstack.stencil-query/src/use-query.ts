@@ -1,5 +1,5 @@
-import { createRef } from "@ssv/stencil.core";
-import type { Ref } from "@ssv/stencil.core";
+import { createRef } from "@ssv/stencil-core";
+import type { Ref } from "@ssv/stencil-core";
 import type { DefaultError, NoInfer, QueryClient, QueryKey, QueryObserverResult } from "@tanstack/query-core";
 
 import { noObserverRefetch, pendingQueryState, useBaseQueryObserver } from "./query-observer";

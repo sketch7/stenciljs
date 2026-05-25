@@ -1,4 +1,4 @@
-import type { ReactiveControllerHost } from "@ssv/stencil.core";
+import type { ReactiveControllerHost } from "@ssv/stencil-core";
 import type { ComponentInterface, MixedInCtor } from "@stencil/core";
 
 import { useSignalWatcher } from "../controllers/signal-watcher-controller";

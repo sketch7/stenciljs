@@ -8,11 +8,11 @@ TanStack Store bindings for [StencilJS](https://stenciljs.com/) components.
 pnpm add @ssv/tanstack.stencil-store
 ```
 
-**Peer dependencies:** `@stencil/core >=4`, `@ssv/stencil.core`, `@tanstack/store`
+**Peer dependencies:** `@stencil/core >=4`, `@ssv/stencil-core`, `@tanstack/store`
 
 ## Prerequisites
 
-Extend `SsvElement` (or apply `SsvElementMixin`) from [`@ssv/stencil.core`](../stencil.core/README.md).
+Extend `SsvElement` (or apply `SsvElementMixin`) from [`@ssv/stencil-core`](../stencil-core/README.md).
 
 ```ts
 @Component({ tag: "my-counter", shadow: true })

@@ -1,7 +1,7 @@
-import { createContext, createRef, provideContext, use, useContext } from "@ssv/stencil.core";
-import type { Ref } from "@ssv/stencil.core";
-import { makeTransferKey } from "@ssv/stencil.core/transfer-state";
-import type { TransferState } from "@ssv/stencil.core/transfer-state";
+import { createContext, createRef, provideContext, use, useContext } from "@ssv/stencil-core";
+import type { Ref } from "@ssv/stencil-core";
+import { makeTransferKey } from "@ssv/stencil-core/transfer-state";
+import type { TransferState } from "@ssv/stencil-core/transfer-state";
 import { dehydrate, hydrate, QueryClient } from "@tanstack/query-core";
 import type { DehydratedState } from "@tanstack/query-core";
 
@@ -23,7 +23,7 @@ export type ProvideQueryClientOptions = {
 	client?: QueryClient;
 	/**
 	 * Wire up SSR dehydration + client hydration via a `TransferState` created with
-	 * `provideTransferState()` from `@ssv/stencil.core`.
+	 * `provideTransferState()` from `@ssv/stencil-core`.
 	 *
 	 * Mirrors React Query's `HydrationBoundary` pattern — the component owns the transfer
 	 * state scope; `provideQueryClient` only wires the dehydrate/hydrate lifecycle hooks.

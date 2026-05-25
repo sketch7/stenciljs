@@ -1,5 +1,5 @@
 export * from "@tanstack/query-core";
-export type { Ref } from "@ssv/stencil.core";
+export type { Ref } from "@ssv/stencil-core";
 
 export { provideQueryClient, queryClientKey, useQueryClient } from "./query-client-context";
 export type { ProvideQueryClientOptions } from "./query-client-context";

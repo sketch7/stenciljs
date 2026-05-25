@@ -1,4 +1,4 @@
-import { createContext } from "@ssv/stencil.core";
+import { createContext } from "@ssv/stencil-core";
 import { createStore } from "@ssv/tanstack.stencil-store";
 
 export type CounterState = { count: number };

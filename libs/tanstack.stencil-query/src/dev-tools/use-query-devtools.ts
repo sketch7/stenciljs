@@ -1,4 +1,4 @@
-import { useLoadEffect } from "@ssv/stencil.core";
+import { useLoadEffect } from "@ssv/stencil-core";
 import { Build } from "@stencil/core";
 import { onlineManager } from "@tanstack/query-core";
 import type { QueryClient } from "@tanstack/query-core";

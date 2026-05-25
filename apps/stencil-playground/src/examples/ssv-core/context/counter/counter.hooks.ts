@@ -1,4 +1,4 @@
-import { useContext } from "@ssv/stencil.core";
+import { useContext } from "@ssv/stencil-core";
 import { useSelector } from "@ssv/tanstack.stencil-store";
 
 import type { CounterStore } from "./counter.context";

@@ -1,4 +1,4 @@
-import { SsvElement } from "@ssv/stencil.core";
+import { SsvElement } from "@ssv/stencil-core";
 import { createAtom, useAtom, useSelector } from "@ssv/tanstack.stencil-store";
 import { Component, h } from "@stencil/core";
 

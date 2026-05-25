@@ -1,6 +1,6 @@
+import { SsvElement } from "@ssv/stencil-core";
 import { useSignalWatcher } from "@ssv/stencil-signals";
 import { signalFromEvent } from "@ssv/stencil-signals/extensions";
-import { SsvElement } from "@ssv/stencil.core";
 import { Component, h } from "@stencil/core";
 
 type MousePos = { x: number; y: number };

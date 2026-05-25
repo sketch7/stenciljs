@@ -29,13 +29,13 @@ export default defineConfig({
 
 ### Watching workspace peer dependencies
 
-When a Stencil lib depends on a local workspace package (e.g. `@ssv/stencil.core`), use `watchDirs` and `preBuildCommand` so changes in the peer also trigger a fresh Stencil build:
+When a Stencil lib depends on a local workspace package (e.g. `@ssv/stencil-core`), use `watchDirs` and `preBuildCommand` so changes in the peer also trigger a fresh Stencil build:
 
 ```ts
 stencilWatch({
   packageDir: path.resolve(__dirname, "../stencil-playground"),
-  watchDirs: [path.resolve(__dirname, "../../libs/stencil.core/src")],
-  preBuildCommand: "pnpm --filter @ssv/stencil.core build",
+  watchDirs: [path.resolve(__dirname, "../../libs/stencil-core/src")],
+  preBuildCommand: "pnpm --filter @ssv/stencil-core build",
 }),
 ```
 

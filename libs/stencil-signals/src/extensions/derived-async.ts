@@ -1,4 +1,4 @@
-import { peekCurrentHost, use } from "@ssv/stencil.core";
+import { peekCurrentHost, use } from "@ssv/stencil-core";
 import { Build } from "@stencil/core";
 
 import { getAdapter } from "../adapters/active";

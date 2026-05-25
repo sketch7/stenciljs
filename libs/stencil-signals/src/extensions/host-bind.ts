@@ -6,7 +6,7 @@
  * `SignalWatcherController` via `getActiveOwner()` registration in core factories.
  */
 
-import { peekCurrentHost, use } from "@ssv/stencil.core";
+import { peekCurrentHost, use } from "@ssv/stencil-core";
 
 import { getActiveOwner } from "../signals/core";
 import type { WatcherRef } from "./effect";

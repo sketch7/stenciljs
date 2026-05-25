@@ -121,7 +121,7 @@ export default defineConfig(({ command, mode }) => {
 			stencilWatch({
 				apply: "serve",
 				packageDir: stencilPkgDir,
-				watchDirs: [path.resolve(__dirname, "../../libs/stencil.core/src")],
+				watchDirs: [path.resolve(__dirname, "../../libs/stencil-core/src")],
 				preBuildCommand: "pnpm nx run stencil-core:build",
 				preBuildCommandCwd: path.resolve(__dirname, "../.."),
 				onRebuildDone: async server => {
@@ -147,7 +147,7 @@ export default defineConfig(({ command, mode }) => {
 				// by the generated server wrappers selected via package export
 				// conditions.
 				module: import("@app/stencil-playground/react"),
-				from: "@app/stencil-playground/react/server",
+				from: "@app/stencil-playground/react",
 				hydrateModule: import("@app/stencil-playground/hydrate").then(m => {
 					hydrateModuleRef = m as Record<string, unknown>;
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any

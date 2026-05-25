@@ -1,6 +1,6 @@
 // oxlint-disable-next-line import/no-unassigned-import -- registers the TC39 signal adapter
 import "@ssv/stencil-signals/tc39";
-import { TestHost } from "@ssv/stencil.core/testing";
+import { TestHost } from "@ssv/stencil-core/testing";
 import { QueryClient, noop } from "@tanstack/query-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 

@@ -1,5 +1,5 @@
 // oxlint-disable complexity -- draft-info render has many conditional display states
-import { SsvElement } from "@ssv/stencil.core";
+import { SsvElement } from "@ssv/stencil-core";
 import { Component, Prop, h } from "@stencil/core";
 
 import { useDraftView } from "../draft/draft.hooks";

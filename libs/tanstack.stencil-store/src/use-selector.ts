@@ -1,4 +1,4 @@
-import { use } from "@ssv/stencil.core";
+import { use } from "@ssv/stencil-core";
 
 /** Options for {@link useSelector}. */
 export type UseSelectorOptions<TSelected> = {

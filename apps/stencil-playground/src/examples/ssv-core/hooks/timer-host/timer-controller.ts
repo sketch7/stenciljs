@@ -1,5 +1,5 @@
-import { use } from "@ssv/stencil.core";
-import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
+import { use } from "@ssv/stencil-core";
+import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil-core";
 
 class TimerController implements ReactiveController {
 	#elapsed = 0;

@@ -1,4 +1,4 @@
-import { SsvElement } from "@ssv/stencil.core";
+import { SsvElement } from "@ssv/stencil-core";
 import { Component, Prop, h } from "@stencil/core";
 
 import type { Champion, Team } from "../lol.types";

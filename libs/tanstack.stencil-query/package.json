@@ -39,8 +39,8 @@
     "@tanstack/query-devtools": "catalog:"
   },
   "devDependencies": {
+    "@ssv/stencil-core": "workspace:*",
     "@ssv/stencil-signals": "workspace:*",
-    "@ssv/stencil.core": "workspace:*",
     "@stencil/core": "catalog:",
     "@tanstack/query-core": "catalog:",
     "@types/node": "catalog:",
@@ -53,8 +53,8 @@
     "vitest": "catalog:"
   },
   "peerDependencies": {
+    "@ssv/stencil-core": "workspace:*",
     "@ssv/stencil-signals": "workspace:*",
-    "@ssv/stencil.core": "workspace:*",
     "@stencil/core": ">=4.0.0",
     "@tanstack/query-core": "^5.0.0"
   },

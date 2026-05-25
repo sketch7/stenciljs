@@ -4,12 +4,12 @@ Tree-scoped dependency injection via DOM events. A consumer dispatches a `__ssv:
 
 ## API
 
-| Export           | Kind | Purpose                                                               |
-| ---------------- | ---- | --------------------------------------------------------------------- |
-| `createContext`  | fn   | Creates a typed `ContextKey` token with an optional default           |
-| `provideContext` | fn   | Registers the host as a provider; returns the context value           |
-| `useContext`     | fn   | Consumes the nearest ancestor provider; returns a `ContextRef`        |
-| `ContextKey<T>`  | type | Opaque token that pairs a provider with its consumers                 |
+| Export           | Kind | Purpose                                                                 |
+| ---------------- | ---- | ----------------------------------------------------------------------- |
+| `createContext`  | fn   | Creates a typed `ContextKey` token with an optional default             |
+| `provideContext` | fn   | Registers the host as a provider; returns the context value             |
+| `useContext`     | fn   | Consumes the nearest ancestor provider; returns a `ContextRef`          |
+| `ContextKey<T>`  | type | Opaque token that pairs a provider with its consumers                   |
 | `ContextRef<T>`  | type | Stable ref: `.current` holds the resolved value before the first render |
 
 ## Resolution
@@ -41,7 +41,7 @@ flowchart TD
 
 ```ts
 // counter.context.ts
-import { createContext } from "@ssv/stencil.core";
+import { createContext } from "@ssv/stencil-core";
 
 export const CounterContext = createContext<CounterStore>(
   () => createCounterStore(),

@@ -1,6 +1,6 @@
 ---
 name: stenciljs-component-development
-description: StencilJS component patterns for this workspace. Use when creating new Stencil components, adding reactive state with @stencil/store or @ssv/tanstack.stencil-store, implementing ReactiveController from @ssv/stencil.core, or working with output targets. Trigger words - component, stencil, @Component, store, reactive controller, SsvElement, output target, web component, useSelector, useAtom, tanstack.
+description: StencilJS component patterns for this workspace. Use when creating new Stencil components, adding reactive state with @stencil/store or @ssv/tanstack.stencil-store, implementing ReactiveController from @ssv/stencil-core, or working with output targets. Trigger words - component, stencil, @Component, store, reactive controller, SsvElement, output target, web component, useSelector, useAtom, tanstack.
 ---
 
 # StencilJS Component Development
@@ -71,11 +71,11 @@ export class AppCounter {
 
 See: [apps/stencil-playground/src/examples/stencil-store/counter/](../../../apps/stencil-playground/src/examples/stencil-store/counter/)
 
-## Reactive Controllers (@ssv/stencil.core)
+## Reactive Controllers (@ssv/stencil-core)
 
 Use `ReactiveController` for lifecycle-aware, reusable behaviour (event listeners, intervals, subscriptions). The controller calls `host.requestUpdate()` to trigger re-renders.
 
-Use `use(factory)` from `@ssv/stencil.core` — the factory receives `host` and returns `{ hooks: ReactiveController; value? }`. The `hooks` object is registered as the controller; `value` is returned to the caller with lifecycle methods stripped from its type. Omit `value` for side-effect-only hooks.
+Use `use(factory)` from `@ssv/stencil-core` — the factory receives `host` and returns `{ hooks: ReactiveController; value? }`. The `hooks` object is registered as the controller; `value` is returned to the caller with lifecycle methods stripped from its type. Omit `value` for side-effect-only hooks.
 
 > The `hooks` key is typed as the exact `ReactiveController` interface, so lifecycle method typos (e.g. `hostDisconnectedX`) are caught at compile time.
 
@@ -89,7 +89,7 @@ State lives in the closure. Return `{ hooks, value }` from the factory.
 
 ```typescript
 // <feature>/<feature>-controller.ts
-import { use } from "@ssv/stencil.core";
+import { use } from "@ssv/stencil-core";
 
 export function useMouseController() {
   return use((host) => {
@@ -119,8 +119,8 @@ Expose it via a factory function so consumers use the same `use*` call-site conv
 
 ```typescript
 // <feature>/<feature>-controller.ts
-import { use } from "@ssv/stencil.core";
-import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil.core";
+import { use } from "@ssv/stencil-core";
+import type { ReactiveController, ReactiveControllerHost } from "@ssv/stencil-core";
 
 class TimerController implements ReactiveController {
   #elapsed = 0;
@@ -166,7 +166,7 @@ Hooks are called in class field initializers — no `this` passed, no `host` par
 
 ```typescript
 // Option A — single inheritance
-import { SsvElement } from "@ssv/stencil.core";
+import { SsvElement } from "@ssv/stencil-core";
 
 export class AppMouseHost extends SsvElement {
   #mouse = useMouseController();
@@ -174,7 +174,7 @@ export class AppMouseHost extends SsvElement {
 }
 
 // Option B — mixin (when you need to extend another base class)
-import { SsvElementMixin } from "@ssv/stencil.core";
+import { SsvElementMixin } from "@ssv/stencil-core";
 import { Mixin } from "@stencil/core";
 
 export class AppTimerHost extends Mixin(SsvElementMixin) {
@@ -187,7 +187,7 @@ See:
 
 - Mouse tracking example: [apps/stencil-playground/src/examples/ssv-core/mouse-host/](../../../apps/stencil-playground/src/examples/ssv-core/mouse-host/)
 - Timer example: [apps/stencil-playground/src/examples/ssv-core/timer-host/](../../../apps/stencil-playground/src/examples/ssv-core/timer-host/)
-- Library source: [libs/stencil.core/src/](../../../libs/stencil.core/src/)
+- Library source: [libs/stencil-core/src/](../../../libs/stencil-core/src/)
 
 ## Output Targets (stencil.config.ts)
 
@@ -222,7 +222,7 @@ See: [apps/stencil-playground/stencil.config.ts](../../../apps/stencil-playgroun
 | Component + ReactiveController (Mixin)      | [ssv-core/timer-host/](../../../apps/stencil-playground/src/examples/ssv-core/timer-host/)         |
 | Component + TanStack Query                  | [ts-query/posts/](../../../apps/stencil-playground/src/examples/ts-query/posts/)                   |
 | Output targets config                       | [stencil.config.ts](../../../apps/stencil-playground/stencil.config.ts)                            |
-| Core library API                            | [libs/stencil.core/src/index.ts](../../../libs/stencil.core/src/index.ts)                          |
+| Core library API                            | [libs/stencil-core/src/index.ts](../../../libs/stencil-core/src/index.ts)                          |
 
 ## TanStack Query (@ssv/tanstack.stencil-query)
 

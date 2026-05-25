@@ -1,4 +1,4 @@
-import type { Ref } from "@ssv/stencil.core";
+import type { Ref } from "@ssv/stencil-core";
 import type {
 	DefaultError,
 	DefinedQueryObserverResult,

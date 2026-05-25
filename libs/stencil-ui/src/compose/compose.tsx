@@ -1,4 +1,4 @@
-import { SsvElement, useEffect } from "@ssv/stencil.core";
+import { SsvElement, useEffect } from "@ssv/stencil-core";
 import { Component, Element, Event, EventEmitter, Listen, Prop, h } from "@stencil/core";
 import type { VNode } from "@stencil/core";
 

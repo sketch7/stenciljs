@@ -347,6 +347,9 @@ importers:
         specifier: 'catalog:'
         version: 5.100.11
     devDependencies:
+      '@ssv/stencil-signals':
+        specifier: workspace:*
+        version: link:../stencil-signals
       '@ssv/stencil.core':
         specifier: workspace:*
         version: link:../stencil.core

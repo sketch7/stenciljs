@@ -61,7 +61,6 @@
     "signal-polyfill": ">=0.2.0"
   },
   "peerDependenciesMeta": {
-    "@stencil/core": ">=4.0.0",
     "signal-polyfill": {
       "optional": true
     },

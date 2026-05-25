@@ -9,7 +9,10 @@ pnpm add @ssv/stencil-ui @ssv/stencil.core
 **Peer deps:** `@stencil/core >=4.0.0`, `@ssv/stencil.core`
 
 ```ts
-import { createCompositionDefs, provideCompositionRegistry } from "@ssv/stencil-ui/compose";
+import {
+  createCompositionDefs,
+  provideCompositionRegistry,
+} from "@ssv/stencil-ui/compose";
 ```
 
 ## Compose system
@@ -27,7 +30,10 @@ import { createCompositionDefs, provideCompositionRegistry } from "@ssv/stencil-
 
 ```ts
 // compose-defs.ts
-import { createCompositionDefs, type CompositionNameOf } from "@ssv/stencil-ui/compose";
+import {
+  createCompositionDefs,
+  type CompositionNameOf,
+} from "@ssv/stencil-ui/compose";
 
 export const defs = createCompositionDefs({
   timer: { tag: "app-timer", aliases: ["countdown"] },
@@ -64,12 +70,12 @@ export class AppDashboard extends SsvElement {
 
 `ssv-compose` chooses how to pass `props` and capture outputs based on what it knows about the resolved element class:
 
-| Mode | When | Props passed | Output forwarding |
-|---|---|---|---|
-| **Direct** | element class not a `ComposeWidget` | `props` spread as component props | all `CustomEvent`s auto-forwarded as `composeEvent` with `eventName` |
-| **Wrapper** | element class extends `ComposeWidget` | `{ props }` as a single prop | listens for `ssvComposeOutput` event |
-| **`mapProps`** | `mapProps` set in def (any mode) | return value of `mapProps(props)` | determined by mode |
-| **`mapOutputs`** | set in def (direct only) | spread (unless `mapProps`) | only mapped events forwarded; auto-forwarding disabled |
+| Mode             | When                                  | Props passed                      | Output forwarding                                                    |
+| ---------------- | ------------------------------------- | --------------------------------- | -------------------------------------------------------------------- |
+| **Direct**       | element class not a `ComposeWidget`   | `props` spread as component props | all `CustomEvent`s auto-forwarded as `composeEvent` with `eventName` |
+| **Wrapper**      | element class extends `ComposeWidget` | `{ props }` as a single prop      | listens for `ssvComposeOutput` event                                 |
+| **`mapProps`**   | `mapProps` set in def (any mode)      | return value of `mapProps(props)` | determined by mode                                                   |
+| **`mapOutputs`** | set in def (direct only)              | spread (unless `mapProps`)        | only mapped events forwarded; auto-forwarding disabled               |
 
 ### Direct mode — use an existing component as-is
 
@@ -82,7 +88,11 @@ const defs = createCompositionDefs({
 ```
 
 ```tsx
-<ssv-compose name="counter" props={{ step: 2 }} onComposeEvent={e => console.log(e.detail)} />
+<ssv-compose
+  name="counter"
+  props={{ step: 2 }}
+  onComposeEvent={e => console.log(e.detail)}
+/>
 // e.detail → { name: "counter", eventName: "myCustomEvent", data: <event detail> }
 ```
 
@@ -92,7 +102,10 @@ Use `mapProps` to control exactly which props get set when the `props` shape dif
 const defs = createCompositionDefs({
   timer: {
     tag: "app-timer",
-    mapProps: (p: { duration: number }) => ({ duration: p.duration, autoStart: true }),
+    mapProps: (p: { duration: number }) => ({
+      duration: p.duration,
+      autoStart: true,
+    }),
   },
 });
 ```
@@ -166,7 +179,10 @@ const defs = createCompositionDefs({
 `createCompositionDefs` preserves literal keys so `CompositionNameOf` gives you a union of all names and aliases:
 
 ```ts
-import { createCompositionDefs, type CompositionNameOf } from "@ssv/stencil-ui/compose";
+import {
+  createCompositionDefs,
+  type CompositionNameOf,
+} from "@ssv/stencil-ui/compose";
 
 export const defs = createCompositionDefs({
   timer: { tag: "app-timer-widget", aliases: ["countdown", "kitchen-timer"] },
@@ -188,8 +204,9 @@ export class AppDashboard extends SsvElement {
   readonly composeRegistry = provideCompositionRegistry(defs);
   // or a fluent setup function
   readonly composeRegistry = provideCompositionRegistry(r =>
-    r.register("timer", { tag: "app-timer-widget" })
-     .register("table", { tag: "app-data-table" }),
+    r
+      .register("timer", { tag: "app-timer-widget" })
+      .register("table", { tag: "app-data-table" }),
   );
 }
 ```
@@ -203,7 +220,7 @@ import { createComposeRegistry } from "@ssv/stencil-ui/compose";
 
 const registry = createComposeRegistry();
 registry.register("timer", { tag: "app-timer-widget" });
-registry.registerFromDefs(defs);         // bulk
+registry.registerFromDefs(defs); // bulk
 ```
 
 **Duplicate policy: last wins.** Re-registering a key overwrites the previous definition. In development a `console.warn` is emitted; in production no warning is logged.
@@ -216,9 +233,9 @@ Every event emitted by `ssv-compose` has this shape:
 
 ```ts
 type ComposeEventDetail<TOutput = unknown> = {
-  name: string;        // the name prop on ssv-compose
-  eventName?: string;  // set in direct mode; the DOM event name from the child element
-  data: TOutput;       // payload from ssvComposeOutput, mapOutputs, or direct event detail
+  name: string; // the name prop on ssv-compose
+  eventName?: string; // set in direct mode; the DOM event name from the child element
+  data: TOutput; // payload from ssvComposeOutput, mapOutputs, or direct event detail
 };
 ```
 
@@ -311,40 +328,40 @@ Use `CompositionNameOf` and a switch to build typed props objects without castin
 
 ### `@ssv/stencil-ui/compose` exports
 
-| Export | Kind | Description |
-|---|---|---|
-| `createCompositionDefs(defs)` | function | Preserves literal keys for `CompositionNameOf` inference |
-| `provideCompositionRegistry(setup)` | function | Scoped registry via context on `SsvElement` host |
-| `useCompositionRegistry()` | hook | Consume nearest registry from context |
-| `createComposeRegistry()` | function | New isolated registry instance |
-| `ComposeWidget` | class | Extend to signal wrapper mode to `ssv-compose` |
-| `CompositionNameOf<TDefs>` | type | Union of all primary keys and alias strings |
-| `ComposeDef<TProps>` | type | Registry entry shape (`tag`, `mapProps?`, `mapOutputs?`, `aliases?`) |
-| `ComposeEventDetail<TOutput>` | type | `{ name, eventName?, data }` — emitted by `ssv-compose` |
-| `ComposeRegistry` | type | Registry interface (`register`, `registerFromDefs`, `resolve`, `listTypes`) |
-| `CompositionDefsMap` | type | `Record<string, ComposeDef>` |
+| Export                              | Kind     | Description                                                                 |
+| ----------------------------------- | -------- | --------------------------------------------------------------------------- |
+| `createCompositionDefs(defs)`       | function | Preserves literal keys for `CompositionNameOf` inference                    |
+| `provideCompositionRegistry(setup)` | function | Scoped registry via context on `SsvElement` host                            |
+| `useCompositionRegistry()`          | hook     | Consume nearest registry from context                                       |
+| `createComposeRegistry()`           | function | New isolated registry instance                                              |
+| `ComposeWidget`                     | class    | Extend to signal wrapper mode to `ssv-compose`                              |
+| `CompositionNameOf<TDefs>`          | type     | Union of all primary keys and alias strings                                 |
+| `ComposeDef<TProps>`                | type     | Registry entry shape (`tag`, `mapProps?`, `mapOutputs?`, `aliases?`)        |
+| `ComposeEventDetail<TOutput>`       | type     | `{ name, eventName?, data }` — emitted by `ssv-compose`                     |
+| `ComposeRegistry`                   | type     | Registry interface (`register`, `registerFromDefs`, `resolve`, `listTypes`) |
+| `CompositionDefsMap`                | type     | `Record<string, ComposeDef>`                                                |
 
 ### `ssv-compose` props
 
-| Prop | Type | Description |
-|---|---|---|
-| `name` | `string` | Registry key to resolve |
+| Prop    | Type      | Description                                             |
+| ------- | --------- | ------------------------------------------------------- |
+| `name`  | `string`  | Registry key to resolve                                 |
 | `props` | `unknown` | Passed to the widget; shape depends on composition mode |
 
 ### `ssv-compose` events
 
-| Event | Detail | Description |
-|---|---|---|
+| Event          | Detail               | Description                                  |
+| -------------- | -------------------- | -------------------------------------------- |
 | `composeEvent` | `ComposeEventDetail` | Normalized output from any registered widget |
 
 ### `ComposeDef<TProps>` fields
 
-| Field | Type | Description |
-|---|---|---|
-| `tag` | `string` | Custom element tag passed to `h()` |
-| `mapProps?` | `(props: TProps) => Record<string, unknown>` | Maps props to explicit child props; bypasses default spreading |
-| `mapOutputs?` | `Record<eventName, (e: CustomEvent) => unknown>` | Maps direct component events to `composeEvent.data` |
-| `aliases?` | `string[]` | Additional names that resolve to this same definition |
+| Field         | Type                                             | Description                                                    |
+| ------------- | ------------------------------------------------ | -------------------------------------------------------------- |
+| `tag`         | `string`                                         | Custom element tag passed to `h()`                             |
+| `mapProps?`   | `(props: TProps) => Record<string, unknown>`     | Maps props to explicit child props; bypasses default spreading |
+| `mapOutputs?` | `Record<eventName, (e: CustomEvent) => unknown>` | Maps direct component events to `composeEvent.data`            |
+| `aliases?`    | `string[]`                                       | Additional names that resolve to this same definition          |
 
 ---
 
@@ -364,6 +381,3 @@ pnpm nx run stencil-ui:dev    # watch
 
 - [@ssv/stencil.core](../stencil.core/README.md) — `SsvElement`, `useContext`, `provideContext`
 - [Stencil component development skill](../../.github/skills/stenciljs-component-development/SKILL.md) — tag prefixes (`ssv-` / `app-`), vertical slices
-
-
-@Component({ tag: "app-dashboard" })

@@ -42,6 +42,15 @@
         "command": "pnpm oxfmt --check src/",
         "cwd": "libs/stencil-ui"
       }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p tsconfig.json --noEmit",
+        "cwd": "libs/stencil-ui"
+      },
+      "cache": true,
+      "inputs": ["default", "^production"]
     }
   }
 }

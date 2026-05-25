@@ -82,7 +82,6 @@ export class AppLolDraftArea extends SsvElement {
 					picks={session?.bluePicks ?? [null, null, null, null, null]}
 					bans={session?.blueBans ?? [null, null, null, null, null]}
 					champions={championMap}
-					session={session ?? null}
 					isActive={currentTurn?.team === "blue" && session?.phase !== "finished"}
 				/>
 
@@ -94,7 +93,6 @@ export class AppLolDraftArea extends SsvElement {
 					picks={session?.redPicks ?? [null, null, null, null, null]}
 					bans={session?.redBans ?? [null, null, null, null, null]}
 					champions={championMap}
-					session={session ?? null}
 					isActive={currentTurn?.team === "red" && session?.phase !== "finished"}
 				/>
 			</div>

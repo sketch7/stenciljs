@@ -19,8 +19,6 @@ const logger = getLogger(["lol", "draft"]);
 
 export const draftQueryKey = (draftId: string) => ["lol-draft", draftId] as const;
 
-export { DRAFTS_QUERY_KEY };
-
 // ── useListDrafts ──────────────────────────────────────────────────────────────
 
 export function useListDrafts() {

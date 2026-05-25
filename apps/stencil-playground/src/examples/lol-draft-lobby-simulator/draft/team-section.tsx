@@ -1,7 +1,7 @@
 import { SsvElement } from "@ssv/stencil.core";
 import { Component, Prop, h } from "@stencil/core";
 
-import type { Champion, DraftSession, Team } from "../lol.types";
+import type { Champion, Team } from "../lol.types";
 
 @Component({
 	tag: "app-lol-team-section",
@@ -13,21 +13,10 @@ export class AppLolTeamSection extends SsvElement {
 	@Prop() picks: (string | null)[] = [null, null, null, null, null];
 	@Prop() bans: (string | null)[] = [null, null, null, null, null];
 	@Prop() champions = new Map<string, Champion>();
-	@Prop() session: DraftSession | null = null;
 	@Prop({ reflect: true }) isActive = false;
-	@Prop() isPendingPick = false;
-	@Prop() isPendingBan = false;
-	@Prop() pendingChampionId: string | null = null;
 
 	render() {
-		const { team, picks, bans, champions, session, isPendingPick, isPendingBan } = this;
-		const currentTurn = session?.turnOrder[session.currentTurnIndex ?? -1];
-		const isCurrentTeamTurn = currentTurn?.team === team;
-
-		// Which slot is actively being filled (pending mutation target)
-		const pendingPickSlot =
-			isPendingPick && isCurrentTeamTurn && currentTurn?.action === "pick" ? currentTurn.slot : null;
-		const pendingBanSlot = isPendingBan && isCurrentTeamTurn && currentTurn?.action === "ban" ? currentTurn.slot : null;
+		const { team, picks, bans, champions } = this;
 
 		return (
 			<div class={`team team--${team}`}>
@@ -44,7 +33,7 @@ export class AppLolTeamSection extends SsvElement {
 							key={`pick-${i}`}
 							slotType="pick"
 							champion={championId ? (champions.get(championId) ?? null) : null}
-							status={championId ? "filled" : pendingPickSlot === i ? "pending" : "empty"}
+							status={championId ? "filled" : "empty"}
 						/>
 					))}
 				</div>
@@ -57,7 +46,7 @@ export class AppLolTeamSection extends SsvElement {
 							key={`ban-${i}`}
 							slotType="ban"
 							champion={championId ? (champions.get(championId) ?? null) : null}
-							status={championId ? "filled" : pendingBanSlot === i ? "pending" : "empty"}
+							status={championId ? "filled" : "empty"}
 						/>
 					))}
 				</div>

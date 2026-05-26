@@ -203,15 +203,15 @@ export const todoStore = createStore({ todos: [] as Todo[], nextId: 1 }, s => ({
 }));
 ```
 
-Read with invocation (`store.count()`, `store.completedCount()`). Mutate with `set`/`update` (`store.count.set(1)`, `store.count.update(v => v + 1)`) or assignment (`store.count = 1`). Escape hatches: `$signal(key)`, `$reset()`.
+Read with invocation (`store.count()`, `store.completedCount()`). Mutate with `set`/`update` (`store.count.set(1)`, `store.count.update(v => v + 1)`) or assignment (`store.count = 1`). Escape hatches: `$signal(key)`, `reset()`.
 
-#### `$patch(partial)` — bulk update
+#### `patch(partial)` — bulk update
 
 Applies a `Partial<T>` object to the store in a single batched write, coalescing all updates into one re-render pass:
 
 ```ts
-todoStore.$patch({ nextId: 2 }); // partial — only listed keys are updated
-todoStore.$patch({ todos: [], nextId: 1 }); // full reset-style update
+todoStore.patch({ nextId: 2 }); // partial — only listed keys are updated
+todoStore.patch({ todos: [], nextId: 1 }); // full reset-style update
 ```
 
 **Behaviour per key kind:**
@@ -307,9 +307,9 @@ Also exported from main entry: `effect`, `derivedAsync`, `computedPrevious`, `cr
 
 ### Store
 
-| Export                                | Description                             |
-| ------------------------------------- | --------------------------------------- |
-| `createStore(init, computedFactory?)` | Proxy store; `$signal(key)`, `$reset()` |
+| Export                                | Description                            |
+| ------------------------------------- | -------------------------------------- |
+| `createStore(init, computedFactory?)` | Proxy store; `$signal(key)`, `reset()` |
 
 ### Low-level
 

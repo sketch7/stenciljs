@@ -370,7 +370,7 @@ export default function Page(): JSX.Element {
 				<SubHeading id="signals-store">Signal store</SubHeading>
 				<p className="text-xs text-(--color-muted-fg)">
 					<code>createStore()</code> wraps a plain object in per-key signals exposed as a reactive Proxy. Computed
-					properties via a factory. <code>$reset()</code> built in.
+					properties via a factory. <code>reset()</code> built in.
 				</p>
 				<BeforeAfter before={h.signalStoreBefore} after={h.signalStoreAfter} />
 

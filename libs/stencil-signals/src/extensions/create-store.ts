@@ -12,7 +12,7 @@ type ComputedMap<C extends Record<string, Signal<unknown>>> = {
 export type Store<T extends object, C extends Record<string, Signal<unknown>> = Record<never, never>> = StateMap<T> &
 	ComputedMap<C> & {
 		$signal<K extends keyof T>(key: K): WritableSignal<T[K]>;
-		$reset(): void;
+		reset(): void;
 		/**
 		 * Applies a partial update to the store, setting only the provided state keys in a single batched write.
 		 *
@@ -23,9 +23,9 @@ export type Store<T extends object, C extends Record<string, Signal<unknown>> = 
 		 * All writes are coalesced into one re-render pass via `batch()`.
 		 *
 		 * @example
-		 * store.$patch({ count: 5, name: "foo" }); // full or partial update
+		 * store.patch({ count: 5, name: "foo" }); // full or partial update
 		 */
-		$patch(partial: Partial<T>): void;
+		patch(partial: Partial<T>): void;
 	};
 
 // ─── Implementation ───────────────────────────────────────────────────────────
@@ -42,7 +42,7 @@ export function createStore<T extends object, C extends Record<string, Signal<un
 ): Store<T, C> {
 	const adapter = getAdapter();
 
-	// Snapshot initial values for $reset().
+	// Snapshot initial values for reset().
 	const initial = { ...initialState } as T;
 
 	// One signal state per key.
@@ -63,7 +63,7 @@ export function createStore<T extends object, C extends Record<string, Signal<un
 					(signals as Record<keyof T, WritableSignal<T[keyof T]>>)[key] as WritableSignal<T[K]>;
 			}
 
-			if (propStr === "$reset") {
+			if (propStr === "reset") {
 				return (): void => {
 					for (const key of Object.keys(initial) as (keyof T)[]) {
 						(signals as Record<keyof T, WritableSignal<unknown>>)[key].set(initial[key]);
@@ -71,7 +71,7 @@ export function createStore<T extends object, C extends Record<string, Signal<un
 				};
 			}
 
-			if (propStr === "$patch") {
+			if (propStr === "patch") {
 				return (partial: Partial<T>): void => {
 					batch(() => {
 						for (const key of Object.keys(partial) as (keyof T)[]) {
@@ -80,7 +80,7 @@ export function createStore<T extends object, C extends Record<string, Signal<un
 							} else if (computedSignals && key in computedSignals) {
 								throw new TypeError(`createStore: cannot patch computed property "${String(key)}".`);
 							} else {
-								console.warn(`createStore: $patch received unknown key "${String(key)}" — skipping.`);
+								console.warn(`createStore: patch received unknown key "${String(key)}" — skipping.`);
 							}
 						}
 					});
@@ -121,8 +121,8 @@ export function createStore<T extends object, C extends Record<string, Signal<un
 				prop in signals ||
 				(computedSignals ? prop in computedSignals : false) ||
 				propStr === "$signal" ||
-				propStr === "$reset" ||
-				propStr === "$patch"
+				propStr === "reset" ||
+				propStr === "patch"
 			);
 		},
 	});

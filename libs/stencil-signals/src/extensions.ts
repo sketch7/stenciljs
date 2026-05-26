@@ -3,6 +3,10 @@ export { effect } from "./extensions/effect";
 export { effectOnceIf } from "./extensions/effect-once-if";
 export type { CleanupFn, EffectOptions, WatcherRef, RegisterCleanup } from "./extensions/effect";
 
+// ─── Notifier ─────────────────────────────────────────────────────────────────
+export { createNotifier } from "./extensions/create-notifier";
+export type { CreateNotifierOptions, Notifier } from "./extensions/create-notifier";
+
 // ─── Derived signals ──────────────────────────────────────────────────────────
 export { computedPrevious } from "./extensions/computed-previous";
 export { derivedAsync } from "./extensions/derived-async";

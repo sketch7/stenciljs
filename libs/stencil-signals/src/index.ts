@@ -10,6 +10,7 @@ export { SignalWatcherController, useSignalWatcher } from "./controllers/signal-
 // ─── Side effects ─────────────────────────────────────────────────────────────
 export { effect } from "./extensions/effect";
 export type { CleanupFn, EffectOptions, WatcherRef, RegisterCleanup } from "./extensions/effect";
+export { effectOnceIf } from "./extensions/effect-once-if";
 
 // ─── Derived signals ──────────────────────────────────────────────────────────
 export { computedPrevious } from "./extensions/computed-previous";

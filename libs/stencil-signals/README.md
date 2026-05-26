@@ -205,6 +205,23 @@ export const todoStore = createStore({ todos: [] as Todo[], nextId: 1 }, s => ({
 
 Read with invocation (`store.count()`, `store.completedCount()`). Mutate with `set`/`update` (`store.count.set(1)`, `store.count.update(v => v + 1)`) or assignment (`store.count = 1`). Escape hatches: `$signal(key)`, `$reset()`.
 
+#### `$patch(partial)` — bulk update
+
+Applies a `Partial<T>` object to the store in a single batched write, coalescing all updates into one re-render pass:
+
+```ts
+todoStore.$patch({ nextId: 2 }); // partial — only listed keys are updated
+todoStore.$patch({ todos: [], nextId: 1 }); // full reset-style update
+```
+
+**Behaviour per key kind:**
+
+| Key kind               | Behaviour                                           |
+| ---------------------- | --------------------------------------------------- |
+| State key (in initial) | Updated via `.set()` inside `batch()`               |
+| Computed key           | Throws `TypeError` — computed signals are read-only |
+| Unknown key            | `console.warn` and skipped                          |
+
 ## Migration from `@stencil/store`
 
 Examples in this monorepo compare the legacy store pattern with signals ([counter](../../apps/stencil-playground/src/examples/stencil-signals/counter/), [todo](../../apps/stencil-playground/src/examples/stencil-signals/todo/)).
@@ -225,6 +242,7 @@ Incremental migration is supported: new features can use signals while existing 
 | `useSignalWatcher` / `SignalWatcherMixin` | [signal-watcher.md](docs/signal-watcher.md)                                  |
 | `useSignalProps`                          | [signal-props.md](docs/signal-props.md)                                      |
 | `effect`                                  | [effect.md](docs/effect.md)                                                  |
+| `effectOnceIf`                            | [effect-once-if.md](docs/effect-once-if.md)                                  |
 | `derivedAsync`                            | [derived-async.md](docs/derived-async.md)                                    |
 | `signalFromEvent`                         | [signal-from-event.md](docs/signal-from-event.md)                            |
 | `computedPrevious`                        | Below ([API](#api-reference))                                                |

@@ -73,7 +73,7 @@ describe("effectOnceIf", () => {
 		["", "empty string"],
 		[null, "null"],
 		[undefined, "undefined"],
-	])("does not execute for falsy value: %o", (falsy: any) => {
+	])("does not execute for falsy value: %o", falsy => {
 		const condition = signal(falsy);
 		const execution = vi.fn();
 
@@ -123,7 +123,7 @@ describe("effectOnceIf", () => {
 
 		// Verify that reading counter in execution doesn't create a dependency
 		// (if it did, changing counter after disposal would cause issues)
-		const executionWithRead = vi.fn((val: boolean) => {
+		const executionWithRead = vi.fn((_val: boolean) => {
 			counter();
 		});
 

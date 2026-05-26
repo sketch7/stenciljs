@@ -21,11 +21,11 @@ function effectOnceIf<T>(
 
 ## When to use
 
-✓ **One-time setup** when a dependency becomes available (auth token, config loaded, user selected).  
-✓ **Async triggers** — fetch data once a filter becomes set, without re-running on every change.  
+✓ **One-time setup** when a dependency becomes available (auth token, config loaded, user selected).
+✓ **Async triggers** — fetch data once a filter becomes set, without re-running on every change.
 ✓ **Event logging** — record when user enters a feature for the first time.
 
-✗ **Multiple executions** — use `effect()` instead ([effect.md](effect.md)).  
+✗ **Multiple executions** — use `effect()` instead ([effect.md](effect.md)).
 ✗ **Conditional rendering** — use a computed or template conditional.
 
 ## Examples
@@ -39,12 +39,15 @@ import { effectOnceIf } from "@ssv/stencil-signals";
 const userId = signal<number | null>(null);
 const userProfile = signal<Profile | null>(null);
 
-effectOnceIf(() => userId(), (id) => {
-  // Runs once when userId changes to a truthy value
-  fetch(`/api/users/${id}`)
-    .then(r => r.json())
-    .then(profile => userProfile.set(profile));
-});
+effectOnceIf(
+  () => userId(),
+  id => {
+    // Runs once when userId changes to a truthy value
+    fetch(`/api/users/${id}`)
+      .then(r => r.json())
+      .then(profile => userProfile.set(profile));
+  },
+);
 ```
 
 ### Log feature gate activation
@@ -52,10 +55,13 @@ effectOnceIf(() => userId(), (id) => {
 ```ts
 const featureEnabled = signal(false);
 
-effectOnceIf(() => featureEnabled(), () => {
-  console.log("Feature X activated");
-  analytics.track("feature_enabled", { name: "X" });
-});
+effectOnceIf(
+  () => featureEnabled(),
+  () => {
+    console.log("Feature X activated");
+    analytics.track("feature_enabled", { name: "X" });
+  },
+);
 ```
 
 ### Initialize subsystem on config load
@@ -63,25 +69,31 @@ effectOnceIf(() => featureEnabled(), () => {
 ```ts
 const config = signal<AppConfig | null>(null);
 
-effectOnceIf(() => config(), (cfg) => {
-  initializeTheme(cfg.theme);
-  initializeLocale(cfg.locale);
-});
+effectOnceIf(
+  () => config(),
+  cfg => {
+    initializeTheme(cfg.theme);
+    initializeLocale(cfg.locale);
+  },
+);
 ```
 
 ## Execution model
 
-| Step | Behavior |
-| --- | --- |
-| **Create** | `condition()` is read synchronously (tracked as a dependency). |
-| **Condition falsy** | Effect waits; dependency change re-checks condition. |
+| Step                 | Behavior                                                                 |
+| -------------------- | ------------------------------------------------------------------------ |
+| **Create**           | `condition()` is read synchronously (tracked as a dependency).           |
+| **Condition falsy**  | Effect waits; dependency change re-checks condition.                     |
 | **Condition truthy** | `execution(value)` runs in untracked context, then effect self-disposes. |
-| **After dispose** | Condition changes no longer trigger re-runs. |
+| **After dispose**    | Condition changes no longer trigger re-runs.                             |
 
 If the condition is **already truthy** on creation:
 
 ```ts
-effectOnceIf(() => true, () => console.log("Runs immediately"));
+effectOnceIf(
+  () => true,
+  () => console.log("Runs immediately"),
+);
 // logs "Runs immediately" synchronously
 ```
 
@@ -98,13 +110,13 @@ ref.dispose();
 
 ## Relationship to `effect()`
 
-| Feature | `effect()` | `effectOnceIf()` |
-| --- | --- | --- |
-| Runs on dependency change | ✓ | ✗ (once only) |
-| Untracked execution | ✗ | ✓ |
-| Explicit disposal | ✓ | ✓ (auto after exec) |
-| Cleanup callbacks | ✓ | ✗ |
-| Condition checking | ✓ | ✓ |
+| Feature                   | `effect()` | `effectOnceIf()`    |
+| ------------------------- | ---------- | ------------------- |
+| Runs on dependency change | ✓          | ✗ (once only)       |
+| Untracked execution       | ✗          | ✓                   |
+| Explicit disposal         | ✓          | ✓ (auto after exec) |
+| Cleanup callbacks         | ✓          | ✗                   |
+| Condition checking        | ✓          | ✓                   |
 
 Use `effect()` with a guard condition if you need cleanup:
 

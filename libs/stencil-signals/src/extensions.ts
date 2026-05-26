@@ -1,5 +1,6 @@
 // ─── Side effects ─────────────────────────────────────────────────────────────
 export { effect } from "./extensions/effect";
+export { effectOnceIf } from "./extensions/effect-once-if";
 export type { CleanupFn, EffectOptions, WatcherRef, RegisterCleanup } from "./extensions/effect";
 
 // ─── Derived signals ──────────────────────────────────────────────────────────

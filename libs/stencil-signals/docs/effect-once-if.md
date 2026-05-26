@@ -33,7 +33,7 @@ function effectOnceIf<T>(
 ### Wait for user before fetching profile
 
 ```ts
-import { signal } from "@ssv/stencil-signals/tc39";
+import { signal } from "@ssv/stencil-signals";
 import { effectOnceIf } from "@ssv/stencil-signals/extensions";
 
 const userId = signal<number | null>(null);

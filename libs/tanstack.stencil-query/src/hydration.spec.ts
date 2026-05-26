@@ -31,16 +31,6 @@ function attachShadowRoot(host: TestHost, script: MockScript | null): void {
 }
 
 describe("hydration", () => {
-	let host: TestHost;
-
-	beforeEach(() => {
-		host = new TestHost();
-	});
-
-	afterEach(() => {
-		host.dispose();
-	});
-
 	it("dehydrate captures query state", async () => {
 		const qc = new QueryClient();
 		await qc.prefetchQuery({ queryKey: ["posts"], queryFn: () => Promise.resolve([{ id: 1, title: "Hello" }]) });
@@ -64,6 +54,7 @@ describe("hydration", () => {
 	});
 
 	it("hydrated client returns data immediately without fetch in useQuery", async () => {
+		using host = new TestHost();
 		const source = new QueryClient();
 		source.setQueryData(["posts"], [{ id: 1, title: "SSR post" }]);
 		const state = dehydrate(source);
@@ -111,19 +102,16 @@ describe("provideQueryClient({ withHydration }) SSR hydration", () => {
 		dispatchEvent = vi.fn<() => boolean>(() => false);
 	}
 
-	let host: EventTestHost;
-
 	beforeEach(() => {
-		host = new EventTestHost();
 		vi.stubGlobal("window", {});
 	});
 
 	afterEach(() => {
-		host.dispose();
 		vi.unstubAllGlobals();
 	});
 
 	it("provideQueryClient hydrates the QueryClient from the transfer state on connect", () => {
+		using host = new EventTestHost();
 		const serverData = [{ id: 1, title: "SSR post" }];
 		const serverQc = new QueryClient();
 		serverQc.setQueryData(["posts"], serverData);
@@ -142,6 +130,7 @@ describe("provideQueryClient({ withHydration }) SSR hydration", () => {
 	});
 
 	it("script tag is removed after hydration", () => {
+		using host = new EventTestHost();
 		const serverQc = new QueryClient();
 		serverQc.setQueryData(["item"], { v: 42 });
 		const script = makeMockScript("hyd-remove", { state: dehydrate(serverQc) });
@@ -156,6 +145,7 @@ describe("provideQueryClient({ withHydration }) SSR hydration", () => {
 	});
 
 	it("useQuery returns cached data immediately after hydration — no additional fetch", async () => {
+		using host = new EventTestHost();
 		const serverData = [{ id: 2, title: "Hydrated" }];
 		const serverQc = new QueryClient();
 		serverQc.setQueryData(["posts"], serverData);
@@ -175,6 +165,7 @@ describe("provideQueryClient({ withHydration }) SSR hydration", () => {
 	});
 
 	it("no withHydration: backward-compatible, no errors", () => {
+		using host = new EventTestHost();
 		attachShadowRoot(host, null);
 
 		provideQueryClient();

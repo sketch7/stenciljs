@@ -7,20 +7,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { $useMutation } from "./mutation";
 
 describe("$useMutation", () => {
-	let host: TestHost;
 	let qc: QueryClient;
 
 	beforeEach(() => {
-		host = new TestHost();
 		qc = new QueryClient();
 	});
 
 	afterEach(() => {
-		host.dispose();
 		qc.clear();
 	});
 
 	it("starts in idle state before connect", () => {
+		using _host = new TestHost();
 		const m = $useMutation({ mutationFn: vi.fn<() => Promise<unknown>>() }, qc);
 		expect(m.isIdle()).toBeTruthy();
 		expect(m.isPending()).toBeFalsy();
@@ -28,6 +26,7 @@ describe("$useMutation", () => {
 	});
 
 	it("is idle after connect with no call", () => {
+		using host = new TestHost();
 		const m = $useMutation({ mutationFn: vi.fn<() => Promise<unknown>>() }, qc);
 		host.connect();
 		expect(m.isIdle()).toBeTruthy();
@@ -35,6 +34,7 @@ describe("$useMutation", () => {
 	});
 
 	it("transitions to success after mutateAsync resolves", async () => {
+		using host = new TestHost();
 		const m = $useMutation({ mutationFn: (v: number) => Promise.resolve(v * 2) }, qc);
 		host.connect();
 		await host.willLoad();
@@ -47,6 +47,7 @@ describe("$useMutation", () => {
 	});
 
 	it("transitions to error when mutationFn rejects", async () => {
+		using host = new TestHost();
 		const m = $useMutation({ mutationFn: () => Promise.reject(new Error("fail")) }, qc);
 		host.connect();
 		await host.willLoad();
@@ -57,15 +58,18 @@ describe("$useMutation", () => {
 		expect((m.error() as Error).message).toBe("fail");
 	});
 
-	it("mutate() fire-and-forget — does not throw", () => {
+	it("mutate() fire-and-forget — does not throw", async () => {
 		const mutationFn = vi.fn<() => Promise<string>>().mockResolvedValue("ok");
+		using host = new TestHost();
 		const m = $useMutation({ mutationFn }, qc);
 		host.connect();
+		await host.willLoad();
 
 		expect(() => m.mutate()).not.toThrow();
 	});
 
 	it("exposes variables during and after mutation", async () => {
+		using host = new TestHost();
 		const m = $useMutation({ mutationFn: (v: string) => Promise.resolve(v.toUpperCase()) }, qc);
 		host.connect();
 		await host.willLoad();
@@ -76,6 +80,7 @@ describe("$useMutation", () => {
 	});
 
 	it("reset() returns to idle state", async () => {
+		using host = new TestHost();
 		const m = $useMutation({ mutationFn: (v: number) => Promise.resolve(v) }, qc);
 		host.connect();
 		await host.willLoad();
@@ -90,6 +95,7 @@ describe("$useMutation", () => {
 	});
 
 	it("updates field signals when mutation state changes", async () => {
+		using host = new TestHost();
 		const m = $useMutation({ mutationFn: (v: number) => Promise.resolve(v) }, qc);
 		host.connect();
 		await host.willLoad();
@@ -100,6 +106,7 @@ describe("$useMutation", () => {
 	});
 
 	it("exposes stable per-field signal identity (memoized computeds)", () => {
+		using _host = new TestHost();
 		const m = $useMutation({ mutationFn: vi.fn<() => Promise<unknown>>() }, qc);
 		// The proxy memoizes the computed per field, so repeated access returns the same signal.
 		expect(m.data).toBe(m.data);
@@ -107,6 +114,7 @@ describe("$useMutation", () => {
 	});
 
 	it("resets to idle after disconnect", async () => {
+		using host = new TestHost();
 		const m = $useMutation({ mutationFn: (v: number) => Promise.resolve(v) }, qc);
 		host.connect();
 		await host.willLoad();
@@ -121,6 +129,7 @@ describe("$useMutation", () => {
 
 	it("onSuccess callback fires with result data", async () => {
 		const onSuccess = vi.fn<(data: number, variables: number, context: undefined, mutation: unknown) => void>();
+		using host = new TestHost();
 		const m = $useMutation({ mutationFn: (v: number) => Promise.resolve(v + 1), onSuccess }, qc);
 		host.connect();
 		await host.willLoad();
@@ -135,7 +144,7 @@ describe("$useMutation", () => {
 		class ComponentLike extends TestHost {
 			readonly mutation = $useMutation({ mutationFn: (v: string) => Promise.resolve(v) }, qc);
 		}
-		const comp = new ComponentLike();
+		using comp = new ComponentLike();
 		comp.connect();
 		await comp.willLoad();
 
@@ -143,7 +152,6 @@ describe("$useMutation", () => {
 		await vi.waitFor(() => expect(comp.mutation.data()).toBe("test"));
 
 		comp.disconnect();
-		comp.dispose();
 		expect(comp.mutation.isIdle()).toBeTruthy();
 	});
 });

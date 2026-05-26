@@ -1,33 +1,26 @@
 import { TestHost } from "@ssv/stencil-core/testing";
 import { createStore } from "@tanstack/store";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { useSelector } from "./use-selector";
 
 describe("useSelector", () => {
-	let host: TestHost;
-
-	beforeEach(() => {
-		host = new TestHost();
-	});
-
-	afterEach(() => {
-		host.dispose();
-	});
-
 	it("registers itself with the host on construction", () => {
+		using host = new TestHost();
 		const store = createStore(0);
 		useSelector(() => store);
 		expect(host.controllers.size).toBe(1);
 	});
 
 	it("returns undefined before first render", () => {
+		using _host = new TestHost();
 		const store = createStore(42);
 		const getValue = useSelector(() => store);
 		expect(getValue()).toBeUndefined();
 	});
 
 	it("reads current store value after first render", () => {
+		using host = new TestHost();
 		const store = createStore(42);
 		const getValue = useSelector(() => store);
 		host.render();
@@ -35,6 +28,7 @@ describe("useSelector", () => {
 	});
 
 	it("updates value and re-renders when store changes", () => {
+		using host = new TestHost();
 		const store = createStore(0);
 		const getValue = useSelector(() => store);
 		host.render();
@@ -46,6 +40,7 @@ describe("useSelector", () => {
 	});
 
 	it("does not re-render when store value is unchanged", () => {
+		using host = new TestHost();
 		const store = createStore(0);
 		useSelector(() => store);
 		host.render();
@@ -56,6 +51,7 @@ describe("useSelector", () => {
 	});
 
 	it("selector suppresses re-render when selected value is unchanged", () => {
+		using host = new TestHost();
 		const store = createStore({ count: 0, ignored: 0 });
 		const getCount = useSelector(
 			() => store,
@@ -70,6 +66,7 @@ describe("useSelector", () => {
 	});
 
 	it("selector triggers re-render when selected value changes", () => {
+		using host = new TestHost();
 		const store = createStore({ count: 0, ignored: 0 });
 		const getCount = useSelector(
 			() => store,
@@ -84,6 +81,7 @@ describe("useSelector", () => {
 	});
 
 	it("selector returns updated value on re-render", () => {
+		using host = new TestHost();
 		const store = createStore({ count: 0, ignored: 0 });
 		const getCount = useSelector(
 			() => store,
@@ -99,6 +97,7 @@ describe("useSelector", () => {
 	});
 
 	it("does not re-render after hostDisconnected", () => {
+		using host = new TestHost();
 		const store = createStore(0);
 		useSelector(() => store);
 		host.render();
@@ -110,6 +109,7 @@ describe("useSelector", () => {
 	});
 
 	it("clears value after hostDisconnected", () => {
+		using host = new TestHost();
 		const store = createStore(42);
 		const getValue = useSelector(() => store);
 		host.render();
@@ -119,6 +119,7 @@ describe("useSelector", () => {
 	});
 
 	it("respects custom compare function — no re-render when within threshold", () => {
+		using host = new TestHost();
 		const store = createStore(1);
 		useSelector(() => store, undefined, {
 			compare: (a, b) => Math.abs((a as number) - (b as number)) < 5,
@@ -132,6 +133,7 @@ describe("useSelector", () => {
 	});
 
 	it("respects custom compare function — re-renders when outside threshold", () => {
+		using host = new TestHost();
 		const store = createStore(1);
 		const getValue = useSelector(() => store, undefined, {
 			compare: (a, b) => Math.abs((a as number) - (b as number)) < 5,
@@ -155,7 +157,7 @@ describe("useSelector", () => {
 			);
 		}
 
-		const component = new ComponentLike();
+		using component = new ComponentLike();
 		component.render();
 
 		expect(component.count()).toBe(0);
@@ -173,7 +175,7 @@ describe("useSelector", () => {
 			readonly count = useSelector(() => store);
 		}
 
-		const component = new ComponentLike();
+		using component = new ComponentLike();
 
 		expect(component.count()).toBeUndefined();
 

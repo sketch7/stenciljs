@@ -4,16 +4,21 @@ import type { ReactiveController, ReactiveControllerHost } from "../hooks/reacti
 /**
  * Minimal host for unit-testing hooks and controllers without the Stencil runtime.
  *
+ * Use `new TestHost()` directly when a test needs to assert behavior at a specific lifecycle
+ * phase. Use {@link mount} for full lifecycle setup with automatic cleanup.
+ *
  * @example
  * ```ts
- * let host: TestHost;
- * beforeEach(() => { host = new TestHost(); });
- * afterEach(() => { host.dispose(); });
+ * // Per-test host with automatic cleanup via `using`:
+ * using host = new TestHost();
+ * useEffect(() => { ... });
+ * host.connect();
  * ```
  */
 export class TestHost extends EventTarget implements ReactiveControllerHost {
 	readonly controllers = new Set<ReactiveController>();
 	renderCount = 0;
+	#disconnected = false;
 
 	constructor() {
 		super();
@@ -65,8 +70,12 @@ export class TestHost extends EventTarget implements ReactiveControllerHost {
 		}
 	}
 
-	/** Simulates `disconnectedCallback` → `hostDisconnected` on each controller. */
+	/** Simulates `disconnectedCallback` → `hostDisconnected` on each controller. Idempotent. */
 	disconnect(): void {
+		if (this.#disconnected) {
+			return;
+		}
+		this.#disconnected = true;
 		for (const ctrl of this.controllers) {
 			ctrl.hostDisconnected?.();
 		}
@@ -75,5 +84,11 @@ export class TestHost extends EventTarget implements ReactiveControllerHost {
 	/** Clears the host context. Call in `afterEach` to clean up between tests. */
 	dispose(): void {
 		clearCurrentHost();
+	}
+
+	/** Full teardown: `disconnect()` then `dispose()`. Enables `using host = new TestHost()`. */
+	[Symbol.dispose](): void {
+		this.disconnect();
+		this.dispose();
 	}
 }

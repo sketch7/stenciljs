@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { TestHost } from "../testing/test-host";
 import { useEffect } from "./use-effect";
@@ -6,22 +6,14 @@ import { useEffect } from "./use-effect";
 // ── useEffect — no deps (every render via hostDidRender) ──────────────────────
 
 describe("useEffect — no deps", () => {
-	let host: TestHost;
-
-	beforeEach(() => {
-		host = new TestHost();
-	});
-
-	afterEach(() => {
-		host.dispose();
-	});
-
 	it("registers exactly one controller with the host", () => {
+		using host = new TestHost();
 		useEffect(vi.fn());
 		expect(host.controllers.size).toBe(1);
 	});
 
 	it("setup does NOT run before hostDidRender", () => {
+		using host = new TestHost();
 		const setup = vi.fn<() => void>();
 		useEffect(setup);
 		host.connect();
@@ -29,6 +21,7 @@ describe("useEffect — no deps", () => {
 	});
 
 	it("setup runs on first hostDidRender", () => {
+		using host = new TestHost();
 		const setup = vi.fn<() => void>();
 		useEffect(setup);
 		host.render();
@@ -36,6 +29,7 @@ describe("useEffect — no deps", () => {
 	});
 
 	it("cleanup from previous render runs before next render setup", () => {
+		using host = new TestHost();
 		const order: string[] = [];
 		useEffect(() => {
 			order.push("setup");
@@ -47,6 +41,7 @@ describe("useEffect — no deps", () => {
 	});
 
 	it("cleanup is NOT called when setup returns void", () => {
+		using host = new TestHost();
 		const setup = vi.fn<() => void>();
 		useEffect(setup);
 		host.render();
@@ -56,6 +51,7 @@ describe("useEffect — no deps", () => {
 	});
 
 	it("cleanup runs on hostDisconnected", () => {
+		using host = new TestHost();
 		const cleanup = vi.fn<() => void>();
 		useEffect(() => cleanup);
 		host.render();
@@ -64,6 +60,7 @@ describe("useEffect — no deps", () => {
 	});
 
 	it("cleanup does NOT run on disconnect if hostDidRender was never called", () => {
+		using host = new TestHost();
 		const cleanup = vi.fn<() => void>();
 		useEffect(() => cleanup);
 		host.disconnect();
@@ -71,6 +68,7 @@ describe("useEffect — no deps", () => {
 	});
 
 	it("multiple useEffect calls work independently", () => {
+		using host = new TestHost();
 		const setupA = vi.fn<() => void>();
 		const setupB = vi.fn<() => void>();
 		useEffect(setupA);
@@ -85,28 +83,21 @@ describe("useEffect — no deps", () => {
 // ── useEffect — empty deps [] (mount-only via hostConnected) ──────────────────
 
 describe("useEffect — [] deps (mount-only)", () => {
-	let host: TestHost;
-
-	beforeEach(() => {
-		host = new TestHost();
-	});
-
-	afterEach(() => {
-		host.dispose();
-	});
-
 	it("registers exactly one controller with the host", () => {
+		using host = new TestHost();
 		useEffect(vi.fn(), []);
 		expect(host.controllers.size).toBe(1);
 	});
 
 	it("setup does NOT run before hostConnected", () => {
+		using _host = new TestHost();
 		const setup = vi.fn<() => void>();
 		useEffect(setup, []);
 		expect(setup).not.toHaveBeenCalled();
 	});
 
 	it("setup runs on hostConnected", () => {
+		using host = new TestHost();
 		const setup = vi.fn<() => void>();
 		useEffect(setup, []);
 		host.connect();
@@ -114,6 +105,7 @@ describe("useEffect — [] deps (mount-only)", () => {
 	});
 
 	it("setup does NOT re-run on subsequent renders", () => {
+		using host = new TestHost();
 		const setup = vi.fn<() => void>();
 		useEffect(setup, []);
 		host.connect();
@@ -123,6 +115,7 @@ describe("useEffect — [] deps (mount-only)", () => {
 	});
 
 	it("cleanup runs on hostDisconnected", () => {
+		using host = new TestHost();
 		const cleanup = vi.fn<() => void>();
 		useEffect(() => cleanup, []);
 		host.connect();
@@ -131,6 +124,7 @@ describe("useEffect — [] deps (mount-only)", () => {
 	});
 
 	it("cleanup is NOT called when setup returns void", () => {
+		using host = new TestHost();
 		const setup = vi.fn<() => void>();
 		useEffect(setup, []);
 		host.connect();
@@ -139,6 +133,7 @@ describe("useEffect — [] deps (mount-only)", () => {
 	});
 
 	it("disconnect then reconnect: cleanup fires then setup fires again", () => {
+		using host = new TestHost();
 		const order: string[] = [];
 		useEffect(() => {
 			order.push("setup");

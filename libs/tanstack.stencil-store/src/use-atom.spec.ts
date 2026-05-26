@@ -1,21 +1,12 @@
 import { TestHost } from "@ssv/stencil-core/testing";
 import { createAtom } from "@tanstack/store";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { useAtom } from "./use-atom";
 
 describe("useAtom", () => {
-	let host: TestHost;
-
-	beforeEach(() => {
-		host = new TestHost();
-	});
-
-	afterEach(() => {
-		host.dispose();
-	});
-
 	it("reads the current atom value after render", () => {
+		using host = new TestHost();
 		const atom = createAtom(42);
 		const state = useAtom(() => atom);
 		host.render();
@@ -23,6 +14,7 @@ describe("useAtom", () => {
 	});
 
 	it("set(value) updates the atom", () => {
+		using host = new TestHost();
 		const atom = createAtom(0);
 		const state = useAtom(() => atom);
 		host.render();
@@ -33,6 +25,7 @@ describe("useAtom", () => {
 	});
 
 	it("set(updater) applies updater function", () => {
+		using host = new TestHost();
 		const atom = createAtom(10);
 		const state = useAtom(() => atom);
 		host.render();
@@ -43,6 +36,7 @@ describe("useAtom", () => {
 	});
 
 	it("triggers re-render when atom value changes via set()", () => {
+		using host = new TestHost();
 		const atom = createAtom(0);
 		const state = useAtom(() => atom);
 		host.render();
@@ -54,6 +48,7 @@ describe("useAtom", () => {
 	});
 
 	it("does not trigger re-render when set() value is unchanged", () => {
+		using host = new TestHost();
 		const atom = createAtom(5);
 		useAtom(() => atom);
 		host.render();
@@ -71,6 +66,7 @@ describe("useAtom", () => {
 	});
 
 	it("does not trigger re-render after disconnect", () => {
+		using host = new TestHost();
 		const atom = createAtom(0);
 		useAtom(() => atom);
 		host.render();
@@ -82,6 +78,7 @@ describe("useAtom", () => {
 	});
 
 	it("value reflects latest set() after re-render", () => {
+		using host = new TestHost();
 		const atom = createAtom(0);
 		const state = useAtom(() => atom);
 		host.render();
@@ -94,6 +91,7 @@ describe("useAtom", () => {
 	});
 
 	it("respects custom compare option — no re-render when within threshold", () => {
+		using host = new TestHost();
 		const atom = createAtom(1);
 		useAtom(() => atom, {
 			compare: (a, b) => Math.abs((a as number) - (b as number)) < 5,
@@ -107,6 +105,7 @@ describe("useAtom", () => {
 	});
 
 	it("respects custom compare option — re-renders when outside threshold", () => {
+		using host = new TestHost();
 		const atom = createAtom(1);
 		const state = useAtom(() => atom, {
 			compare: (a, b) => Math.abs((a as number) - (b as number)) < 5,
@@ -131,7 +130,7 @@ describe("useAtom", () => {
 			}
 		}
 
-		const component = new ComponentLike();
+		using component = new ComponentLike();
 		component.render();
 
 		expect(component.count.value).toBe(0);

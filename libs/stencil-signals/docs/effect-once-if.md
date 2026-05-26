@@ -2,7 +2,7 @@
 
 Execute a side effect **once** when a condition becomes truthy, then dispose automatically. Returns a `WatcherRef` (`{ dispose() }`).
 
-**Import:** `@ssv/stencil-signals`
+**Import:** `@ssv/stencil-signals/extensions`
 
 **Use case:** Run one-time initialization, log events, or trigger async operations when a specific state is met (e.g., when data loads, when user authenticates, when a feature flag is enabled).
 
@@ -34,7 +34,7 @@ function effectOnceIf<T>(
 
 ```ts
 import { signal } from "@ssv/stencil-signals/tc39";
-import { effectOnceIf } from "@ssv/stencil-signals";
+import { effectOnceIf } from "@ssv/stencil-signals/extensions";
 
 const userId = signal<number | null>(null);
 const userProfile = signal<Profile | null>(null);

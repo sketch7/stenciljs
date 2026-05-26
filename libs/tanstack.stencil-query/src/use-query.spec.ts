@@ -15,20 +15,23 @@ describe("useQuery", () => {
 		qc.clear();
 	});
 
-	it("registers a controller with the host on construction", () => {
-		using host = new TestHost();
-		useQuery({ queryKey: ["test"], queryFn: vi.fn<() => unknown>() }, qc);
+	it("registers a controller with the host on construction", async () => {
+		using host = await mount(() => {
+			useQuery({ queryKey: ["test"], queryFn: vi.fn<() => unknown>() }, qc);
+		});
 		// useQueryClient + useQuery controllers both registered
 		expect(host.controllers.size).toBeGreaterThanOrEqual(1);
 	});
 
-	it("starts in pending state before connect", () => {
-		using _host = new TestHost();
-		const query = useQuery({ queryKey: ["test"], queryFn: vi.fn() }, qc);
-		expect(query().isPending).toBeTruthy();
-		expect(query().data).toBeUndefined();
-		expect(query().isSuccess).toBeFalsy();
-		expect(query().isError).toBeFalsy();
+	it("starts in pending state on connect — no cached data", async () => {
+		using _m = await mount(() => ({ query: useQuery({ queryKey: ["test"], queryFn: vi.fn() }, qc) }), {
+			afterConnect: mounted => {
+				expect(mounted.query().isPending).toBeTruthy();
+				expect(mounted.query().data).toBeUndefined();
+				expect(mounted.query().isSuccess).toBeFalsy();
+				expect(mounted.query().isError).toBeFalsy();
+			},
+		});
 	});
 
 	it("reads cached data immediately after connect", async () => {
@@ -45,7 +48,6 @@ describe("useQuery", () => {
 		using m = await mount(() => ({
 			query: useQuery({ queryKey: ["test"], queryFn: vi.fn<() => unknown>() }, qc),
 		}));
-
 		qc.setQueryData(["test"], 99);
 		// notifyManager schedules notifications as microtasks — wait for them to flush
 		await vi.waitFor(() => expect(m.renderCount).toBeGreaterThan(0));
@@ -113,10 +115,13 @@ describe("useQuery", () => {
 		class ComponentLike extends TestHost {
 			readonly query = useQuery({ queryKey: ["sub"], queryFn: vi.fn<() => unknown>() }, qc);
 		}
-		using comp = new ComponentLike();
 		qc.setQueryData(["sub"], "hello");
-		comp.connect();
-		await comp.willLoad();
+		using comp = await mount(
+			() => {
+				/* noop */
+			},
+			{ hostFactory: () => new ComponentLike() },
+		);
 		expect(comp.query().data).toBe("hello");
 		comp.disconnect();
 		expect(comp.query().isPending).toBeTruthy();
@@ -131,15 +136,11 @@ describe("useQuery", () => {
 	});
 
 	it("exposes isFetched — false before first fetch, true after data arrives", async () => {
-		using host = new TestHost();
-		const query = useQuery({ queryKey: ["fetched"], queryFn: () => Promise.resolve("done") }, qc);
-		host.connect();
-		expect(query().isFetched).toBeFalsy();
-
-		await host.willLoad();
-		host.render();
-		await vi.waitFor(() => expect(query().isFetched).toBeTruthy());
-		expect(query().isFetched).toBeTruthy();
+		using m = await mount(
+			() => ({ query: useQuery({ queryKey: ["fetched"], queryFn: () => Promise.resolve("done") }, qc) }),
+			{ afterConnect: mounted => expect(mounted.query().isFetched).toBeFalsy() },
+		);
+		await vi.waitFor(() => expect(m.query().isFetched).toBeTruthy());
 	});
 
 	it("delivers updated data when queryFn returns a new value for the same key", async () => {

@@ -200,11 +200,11 @@ describe("createStore()", () => {
 		expect(store.x()).toBe(20);
 	});
 
-	it("resets to initial values via $reset()", () => {
+	it("resets to initial values via reset()", () => {
 		const store = createStore({ a: 1, b: 2 });
 		store.a.set(99);
 		store.b.set(99);
-		store.$reset();
+		store.reset();
 		expect(store.a()).toBe(1);
 		expect(store.b()).toBe(2);
 	});

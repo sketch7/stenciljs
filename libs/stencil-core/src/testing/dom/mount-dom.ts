@@ -14,19 +14,19 @@ export type DomTestMode = "default" | "hydrate";
  *
  * `[Symbol.dispose]` disconnects all nodes post-order, removes the root from the DOM.
  */
-export interface DomTestTree<T = void> extends Disposable {
+export type DomTestTree<T = void> = {
 	/** The root `DomTestHost`. */
 	readonly host: DomTestHost;
 	/** Value returned by the root setup callback. */
 	readonly result: T;
-}
+} & Disposable;
 
 /**
  * Builder node passed to setup callbacks in {@link mountDom}.
  * Register hooks directly (they bind to this node's host via `currentHost`),
  * and call `child()` to attach child nodes.
  */
-export interface DomTreeNode {
+export type DomTreeNode = {
 	/** The `DomTestHost` for this node. */
 	readonly host: DomTestHost;
 	/**
@@ -35,14 +35,14 @@ export interface DomTreeNode {
 	 * Returns whatever `setup` returns.
 	 */
 	child<T>(setup: (node: DomTreeNode) => T): T;
-}
+};
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
-interface InternalNode {
+type InternalNode = {
 	readonly host: DomTestHost;
 	readonly children: InternalNode[];
-}
+};
 
 class DomTreeNodeImpl implements DomTreeNode {
 	readonly #node: InternalNode;

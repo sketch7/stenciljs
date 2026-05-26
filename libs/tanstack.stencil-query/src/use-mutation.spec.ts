@@ -15,20 +15,21 @@ describe("useMutation", () => {
 		qc.clear();
 	});
 
-	it("starts in idle state before connect", () => {
-		using _host = new TestHost();
-		const mutation = useMutation({ mutationFn: vi.fn<() => Promise<unknown>>() }, qc);
-		expect(mutation().isIdle).toBeTruthy();
-		expect(mutation().isPending).toBeFalsy();
-		expect(mutation().data).toBeUndefined();
+	it("starts in idle state — no mutation called", async () => {
+		using m = await mount(() => ({
+			mutation: useMutation({ mutationFn: vi.fn<() => Promise<unknown>>() }, qc),
+		}));
+		expect(m.mutation().isIdle).toBeTruthy();
+		expect(m.mutation().isPending).toBeFalsy();
+		expect(m.mutation().data).toBeUndefined();
 	});
 
-	it("is idle after connect with no call", () => {
-		using host = new TestHost();
-		const mutation = useMutation({ mutationFn: vi.fn<() => Promise<unknown>>() }, qc);
-		host.connect();
-		expect(mutation().isIdle).toBeTruthy();
-		expect(mutation().status).toBe("idle");
+	it("is idle after connect with no call", async () => {
+		using m = await mount(() => ({
+			mutation: useMutation({ mutationFn: vi.fn<() => Promise<unknown>>() }, qc),
+		}));
+		expect(m.mutation().isIdle).toBeTruthy();
+		expect(m.mutation().status).toBe("idle");
 	});
 
 	it("transitions to success after mutateAsync resolves", async () => {
@@ -132,9 +133,7 @@ describe("useMutation", () => {
 		class ComponentLike extends TestHost {
 			readonly mutation = useMutation({ mutationFn: (v: string) => Promise.resolve(v) }, qc);
 		}
-		using comp = new ComponentLike();
-		comp.connect();
-		await comp.willLoad();
+		using comp = await mount(() => {}, { hostFactory: () => new ComponentLike() });
 
 		await comp.mutation().mutateAsync("test");
 		await vi.waitFor(() => expect(comp.mutation().data).toBe("test"));

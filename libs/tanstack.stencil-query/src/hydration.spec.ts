@@ -1,4 +1,4 @@
-import { TestHost } from "@ssv/stencil-core/testing";
+import { TestHost, mount } from "@ssv/stencil-core/testing";
 import { provideTransferState, scriptId } from "@ssv/stencil-core/transfer-state";
 import { QueryClient, dehydrate, hydrate } from "@tanstack/query-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -54,7 +54,6 @@ describe("hydration", () => {
 	});
 
 	it("hydrated client returns data immediately without fetch in useQuery", async () => {
-		using host = new TestHost();
 		const source = new QueryClient();
 		source.setQueryData(["posts"], [{ id: 1, title: "SSR post" }]);
 		const state = dehydrate(source);
@@ -63,12 +62,12 @@ describe("hydration", () => {
 		const target = new QueryClient();
 		hydrate(target, state);
 
-		const query = useQuery({ queryKey: ["posts"], queryFn: () => Promise.resolve([]) }, target);
-		host.connect();
-		await host.willLoad();
+		using m = await mount(() => ({
+			query: useQuery({ queryKey: ["posts"], queryFn: () => Promise.resolve([]), staleTime: Infinity }, target),
+		}));
 
-		expect(query().data).toStrictEqual([{ id: 1, title: "SSR post" }]);
-		expect(query().isSuccess).toBeTruthy();
+		expect(m.query().data).toStrictEqual([{ id: 1, title: "SSR post" }]);
+		expect(m.query().isSuccess).toBeTruthy();
 	});
 
 	it("dehydrate excludes queries that have not been fetched", () => {
@@ -110,66 +109,78 @@ describe("provideQueryClient({ withHydration }) SSR hydration", () => {
 		vi.unstubAllGlobals();
 	});
 
-	it("provideQueryClient hydrates the QueryClient from the transfer state on connect", () => {
-		using host = new EventTestHost();
+	it("provideQueryClient hydrates the QueryClient from the transfer state on connect", async () => {
 		const serverData = [{ id: 1, title: "SSR post" }];
 		const serverQc = new QueryClient();
 		serverQc.setQueryData(["posts"], serverData);
 		// DEHYDRATED_KEY = makeTransferKey("state") = "state"
 		const script = makeMockScript("hyd-basic", { state: dehydrate(serverQc) });
 		serverQc.clear();
-		attachShadowRoot(host, script);
 
 		// provideTransferState must be registered BEFORE provideQueryClient so its
 		// hostConnected (script read) fires before the hydration hostConnected.
-		const ts = provideTransferState("hyd-basic");
-		const qc = provideQueryClient({ withHydration: ts });
-		host.connect();
+		using m = await mount(
+			h => {
+				attachShadowRoot(h, script);
+				const ts = provideTransferState("hyd-basic");
+				return { qc: provideQueryClient({ withHydration: ts }) };
+			},
+			{ hostFactory: () => new EventTestHost() },
+		);
 
-		expect(qc.getQueryData(["posts"])).toStrictEqual(serverData);
+		expect(m.qc.getQueryData(["posts"])).toStrictEqual(serverData);
 	});
 
-	it("script tag is removed after hydration", () => {
-		using host = new EventTestHost();
+	it("script tag is removed after hydration", async () => {
 		const serverQc = new QueryClient();
 		serverQc.setQueryData(["item"], { v: 42 });
 		const script = makeMockScript("hyd-remove", { state: dehydrate(serverQc) });
 		serverQc.clear();
-		attachShadowRoot(host, script);
 
-		const ts = provideTransferState("hyd-remove");
-		provideQueryClient({ withHydration: ts });
-		host.connect();
+		using _m = await mount(
+			h => {
+				attachShadowRoot(h, script);
+				const ts = provideTransferState("hyd-remove");
+				provideQueryClient({ withHydration: ts });
+			},
+			{ hostFactory: () => new EventTestHost() },
+		);
 
 		expect(script.remove).toHaveBeenCalledOnce();
 	});
 
 	it("useQuery returns cached data immediately after hydration — no additional fetch", async () => {
-		using host = new EventTestHost();
 		const serverData = [{ id: 2, title: "Hydrated" }];
 		const serverQc = new QueryClient();
 		serverQc.setQueryData(["posts"], serverData);
 		const script = makeMockScript("hyd-usequery", { state: dehydrate(serverQc) });
 		serverQc.clear();
-		attachShadowRoot(host, script);
 
 		// Registration order matters: transfer state → QueryClient (hydrate) → useQuery (observe)
-		const ts = provideTransferState("hyd-usequery");
-		const qc = provideQueryClient({ withHydration: ts });
-		const query = useQuery({ queryKey: ["posts"], queryFn: () => Promise.resolve([]) }, qc);
-		host.connect();
-		await host.willLoad();
+		using m = await mount(
+			h => {
+				attachShadowRoot(h, script);
+				const ts = provideTransferState("hyd-usequery");
+				const qc = provideQueryClient({ withHydration: ts });
+				return {
+					query: useQuery({ queryKey: ["posts"], queryFn: () => Promise.resolve([]), staleTime: Infinity }, qc),
+				};
+			},
+			{ hostFactory: () => new EventTestHost() },
+		);
 
-		expect(query().data).toStrictEqual(serverData);
-		expect(query().isSuccess).toBeTruthy();
+		expect(m.query().data).toStrictEqual(serverData);
+		expect(m.query().isSuccess).toBeTruthy();
 	});
 
-	it("no withHydration: backward-compatible, no errors", () => {
-		using host = new EventTestHost();
-		attachShadowRoot(host, null);
-
-		provideQueryClient();
-		host.connect();
+	it("no withHydration: backward-compatible, no errors", async () => {
+		using _m = await mount(
+			h => {
+				attachShadowRoot(h, null);
+				provideQueryClient();
+			},
+			{ hostFactory: () => new EventTestHost() },
+		);
 
 		// Must not throw — backward-compatible with no hydration
 		expect(true).toBeTruthy();

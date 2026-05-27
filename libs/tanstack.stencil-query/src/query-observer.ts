@@ -1,4 +1,5 @@
 import { use, useLoadEffect } from "@ssv/stencil-core";
+import type { Ref } from "@ssv/stencil-core";
 import { QueryObserver, notifyManager } from "@tanstack/query-core";
 import type { QueryClient, QueryKey, QueryObserverResult, RefetchOptions } from "@tanstack/query-core";
 
@@ -65,7 +66,7 @@ export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey exte
 	getOptions:
 		| UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>
 		| (() => UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>),
-	client: QueryClient | undefined,
+	client: QueryClient | Ref<QueryClient> | undefined,
 	handlers: QueryObserverHandlers<TData, TError>,
 ): QueryObserverHandle<TQueryFnData, TError, TData, TQueryKey> {
 	const getOpts =

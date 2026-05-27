@@ -26,7 +26,7 @@ export function useLoLText() {
 		},
 	});
 
-	const textRef = useQuery(() => ({ queryKey: QUERY_KEY, staleTime: Infinity, queryFn: fetchLolText }));
+	const textRef = useQuery(() => ({ queryKey: QUERY_KEY, staleTime: Infinity, queryFn: fetchLolText }), client);
 
 	function t(key: string, fallback?: string): string {
 		const map = textRef().data ?? {};

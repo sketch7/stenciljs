@@ -10,7 +10,7 @@ import { Component, State, h } from "@stencil/core";
 import { useDraftSSE } from "../draft/draft-sse.hooks";
 import type { LobbyJoinEvent } from "../lobby/lol-lobby-list";
 import type { Team } from "../lol.types";
-import { provideLolDraftQueryClient } from "../shared/lol-query-client";
+import { provideLolDraftContentQueryClient, provideLolDraftQueryClient } from "../shared/lol-query-client";
 
 const logger = getLogger(["lol"]);
 
@@ -25,6 +25,9 @@ export class AppLolDraftLobbyHost extends SsvElement {
 	readonly _queryClient = provideLolDraftQueryClient({
 		// SSE drives real-time invalidation — disable window-focus refetching to avoid noise.
 		client: new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } }),
+		withHydration: this.#ts,
+	});
+	readonly _contentQueryClient = provideLolDraftContentQueryClient({
 		withHydration: this.#ts,
 	});
 	readonly _devTools = useQueryDevtools({ enabled: true });

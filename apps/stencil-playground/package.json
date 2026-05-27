@@ -61,6 +61,8 @@
     "build": "stencil build",
     "dev": "NODE_ENV=development stencil build --dev --watch",
     "generate": "stencil generate",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "oxlint src/",
     "fmt": "oxfmt src/",
     "fmt:check": "oxfmt --check src/"
@@ -79,7 +81,9 @@
   },
   "devDependencies": {
     "@types/node": "catalog:",
-    "oxlint": "catalog:"
+    "jsdom": "catalog:",
+    "oxlint": "catalog:",
+    "vitest": "catalog:"
   },
   "peerDependencies": {
     "@ssv/stencil-core": "workspace:*",

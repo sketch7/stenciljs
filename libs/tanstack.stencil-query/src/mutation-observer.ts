@@ -1,4 +1,5 @@
 import { use, useLoadEffect } from "@ssv/stencil-core";
+import type { Ref } from "@ssv/stencil-core";
 import { MutationObserver, notifyManager, noop } from "@tanstack/query-core";
 import type { MutationObserverResult, QueryClient } from "@tanstack/query-core";
 
@@ -41,7 +42,7 @@ export function useMutationObserver<TData, TError, TVariables, TContext>(
 	getOptions:
 		| UseMutationOptions<TData, TError, TVariables, TContext>
 		| (() => UseMutationOptions<TData, TError, TVariables, TContext>),
-	client: QueryClient | undefined,
+	client: QueryClient | Ref<QueryClient> | undefined,
 	onResult: (result: MutationObserverResult<TData, TError, TVariables, TContext>, requestUpdate: () => void) => void,
 	onDispose?: () => void,
 ): MutationObserverHandle<TData, TError, TVariables, TContext> {

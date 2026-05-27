@@ -82,6 +82,9 @@ export function createContext<T>(defaultFactory?: () => T, options?: { name?: st
 	const displayName = options?.name ?? "(unnamed)";
 	let singleton: T | undefined;
 	let initialized = false;
+	if (DEBUG) {
+		console.warn(`[ssv:context] createContext  name=${displayName}  hasDefaultFactory=${Boolean(defaultFactory)}`);
+	}
 	return {
 		id: Symbol(displayName),
 		name: displayName,

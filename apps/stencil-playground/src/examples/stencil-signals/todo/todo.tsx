@@ -5,9 +5,6 @@ import { Component, h } from "@stencil/core";
 
 import { todoStore } from "./todo.store";
 
-const inputText = signal("");
-const $addTodo = createNotifier();
-
 @Component({
 	tag: "app-signals-todo",
 	styleUrl: "todo.css",
@@ -15,27 +12,29 @@ const $addTodo = createNotifier();
 })
 export class AppSignalsTodo extends SsvElement {
 	readonly signalWatcher = useSignalWatcher();
+	readonly inputText = signal("");
+	readonly $addTodo = createNotifier();
 
 	readonly _addTodo = effect(
-		[$addTodo.listen],
+		[this.$addTodo.listen],
 		() => {
-			const text = inputText().trim();
+			const text = this.inputText().trim();
 			if (text) {
 				todoStore.todos.update(todos => [...todos, { id: todoStore.nextId(), text, completed: false }]);
 				todoStore.nextId.update(id => id + 1);
-				inputText.set("");
+				this.inputText.set("");
 			}
 		},
 		{ defer: true },
 	);
 
 	private handleInput(event: Event) {
-		inputText.set((event.target as HTMLInputElement).value);
+		this.inputText.set((event.target as HTMLInputElement).value);
 	}
 
 	private handleKeyDown(event: KeyboardEvent) {
 		if (event.key === "Enter") {
-			$addTodo.notify();
+			this.$addTodo.notify();
 		}
 	}
 
@@ -59,11 +58,11 @@ export class AppSignalsTodo extends SsvElement {
 						class="todo-input"
 						type="text"
 						placeholder="Add a new task…"
-						value={inputText()}
+						value={this.inputText()}
 						onInput={e => this.handleInput(e)}
 						onKeyDown={e => this.handleKeyDown(e)}
 					/>
-					<button type="button" class="btn btn-primary" onClick={() => $addTodo.notify()}>
+					<button type="button" class="btn btn-primary" onClick={() => this.$addTodo.notify()}>
 						Add
 					</button>
 				</div>

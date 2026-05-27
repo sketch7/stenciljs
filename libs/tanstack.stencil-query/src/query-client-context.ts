@@ -1,4 +1,4 @@
-import { createContext, createRef, provideContext, use, useContext } from "@ssv/stencil-core";
+import { createContext, createRef, isRef, provideContext, use, useContext } from "@ssv/stencil-core";
 import type { Ref } from "@ssv/stencil-core";
 import { makeTransferKey } from "@ssv/stencil-core/transfer-state";
 import type { TransferState } from "@ssv/stencil-core/transfer-state";
@@ -125,9 +125,12 @@ export function provideQueryClient(clientOrOptions?: QueryClient | ProvideQueryC
  * this.#client.current.invalidateQueries({ queryKey: ['posts'] });
  * ```
  */
-export function useQueryClient(client?: QueryClient): Ref<QueryClient> {
-	if (client) {
-		return createRef(() => client);
+export function useQueryClient(client?: QueryClient | Ref<QueryClient>): Ref<QueryClient> {
+	if (!client) {
+		return useContext(queryClientKey);
 	}
-	return useContext(queryClientKey);
+	if (isRef<QueryClient>(client)) {
+		return client;
+	}
+	return createRef(() => client as QueryClient);
 }

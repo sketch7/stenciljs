@@ -18,11 +18,14 @@ export function useChampions() {
 		},
 	});
 
-	const championsRef = useQuery(() => ({
-		queryKey: CHAMPIONS_QUERY_KEY,
-		staleTime: Infinity,
-		queryFn: fetchChampions,
-	}));
+	const championsRef = useQuery(
+		() => ({
+			queryKey: CHAMPIONS_QUERY_KEY,
+			staleTime: Infinity,
+			queryFn: fetchChampions,
+		}),
+		client,
+	);
 
 	return {
 		get query() {

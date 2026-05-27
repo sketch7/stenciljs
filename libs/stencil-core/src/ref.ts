@@ -42,6 +42,21 @@ export function createRef<T>(getter: () => T): Ref<T> {
 }
 
 /**
+ * Returns `true` when `value` is a {@link Ref}.
+ *
+ * @example
+ * ```ts
+ * function useQueryClient(client?: QueryClient | Ref<QueryClient>): Ref<QueryClient> {
+ *   if (isRef(client)) return client;
+ *   // ...
+ * }
+ * ```
+ */
+export function isRef<T>(value: unknown): value is Ref<T> {
+	return typeof value === "function" && "current" in (value as object);
+}
+
+/**
  * Creates a {@link WritableRef} backed by an internal value cell.
  * Starts from a {@link Ref} and extends it with a setter and `.asReadonly()` —
  * the same function object serves both roles.

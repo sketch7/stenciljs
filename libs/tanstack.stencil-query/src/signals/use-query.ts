@@ -1,3 +1,4 @@
+import type { Ref } from "@ssv/stencil-core";
 import { signal } from "@ssv/stencil-signals";
 import type { DefaultError, NoInfer, QueryClient, QueryKey, QueryObserverResult } from "@tanstack/query-core";
 
@@ -65,7 +66,7 @@ export function $useQuery<
 	getOptions:
 		| UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>
 		| (() => UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>),
-	client?: QueryClient,
+	client?: QueryClient | Ref<QueryClient>,
 ): QuerySignalResult<NoInfer<TData>, TError>;
 
 export function $useQuery<
@@ -77,7 +78,7 @@ export function $useQuery<
 	getOptions:
 		| UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>
 		| (() => UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>),
-	client?: QueryClient,
+	client?: QueryClient | Ref<QueryClient>,
 ): QuerySignalResult<TData, TError> {
 	const state = signal(pendingQueryState as unknown as QueryStateData<TData, TError>);
 

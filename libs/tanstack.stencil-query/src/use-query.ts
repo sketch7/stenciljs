@@ -48,7 +48,7 @@ export function useQuery<
 	getOptions:
 		| DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>
 		| (() => DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>),
-	client?: QueryClient,
+	client?: QueryClient | Ref<QueryClient>,
 ): Ref<DefinedUseQueryResult<NoInfer<TData>, TError>>;
 
 export function useQuery<
@@ -60,7 +60,7 @@ export function useQuery<
 	getOptions:
 		| UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>
 		| (() => UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>),
-	client?: QueryClient,
+	client?: QueryClient | Ref<QueryClient>,
 ): Ref<UseQueryResult<NoInfer<TData>, TError>>;
 
 export function useQuery<
@@ -72,7 +72,7 @@ export function useQuery<
 	getOptions:
 		| UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>
 		| (() => UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>),
-	client?: QueryClient,
+	client?: QueryClient | Ref<QueryClient>,
 ): Ref<QueryObserverResult<TData, TError>> {
 	const { getObserver } = useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey>(getOptions, client, {
 		onResult: (_result, requestUpdate) => requestUpdate(),

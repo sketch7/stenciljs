@@ -67,7 +67,14 @@ describe("useEffect — no deps", () => {
 		expect(cleanup).not.toHaveBeenCalled();
 	});
 
-	it("multiple useEffect calls work independently", () => {
+	it("registers one controller per useEffect call", () => {
+		using host = new TestHost();
+		useEffect(vi.fn());
+		useEffect(vi.fn());
+		expect(host.controllers.size).toBe(2);
+	});
+
+	it("multiple useEffect callbacks each run independently on render", () => {
 		using host = new TestHost();
 		const setupA = vi.fn<() => void>();
 		const setupB = vi.fn<() => void>();
@@ -76,7 +83,6 @@ describe("useEffect — no deps", () => {
 		host.render();
 		expect(setupA).toHaveBeenCalledOnce();
 		expect(setupB).toHaveBeenCalledOnce();
-		expect(host.controllers.size).toBe(2);
 	});
 });
 

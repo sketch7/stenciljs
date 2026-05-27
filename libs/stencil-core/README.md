@@ -29,6 +29,7 @@ See [docs/hooks.md](docs/hooks.md) for the full `use()` guide — forms, example
 See [docs/context.md](docs/context.md) for the tree-scoped context API — `createContext`, `provideContext`, `useContext`, and composing into hooks.
 See [docs/transfer-state.md](docs/transfer-state.md) for SSR state serialization — `provideTransferState`, `useTransferState`, and shadow DOM hydration. Import from `@ssv/stencil-core/transfer-state`.
 See [docs/dev.md](docs/dev.md) for development utilities — `useLifecycleLogger` and related types. Import from `@ssv/stencil-core/dev`.
+See [docs/testing.md](docs/testing.md) for testing utilities — `TestHost`, `mount`, `DomTestHost`, `mountDom`, and patterns for isolating lifecycle phases. Import from `@ssv/stencil-core/testing` and `@ssv/stencil-core/testing/dom`.
 
 ## Examples
 

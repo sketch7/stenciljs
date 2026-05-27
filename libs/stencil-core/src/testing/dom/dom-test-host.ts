@@ -8,23 +8,22 @@ import type { ReactiveController, ReactiveControllerHost } from "../../hooks/rea
  * or any scenario that requires controlling initialization order (e.g. bottom-up DSD hydration).
  * For pure lifecycle tests without DOM hierarchy, prefer {@link TestHost}.
  *
+ * Use {@link mountDom} to set up a full DOM tree with automatic lifecycle and cleanup.
+ * Use `new DomTestHost()` directly when `mountDom` cannot be used (e.g., error-throwing scenarios).
+ *
  * @example
  * ```ts
- * const providerEl = new DomTestHost();
- * provideContext(MyCtx, value);
- * const consumerEl = new DomTestHost();
- * const ref = useContext(MyCtx);
- * clearCurrentHost();
- *
- * providerEl.append(consumerEl);
- * document.body.append(providerEl);
- * providerEl.connect();
- * consumerEl.connect();
+ * using host = new DomTestHost(); // [Symbol.dispose] → disconnect + remove + clearCurrentHost
+ * useContext(MyCtx);
+ * document.body.append(host);
+ * host.connect();
+ * await expect(host.willLoad()).rejects.toThrow();
  * ```
  */
 export class DomTestHost extends HTMLElement implements ReactiveControllerHost {
 	readonly controllers = new Set<ReactiveController>();
 	renderCount = 0;
+	#disconnected = false;
 
 	constructor() {
 		super();
@@ -64,8 +63,12 @@ export class DomTestHost extends HTMLElement implements ReactiveControllerHost {
 		}
 	}
 
-	/** Simulates `disconnectedCallback` → `hostDisconnected` on each controller. */
+	/** Simulates `disconnectedCallback` → `hostDisconnected` on each controller. Idempotent. */
 	disconnect(): void {
+		if (this.#disconnected) {
+			return;
+		}
+		this.#disconnected = true;
 		for (const ctrl of this.controllers) {
 			ctrl.hostDisconnected?.();
 		}
@@ -74,6 +77,13 @@ export class DomTestHost extends HTMLElement implements ReactiveControllerHost {
 	/** Clears the host context. Call after all hooks are registered in setup. */
 	dispose(): void {
 		clearCurrentHost();
+	}
+
+	/** Full teardown: `disconnect()`, removes from DOM, then `dispose()`. Enables `using host = new DomTestHost()`. */
+	[Symbol.dispose](): void {
+		this.disconnect();
+		this.remove();
+		this.dispose();
 	}
 }
 

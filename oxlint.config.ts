@@ -82,7 +82,7 @@ export default defineConfig({
 		"import/prefer-default-export": "off",
 
 		// ── TypeScript ─────────────────────────────────────────────────────────
-		"typescript/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+		"typescript/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
 		"typescript/consistent-type-imports": ["error", { prefer: "type-imports" }],
 		"typescript/no-explicit-any": "error",
 		"typescript/explicit-function-return-type": ["warn", { allowExpressions: true }],

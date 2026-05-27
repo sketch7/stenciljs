@@ -147,7 +147,7 @@ export default defineConfig(({ command, mode }) => {
 				// by the generated server wrappers selected via package export
 				// conditions.
 				module: import("@app/stencil-playground/react"),
-				from: "@app/stencil-playground/react",
+				from: "@app/stencil-playground/react/server",
 				hydrateModule: import("@app/stencil-playground/hydrate").then(m => {
 					hydrateModuleRef = m as Record<string, unknown>;
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any

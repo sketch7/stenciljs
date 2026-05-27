@@ -84,6 +84,7 @@ pnpm nx g @nx/js:app apps/<name>
 
 - `stenciljs-component-development` — StencilJS patterns: vertical slices, @stencil/store, ReactiveController, output targets
 - `stenciljs-init-order` — Initialization order across SSR / client nav / hydration; context timing; `globalThis` vs `window`
+- `stenciljs-testing` — Write/review Vitest tests for hooks and controllers: `mount`, `mountDom`, `TestHost`, `afterConnect`, `it.each`, lifecycle vs pure logic
 - `nx-generate` — Scaffold libs/apps via NX generators (use this first for any scaffolding)
 - `nx-workspace` — Explore projects, targets, and dependencies
 - `link-workspace-packages` — Wire up workspace package dependencies

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
+import { describe, expect, expectTypeOf, it, vi } from "vitest";
 
 import { createWritableRef } from "../ref";
 import { TestHost } from "../testing";
@@ -8,22 +8,14 @@ import { useLoadEffect } from "./use-load-effect";
 // ── useLoadEffect ─────────────────────────────────────────────────────────────
 
 describe("useLoadEffect", () => {
-	let host: TestHost;
-
-	beforeEach(() => {
-		host = new TestHost();
-	});
-
-	afterEach(() => {
-		host.dispose();
-	});
-
 	it("registers exactly one controller with the host", () => {
+		using host = new TestHost();
 		useLoadEffect(vi.fn());
 		expect(host.controllers.size).toBe(1);
 	});
 
 	it("setup does NOT run on hostConnected", () => {
+		using host = new TestHost();
 		const setup = vi.fn<() => void>();
 		useLoadEffect(setup);
 		host.connect();
@@ -31,6 +23,7 @@ describe("useLoadEffect", () => {
 	});
 
 	it("setup runs on hostWillLoad", async () => {
+		using host = new TestHost();
 		const setup = vi.fn<() => void>();
 		useLoadEffect(setup);
 		await host.willLoad();
@@ -38,6 +31,7 @@ describe("useLoadEffect", () => {
 	});
 
 	it("cleanup runs on hostDisconnected", async () => {
+		using host = new TestHost();
 		const cleanup = vi.fn<() => void>();
 		useLoadEffect(() => cleanup);
 		await host.willLoad();
@@ -46,6 +40,7 @@ describe("useLoadEffect", () => {
 	});
 
 	it("cleanup is NOT called when setup returns void", async () => {
+		using host = new TestHost();
 		const setup = vi.fn<() => void>();
 		useLoadEffect(setup);
 		await host.willLoad();
@@ -54,6 +49,7 @@ describe("useLoadEffect", () => {
 	});
 
 	it("receives UseLoadEffectContext — host.requestUpdate is callable", async () => {
+		using host = new TestHost();
 		let capturedCtx: UseLoadEffectContext | undefined;
 		useLoadEffect(ctx => {
 			capturedCtx = ctx;
@@ -67,17 +63,8 @@ describe("useLoadEffect", () => {
 // ── useLoadEffect — named deps ─────────────────────────────────────────────────
 
 describe("useLoadEffect — named deps", () => {
-	let host: TestHost;
-
-	beforeEach(() => {
-		host = new TestHost();
-	});
-
-	afterEach(() => {
-		host.dispose();
-	});
-
 	it("setup receives unwrapped dep values when all are defined", async () => {
+		using host = new TestHost();
 		const valRef = createWritableRef<string>("hello");
 		let captured: { val: string } | undefined;
 		useLoadEffect(
@@ -91,6 +78,7 @@ describe("useLoadEffect — named deps", () => {
 	});
 
 	it("setup is skipped when a dep's current is undefined", async () => {
+		using host = new TestHost();
 		const emptyRef = createWritableRef<string>();
 		const setup = vi.fn();
 		useLoadEffect(setup, { val: emptyRef });
@@ -99,6 +87,7 @@ describe("useLoadEffect — named deps", () => {
 	});
 
 	it("supports multiple named deps", async () => {
+		using host = new TestHost();
 		const aRef = createWritableRef<number>(1);
 		const bRef = createWritableRef<string>("b");
 		let captured: { a: number; b: string } | undefined;
@@ -113,6 +102,7 @@ describe("useLoadEffect — named deps", () => {
 	});
 
 	it("skips setup when at least one dep is undefined", async () => {
+		using host = new TestHost();
 		const aRef = createWritableRef<number>(1);
 		const bRef = createWritableRef<string>(); // undefined
 		const setup = vi.fn();
@@ -122,6 +112,7 @@ describe("useLoadEffect — named deps", () => {
 	});
 
 	it("cleanup runs on hostDisconnected", async () => {
+		using host = new TestHost();
 		const valRef = createWritableRef<number>(42);
 		const cleanup = vi.fn();
 		useLoadEffect(() => cleanup, { val: valRef });
@@ -131,6 +122,7 @@ describe("useLoadEffect — named deps", () => {
 	});
 
 	it("dep values are correctly typed", async () => {
+		using host = new TestHost();
 		const numRef = createWritableRef<number>(7);
 		let capturedN: number | undefined;
 		useLoadEffect(

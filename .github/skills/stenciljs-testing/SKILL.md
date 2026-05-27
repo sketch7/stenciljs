@@ -5,7 +5,7 @@ description: Write and review Vitest tests for Stencil hooks and controllers in 
 
 # StencilJS Testing
 
-> Full API reference: [libs/stencil-core/docs/testing.md](../../libs/stencil-core/docs/testing.md)
+> Full API reference: [libs/stencil-core/docs/testing.md](../../../libs/stencil-core/docs/testing.md)
 
 ## Principles
 
@@ -98,6 +98,27 @@ class ComponentLike extends TestHost {
 qc.setQueryData(["sub"], "cached");
 using comp = await mount(() => {}, { hostFactory: () => new ComponentLike() });
 expect(comp.query().data).toBe("cached");
+```
+
+---
+
+## Error states
+
+When testing hooks that throw or queries that reject, use `mount()` with a try/catch or `expect(...).rejects`, or use `new TestHost()` / `new DomTestHost()` directly when the error occurs during a specific lifecycle phase.
+
+```ts
+// Query that rejects
+it("sets isError when queryFn rejects", async () => {
+  using m = await mount(() => ({
+    query: useQuery({ queryKey: ["fail"], queryFn: () => Promise.reject(new Error("oops")), retry: false }, qc),
+  }));
+  expect(m.query().isError).toBeTruthy();
+});
+
+// Hook that throws during lifecycle
+it("throws during willLoad", async () => {
+  await expect(mount(() => { throw new Error("boom"); })).rejects.toThrow("boom");
+});
 ```
 
 ---
@@ -229,7 +250,7 @@ vi.mock(import("@stencil/core"), () => ({
 | `let query!: ReturnType<typeof useQuery>` | Return `{ query }` from `mount()` setup |
 | `new TestHost()` + `host.connect(); await host.willLoad()` | `mount()` |
 | `new ComponentLike()` + manual lifecycle | `mount(() => {}, { hostFactory: () => new ComponentLike() })` |
-| Inline `TestHost` subclass >5 lines in spec | Extract to `<feature>.test-utils.ts` |
+| Inline `TestHost` subclass with more than 5 lines of code in its body | Extract to `<feature>.test-utils.ts` |
 | `describe.skip` / `it.skip` as parking lot | Delete or fix |
 | Asserting private/internal state | Assert public behaviour only |
 | `vi.fn()` without type param | `vi.fn<() => void>()` |

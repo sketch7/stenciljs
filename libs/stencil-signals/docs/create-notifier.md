@@ -40,30 +40,34 @@ type Notifier = {
 
 ## Basic usage
 
+The canonical pattern pairs `createNotifier` with `effect`'s explicit-deps overload and `{ defer: true }` — the effect only fires when `notify()` is called, never on init:
+
 ```ts
-import { effect } from "@ssv/stencil-signals";
-import { createNotifier } from "@ssv/stencil-signals/extensions";
+import { createNotifier, effect } from "@ssv/stencil-signals/extensions";
 
-const refresh = createNotifier();
+const $refresh = createNotifier();
 
-effect(() => {
-  if (refresh.listen()) {
-    // runs only when notify() is called, not on init (listen() === 0 initially)
+effect(
+  [$refresh.listen],
+  () => {
     fetchLatestData();
-  }
-});
+  },
+  { defer: true },
+);
 
 // Elsewhere — e.g. a button click handler:
-button.addEventListener("click", () => refresh.notify());
+button.addEventListener("click", () => $refresh.notify());
 ```
 
-If you want the effect to also run on init, remove the `if` guard:
+Prefix notifiers with `$` to make their imperative role visible at every call site (`$refresh.notify()`).
+
+To also run on init, omit `defer` (defaults to `false`):
 
 ```ts
-effect(() => {
-  refresh.listen(); // just track — effect re-runs on every notify()
+effect([$refresh.listen], () => {
   render();
 });
+// runs immediately on creation, then again on each notify()
 ```
 
 ## With `deps`
@@ -72,39 +76,41 @@ Attach signal dependencies so that dep changes also fire the notifier:
 
 ```ts
 import { signal } from "@ssv/stencil-signals";
-import { createNotifier } from "@ssv/stencil-signals/extensions";
+import { createNotifier, effect } from "@ssv/stencil-signals/extensions";
 
 const userId = signal<number | null>(null);
 const roleFilter = signal<string>("admin");
 
-const notifier = createNotifier({ deps: [userId, roleFilter] });
+const $reload = createNotifier({ deps: [userId, roleFilter] });
 
-effect(() => {
-  if (notifier.listen()) {
+effect(
+  [$reload.listen],
+  () => {
     // re-runs when userId or roleFilter changes AND when notify() is called
     reloadTable(userId(), roleFilter());
-  }
-});
+  },
+  { defer: true },
+);
 
 // Also fire manually on a button click:
-refreshButton.addEventListener("click", () => notifier.notify());
+refreshButton.addEventListener("click", () => $reload.notify());
 ```
 
 ### `depsEmitInitially`
 
-By default (`depsEmitInitially: true`) the counter starts at **1**, so the effect's `if (notifier.listen())` branch executes immediately on the first run:
+When using `{ defer: true }` the starting counter value is irrelevant — the effect skips its first run regardless. `depsEmitInitially` only matters when using auto-tracking effects without `defer`:
 
 ```ts
-const notifier = createNotifier({ deps: [userId] });
-// notifier.listen() === 1 on creation — effect fires right away
-```
-
-Set `depsEmitInitially: false` to start at **0** and only notify on actual changes:
-
-```ts
+// auto-tracking with if-guard: depsEmitInitially: false keeps counter at 0 so the guard skips init
 const notifier = createNotifier({ deps: [userId], depsEmitInitially: false });
-// notifier.listen() === 0 on creation — effect's if-guard skips the first run
+effect(() => {
+  if (notifier.listen()) {
+    reloadTable(userId());
+  }
+});
 ```
+
+Prefer the explicit-deps + `{ defer: true }` pattern above — it removes the if-guard entirely.
 
 ## Counter semantics
 
@@ -132,31 +138,44 @@ The counter uses unsigned 32-bit arithmetic (`>>> 0`) and wraps from `0xFFFFFFFF
 ## StencilJS component example
 
 ```ts
-import { Component } from "@stencil/core";
-import { SignalWatcherMixin, signal } from "@ssv/stencil-signals";
+import { signal, useSignalWatcher } from "@ssv/stencil-signals";
 import { createNotifier, effect } from "@ssv/stencil-signals/extensions";
+import { Component, h } from "@stencil/core";
 
-const pageSignal = signal(1);
-const dataNotifier = createNotifier({ deps: [pageSignal] });
+const inputText = signal("");
+const $addTodo = createNotifier();
 
-@Component({ tag: "my-table" })
-export class MyTable extends SignalWatcherMixin(HTMLElement) {
-  readonly _loadData = effect(() => {
-    if (dataNotifier.listen()) {
-      this.loadData(pageSignal());
-    }
-  });
+@Component({ tag: "app-todo" })
+export class AppTodo extends SsvElement {
+  readonly signalWatcher = useSignalWatcher();
 
-  private loadData(page: number) {
-    fetch(`/api/items?page=${page}`).then(/* ... */);
+  readonly _addTodo = effect(
+    [$addTodo.listen],
+    () => {
+      const text = inputText().trim();
+      if (text) {
+        todoStore.add(text);
+        inputText.set("");
+      }
+    },
+    { defer: true },
+  );
+
+  render() {
+    return (
+      <div>
+        <input value={inputText()} onInput={e => inputText.set((e.target as HTMLInputElement).value)} />
+        <button onClick={() => $addTodo.notify()}>Add</button>
+      </div>
+    );
   }
 }
-
-// Anywhere else in the app:
-document
-  .querySelector("#refresh-btn")!
-  .addEventListener("click", () => dataNotifier.notify());
 ```
+
+Key points:
+- `$addTodo.listen` is the only dep — the effect fires only on `notify()`, not on every keystroke
+- `{ defer: true }` skips the initial run so an empty input never triggers an add
+- `inputText()` is read inside the effect body untracked — reads outside `deps` don't create subscriptions in explicit-deps mode
 
 ## Relationship to `effect()`
 

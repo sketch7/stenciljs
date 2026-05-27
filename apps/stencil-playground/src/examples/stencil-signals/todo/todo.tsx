@@ -1,8 +1,12 @@
 import { SsvElement } from "@ssv/stencil-core";
-import { useSignalWatcher } from "@ssv/stencil-signals";
-import { Component, h, State } from "@stencil/core";
+import { signal, useSignalWatcher } from "@ssv/stencil-signals";
+import { createNotifier, effect } from "@ssv/stencil-signals/extensions";
+import { Component, h } from "@stencil/core";
 
 import { todoStore } from "./todo.store";
+
+const inputText = signal("");
+const $addTodo = createNotifier();
 
 @Component({
 	tag: "app-signals-todo",
@@ -11,27 +15,28 @@ import { todoStore } from "./todo.store";
 })
 export class AppSignalsTodo extends SsvElement {
 	readonly signalWatcher = useSignalWatcher();
-	@State() inputValue = "";
+
+	readonly _addTodo = effect(
+		[$addTodo.listen],
+		() => {
+			const text = inputText().trim();
+			if (text) {
+				todoStore.todos.update(todos => [...todos, { id: todoStore.nextId(), text, completed: false }]);
+				todoStore.nextId.update(id => id + 1);
+				inputText.set("");
+			}
+		},
+		{ defer: true },
+	);
 
 	private handleInput(event: Event) {
-		this.inputValue = (event.target as HTMLInputElement).value;
+		inputText.set((event.target as HTMLInputElement).value);
 	}
 
 	private handleKeyDown(event: KeyboardEvent) {
 		if (event.key === "Enter") {
-			this.addTodo();
+			$addTodo.notify();
 		}
-	}
-
-	private addTodo() {
-		const text = this.inputValue.trim();
-		if (!text) {
-			return;
-		}
-
-		todoStore.todos.update(todos => [...todos, { id: todoStore.nextId(), text, completed: false }]);
-		todoStore.nextId.update(id => id + 1);
-		this.inputValue = "";
 	}
 
 	private toggleTodo(id: number) {
@@ -54,11 +59,11 @@ export class AppSignalsTodo extends SsvElement {
 						class="todo-input"
 						type="text"
 						placeholder="Add a new task…"
-						value={this.inputValue}
+						value={inputText()}
 						onInput={e => this.handleInput(e)}
 						onKeyDown={e => this.handleKeyDown(e)}
 					/>
-					<button type="button" class="btn btn-primary" onClick={() => this.addTodo()}>
+					<button type="button" class="btn btn-primary" onClick={() => $addTodo.notify()}>
 						Add
 					</button>
 				</div>

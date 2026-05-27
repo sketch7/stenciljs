@@ -1,6 +1,7 @@
 import type { Signal } from "../adapters/types";
 import { signal } from "../signals/core";
 import { effect } from "./effect";
+import type { WatcherRef } from "./effect";
 
 export type CreateNotifierOptions = {
 	deps?: Signal<unknown>[];
@@ -9,7 +10,10 @@ export type CreateNotifierOptions = {
 
 export type Notifier = {
 	notify(): void;
+	/** Read-only signal. Track this inside effects or computeds to react on each notify/dep change. */
 	listen: Signal<number>;
+	/** Stops the inner dep-tracking effect. No-op when no deps were provided. */
+	dispose(): void;
 };
 
 /**
@@ -29,9 +33,11 @@ export function createNotifier(options?: CreateNotifierOptions): Notifier {
 	const initialValue = deps.length > 0 && depsEmitInitially ? 1 : 0;
 	const counter = signal<number>(initialValue);
 
+	let innerRef: WatcherRef | null = null;
+
 	if (deps.length > 0) {
 		let isFirst = true;
-		effect(() => {
+		innerRef = effect(() => {
 			deps.forEach(dep => dep());
 			if (isFirst) {
 				isFirst = false;
@@ -44,5 +50,6 @@ export function createNotifier(options?: CreateNotifierOptions): Notifier {
 	return {
 		notify: () => counter.update(v => v + 1),
 		listen: counter.asReadonly(),
+		dispose: () => innerRef?.dispose(),
 	};
 }

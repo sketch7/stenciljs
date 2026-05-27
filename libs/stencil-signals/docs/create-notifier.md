@@ -26,6 +26,8 @@ type Notifier = {
   notify(): void;
   /** Read-only signal. Track this inside effects or computeds to react on each notify/dep change. */
   listen: Signal<number>;
+  /** Stops the inner dep-tracking effect. No-op when no deps were provided. */
+  dispose(): void;
 };
 ```
 
@@ -112,6 +114,43 @@ effect(() => {
 
 Prefer the explicit-deps + `{ defer: true }` pattern above — it removes the if-guard entirely.
 
+## Disposal
+
+A no-deps notifier (`createNotifier()`) is just a counter signal — there is nothing to dispose.
+
+A deps-based notifier owns an inner auto-tracking effect that watches those signals. Call `dispose()` to stop it:
+
+```ts
+const $reload = createNotifier({ deps: [userId] });
+
+// later, when the notifier is no longer needed:
+$reload.dispose();
+// dep changes to userId no longer increment the counter
+```
+
+**Inside a component** the inner effect is automatically host-bound when the notifier is created during class-field initialisation (while a host context is active). It disposes on `disconnectedCallback` without any extra wiring:
+
+```ts
+const dep = signal(0);
+
+@Component({ tag: "my-comp" })
+export class MyComp extends SsvElement {
+  readonly signalWatcher = useSignalWatcher();
+  // inner effect is host-bound — disposes automatically on disconnect
+  readonly $trigger = createNotifier({ deps: [dep] });
+}
+```
+
+**Module-level with deps** — the notifier lives outside any host context, so the inner effect runs for the lifetime of the module. Call `dispose()` manually when you are done:
+
+```ts
+// module scope
+const $poll = createNotifier({ deps: [sessionSignal] });
+
+// e.g. on app teardown:
+$poll.dispose();
+```
+
 ## Counter semantics
 
 | State                                           | Value                       |
@@ -184,5 +223,5 @@ Key points:
 | Reactive dep tracking | ✓                    | ✓ (via `deps`)         |
 | Imperative trigger    | ✗                    | ✓ (`notify()`)         |
 | Carries a value       | ✗                    | counter (number)       |
-| Auto-dispose          | ✓ (via `WatcherRef`) | inner effect only      |
+| Auto-dispose          | ✓ (via `WatcherRef`) | ✓ (`dispose()`)        |
 | One-time execution    | ✗                    | ✗ (use `effectOnceIf`) |

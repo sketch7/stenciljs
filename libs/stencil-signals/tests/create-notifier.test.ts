@@ -1,10 +1,13 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 // oxlint-disable-next-line import/no-unassigned-import
 import "../src/tc39";
+
+import { TestHost } from "@ssv/stencil-core/testing";
 
 import { createNotifier } from "../src/extensions/create-notifier";
 import { effect } from "../src/extensions/effect";
 import { signal } from "../src/signals/core";
+import { useSignalWatcher } from "../src/controllers/signal-watcher-controller";
 
 const tick = () =>
 	new Promise<void>(r => {
@@ -208,6 +211,60 @@ describe("createNotifier", () => {
 			await tick();
 			await tick();
 			expect(testFn).toHaveBeenCalledTimes(callsAfterInit + 2);
+		});
+	});
+
+	describe("dispose", () => {
+		it("dispose() is a no-op for a no-deps notifier", () => {
+			const trigger = createNotifier();
+			expect(() => trigger.dispose()).not.toThrow();
+			trigger.notify();
+			expect(trigger.listen()).toBe(1);
+		});
+
+		it("dispose() stops the inner dep-tracking effect", async () => {
+			const dep = signal<unknown>(null);
+			const trigger = createNotifier({ deps: [dep] });
+			expect(trigger.listen()).toBe(1); // depsEmitInitially default
+
+			trigger.dispose();
+
+			dep.set("changed");
+			await tick();
+			await tick();
+			expect(trigger.listen()).toBe(1); // unchanged — inner effect stopped
+		});
+
+		describe("inside a component", () => {
+			let host: TestHost;
+
+			beforeEach(() => {
+				host = new TestHost();
+			});
+
+			afterEach(() => {
+				host.dispose();
+			});
+
+			it("dep-tracking effect is disposed when the component disconnects", async () => {
+				useSignalWatcher();
+				const dep = signal<unknown>(null);
+				const trigger = createNotifier({ deps: [dep] });
+
+				host.connect();
+
+				dep.set("a");
+				await tick();
+				await tick();
+				expect(trigger.listen()).toBe(2); // 1 (initial) + 1 dep change
+
+				host.disconnect();
+
+				dep.set("b");
+				await tick();
+				await tick();
+				expect(trigger.listen()).toBe(2); // unchanged — inner effect disposed on disconnect
+			});
 		});
 	});
 });

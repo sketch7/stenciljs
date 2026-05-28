@@ -17,7 +17,7 @@ export class AppTsQueryPosts extends SsvElement {
 	readonly #ts = provideTransferState("ts-query-posts");
 	readonly #queryClient = provideQueryClient({ withHydration: this.#ts });
 	readonly #api = usePosts(this.#queryClient);
-	_ = useQueryDevtools();
+	_ = useQueryDevtools({ enabled: true });
 
 	@State() inputValue = "";
 

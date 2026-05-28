@@ -1,5 +1,4 @@
 import { SsvElement } from "@ssv/stencil-core";
-import { provideQueryClient } from "@ssv/tanstack.stencil-query";
 import { Component, h } from "@stencil/core";
 
 import { prefetchPosts, usePrefetchedPosts } from "./prefetch.api";
@@ -21,15 +20,12 @@ import type { Post } from "./prefetch.api";
 	shadow: true,
 })
 export class AppTsQueryPrefetchReuse extends SsvElement {
-	readonly #qc = provideQueryClient();
-
 	// `prefetchPosts` is defined in prefetch.api.ts — outside this component.
 	// Calling it here wires the prefetch controller onto this host via `use()`.
-	// eslint-disable-next-line @typescript-eslint/no-unused-private-class-members
-	readonly _prefetch = prefetchPosts(this.#qc);
+	readonly _prefetch = prefetchPosts();
 
 	// Same query as Component 1 — hits the pre-seeded cache.
-	readonly #posts = usePrefetchedPosts(this.#qc);
+	readonly #posts = usePrefetchedPosts();
 
 	render() {
 		const { data: posts, isPending, isError, error } = this.#posts();

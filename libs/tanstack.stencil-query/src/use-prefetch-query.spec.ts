@@ -21,16 +21,26 @@ describe("usePrefetchQuery", () => {
 	it("does NOT call prefetchQuery before hostConnected", () => {
 		const spy = vi.spyOn(qc, "prefetchQuery");
 
-		using host = new TestHost();
+		using _host = new TestHost();
 		usePrefetchQuery({ queryKey: ["test"], queryFn: vi.fn<() => unknown>() }, qc);
 
 		expect(spy).not.toHaveBeenCalled();
+	});
+
+	it("calls prefetchQuery on hostWillLoad", async () => {
+		const spy = vi.spyOn(qc, "prefetchQuery");
+
+		using host = new TestHost();
+		usePrefetchQuery({ queryKey: ["test"], queryFn: vi.fn<() => unknown>() }, qc);
 
 		host.connect();
+		expect(spy).not.toHaveBeenCalled();
+
+		await host.willLoad();
 		expect(spy).toHaveBeenCalledOnce();
 	});
 
-	it("evaluates the getter at connect time — not before", () => {
+	it("evaluates the getter at load time — not before", async () => {
 		const getOpts = vi.fn(() => ({ queryKey: ["test"] as const, queryFn: vi.fn<() => unknown>() }));
 
 		using host = new TestHost();
@@ -39,6 +49,9 @@ describe("usePrefetchQuery", () => {
 		expect(getOpts).not.toHaveBeenCalled();
 
 		host.connect();
+		expect(getOpts).not.toHaveBeenCalled();
+
+		await host.willLoad();
 		expect(getOpts).toHaveBeenCalledOnce();
 	});
 

@@ -1,7 +1,7 @@
 // oxlint-disable-next-line import/no-unassigned-import -- registers the TC39 signal adapter
 import "@ssv/stencil-signals/tc39";
 import { TestHost, mount } from "@ssv/stencil-core/testing";
-import { signal } from "@ssv/stencil-signals";
+import { signal, useSignalWatcher } from "@ssv/stencil-signals";
 import { QueryClient } from "@tanstack/query-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -25,6 +25,7 @@ describe("$usePrefetchQuery", () => {
 		const spy = vi.spyOn(qc, "prefetchQuery");
 
 		using host = new TestHost();
+		useSignalWatcher();
 		$usePrefetchQuery({ queryKey: ["test"], queryFn: vi.fn<() => unknown>() }, qc);
 
 		expect(spy).not.toHaveBeenCalled();
@@ -39,6 +40,7 @@ describe("$usePrefetchQuery", () => {
 		const spy = vi.spyOn(qc, "prefetchQuery");
 
 		using _m = await mount(() => {
+			useSignalWatcher();
 			$usePrefetchQuery({ queryKey: ["test"], queryFn: vi.fn<() => unknown>() }, qc);
 		});
 
@@ -50,6 +52,7 @@ describe("$usePrefetchQuery", () => {
 		const spy = vi.spyOn(qc, "prefetchQuery");
 
 		using _m = await mount(() => {
+			useSignalWatcher();
 			$usePrefetchQuery({ queryKey: ["test"], queryFn: vi.fn<() => unknown>() }, qc);
 		});
 
@@ -63,6 +66,7 @@ describe("$usePrefetchQuery", () => {
 		const postId = signal(1);
 
 		using _m = await mount(() => {
+			useSignalWatcher();
 			$usePrefetchQuery(
 				() => ({
 					queryKey: ["post", postId()] as const,
@@ -86,6 +90,7 @@ describe("$usePrefetchQuery", () => {
 		qc.setQueryData(["post", 2], { id: 2 });
 
 		using _m = await mount(() => {
+			useSignalWatcher();
 			$usePrefetchQuery(
 				() => ({
 					queryKey: ["post", postId()] as const,
@@ -112,6 +117,7 @@ describe("$usePrefetchQuery", () => {
 		const postId = signal(1);
 
 		using m = await mount(() => {
+			useSignalWatcher();
 			$usePrefetchQuery(
 				() => ({
 					queryKey: ["post", postId()] as const,

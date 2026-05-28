@@ -1,4 +1,4 @@
-import { use } from "@ssv/stencil-core";
+import { useLoadEffect } from "@ssv/stencil-core";
 import type { Ref } from "@ssv/stencil-core";
 import type { DefaultError, QueryClient, QueryKey } from "@tanstack/query-core";
 
@@ -6,7 +6,7 @@ import { useQueryClient } from "./query-client-context";
 import type { UsePrefetchQueryOptions } from "./types";
 
 /**
- * Seeds the QueryClient cache on `hostConnected` — before any child `useQuery` renders.
+ * Seeds the QueryClient cache on `hostWillLoad` via `useLoadEffect`.
  *
  * Mirrors TanStack React's `usePrefetchQuery`: skips the fetch if any cache entry already
  * exists for `queryKey`. Returns `void` — no state, no subscriptions, no re-renders.
@@ -42,13 +42,13 @@ export function usePrefetchQuery<
 	const clientRef = useQueryClient(client);
 	const getOpts = typeof getOptions === "function" ? getOptions : () => getOptions;
 
-	use({
-		hostConnected() {
+	useLoadEffect(
+		({ qc }) => {
 			const opts = getOpts();
-			const qc = clientRef();
 			if (!qc.getQueryState(opts.queryKey)) {
 				qc.prefetchQuery(opts);
 			}
 		},
-	});
+		{ qc: clientRef },
+	);
 }

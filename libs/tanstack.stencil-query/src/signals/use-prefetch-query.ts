@@ -43,7 +43,7 @@ export function $usePrefetchQuery<
 >(
 	getOptions:
 		| UsePrefetchQueryOptions<TQueryFnData, TError, TData, TQueryKey>
-		| (() => UsePrefetchQueryOptions<TQueryFnData, TError, TData, TQueryKey>),
+		| (() => UsePrefetchQueryOptions<TQueryFnData, TError, TData, TQueryKey> | undefined | null | false),
 	client?: QueryClient | Ref<QueryClient>,
 ): void {
 	const clientRef = useQueryClient(client);
@@ -52,6 +52,9 @@ export function $usePrefetchQuery<
 	const optsComputed = computed(() => getOpts());
 
 	effect([optsComputed], ([opts]) => {
+		if (!opts) {
+			return;
+		}
 		const qc = clientRef.current;
 		if (!qc) {
 			return;

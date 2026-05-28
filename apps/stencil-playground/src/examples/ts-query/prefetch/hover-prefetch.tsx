@@ -16,7 +16,13 @@ export class AppTsQueryHoverPrefetch extends SsvElement {
 	readonly _signalWatcher = useSignalWatcher();
 	readonly #hoveredId = signal<number | null>(null);
 
-	readonly _hoverPrefetch = $usePrefetchQuery(() => postQueries.hover(this.#hoveredId()));
+	readonly _hoverPrefetch = $usePrefetchQuery(() => {
+		const id = this.#hoveredId();
+		if (!id) {
+			return;
+		}
+		return postQueries.detail(id);
+	});
 
 	readonly #hoveredPost = useHoveredPost(this.#hoveredId);
 
@@ -40,15 +46,17 @@ export class AppTsQueryHoverPrefetch extends SsvElement {
 					))}
 				</ul>
 
-				{hoveredId === null && <p class="status">Hover a row to trigger prefetch.</p>}
-				{hoveredId !== null && hoveredPost.isPending && <p class="status">Prefetching post #{hoveredId}…</p>}
-				{hoveredPost.isError && <p class="status status--error">Error: {String(hoveredPost.error)}</p>}
-				{hoveredPost.data && (
-					<div class="item item--detail">
-						<span class="item-id">#{hoveredPost.data.id}</span>
-						<span class="item-title">{hoveredPost.data.title}</span>
-					</div>
-				)}
+				<div class="detail-area">
+					{hoveredId === null && <p class="status">Hover a row to trigger prefetch.</p>}
+					{hoveredId !== null && hoveredPost.isPending && <p class="status">Prefetching post #{hoveredId}…</p>}
+					{hoveredPost.isError && <p class="status status--error">Error: {String(hoveredPost.error)}</p>}
+					{hoveredPost.data && (
+						<div class="item item--detail">
+							<span class="item-id">#{hoveredPost.data.id}</span>
+							<span class="item-title">{hoveredPost.data.title}</span>
+						</div>
+					)}
+				</div>
 			</div>
 		);
 	}

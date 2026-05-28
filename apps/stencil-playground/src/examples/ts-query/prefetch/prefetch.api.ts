@@ -1,7 +1,4 @@
-// oxlint-disable typescript/no-non-null-assertion
-import type { Ref } from "@ssv/stencil-core";
 import { queryOptions, useQuery, usePrefetchQuery } from "@ssv/tanstack.stencil-query";
-import type { QueryClient } from "@ssv/tanstack.stencil-query";
 
 export type Post = {
 	userId: number;
@@ -27,42 +24,18 @@ export const postQueries = {
 			queryKey: postKeys.detail(id),
 			queryFn: () => fetchPostById(id),
 		}),
-	/** Shares the same cache key as `detail` — hover prefetches are immediately available to detail queries. */
-	hover: (id: number | null) =>
-		queryOptions({
-			queryKey: postKeys.detail(id!),
-			queryFn: () => fetchPostById(id!),
-			enabled: id !== null,
-		}),
 };
 
-/**
- * Seeds the posts cache before any `useQuery` in the component renders.
- * Defined outside the component and reusable across any component that provides a client.
- *
- * @example
- * ```ts
- * readonly _prefetch = prefetchPosts();
- * ```
- */
-export function prefetchPosts(client?: QueryClient | Ref<QueryClient>): void {
-	usePrefetchQuery(postQueries.list(), client);
+export function prefetchPosts(): void {
+	usePrefetchQuery(postQueries.list());
 }
 
-/**
- * Posts query — picks up pre-seeded cache data immediately with no loading state.
- *
- * @example
- * ```ts
- * readonly #posts = usePrefetchedPosts();
- * ```
- */
-export function usePrefetchedPosts(client?: QueryClient | Ref<QueryClient>) {
-	return useQuery(postQueries.list(), client);
+export function usePrefetchedPosts() {
+	return useQuery(postQueries.list());
 }
 
-export function useHoveredPost(getPostId: () => number | null, client?: QueryClient | Ref<QueryClient>) {
-	return useQuery(() => postQueries.hover(getPostId()), client);
+export function useHoveredPost(getPostId: () => number | null) {
+	return useQuery(() => ({ ...postQueries.detail(getPostId() ?? 0), enabled: getPostId() !== null }));
 }
 
 // ── private ──────────────────────────────────────────────────────────────────

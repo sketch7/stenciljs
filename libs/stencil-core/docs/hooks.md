@@ -236,6 +236,27 @@ useLoadEffect(({ qc, requestUpdate }) => {
 }, { qc: clientRef });
 ```
 
+## Side-effect hooks (`this.setup()`)
+
+Some hooks exist purely for their lifecycle side-effects — their return value is never read. TypeScript class bodies require every expression to be assigned, so `this.setup()` lets you group them under a single `readonly _` field.
+
+Hooks called inside the callback still self-register because `currentHost` is live during the entire field-initialization sequence.
+
+```ts
+// callback form — group multiple hooks
+readonly _ = this.setup(() => {
+  provideQueryClient({ client: new QueryClient() });
+  useQueryDevtools({ enabled: true });
+});
+
+// spread form — single hook, terse
+readonly _ = this.setup(useQueryDevtools());
+```
+
+Always use `readonly _` — the `void` return type signals that the value is intentionally discarded.
+
+See examples: [ts-query/posts/](../../../apps/stencil-playground/src/examples/ts-query/posts/), [ts-query/prefetch/](../../../apps/stencil-playground/src/examples/ts-query/prefetch/)
+
 ## Host context (`getCurrentHost`)
 
 `getCurrentHost()` is a low-level primitive used internally by `use()`. You only need it when building a hook primitive that requires the host reference outside a `use()` factory.

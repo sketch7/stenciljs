@@ -13,15 +13,17 @@ const HOVER_POST_IDS = [1, 2, 3, 4, 5] as const;
 	shadow: true,
 })
 export class AppTsQueryHoverPrefetch extends SsvElement {
-	readonly _signalWatcher = useSignalWatcher();
 	readonly #hoveredId = signal<number | null>(null);
 
-	readonly _hoverPrefetch = $usePrefetchQuery(() => {
-		const id = this.#hoveredId();
-		if (!id) {
-			return;
-		}
-		return postQueries.detail(id);
+	readonly _ = this.setup(() => {
+		useSignalWatcher();
+		$usePrefetchQuery(() => {
+			const id = this.#hoveredId();
+			if (!id) {
+				return;
+			}
+			return postQueries.detail(id);
+		});
 	});
 
 	readonly #hoveredPost = useHoveredPost(this.#hoveredId);

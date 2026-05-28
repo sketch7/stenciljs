@@ -117,6 +117,37 @@ export function ReactiveControllerHostMixin<B extends MixedInCtor>(Base: B) {
 			this.controllers.delete(controller);
 		}
 
+		/**
+		 * Runs side-effect-only hooks inside a class field initializer without polluting the class with named fields.
+		 *
+		 * Hooks called inside the callback still self-register because `currentHost` is live during field initialization.
+		 *
+		 * @example
+		 * ```ts
+		 * // callback form — group multiple hooks
+		 * readonly _ = this.setup(() => {
+		 *   provideQueryClient({ client: new QueryClient() });
+		 *   useQueryDevtools({ enabled: true });
+		 * });
+		 * ```
+		 *
+		 * @example
+		 * ```ts
+		 * // spread form — single hook, terse
+		 * readonly _ = this.setup(useQueryDevtools());
+		 * ```
+		 */
+		setup(init: () => void): void;
+		// oxlint-disable-next-line @typescript-eslint/no-explicit-any -- spread accepts any hook return value
+		setup(..._hooks: any[]): void;
+		// oxlint-disable-next-line @typescript-eslint/no-explicit-any -- overload implementation
+		setup(init?: (() => void) | any): void {
+			if (typeof init === "function") {
+				init();
+			}
+			// spread form: arguments already evaluated → hooks already self-registered
+		}
+
 		requestUpdate(): void {
 			forceUpdate(this);
 		}

@@ -22,22 +22,21 @@ const logger = getLogger(["lol"]);
 export class AppLolDraftLobbyHost extends SsvElement {
 	// Transfer state must be declared before provideLolDraftQueryClient.
 	readonly #ts = provideTransferState("lol-draft");
-	readonly _queryClient = provideLolDraftQueryClient({
+	readonly _ = this.setup(() => {
 		// SSE drives real-time invalidation — disable window-focus refetching to avoid noise.
-		client: new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } }),
-		withHydration: this.#ts,
+		provideLolDraftQueryClient({
+			client: new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } }),
+			withHydration: this.#ts,
+		});
+		provideLolDraftContentQueryClient({ withHydration: this.#ts });
+		useQueryDevtools({ enabled: true });
+		// Subscribe to per-session SSE once we have a draftId.
+		useDraftSSE(() => this.draftId);
 	});
-	readonly _contentQueryClient = provideLolDraftContentQueryClient({
-		withHydration: this.#ts,
-	});
-	readonly _devTools = useQueryDevtools({ enabled: true });
 
 	@State() view: "lobby" | "draft" = "lobby";
 	@State() draftId: string | null = null;
 	@State() myTeam: Team | null = null;
-
-	// Subscribe to per-session SSE once we have a draftId
-	readonly _ = useDraftSSE(() => this.draftId);
 
 	private handleCreate(e: CustomEvent<LobbyJoinEvent>) {
 		this.draftId = e.detail.session.id;

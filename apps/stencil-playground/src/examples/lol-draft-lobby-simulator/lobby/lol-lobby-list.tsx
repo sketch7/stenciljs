@@ -27,7 +27,7 @@ const PHASE_LABELS: Record<string, string> = {
 })
 export class AppLolLobbyList extends SsvElement {
 	readonly #lobby = useDraftLobby();
-	readonly _ = useDraftsSSE();
+	readonly _ = this.setup(useDraftsSSE());
 
 	@Event() appCreate!: EventEmitter<LobbyJoinEvent>;
 	@Event() appJoin!: EventEmitter<LobbyJoinEvent>;

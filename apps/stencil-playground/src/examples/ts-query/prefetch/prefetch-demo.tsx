@@ -11,11 +11,13 @@ import { Component, h } from "@stencil/core";
 })
 export class AppTsQueryPrefetchDemo extends SsvElement {
 	readonly #ts = provideTransferState("ts-query-prefetch");
-	readonly _queryClient = provideQueryClient({
-		client: new QueryClient({ defaultOptions: { queries: { staleTime: 5 * 60 * 1000 } } }),
-		withHydration: this.#ts,
+	readonly _ = this.setup(() => {
+		provideQueryClient({
+			client: new QueryClient({ defaultOptions: { queries: { staleTime: 5 * 60 * 1000 } } }),
+			withHydration: this.#ts,
+		});
+		useQueryDevtools({ enabled: true });
 	});
-	readonly _devtools = useQueryDevtools({ enabled: true });
 
 	render() {
 		return (

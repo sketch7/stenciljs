@@ -22,7 +22,7 @@ import type { Post } from "./prefetch.api";
 export class AppTsQueryPrefetchReuse extends SsvElement {
 	// `prefetchPosts` is defined in prefetch.api.ts — outside this component.
 	// Calling it here wires the prefetch controller onto this host via `use()`.
-	readonly _prefetch = prefetchPosts();
+	readonly _ = this.setup(prefetchPosts());
 
 	// Same query as Component 1 — hits the pre-seeded cache.
 	readonly #posts = usePrefetchedPosts();

@@ -11,7 +11,7 @@ import { todoStore } from "./todo.store";
 	shadow: true,
 })
 export class AppSignalsTodo extends SsvElement {
-	readonly signalWatcher = useSignalWatcher();
+	readonly _ = this.setup(useSignalWatcher());
 	readonly inputText = signal("");
 	readonly $addTodo = createNotifier();
 

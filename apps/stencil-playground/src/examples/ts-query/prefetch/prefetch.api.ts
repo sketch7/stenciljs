@@ -1,3 +1,4 @@
+// oxlint-disable typescript/no-non-null-assertion
 import type { Ref } from "@ssv/stencil-core";
 import { queryOptions, useQuery, usePrefetchQuery } from "@ssv/tanstack.stencil-query";
 import type { QueryClient } from "@ssv/tanstack.stencil-query";
@@ -11,11 +12,8 @@ export type Post = {
 
 export const postKeys = {
 	all: ["prefetch-posts"] as const,
-	lists: () => [...postKeys.all, "list"] as const,
-	list: () => [...postKeys.lists()] as const,
-	details: () => [...postKeys.all, "detail"] as const,
-	detail: (id: number) => [...postKeys.details(), id] as const,
-	hover: (id: number | null) => [...postKeys.details(), id ?? ("idle" as const)] as const,
+	list: () => [...postKeys.all, "list"] as const,
+	detail: (id: number) => [...postKeys.all, "detail", id] as const,
 };
 
 export const postQueries = {
@@ -29,10 +27,12 @@ export const postQueries = {
 			queryKey: postKeys.detail(id),
 			queryFn: () => fetchPostById(id),
 		}),
+	/** Shares the same cache key as `detail` — hover prefetches are immediately available to detail queries. */
 	hover: (id: number | null) =>
 		queryOptions({
-			queryKey: postKeys.hover(id),
-			queryFn: () => fetchHoveredPost(id),
+			queryKey: postKeys.detail(id!),
+			queryFn: () => fetchPostById(id!),
+			enabled: id !== null,
 		}),
 };
 
@@ -65,6 +65,8 @@ export function useHoveredPost(getPostId: () => number | null, client?: QueryCli
 	return useQuery(() => postQueries.hover(getPostId()), client);
 }
 
+// ── private ──────────────────────────────────────────────────────────────────
+
 async function fetchPosts(): Promise<Post[]> {
 	console.warn("Fetching posts…");
 	const res = await fetch("https://jsonplaceholder.typicode.com/posts?_limit=5");
@@ -80,11 +82,4 @@ async function fetchPostById(id: number): Promise<Post> {
 		throw new Error(`Failed to fetch post ${id}: ${res.status}`);
 	}
 	return res.json() as Promise<Post>;
-}
-
-async function fetchHoveredPost(id: number | null): Promise<Post | null> {
-	if (id === null) {
-		return null;
-	}
-	return fetchPostById(id);
 }

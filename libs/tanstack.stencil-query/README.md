@@ -13,34 +13,33 @@ pnpm add @ssv/tanstack.stencil-query @tanstack/query-core
 ## Quick start
 
 ```ts
-// posts.api.ts — wrapper hook (vertical slice co-location)
-import { useQuery, useMutation } from "@ssv/tanstack.stencil-query";
+// posts.api.ts — typed query factories + wrapper hooks (vertical slice)
+import { queryOptions, useQuery, useMutation } from "@ssv/tanstack.stencil-query";
+
+export const postKeys = {
+  all: ["posts"] as const,
+  list: () => [...postKeys.all, "list"] as const,
+  detail: (id: number) => [...postKeys.all, "detail", id] as const,
+};
+
+export const postQueries = {
+  list: () => queryOptions({ queryKey: postKeys.list(), queryFn: fetchPosts }),
+  detail: (id: number) => queryOptions({ queryKey: postKeys.detail(id), queryFn: () => fetchPost(id) }),
+};
 
 export function usePosts() {
-  const postsRef = useQuery(() => ({
-    queryKey: ["posts"],
-    queryFn: fetchPosts,
-    staleTime: 5 * 60 * 1000,
-  }));
+  const postsRef = useQuery(postQueries.list());
+  const createRef = useMutation({ mutationFn: (title: string) => apiCreatePost(title) });
 
-  const createRef = useMutation({
-    mutationFn: (title: string) => apiCreatePost(title),
-  });
-
-  // Getter properties absorb the () call — component accesses plain properties
   return {
-    get posts() {
-      return postsRef();
-    },
-    get create() {
-      return createRef();
-    },
+    get posts() { return postsRef(); },
+    get create() { return createRef(); },
   };
 }
 ```
 
 ```ts
-// posts.tsx — component accesses plain property paths, no () needed
+// posts.tsx
 @Component({ tag: "app-posts", shadow: true })
 export class AppPosts extends SsvElement {
   readonly #api = usePosts();
@@ -55,18 +54,22 @@ export class AppPosts extends SsvElement {
 
 ## API
 
-| Export                     | Kind | Purpose                                                         |
-| -------------------------- | ---- | --------------------------------------------------------------- |
-| `useQuery`                 | fn   | Subscribes to a query; returns `Ref<UseQueryResult>`            |
-| `useMutation`              | fn   | Subscribes to a mutation; returns `Ref<UseMutationResult>`      |
-| `provideQueryClient`       | fn   | Registers a `QueryClient` in context; returns the client        |
-| `useQueryClient`           | fn   | Resolves the nearest `QueryClient` from context                 |
-| `Ref<T>`                   | type | Callable ref — `ref()` or `ref.current` reads the live value    |
-| `UseQueryRef<T>`           | type | `Ref<UseQueryResult<T>>` — return type of `useQuery`            |
-| `DefinedUseQueryRef<T>`    | type | `Ref<DefinedUseQueryResult<T>>` — when `initialData` is defined |
-| `UseMutationRef<T,E,V>`    | type | `Ref<UseMutationResult<T,E,V>>` — return type of `useMutation`  |
-| `UseQueryResult<T>`        | type | Full query result shape (`data`, `isPending`, `isError`, …)     |
-| `UseMutationResult<T,E,V>` | type | Full mutation result shape + `mutate` + `mutateAsync`           |
+| Export                     | Kind | Purpose                                                              |
+| -------------------------- | ---- | -------------------------------------------------------------------- |
+| `queryOptions`             | fn   | Type-safe query factory; stamps `DataTag` on `queryKey`             |
+| `useQuery`                 | fn   | Subscribes to a query; returns `Ref<UseQueryResult>`                |
+| `useMutation`              | fn   | Subscribes to a mutation; returns `Ref<UseMutationResult>`          |
+| `usePrefetchQuery`         | fn   | Seeds the cache on `hostWillLoad`; returns `void`                   |
+| `provideQueryClient`       | fn   | Registers a `QueryClient` in context; returns the client            |
+| `useQueryClient`           | fn   | Resolves the nearest `QueryClient` from context                     |
+| `useQueryClientRef`        | fn   | Returns a `Ref<QueryClient>` from context                           |
+| `Ref<T>`                   | type | Callable ref — `ref()` or `ref.current` reads the live value        |
+| `UseQueryRef<T>`           | type | `Ref<UseQueryResult<T>>` — return type of `useQuery`                |
+| `DefinedUseQueryRef<T>`    | type | `Ref<DefinedUseQueryResult<T>>` — when `initialData` is defined     |
+| `UseMutationRef<T,E,V>`    | type | `Ref<UseMutationResult<T,E,V>>` — return type of `useMutation`      |
+| `UseQueryResult<T>`        | type | Full query result shape (`data`, `isPending`, `isError`, …)         |
+| `UseMutationResult<T,E,V>` | type | Full mutation result shape + `mutate` + `mutateAsync`               |
+| `DefinedQueryOptions`      | type | `UseQueryOptions` variant asserting `queryFn` is never `skipToken`  |
 
 All `@tanstack/query-core` exports are also re-exported from this package.
 
@@ -75,24 +78,50 @@ All `@tanstack/query-core` exports are also re-exported from this package.
 `useQuery` and `useMutation` return a `Ref<T>` — a callable function that reads the current result live from the observer on each call.
 
 ```ts
-// Direct use in a component — call the ref to get the current result
-readonly #posts = useQuery({ queryKey: ["posts"], queryFn: fetchPosts });
+readonly #posts = useQuery(postQueries.list());
 
 render() {
   const { data, isPending } = this.#posts(); // () reads the live result
-  // or: this.#posts.current
 }
 ```
 
-The **wrapper hook pattern** above uses getter properties to absorb `()` — the component sees plain property access (`this.#api.posts.data`) and needs no changes when the underlying ref changes.
+The **wrapper hook pattern** uses getter properties to absorb `()` — the component sees plain property access (`this.#api.posts.data`) and stays decoupled from the ref.
+
+## `queryOptions`
+
+Creates a typed, reusable query options object. The `queryKey` carries a `DataTag` so the data type flows through `getQueryData` / `setQueryData` / `invalidateQueries` without manual casting.
+
+```ts
+export const postKeys = {
+  all: ["posts"] as const,
+  list: () => [...postKeys.all, "list"] as const,
+  detail: (id: number) => [...postKeys.all, "detail", id] as const,
+};
+
+export const postQueries = {
+  list: () => queryOptions({ queryKey: postKeys.list(), queryFn: fetchPosts }),
+  detail: (id: number) => queryOptions({ queryKey: postKeys.detail(id), queryFn: () => fetchPost(id) }),
+};
+
+// Type flows automatically — no explicit generics needed:
+const data = qc.getQueryData(postQueries.list().queryKey); // Post[]
+```
 
 ## Provider setup
 
 ```ts
 @Component({ tag: "app-root", shadow: true })
 export class AppRoot extends SsvElement {
-  readonly #qc = provideQueryClient({ queryClient: new QueryClient() });
+  readonly #qc = provideQueryClient(
+    new QueryClient({ defaultOptions: { queries: { staleTime: 5 * 60 * 1000 } } })
+  );
 }
+```
+
+Pass a `ProvideQueryClientOptions` object to reuse an existing client or add SSR hydration:
+
+```ts
+readonly #qc = provideQueryClient({ client: existingClient });
 ```
 
 ### SSR hydration
@@ -102,9 +131,49 @@ import { provideTransferState } from "@ssv/stencil-core/transfer-state";
 
 readonly #ts = provideTransferState("my-scope");
 readonly #qc = provideQueryClient({ withHydration: this.#ts });
+
+render() {
+  return <>{this.#ts.toScriptElement()}</>;
+}
 ```
 
-The query client hydrates from the serialized transfer-state script tag on connect, then removes the script. See [apps/stencil-playground/src/examples/ts-query/](../../apps/stencil-playground/src/examples/ts-query/) for a full SSR + client-side example.
+The query client dehydrates state to a `<script>` tag on each render and rehydrates from it on connect. See [apps/stencil-playground/src/examples/ts-query/](../../apps/stencil-playground/src/examples/ts-query/) for a full example.
+
+## Prefetch
+
+`usePrefetchQuery` seeds the cache on `hostWillLoad` — before any `useQuery` in the component subscribes. Skips the fetch if a cache entry already exists.
+
+```ts
+// Inline — seeds cache before children connect
+@Component({ tag: "app-posts-page", shadow: true })
+export class AppPostsPage extends SsvElement {
+  readonly _prefetch = usePrefetchQuery(postQueries.list());
+  readonly #posts = useQuery(postQueries.list()); // cache hit — no loading state
+}
+```
+
+**Reusable wrapper pattern** — define outside the component so any tree can seed the same key:
+
+```ts
+// posts.api.ts
+export function prefetchPosts(client?: QueryClient | Ref<QueryClient>): void {
+  usePrefetchQuery(postQueries.list(), client);
+}
+
+export function usePrefetchedPosts(client?: QueryClient | Ref<QueryClient>) {
+  return useQuery(postQueries.list(), client);
+}
+```
+
+```ts
+// root.tsx — seeds before child renders
+readonly _prefetch = prefetchPosts();
+```
+
+```ts
+// posts.tsx — receives pre-seeded data immediately
+readonly #posts = usePrefetchedPosts();
+```
 
 ## Devtools
 
@@ -114,19 +183,17 @@ Install the peer dependency:
 pnpm add -D @tanstack/query-devtools
 ```
 
-Import from the `dev-tools` sub-entrypoint and call the hook in any component that has a `QueryClient` in context:
-
 ```ts
 import { useQueryDevtools } from "@ssv/tanstack.stencil-query/dev-tools";
 
 @Component({ tag: "app-root", shadow: true })
 export class AppRoot extends SsvElement {
   readonly #qc = provideQueryClient();
-  _ = useQueryDevtools();
+  readonly _devtools = useQueryDevtools();
 }
 ```
 
-Devtools are **disabled by default in non-development environments** (`process.env.NODE_ENV !== 'development'`), matching the React Query convention. Pass `enabled: true` to force them on in any environment.
+Devtools are **disabled by default** outside `NODE_ENV === 'development'`. Pass `enabled: true` to force them on.
 
 | Option                | Type                     | Default                                  | Description                             |
 | --------------------- | ------------------------ | ---------------------------------------- | --------------------------------------- |
@@ -151,23 +218,16 @@ import { computed, useSignalWatcher } from "@ssv/stencil-signals";
 
 @Component({ tag: "app-posts", shadow: true })
 export class AppPosts extends SsvElement {
-  readonly signalWatcher = useSignalWatcher();
+  readonly _signalWatcher = useSignalWatcher();
 
-  readonly #posts = $useQuery(() => ({
-    queryKey: ["posts"],
-    queryFn: fetchPosts,
-  }));
+  readonly #posts = $useQuery(postQueries.list());
+  readonly #create = $useMutation({ mutationFn: (title: string) => apiCreatePost(title) });
 
-  readonly #create = $useMutation({
-    mutationFn: (title: string) => apiCreatePost(title),
-  });
-
-  // Derived signal — recomputes only when the two source signals change
-  readonly canSubmit = computed(() => !!this.inputValue() && !this.#create.isPending());
+  readonly #canSubmit = computed(() => !!this.#inputValue() && !this.#create.isPending());
 
   render() {
     return (
-      <button disabled={!this.canSubmit()} onClick={() => this.#create.mutate("New post")}>
+      <button disabled={!this.#canSubmit()} onClick={() => this.#create.mutate("New post")}>
         {this.#create.isPending() ? "Creating…" : "Create"}
       </button>
     );
@@ -181,38 +241,63 @@ export class AppPosts extends SsvElement {
 | ---------------------- | ---- | ----------------------------------------------------------- |
 | `$useQuery`            | fn   | Per-field signal store + `refetch`                          |
 | `$useMutation`         | fn   | Per-field signal store + `mutate` / `mutateAsync` / `reset` |
+| `$usePrefetchQuery`    | fn   | Reactive prefetch — re-fires when signal-based options change |
 | `QuerySignalResult`    | type | `Store<QueryStateData> & { refetch }`                       |
 | `MutationSignalResult` | type | `Store<MutationStateData> & { mutate, mutateAsync, reset }` |
 
 ### `$useQuery` vs `useQuery`
 
-|                             | `useQuery`                               | `$useQuery`                                               |
-| --------------------------- | ---------------------------------------- | --------------------------------------------------------- |
-| Return                      | `Ref<UseQueryResult>` — single ref       | `Store<QueryStateData> & { refetch }` — per-field signals |
-| Read                        | `ref()` or `ref.current`                 | `store.data()`, `store.isPending()`                       |
-| Re-render granularity       | Any field change re-renders              | Only fields read during last render                       |
-| Requires `useSignalWatcher` | No                                       | Yes                                                       |
-| Reactive options            | Getter function: `$useQuery(() => opts)` | Same                                                      |
+|                             | `useQuery`                          | `$useQuery`                                               |
+| --------------------------- | ----------------------------------- | --------------------------------------------------------- |
+| Return                      | `Ref<UseQueryResult>` — single ref  | `Store<QueryStateData> & { refetch }` — per-field signals |
+| Read                        | `ref()` or `ref.current`            | `store.data()`, `store.isPending()`                       |
+| Re-render granularity       | Any field change re-renders         | Only fields read during last render                       |
+| Requires `useSignalWatcher` | No                                  | Yes                                                       |
+| Reactive options            | `useQuery(() => opts)`              | Same                                                      |
 
 ### Reactive options
 
-Pass a getter function to recompute options when a signal changes:
+Pass a getter to recompute options when a signal changes:
 
 ```ts
 readonly #userId = signal(1);
 
 readonly #user = $useQuery(() => {
-    const userId = this.#userId();
-    return {
-      queryKey: ["user", userId] as const,
-      queryFn: ({ signal }) => fetchUser(userId, { signal }),
-    };
+  const userId = this.#userId();
+  return {
+    queryKey: ["user", userId] as const,
+    queryFn: ({ signal }) => fetchUser(userId, { signal }),
+  };
 });
 ```
 
-### Derived signals with `computed`
+### Signal-driven prefetch (`$usePrefetchQuery`)
 
-Fine-grained signals compose cleanly with `computed`:
+Seeds the cache whenever the signal-based options change. Requires `useSignalWatcher()`.
+Return `undefined` / `null` / `false` from the getter to skip the prefetch (e.g. when the id is absent).
+
+```ts
+import { $usePrefetchQuery } from "@ssv/tanstack.stencil-query/signals";
+
+@Component({ tag: "app-hover-list", shadow: true })
+export class AppHoverList extends SsvElement {
+  readonly _signalWatcher = useSignalWatcher();
+  readonly #hoveredId = signal<number | null>(null);
+
+  // Re-fires on every hoveredId change; skips when null
+  readonly _prefetch = $usePrefetchQuery(() => {
+    const id = this.#hoveredId();
+    if (!id) {
+      return;
+    }
+    return postQueries.detail(id);
+  });
+
+  readonly #hoveredPost = useHoveredPost(this.#hoveredId);
+}
+```
+
+### Derived signals with `computed`
 
 ```ts
 readonly #isLoading = computed(() => this.#posts.isPending() || this.#posts.isFetching());
@@ -220,10 +305,10 @@ readonly #hasError = computed(() => this.#posts.isError());
 readonly #canRetry = computed(() => this.#hasError() && !this.#posts.isFetching());
 ```
 
-Use `peek` for untracked reads in handlers or helper functions:
+Use `peek` for untracked reads inside event handlers:
 
 ```ts
-const hasDataNow = this.#posts.data.peek() !== undefined;
+const hasData = this.#posts.data.peek() !== undefined;
 ```
 
 See the full example: [apps/stencil-playground/src/examples/ts-query/posts-signals/](../../apps/stencil-playground/src/examples/ts-query/posts-signals/)
@@ -231,3 +316,4 @@ See the full example: [apps/stencil-playground/src/examples/ts-query/posts-signa
 ## Examples
 
 Full working demo: [apps/stencil-playground/src/examples/ts-query/](../../apps/stencil-playground/src/examples/ts-query/)
+

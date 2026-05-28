@@ -1,10 +1,61 @@
 import { use, useLoadEffect } from "@ssv/stencil-core";
 import type { Ref } from "@ssv/stencil-core";
 import { MutationObserver, notifyManager, noop } from "@tanstack/query-core";
-import type { MutationObserverResult, QueryClient } from "@tanstack/query-core";
+import type {
+	DefaultError,
+	MutateFunction,
+	MutationObserverOptions,
+	MutationObserverResult,
+	OmitKeyof,
+	Override,
+	QueryClient,
+} from "@tanstack/query-core";
 
 import { useQueryClient } from "./query-client-context";
-import type { UseMutateAsyncFunction, UseMutateFunction, UseMutationOptions } from "./types";
+
+// ── useMutation types ─────────────────────────────────────────────────────────
+
+/**
+ * Options for {@link useMutation}.
+ * Equivalent to react-query's `UseMutationOptions`.
+ */
+export type UseMutationOptions<
+	TData = unknown,
+	TError = DefaultError,
+	TVariables = void,
+	TContext = unknown,
+> = OmitKeyof<MutationObserverOptions<TData, TError, TVariables, TContext>, "_defaulted">;
+
+/** Fire-and-forget `mutate` — same parameter signature as {@link MutateFunction} but returns `void`. */
+export type UseMutateFunction<TData = unknown, TError = DefaultError, TVariables = void, TContext = unknown> = (
+	...args: Parameters<MutateFunction<TData, TError, TVariables, TContext>>
+) => void;
+
+/** Async `mutateAsync` — returns `Promise<TData>`. Alias for {@link MutateFunction}. */
+export type UseMutateAsyncFunction<
+	TData = unknown,
+	TError = DefaultError,
+	TVariables = void,
+	TContext = unknown,
+> = MutateFunction<TData, TError, TVariables, TContext>;
+
+/**
+ * Return type of {@link useMutation}.
+ * Mirrors react-query's `UseMutationResult` — all `MutationObserverResult` fields
+ * (`context`, `submittedAt`, `isPaused`, `failureCount`, etc.) plus a fire-and-forget
+ * `mutate` override and an async `mutateAsync`.
+ */
+export type UseMutationResult<TData = unknown, TError = DefaultError, TVariables = void, TContext = unknown> = Override<
+	MutationObserverResult<TData, TError, TVariables, TContext>,
+	{ mutate: UseMutateFunction<TData, TError, TVariables, TContext> }
+> & {
+	mutateAsync: UseMutateAsyncFunction<TData, TError, TVariables, TContext>;
+};
+
+/** {@link Ref} alias for the result of {@link useMutation}. */
+export type UseMutationRef<TData = unknown, TError = DefaultError, TVariables = void, TContext = unknown> = Ref<
+	UseMutationResult<TData, TError, TVariables, TContext>
+>;
 
 /** Base mutation state shared by both hooks as the not-yet-connected value. Excludes `reset` (an action). */
 export const idleMutationState = {

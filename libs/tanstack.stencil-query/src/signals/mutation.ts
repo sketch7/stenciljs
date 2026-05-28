@@ -2,7 +2,7 @@ import { signal } from "@ssv/stencil-signals";
 import type { DefaultError, MutationObserverResult, QueryClient } from "@tanstack/query-core";
 
 import { idleMutationState, useMutationObserver } from "../mutation-observer";
-import type { UseMutateAsyncFunction, UseMutateFunction, UseMutationOptions } from "../types";
+import type { UseMutateAsyncFunction, UseMutateFunction, UseMutationOptions } from "../mutation-observer";
 import { createSignalResult } from "./signal-result";
 import type { SignalFields } from "./signal-result";
 

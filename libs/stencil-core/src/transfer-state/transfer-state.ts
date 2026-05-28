@@ -62,6 +62,21 @@ export type TransferState = {
 	/** Stores `value` for `key`. */
 	set<T>(key: TransferKey<T>, value: T): void;
 	/**
+	 * Registers a lazy factory for `key` — called during `toScriptElement()` serialization rather
+	 * than at registration time.
+	 *
+	 * The factory is **never called on the client** (`toScriptElement()` returns `null` there).
+	 * If both `set()` and `setLazy()` target the same key, the lazy value takes precedence in
+	 * the serialized output.
+	 *
+	 * @example
+	 * ```ts
+	 * // Value captured when render() calls toScriptElement(), not when setup() runs.
+	 * ts.setLazy(MY_KEY, () => expensiveCompute());
+	 * ```
+	 */
+	setLazy<T>(key: TransferKey<T>, factory: () => T): void;
+	/**
 	 * Server: calls `getValue()`, stores the result, and returns it.
 	 * Client: returns the value read from the serialized script tag (or `undefined` if absent).
 	 */
@@ -85,6 +100,7 @@ export type TransferState = {
 class TransferStateImpl implements TransferState {
 	readonly #id: string | undefined;
 	readonly #map = new Map<string, unknown>();
+	readonly #lazy = new Map<string, () => unknown>();
 
 	constructor(id: string | undefined) {
 		this.#id = id;
@@ -98,6 +114,10 @@ class TransferStateImpl implements TransferState {
 		this.#map.set(key, value);
 	}
 
+	setLazy<T>(key: TransferKey<T>, factory: () => T): void {
+		this.#lazy.set(key, factory as () => unknown);
+	}
+
 	transfer<T>(key: TransferKey<T>, getValue: () => T): T | undefined {
 		if (detectServer()) {
 			const v = getValue();
@@ -109,7 +129,11 @@ class TransferStateImpl implements TransferState {
 
 	/** @internal */
 	toJSON(): string {
-		const raw = JSON.stringify(Object.fromEntries(this.#map));
+		const entries = new Map(this.#map);
+		for (const [k, factory] of this.#lazy) {
+			entries.set(k, factory());
+		}
+		const raw = JSON.stringify(Object.fromEntries(entries));
 		// Escape script tag to avoid break out of <script> tag in serialized output.
 		// Encoding of `<` is the same behavior as G3 script_builders.
 		// Encoding of `/` prevents crawlers from incorrectly indexing relative URLs in inline JSON.

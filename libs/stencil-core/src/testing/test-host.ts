@@ -16,8 +16,8 @@ import type { ReactiveController, ReactiveControllerHost } from "../hooks/reacti
  * ```
  */
 export class TestHost extends EventTarget implements ReactiveControllerHost {
-	readonly controllers = new Set<ReactiveController>();
-	renderCount = 0;
+	readonly controllers: Set<ReactiveController> = new Set<ReactiveController>();
+	renderCount: number = 0;
 	#disconnected = false;
 
 	constructor() {

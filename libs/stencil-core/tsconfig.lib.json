@@ -1,4 +1,7 @@
 {
   "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "isolatedDeclarations": true
+  },
   "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts"]
 }

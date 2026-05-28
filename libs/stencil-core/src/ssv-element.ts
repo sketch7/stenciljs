@@ -1,6 +1,7 @@
 import type { MixedInCtor } from "@stencil/core";
 
 import { ReactiveControllerHostMixin } from "./hooks/reactive-controller";
+import type { ReactiveControllerHostMixinReturn } from "./hooks/reactive-controller";
 
 /**
  * Default host base for {@link SsvElement}.
@@ -32,7 +33,10 @@ const defaultStencilHostBase: MixedInCtor =
  *
  * For mixin composition, use {@link SsvElementMixin} with Stencil's `Mixin()` helper instead.
  */
-export class SsvElement extends ReactiveControllerHostMixin(defaultStencilHostBase) {}
+const SsvElementBase: ReactiveControllerHostMixinReturn<MixedInCtor> =
+	ReactiveControllerHostMixin(defaultStencilHostBase);
+
+export class SsvElement extends SsvElementBase {}
 
 /**
  * Composable mixin version of {@link SsvElement} for use with Stencil's `Mixin()` helper.
@@ -45,6 +49,6 @@ export class SsvElement extends ReactiveControllerHostMixin(defaultStencilHostBa
  * }
  * ```
  */
-export function SsvElementMixin<B extends MixedInCtor>(Base: B) {
+export function SsvElementMixin<B extends MixedInCtor>(Base: B): ReactiveControllerHostMixinReturn<B> {
 	return ReactiveControllerHostMixin(Base);
 }

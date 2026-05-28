@@ -56,7 +56,10 @@ export type LifecycleLoggerOptions = {
  * }
  * ```
  */
-export function useLifecycleLogger(options?: LifecycleLoggerOptions) {
+export function useLifecycleLogger(options?: LifecycleLoggerOptions): {
+	readonly events: readonly HookEvent[];
+	clear(): void;
+} {
 	return use(host => {
 		const events: HookEvent[] = [];
 		let count = 0;

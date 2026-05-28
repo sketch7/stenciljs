@@ -89,6 +89,30 @@ export type UseHostContext = ReactiveControllerHost & {
 };
 
 /**
+ * Shape of the class constructor returned by {@link ReactiveControllerHostMixin}.
+ * Use as a return-type annotation where an explicit type is required (e.g. `isolatedDeclarations`).
+ */
+// oxlint-disable-next-line @typescript-eslint/no-explicit-any -- mixin ctor must accept any args
+export type ReactiveControllerHostMixinReturn<B extends MixedInCtor> = (new (...args: any[]) => {
+	readonly controllers: Set<ReactiveController>;
+	addController(controller: ReactiveController): void;
+	removeController(controller: ReactiveController): void;
+	setup(init: () => void): void;
+	// oxlint-disable-next-line @typescript-eslint/no-explicit-any -- overload accepts any hook return value
+	setup(..._hooks: any[]): void;
+	requestUpdate(): void;
+	connectedCallback(): void;
+	disconnectedCallback(): void;
+	componentWillLoad(): Promise<void> | void;
+	componentDidLoad(): void;
+	componentWillRender(): Promise<void> | void;
+	componentDidRender(): void;
+	componentWillUpdate(): Promise<void> | void;
+	componentDidUpdate(): void;
+}) &
+	B;
+
+/**
  * Mixin factory that adds `ReactiveController` support to any Stencil component class.
  *
  * @example
@@ -99,7 +123,7 @@ export type UseHostContext = ReactiveControllerHost & {
  * }
  * ```
  */
-export function ReactiveControllerHostMixin<B extends MixedInCtor>(Base: B) {
+export function ReactiveControllerHostMixin<B extends MixedInCtor>(Base: B): ReactiveControllerHostMixinReturn<B> {
 	class ReactiveControllerHostClass extends Base implements ComponentInterface, ReactiveControllerHost {
 		readonly controllers = new Set<ReactiveController>();
 

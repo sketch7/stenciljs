@@ -2,6 +2,7 @@ import { Build, h } from "@stencil/core";
 import type { VNode } from "@stencil/core";
 
 import { createContext, provideContext, useContext } from "../context";
+import type { ContextKey } from "../context";
 import { use } from "../hooks/use";
 
 const SCRIPT_TYPE = "application/json";
@@ -145,7 +146,9 @@ class TransferStateImpl implements TransferState {
 const _globalState = new TransferStateImpl(undefined);
 
 /** @internal */
-export const TransferStateContext = createContext<TransferState>(() => _globalState, { name: "transfer-state" });
+export const TransferStateContext: ContextKey<TransferState> = createContext<TransferState>(() => _globalState, {
+	name: "transfer-state",
+});
 
 /**
  * Registers the current component as a `TransferState` provider.

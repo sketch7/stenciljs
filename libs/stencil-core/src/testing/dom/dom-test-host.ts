@@ -21,8 +21,8 @@ import type { ReactiveController, ReactiveControllerHost } from "../../hooks/rea
  * ```
  */
 export class DomTestHost extends HTMLElement implements ReactiveControllerHost {
-	readonly controllers = new Set<ReactiveController>();
-	renderCount = 0;
+	readonly controllers: Set<ReactiveController> = new Set<ReactiveController>();
+	renderCount: number = 0;
 	#disconnected = false;
 
 	constructor() {

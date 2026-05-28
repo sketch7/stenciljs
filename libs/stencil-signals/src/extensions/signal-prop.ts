@@ -10,7 +10,7 @@ import type { HostPropsSnapshotBag } from "./host-bind";
 // ─── Public types ─────────────────────────────────────────────────────────────
 
 export type SignalPropOptions<T = unknown> = {
-	/** Fallback when the prop value is `null` or `undefined`. */
+	/** Fallback when the prop value is `undefined`. */
 	default?: T;
 	/** Log a console error during `hostWillLoad` when the prop is null or undefined. */
 	required?: boolean;
@@ -26,13 +26,18 @@ export type SignalPropOptions<T = unknown> = {
  * Resolution order (first match wins):
  *  1. `transform` return type — explicit sanitiser always wins
  *  2. `H[K]`      — prop type from the host class (requires `as HostClass` cast at call site)
+ *     then excludes `undefined` when a non-undefined `default` is provided
  *  3. `unknown`   — fallback when neither is available
  */
 type PropValue<H, K extends string, Opts extends SignalPropOptions<unknown>> = Opts extends {
 	transform: (v: unknown) => infer R;
 }
 	? R
-	: (H & Record<K, unknown>)[K];
+	: Opts extends { default: infer D }
+		? [D] extends [undefined]
+			? (H & Record<K, unknown>)[K]
+			: Exclude<(H & Record<K, unknown>)[K], undefined>
+		: (H & Record<K, unknown>)[K];
 
 type PropSignal<H, K extends string, Opts extends SignalPropOptions<unknown>> = Opts extends { twoWay: boolean }
 	? WritableSignal<PropValue<H, K, Opts>>
@@ -63,7 +68,7 @@ type PropsBundle = {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function applyTransform<T>(raw: unknown, options: SignalPropOptions<T>): T {
-	const value = raw ?? options.default;
+	const value = raw === undefined ? options.default : raw;
 	return options.transform ? options.transform(value as T) : (value as T);
 }
 

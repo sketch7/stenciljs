@@ -8,13 +8,13 @@ import { provideTransferState, useTransferState, makeTransferKey } from "@ssv/st
 
 ## API
 
-| Export                 | Kind | Purpose                                                            |
-| ---------------------- | ---- | ------------------------------------------------------------------ |
-| `provideTransferState` | fn   | Registers the host as provider; returns a `TransferState`          |
-| `useTransferState`     | fn   | Consumes the nearest ancestor provider; returns `TransferState`    |
-| `makeTransferKey<T>`   | fn   | Creates a typed key for `get` / `set` / `transfer`                 |
+| Export                 | Kind | Purpose                                                                       |
+| ---------------------- | ---- | ----------------------------------------------------------------------------- |
+| `provideTransferState` | fn   | Registers the host as provider; returns a `TransferState`                     |
+| `useTransferState`     | fn   | Consumes the nearest ancestor provider; returns `TransferState`               |
+| `makeTransferKey<T>`   | fn   | Creates a typed key for `get` / `set` / `transfer`                            |
 | `TransferState`        | type | Shared API: `get`, `set`, `setLazy`, `transfer`, `toScriptElement` (optional) |
-| `TransferKey<T>`       | type | Branded string that carries the value type                         |
+| `TransferKey<T>`       | type | Branded string that carries the value type                                    |
 
 ## Keys
 

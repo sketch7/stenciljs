@@ -1,6 +1,5 @@
 import { SsvElement } from "@ssv/stencil-core";
 import { provideTransferState } from "@ssv/stencil-core/transfer-state";
-import { useSignalWatcher } from "@ssv/stencil-signals";
 import { provideQueryClient, QueryClient } from "@ssv/tanstack.stencil-query";
 import { useQueryDevtools } from "@ssv/tanstack.stencil-query/dev-tools";
 import { Component, h } from "@stencil/core";
@@ -17,7 +16,6 @@ export class AppTsQueryPrefetchDemo extends SsvElement {
 		withHydration: this.#ts,
 	});
 	readonly _devtools = useQueryDevtools({ enabled: true });
-	readonly _signalWatcher = useSignalWatcher();
 
 	render() {
 		return (

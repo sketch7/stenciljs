@@ -2,7 +2,7 @@ import { SsvElement } from "@ssv/stencil-core";
 import { usePrefetchQuery } from "@ssv/tanstack.stencil-query";
 import { Component, h } from "@stencil/core";
 
-import { POSTS_QUERY_KEY, fetchPosts, usePrefetchedPosts } from "./prefetch.api";
+import { postQueries, usePrefetchedPosts } from "./prefetch.api";
 import type { Post } from "./prefetch.api";
 
 /**
@@ -22,7 +22,7 @@ import type { Post } from "./prefetch.api";
 export class AppTsQueryPrefetch extends SsvElement {
 	// Seeds the cache on hostConnected — before useQuery subscribes.
 	// Skips the fetch if a cache entry already exists.
-	readonly _prefetch = usePrefetchQuery({ queryKey: POSTS_QUERY_KEY, queryFn: fetchPosts });
+	readonly _prefetch = usePrefetchQuery(postQueries.list());
 
 	// Picks up the pre-seeded cache immediately — no loading flash.
 	readonly #posts = usePrefetchedPosts();

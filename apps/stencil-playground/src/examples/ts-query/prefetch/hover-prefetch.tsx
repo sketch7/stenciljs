@@ -3,7 +3,9 @@ import { signal, useSignalWatcher } from "@ssv/stencil-signals";
 import { $usePrefetchQuery } from "@ssv/tanstack.stencil-query/signals";
 import { Component, h } from "@stencil/core";
 
-import { HOVER_POST_IDS, fetchHoveredPost, hoverPostQueryKey, useHoveredPost } from "./prefetch.api";
+import { postQueries, useHoveredPost } from "./prefetch.api";
+
+const HOVER_POST_IDS = [1, 2, 3, 4, 5] as const;
 
 @Component({
 	tag: "app-ts-query-hover-prefetch",
@@ -14,20 +16,9 @@ export class AppTsQueryHoverPrefetch extends SsvElement {
 	readonly _signalWatcher = useSignalWatcher();
 	readonly #hoveredId = signal<number | null>(null);
 
-	readonly _hoverPrefetch = $usePrefetchQuery(() => ({
-		queryKey: hoverPostQueryKey(this.#hoveredId()),
-		queryFn: () => fetchHoveredPost(this.#hoveredId()),
-	}));
+	readonly _hoverPrefetch = $usePrefetchQuery(() => postQueries.hover(this.#hoveredId()));
 
-	readonly #hoveredPost = useHoveredPost(() => this.#hoveredId());
-
-	private handleEnter(id: number) {
-		this.#hoveredId.set(id);
-	}
-
-	private handleLeave() {
-		this.#hoveredId.set(null);
-	}
+	readonly #hoveredPost = useHoveredPost(this.#hoveredId);
 
 	render() {
 		const hoveredId = this.#hoveredId();
@@ -40,9 +31,9 @@ export class AppTsQueryHoverPrefetch extends SsvElement {
 				</h3>
 				<p class="hint">Hover an item to prefetch its detail query key via a signal-driven options getter.</p>
 
-				<ul class="list" onMouseLeave={() => this.handleLeave()}>
+				<ul class="list" onMouseLeave={() => this.#hoveredId.set(null)}>
 					{HOVER_POST_IDS.map(id => (
-						<li key={id} class="item item--hover" onMouseEnter={() => this.handleEnter(id)}>
+						<li key={id} class="item item--hover" onMouseEnter={() => this.#hoveredId.set(id)}>
 							<span class="item-id">#{id}</span>
 							<span class="item-title">Hover to prefetch post detail</span>
 						</li>

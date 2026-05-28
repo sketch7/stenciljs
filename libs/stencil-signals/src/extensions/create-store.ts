@@ -11,7 +11,7 @@ type ComputedMap<C extends Record<string, Signal<unknown>>> = {
 
 export type Store<T extends object, C extends Record<string, Signal<unknown>> = Record<never, never>> = StateMap<T> &
 	ComputedMap<C> & {
-		$signal<K extends keyof T>(key: K): WritableSignal<T[K]>;
+		get<K extends keyof T>(key: K): WritableSignal<T[K]>;
 		reset(): void;
 		/**
 		 * Applies a partial update to the store, setting only the provided state keys in a single batched write.
@@ -58,7 +58,7 @@ export function createStore<T extends object, C extends Record<string, Signal<un
 		get(_target, prop: string | symbol) {
 			const propStr = String(prop);
 
-			if (propStr === "$signal") {
+			if (propStr === "get") {
 				return <K extends keyof T>(key: K): WritableSignal<T[K]> =>
 					(signals as Record<keyof T, WritableSignal<T[keyof T]>>)[key] as WritableSignal<T[K]>;
 			}
@@ -120,7 +120,7 @@ export function createStore<T extends object, C extends Record<string, Signal<un
 			return (
 				prop in signals ||
 				(computedSignals ? prop in computedSignals : false) ||
-				propStr === "$signal" ||
+				propStr === "get" ||
 				propStr === "reset" ||
 				propStr === "patch"
 			);

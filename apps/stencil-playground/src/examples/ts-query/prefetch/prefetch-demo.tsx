@@ -1,10 +1,9 @@
 import { SsvElement } from "@ssv/stencil-core";
 import { provideTransferState } from "@ssv/stencil-core/transfer-state";
 import { useSignalWatcher } from "@ssv/stencil-signals";
-import { provideQueryClient } from "@ssv/tanstack.stencil-query";
+import { provideQueryClient, QueryClient } from "@ssv/tanstack.stencil-query";
 import { useQueryDevtools } from "@ssv/tanstack.stencil-query/dev-tools";
 import { Component, h } from "@stencil/core";
-import { QueryClient } from "@tanstack/query-core";
 
 @Component({
 	tag: "app-ts-query-prefetch-demo",

@@ -1,6 +1,6 @@
 import type { DataTag, DefaultError, OmitKeyof, QueryKey, SkipToken } from "@tanstack/query-core";
 
-import type { DefinedInitialDataOptions, UndefinedInitialDataOptions, UseQueryOptions } from "./types";
+import type { DefinedInitialDataOptions, UndefinedInitialDataOptions, UseQueryOptions } from "./query-observer";
 
 /**
  * {@link UseQueryOptions} variant that explicitly excludes {@link SkipToken} from `queryFn`.

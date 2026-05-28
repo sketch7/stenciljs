@@ -3,7 +3,7 @@ import { signal } from "@ssv/stencil-signals";
 import type { DefaultError, NoInfer, QueryClient, QueryKey, QueryObserverResult } from "@tanstack/query-core";
 
 import { pendingQueryState, useBaseQueryObserver } from "../query-observer";
-import type { UseQueryOptions } from "../types";
+import type { UseQueryOptions } from "../query-observer";
 import { createSignalResult } from "./signal-result";
 import type { SignalFields } from "./signal-result";
 

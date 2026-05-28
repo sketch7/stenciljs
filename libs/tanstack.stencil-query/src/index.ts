@@ -10,16 +10,18 @@ export type {
 	DefinedUseQueryRef,
 	DefinedUseQueryResult,
 	UndefinedInitialDataOptions,
+	UseQueryOptions,
+	UseQueryRef,
+	UseQueryResult,
+} from "./query-observer";
+export type {
 	UseMutateAsyncFunction,
 	UseMutateFunction,
 	UseMutationOptions,
 	UseMutationRef,
 	UseMutationResult,
-	UseQueryOptions,
-	UseQueryRef,
-	UseQueryResult,
-	UsePrefetchQueryOptions,
-} from "./types";
+} from "./mutation-observer";
+export type { UsePrefetchQueryOptions } from "./use-prefetch-query";
 export { useMutation } from "./use-mutation";
 export { usePrefetchQuery } from "./use-prefetch-query";
 export { useQuery } from "./use-query";

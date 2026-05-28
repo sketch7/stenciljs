@@ -3,7 +3,7 @@ import { computed, effect } from "@ssv/stencil-signals";
 import type { DefaultError, QueryClient, QueryKey } from "@tanstack/query-core";
 
 import { useQueryClient } from "../query-client-context";
-import type { UsePrefetchQueryOptions } from "../types";
+import type { UsePrefetchQueryOptions } from "../use-prefetch-query";
 
 /**
  * Reactive prefetch — seeds the cache whenever signal-based options change.

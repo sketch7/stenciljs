@@ -4,7 +4,7 @@ import { noop } from "@tanstack/query-core";
 import type { DefaultError, QueryClient } from "@tanstack/query-core";
 
 import { idleMutationState, useMutationObserver } from "./mutation-observer";
-import type { UseMutationOptions, UseMutationResult } from "./types";
+import type { UseMutationOptions, UseMutationResult } from "./mutation-observer";
 
 /**
  * Subscribes to a mutation and schedules a re-render whenever the mutation state changes.

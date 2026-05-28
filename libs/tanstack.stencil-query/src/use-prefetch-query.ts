@@ -1,9 +1,22 @@
 import { useLoadEffect } from "@ssv/stencil-core";
 import type { Ref } from "@ssv/stencil-core";
-import type { DefaultError, QueryClient, QueryKey } from "@tanstack/query-core";
+import type { DefaultError, FetchQueryOptions, QueryClient, QueryKey } from "@tanstack/query-core";
 
 import { useQueryClient } from "./query-client-context";
-import type { UsePrefetchQueryOptions } from "./types";
+
+// ── usePrefetchQuery types ────────────────────────────────────────────────────
+
+/**
+ * Options for {@link usePrefetchQuery} and {@link $usePrefetchQuery}.
+ * A subset of `UseQueryOptions` — only fields relevant to fetching (`queryKey`, `queryFn`,
+ * `staleTime`, `gcTime`). Observer-specific fields (`enabled`, `refetchInterval`, etc.) are excluded.
+ */
+export type UsePrefetchQueryOptions<
+	TQueryFnData = unknown,
+	TError = DefaultError,
+	TData = TQueryFnData,
+	TQueryKey extends QueryKey = QueryKey,
+> = FetchQueryOptions<TQueryFnData, TError, TData, TQueryKey>;
 
 /**
  * Seeds the QueryClient cache on `hostWillLoad` via `useLoadEffect`.

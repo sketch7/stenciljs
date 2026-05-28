@@ -3,7 +3,12 @@ import type { Ref } from "@ssv/stencil-core";
 import type { DefaultError, NoInfer, QueryClient, QueryKey, QueryObserverResult } from "@tanstack/query-core";
 
 import { noObserverRefetch, pendingQueryState, useBaseQueryObserver } from "./query-observer";
-import type { DefinedInitialDataOptions, DefinedUseQueryResult, UseQueryOptions, UseQueryResult } from "./types";
+import type {
+	DefinedInitialDataOptions,
+	DefinedUseQueryResult,
+	UseQueryOptions,
+	UseQueryResult,
+} from "./query-observer";
 
 /**
  * Subscribes to a query and schedules a re-render whenever the result changes.

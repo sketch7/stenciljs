@@ -1,10 +1,80 @@
 import { use, useLoadEffect } from "@ssv/stencil-core";
 import type { Ref } from "@ssv/stencil-core";
 import { QueryObserver, notifyManager } from "@tanstack/query-core";
-import type { QueryClient, QueryKey, QueryObserverResult, RefetchOptions } from "@tanstack/query-core";
+import type {
+	DefaultError,
+	DefinedQueryObserverResult,
+	InitialDataFunction,
+	NonUndefinedGuard,
+	OmitKeyof,
+	QueryClient,
+	QueryFunction,
+	QueryKey,
+	QueryObserverOptions,
+	QueryObserverResult,
+	RefetchOptions,
+} from "@tanstack/query-core";
 
 import { useQueryClient } from "./query-client-context";
-import type { UseQueryOptions } from "./types";
+
+// ── useQuery types ────────────────────────────────────────────────────────────
+
+/**
+ * Options for {@link useQuery}.
+ * Equivalent to react-query's `UseQueryOptions` — `QueryObserverOptions` without the
+ * React-specific `suspense` field (not applicable in Stencil).
+ */
+export type UseQueryOptions<
+	TQueryFnData = unknown,
+	TError = DefaultError,
+	TData = TQueryFnData,
+	TQueryKey extends QueryKey = QueryKey,
+> = OmitKeyof<QueryObserverOptions<TQueryFnData, TError, TData, TQueryFnData, TQueryKey>, "suspense">;
+
+/**
+ * {@link UseQueryOptions} variant where `initialData` is always defined.
+ * When this overload is matched, {@link useQuery} returns {@link DefinedUseQueryResult}
+ * (`data: TData`, never `undefined`).
+ */
+export type DefinedInitialDataOptions<
+	TQueryFnData = unknown,
+	TError = DefaultError,
+	TData = TQueryFnData,
+	TQueryKey extends QueryKey = QueryKey,
+> = Omit<UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>, "queryFn"> & {
+	initialData: NonUndefinedGuard<TQueryFnData> | (() => NonUndefinedGuard<TQueryFnData>);
+	queryFn?: QueryFunction<TQueryFnData, TQueryKey>;
+};
+
+/**
+ * {@link UseQueryOptions} variant where `initialData` is absent or `undefined`.
+ * This is the default — `useQuery` returns {@link UseQueryResult} (`data: TData | undefined`).
+ */
+export type UndefinedInitialDataOptions<
+	TQueryFnData = unknown,
+	TError = DefaultError,
+	TData = TQueryFnData,
+	TQueryKey extends QueryKey = QueryKey,
+> = UseQueryOptions<TQueryFnData, TError, TData, TQueryKey> & {
+	initialData?: undefined | InitialDataFunction<NonUndefinedGuard<TQueryFnData>> | NonUndefinedGuard<TQueryFnData>;
+};
+
+/** Return type of {@link useQuery} when `initialData` is always defined — `data: TData`, never `undefined`. */
+export type DefinedUseQueryResult<TData = unknown, TError = DefaultError> = DefinedQueryObserverResult<TData, TError>;
+
+/**
+ * Return type of {@link useQuery}.
+ * Direct alias for `QueryObserverResult` — exposes every field TanStack Query populates,
+ * matching react-query's `UseQueryResult` exactly (`isLoading`, `isRefetching`, `isFetched`,
+ * `failureCount`, `dataUpdatedAt`, etc.).
+ */
+export type UseQueryResult<TData = unknown, TError = DefaultError> = QueryObserverResult<TData, TError>;
+
+/** {@link Ref} alias for the result of {@link useQuery}. */
+export type UseQueryRef<TData = unknown, TError = DefaultError> = Ref<UseQueryResult<TData, TError>>;
+
+/** {@link Ref} alias for the result of {@link useQuery} when `initialData` is always defined. */
+export type DefinedUseQueryRef<TData = unknown, TError = DefaultError> = Ref<DefinedUseQueryResult<TData, TError>>;
 
 /** Base query state shared by both hooks as the not-yet-connected value. Excludes `refetch` (an action). */
 export const pendingQueryState = {

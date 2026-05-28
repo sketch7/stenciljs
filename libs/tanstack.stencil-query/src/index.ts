@@ -16,6 +16,8 @@ export type {
 	UseQueryOptions,
 	UseQueryRef,
 	UseQueryResult,
+	UsePrefetchQueryOptions,
 } from "./types";
 export { useMutation } from "./use-mutation";
+export { usePrefetchQuery } from "./use-prefetch-query";
 export { useQuery } from "./use-query";

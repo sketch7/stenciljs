@@ -1,13 +1,12 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { TestHost } from "@ssv/stencil-core/testing";
 // oxlint-disable-next-line import/no-unassigned-import
 import "../src/tc39";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 
-import { TestHost } from "@ssv/stencil-core/testing";
-
+import { useSignalWatcher } from "../src/controllers/signal-watcher-controller";
 import { createNotifier } from "../src/extensions/create-notifier";
 import { effect } from "../src/extensions/effect";
 import { signal } from "../src/signals/core";
-import { useSignalWatcher } from "../src/controllers/signal-watcher-controller";
 
 const tick = () =>
 	new Promise<void>(r => {

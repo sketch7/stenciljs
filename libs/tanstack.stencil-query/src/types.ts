@@ -2,6 +2,7 @@ import type { Ref } from "@ssv/stencil-core";
 import type {
 	DefaultError,
 	DefinedQueryObserverResult,
+	FetchQueryOptions,
 	InitialDataFunction,
 	MutateFunction,
 	MutationObserverOptions,
@@ -119,3 +120,17 @@ export type DefinedUseQueryRef<TData = unknown, TError = DefaultError> = Ref<Def
 export type UseMutationRef<TData = unknown, TError = DefaultError, TVariables = void, TContext = unknown> = Ref<
 	UseMutationResult<TData, TError, TVariables, TContext>
 >;
+
+// ── usePrefetchQuery ──────────────────────────────────────────────────────────
+
+/**
+ * Options for {@link usePrefetchQuery} and {@link $usePrefetchQuery}.
+ * A subset of `UseQueryOptions` — only fields relevant to fetching (`queryKey`, `queryFn`,
+ * `staleTime`, `gcTime`). Observer-specific fields (`enabled`, `refetchInterval`, etc.) are excluded.
+ */
+export type UsePrefetchQueryOptions<
+	TQueryFnData = unknown,
+	TError = DefaultError,
+	TData = TQueryFnData,
+	TQueryKey extends QueryKey = QueryKey,
+> = FetchQueryOptions<TQueryFnData, TError, TData, TQueryKey>;

@@ -190,6 +190,86 @@ describe("provideTransferState", () => {
 			expect(m.ts.transfer(ITEMS_KEY, () => ["fallback"])).toBeUndefined();
 		});
 	});
+
+	// ── setLazy() ─────────────────────────────────────────────────────────────────
+
+	describe("setLazy()", () => {
+		const COUNT_KEY = makeTransferKey<number>("count");
+
+		describe("server", () => {
+			beforeEach(() => {
+				Object.assign(Build, { isServer: true });
+			});
+
+			afterEach(() => {
+				Object.assign(Build, { isServer: false });
+			});
+
+			it("factory is not called at registration time", async () => {
+				const factory = vi.fn<() => number>(() => 42);
+				await mount(() => {
+					const ts = provideTransferState("lazy-server");
+					ts.setLazy(COUNT_KEY, factory);
+				});
+				expect(factory).not.toHaveBeenCalled();
+			});
+
+			it("factory is called when toScriptElement() serializes", async () => {
+				const factory = vi.fn<() => number>(() => 42);
+				using m = await mount(() => {
+					const ts = provideTransferState("lazy-server");
+					ts.setLazy(COUNT_KEY, factory);
+					return { ts };
+				});
+				m.ts.toScriptElement();
+				expect(factory).toHaveBeenCalledOnce();
+			});
+
+			it("lazy value is included in the serialized JSON", async () => {
+				using m = await mount(() => {
+					const ts = provideTransferState("lazy-server");
+					ts.setLazy(COUNT_KEY, () => 77);
+					return { ts };
+				});
+				// toJSON() is @internal — used here to assert serialized content directly.
+				expect(JSON.parse((m.ts as any).toJSON())).toMatchObject({ count: 77 });
+			});
+
+			it("factory captures value at serialization time, not registration time", async () => {
+				const state = { value: 0 };
+				using m = await mount(() => {
+					const ts = provideTransferState("lazy-server");
+					ts.setLazy(COUNT_KEY, () => state.value);
+					return { ts };
+				});
+				state.value = 99;
+				expect(JSON.parse((m.ts as any).toJSON())).toMatchObject({ count: 99 });
+			});
+
+			it("lazy value overrides set() for the same key in serialized output", async () => {
+				using m = await mount(() => {
+					const ts = provideTransferState("lazy-server");
+					ts.set(COUNT_KEY, 1);
+					ts.setLazy(COUNT_KEY, () => 2);
+					return { ts };
+				});
+				expect(JSON.parse((m.ts as any).toJSON())).toMatchObject({ count: 2 });
+			});
+		});
+
+		describe("client", () => {
+			it("factory is never called — toScriptElement() returns null on the client", async () => {
+				const factory = vi.fn<() => number>(() => 42);
+				using m = await mount(() => {
+					const ts = provideTransferState("lazy-client");
+					ts.setLazy(COUNT_KEY, factory);
+					return { ts };
+				});
+				m.ts.toScriptElement();
+				expect(factory).not.toHaveBeenCalled();
+			});
+		});
+	});
 });
 
 // ── useTransferState (consumer) ───────────────────────────────────────────────

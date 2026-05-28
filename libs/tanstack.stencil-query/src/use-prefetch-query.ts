@@ -1,4 +1,4 @@
-import { useLoadEffect } from "@ssv/stencil-core";
+import { use } from "@ssv/stencil-core";
 import type { Ref } from "@ssv/stencil-core";
 import type { DefaultError, FetchQueryOptions, QueryClient, QueryKey } from "@tanstack/query-core";
 
@@ -19,10 +19,11 @@ export type UsePrefetchQueryOptions<
 > = FetchQueryOptions<TQueryFnData, TError, TData, TQueryKey>;
 
 /**
- * Seeds the QueryClient cache on `hostWillLoad` via `useLoadEffect`.
+ * Seeds the QueryClient cache on `hostWillLoad`.
  *
- * Mirrors TanStack React's `usePrefetchQuery`: skips the fetch if any cache entry already
- * exists for `queryKey`. Returns `void` — no state, no subscriptions, no re-renders.
+ * Returns the `Promise` from `prefetchQuery` out of `hostWillLoad` so Stencil awaits it
+ * during SSR before rendering. Mirrors TanStack React's `usePrefetchQuery`: skips the fetch
+ * if any cache entry already exists for `queryKey`. Returns `void` — no state, no subscriptions, no re-renders.
  *
  * Pass a **getter function** for options computed from props or other state.
  * Pass an explicit `client` to bypass context — useful in unit tests.
@@ -55,13 +56,16 @@ export function usePrefetchQuery<
 	const clientRef = useQueryClient(client);
 	const getOpts = typeof getOptions === "function" ? getOptions : () => getOptions;
 
-	useLoadEffect(
-		({ qc }) => {
+	use(() => ({
+		hostWillLoad(): Promise<void> | void {
+			const qc = clientRef.current;
+			if (!qc) {
+				return;
+			}
 			const opts = getOpts();
 			if (!qc.getQueryState(opts.queryKey)) {
-				qc.prefetchQuery(opts);
+				return qc.prefetchQuery(opts);
 			}
 		},
-		{ qc: clientRef },
-	);
+	}));
 }

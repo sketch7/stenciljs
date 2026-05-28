@@ -8,13 +8,13 @@ import { provideTransferState, useTransferState, makeTransferKey } from "@ssv/st
 
 ## API
 
-| Export                 | Kind | Purpose                                                         |
-| ---------------------- | ---- | --------------------------------------------------------------- |
-| `provideTransferState` | fn   | Registers the host as provider; returns a `TransferState`       |
-| `useTransferState`     | fn   | Consumes the nearest ancestor provider; returns `TransferState` |
-| `makeTransferKey<T>`   | fn   | Creates a typed key for `get` / `set` / `transfer`              |
-| `TransferState`        | type | Shared API: `get`, `set`, `transfer`, `toScriptElement`         |
-| `TransferKey<T>`       | type | Branded string that carries the value type                      |
+| Export                 | Kind | Purpose                                                            |
+| ---------------------- | ---- | ------------------------------------------------------------------ |
+| `provideTransferState` | fn   | Registers the host as provider; returns a `TransferState`          |
+| `useTransferState`     | fn   | Consumes the nearest ancestor provider; returns `TransferState`    |
+| `makeTransferKey<T>`   | fn   | Creates a typed key for `get` / `set` / `transfer`                 |
+| `TransferState`        | type | Shared API: `get`, `set`, `setLazy`, `transfer`, `toScriptElement` |
+| `TransferKey<T>`       | type | Branded string that carries the value type                         |
 
 ## Keys
 
@@ -57,6 +57,22 @@ export class AppMyPage extends SsvElement {
 
 `toScriptElement()` emits a `<script id="__ssv-state__{id}" type="application/json">` VNode on the server and returns `null` on the client. Place it anywhere inside the shadow root.
 
+## setLazy
+
+`setLazy(key, factory)` registers a factory that is called **at serialization time** — when `toScriptElement()` calls `toJSON()` during `render()`. Use it when the value is not yet ready at the time `setup()` runs but will be ready by the time `render()` executes.
+
+The factory is never called on the client.
+
+```ts
+// Dehydrate a QueryClient whose cache is populated during hostWillLoad —
+// called in render() so the data is fully settled before serialization.
+ts.setLazy(DEHYDRATED_STATE_KEY, () => dehydrate(queryClient));
+```
+
+If both `set()` and `setLazy()` target the same key, `setLazy` wins in the serialized output.
+
+> **SSR ordering note:** `setLazy` defers evaluation to `render()` of the **owning component**. Children's `hostWillLoad` still runs after the parent's `render()`, so child-populated state cannot be captured here. Prefetch in the same component that owns `provideTransferState`.
+
 ## Consumer
 
 Descendant components receive the same state via context — no prop drilling.
@@ -81,7 +97,9 @@ export class AppPostList extends SsvElement {
 Server render
   provideTransferState("id")
     └─ transfer(KEY, getValue)  →  calls getValue(), stores result
-    └─ toScriptElement()        →  <script id="__ssv-state__id">{json}</script>
+    └─ setLazy(KEY, factory)    →  registers factory; called during toScriptElement()
+    └─ toScriptElement()        →  invokes lazy factories, then serializes all values
+                                   <script id="__ssv-state__id">{json}</script>
                                     emitted inside <template shadowrootmode="open">
 
 Client hydration

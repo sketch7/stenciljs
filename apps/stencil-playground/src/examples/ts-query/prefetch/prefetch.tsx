@@ -20,8 +20,8 @@ import type { Post } from "./prefetch.api";
 	shadow: true,
 })
 export class AppTsQueryPrefetch extends SsvElement {
-	// Seeds the cache on hostConnected — before useQuery subscribes.
-	// Skips the fetch if a cache entry already exists.
+	// Seeds the cache on hostWillLoad — before useQuery subscribes.
+	// TanStack deduplicates if sibling components prefetch the same key concurrently.
 	readonly _ = this.setup(usePrefetchQuery(postQueries.list()));
 
 	// Picks up the pre-seeded cache immediately — no loading flash.

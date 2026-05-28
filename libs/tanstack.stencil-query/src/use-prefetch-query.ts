@@ -22,8 +22,10 @@ export type UsePrefetchQueryOptions<
  * Seeds the QueryClient cache on `hostWillLoad`.
  *
  * Returns the `Promise` from `prefetchQuery` out of `hostWillLoad` so Stencil awaits it
- * during SSR before rendering. Mirrors TanStack React's `usePrefetchQuery`: skips the fetch
- * if any cache entry already exists for `queryKey`. Returns `void` — no state, no subscriptions, no re-renders.
+ * during SSR before rendering. Always calls `qc.prefetchQuery` — TanStack deduplicates
+ * concurrent requests (returns the in-flight promise for the same key) and resolves
+ * immediately for fresh cache entries, so calling it unconditionally is safe.
+ * Returns `void` — no state, no subscriptions, no re-renders.
  *
  * Pass a **getter function** for options computed from props or other state.
  * Pass an explicit `client` to bypass context — useful in unit tests.
@@ -63,9 +65,12 @@ export function usePrefetchQuery<
 				return;
 			}
 			const opts = getOpts();
-			if (!qc.getQueryState(opts.queryKey)) {
-				return qc.prefetchQuery(opts);
-			}
+			// Always call prefetchQuery — TanStack deduplicates concurrent requests (if another
+			// component already started the same fetch, this returns the same in-flight promise)
+			// and resolves immediately for fresh cache entries. Guarding with getQueryState()
+			// would skip awaiting when a sibling's prefetch is pending, causing render() to run
+			// before data arrives.
+			return qc.prefetchQuery(opts);
 		},
 	}));
 }

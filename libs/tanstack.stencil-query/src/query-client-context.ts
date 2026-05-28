@@ -96,9 +96,6 @@ export function provideQueryClient(clientOrOptions?: QueryClient | ProvideQueryC
 		const ts = withHydration;
 
 		use({
-			hostWillRender() {
-				ts.set(DEHYDRATED_KEY, dehydrate(qc));
-			},
 			hostConnected() {
 				const dehydrated = ts.get(DEHYDRATED_KEY);
 				if (dehydrated !== undefined) {
@@ -106,6 +103,7 @@ export function provideQueryClient(clientOrOptions?: QueryClient | ProvideQueryC
 				}
 			},
 		});
+		ts.setLazy(DEHYDRATED_KEY, () => dehydrate(qc));
 	}
 
 	return qc;

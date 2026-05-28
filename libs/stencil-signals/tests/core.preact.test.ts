@@ -190,9 +190,9 @@ describe("createStore() [preact]", () => {
 		expect(store.count()).toBe(5);
 	});
 
-	it("exposes raw signal via $signal()", () => {
+	it("exposes raw signal via get()", () => {
 		const store = createStore({ x: 10 });
-		const sig = store.$signal("x");
+		const sig = store.get("x");
 		expect(sig()).toBe(10);
 		sig.set(20);
 		expect(store.x()).toBe(20);

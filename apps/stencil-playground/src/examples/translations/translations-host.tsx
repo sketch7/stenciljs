@@ -26,7 +26,6 @@ export class AppTranslationsHost extends SsvElement {
 
 		return (
 			<div class="host">
-				{this.#ts.toScriptElement()}
 				<header class="host-header">
 					<span class="host-badge">i18n</span>
 					<h1 class="host-title">{tr("authshell-dashboard.message")}</h1>

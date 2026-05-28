@@ -153,7 +153,6 @@ export class MyData extends SsvElement {
 
   render() {
     return <>
-      {this.#ts.toScriptElement()}   {/* serializes into shadow DOM */}
       <ul>{this.data?.map(...)}</ul>
     </>;
   }

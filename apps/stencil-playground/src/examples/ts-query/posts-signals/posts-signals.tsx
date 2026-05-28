@@ -88,7 +88,6 @@ export class AppTsQueryPostsSignals extends SsvElement {
 
 		return (
 			<div class="posts">
-				{this.#ts.toScriptElement()}
 				<div class="add-row">
 					<input
 						class="post-input"

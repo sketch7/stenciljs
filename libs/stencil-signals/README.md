@@ -203,7 +203,7 @@ export const todoStore = createStore({ todos: [] as Todo[], nextId: 1 }, s => ({
 }));
 ```
 
-Read with invocation (`store.count()`, `store.completedCount()`). Mutate with `set`/`update` (`store.count.set(1)`, `store.count.update(v => v + 1)`) or assignment (`store.count = 1`). Escape hatches: `$signal(key)`, `reset()`.
+Read with invocation (`store.count()`, `store.completedCount()`). Mutate with `set`/`update` (`store.count.set(1)`, `store.count.update(v => v + 1)`) or assignment (`store.count = 1`). Escape hatches: `get(key)`, `reset()`.
 
 #### `patch(partial)` — bulk update
 
@@ -307,9 +307,9 @@ Also exported from main entry: `effect`, `derivedAsync`, `computedPrevious`, `cr
 
 ### Store
 
-| Export                                | Description                            |
-| ------------------------------------- | -------------------------------------- |
-| `createStore(init, computedFactory?)` | Proxy store; `$signal(key)`, `reset()` |
+| Export                                | Description                        |
+| ------------------------------------- | ---------------------------------- |
+| `createStore(init, computedFactory?)` | Proxy store; `get(key)`, `reset()` |
 
 ### Low-level
 

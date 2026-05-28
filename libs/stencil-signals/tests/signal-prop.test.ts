@@ -3,13 +3,15 @@ import { TestHost } from "@ssv/stencil-core/testing";
 import "../src/tc39";
 // oxlint-disable-next-line import/no-namespace -- namespace required for vi.spyOn module mock
 import * as stencilCore from "@stencil/core";
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, expectTypeOf, vi, afterEach } from "vitest";
 
 import { useSignalWatcher } from "../src/controllers/signal-watcher-controller";
 import { useSignalProps } from "../src/extensions/signal-prop";
 
 class PropTestHost extends TestHost {
 	duration = 10;
+	nullableDuration: number | null | undefined = 10;
+	isEnabled: boolean | undefined = true;
 	isRunning = false;
 	readonly dispatched: CustomEvent[] = [];
 
@@ -91,6 +93,49 @@ describe("useSignalProps", () => {
 		host.connect();
 		runHostWillLoad(host);
 		expect($props.duration()).toBe(25);
+	});
+
+	it("uses default when prop is undefined", () => {
+		const host = new PropTestHost();
+		host.nullableDuration = undefined;
+		useSignalWatcher();
+		const $props = useSignalProps(PropTestHost)({
+			nullableDuration: { default: 99 },
+		});
+
+		host.connect();
+		runHostWillLoad(host);
+		expect($props.nullableDuration()).toBe(99);
+	});
+
+	it("does not use default when prop is null", () => {
+		const host = new PropTestHost();
+		host.nullableDuration = null;
+		useSignalWatcher();
+		const $props = useSignalProps(PropTestHost)({
+			nullableDuration: { default: 99 },
+		});
+
+		host.connect();
+		runHostWillLoad(host);
+		expect($props.nullableDuration()).toBeNull();
+	});
+
+	it("default removes undefined from inferred signal type", () => {
+		const host = new PropTestHost();
+		useSignalWatcher();
+		const withDefault = useSignalProps(PropTestHost)({
+			isEnabled: { default: false },
+		});
+		const withoutDefault = useSignalProps(PropTestHost)({
+			isEnabled: {},
+		});
+
+		host.connect();
+		runHostWillLoad(host);
+		expect(withDefault.isEnabled()).toBeTypeOf("boolean");
+		expectTypeOf(withDefault.isEnabled()).toEqualTypeOf<boolean>();
+		expectTypeOf(withoutDefault.isEnabled()).toEqualTypeOf<boolean | undefined>();
 	});
 
 	it("twoWay dispatches Change event when connected", () => {

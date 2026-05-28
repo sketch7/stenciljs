@@ -12,7 +12,7 @@ type ProfileStatus = "idle" | "success" | "error" | "empty";
 	shadow: true,
 })
 export class AppTranslationProfile extends SsvElement {
-	readonly _lifecycle = useLifecycleLogger({ name: "translation-profile" });
+	readonly _ = this.setup(useLifecycleLogger({ name: "translation-profile" }));
 	readonly #tr = useTranslations();
 
 	@State() name = "Alice";

@@ -17,8 +17,10 @@ export class AppTsQueryPostsSignals extends SsvElement {
 	readonly #ts = provideTransferState("ts-query-posts-signals");
 	readonly #queryClient = provideQueryClient({ withHydration: this.#ts });
 	readonly #api = $usePosts(this.#queryClient);
-	readonly _ = useSignalWatcher();
-	readonly __ = useQueryDevtools();
+	readonly _ = this.setup(() => {
+		useSignalWatcher();
+		useQueryDevtools();
+	});
 
 	readonly inputValue = signal("");
 

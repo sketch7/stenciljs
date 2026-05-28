@@ -12,8 +12,8 @@ import { useTranslations } from "./translations.api";
 	shadow: true,
 })
 export class AppTranslationsHost extends SsvElement {
+	readonly _ = this.setup(useLifecycleLogger({ name: "translations-host" }));
 	// Transfer state must be declared BEFORE provideQueryClient.
-	readonly _lifecycle = useLifecycleLogger({ name: "translations-host" });
 	readonly #ts = provideTransferState("translations");
 	readonly #queryClient = provideQueryClient({ withHydration: this.#ts });
 	readonly #tr = useTranslations(this.#queryClient);

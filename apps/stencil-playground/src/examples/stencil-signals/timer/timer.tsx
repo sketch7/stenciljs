@@ -16,7 +16,7 @@ export class AppTimer extends SsvElement {
 
 	@Event() isRunningChange!: EventEmitter<boolean>;
 
-	readonly signalWatcher = useSignalWatcher();
+	readonly _ = this.setup(useSignalWatcher());
 	readonly $props = useSignalProps(AppTimer)({
 		duration: { transform: v => Math.max(0, v) },
 		isRunning: { twoWay: true },

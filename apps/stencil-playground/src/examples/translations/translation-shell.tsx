@@ -10,7 +10,7 @@ import { useTranslations } from "./translations.api";
 	shadow: true,
 })
 export class AppTranslationShell extends SsvElement {
-	readonly _lifecycle = useLifecycleLogger({ name: "translation-shell" });
+	readonly _ = this.setup(useLifecycleLogger({ name: "translation-shell" }));
 	readonly #tr = useTranslations();
 
 	render() {

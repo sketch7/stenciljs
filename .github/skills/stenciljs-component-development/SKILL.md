@@ -212,6 +212,41 @@ import { AppCounter } from "@app/stencil-playground/react";
 
 See: [apps/stencil-playground/stencil.config.ts](../../../apps/stencil-playground/stencil.config.ts)
 
+## Side-effect Hooks (`this.setup()`)
+
+Some hooks register controllers for lifecycle side-effects only — their return value is never read. TypeScript class bodies require every expression to be assigned, so use `this.setup()` instead of proliferating `_xxx` fields.
+
+Two forms:
+
+```ts
+// callback — group multiple hooks, statement syntax inside
+readonly _ = this.setup(() => {
+  provideQueryClient({ client: new QueryClient() });
+  useQueryDevtools({ enabled: true });
+});
+
+// spread — single hook, terse
+readonly _ = this.setup(useQueryDevtools());
+```
+
+**Rules:**
+- Always `readonly _` — the `void` type signals "don't read this value"
+- Use callback form when grouping 2+ hooks or when order matters (e.g. `provideQueryClient` before `useQueryDevtools`)
+- Use spread form for a single standalone hook
+
+**Never do:**
+
+```ts
+// ❌ unnamed, non-readonly — easy to miss, inconsistent
+_ = useQueryDevtools();
+
+// ❌ separate named fields for each side-effect hook
+readonly _devtools = useQueryDevtools();
+readonly _watcher = useSignalWatcher();
+```
+
+See: [ts-query/posts/posts.tsx](../../../apps/stencil-playground/src/examples/ts-query/posts/posts.tsx), [ts-query/prefetch/prefetch-demo.tsx](../../../apps/stencil-playground/src/examples/ts-query/prefetch/prefetch-demo.tsx)
+
 ## Quick Reference
 
 | Pattern                                     | Example Files                                                                 |
@@ -220,6 +255,7 @@ See: [apps/stencil-playground/stencil.config.ts](../../../apps/stencil-playgroun
 | Component + @ssv/tanstack.stencil-store      | [ts-store/counter/](../../../apps/stencil-playground/src/examples/ts-store/counter/)               |
 | Component + ReactiveController (SsvElement) | [ssv-core/mouse-host/](../../../apps/stencil-playground/src/examples/ssv-core/mouse-host/)         |
 | Component + ReactiveController (Mixin)      | [ssv-core/timer-host/](../../../apps/stencil-playground/src/examples/ssv-core/timer-host/)         |
+| Side-effect hooks (`this.setup()`)          | [ts-query/posts/posts.tsx](../../../apps/stencil-playground/src/examples/ts-query/posts/posts.tsx) |
 | Component + TanStack Query                  | [ts-query/posts/](../../../apps/stencil-playground/src/examples/ts-query/posts/)                   |
 | Output targets config                       | [stencil.config.ts](../../../apps/stencil-playground/stencil.config.ts)                            |
 | Core library API                            | [libs/stencil-core/src/index.ts](../../../libs/stencil-core/src/index.ts)                          |

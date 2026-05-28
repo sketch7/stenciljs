@@ -45,7 +45,6 @@ export class AppTsQueryPrefetchDemo extends SsvElement {
 					</p>
 					<app-ts-query-hover-prefetch />
 				</section>
-				{this.#ts.toScriptElement()}
 			</div>
 		);
 	}

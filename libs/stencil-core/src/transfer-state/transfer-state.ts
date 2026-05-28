@@ -62,16 +62,15 @@ export type TransferState = {
 	/** Stores `value` for `key`. */
 	set<T>(key: TransferKey<T>, value: T): void;
 	/**
-	 * Registers a lazy factory for `key` — called during `toScriptElement()` serialization rather
-	 * than at registration time.
+	 * Registers a lazy factory for `key` — called at serialization time rather than at registration time.
 	 *
-	 * The factory is **never called on the client** (`toScriptElement()` returns `null` there).
+	 * The factory is **never called on the client**.
 	 * If both `set()` and `setLazy()` target the same key, the lazy value takes precedence in
 	 * the serialized output.
 	 *
 	 * @example
 	 * ```ts
-	 * // Value captured when render() calls toScriptElement(), not when setup() runs.
+	 * // Value captured at serialization time, not when setup() runs.
 	 * ts.setLazy(MY_KEY, () => expensiveCompute());
 	 * ```
 	 */
@@ -82,10 +81,12 @@ export type TransferState = {
 	 */
 	transfer<T>(key: TransferKey<T>, getValue: () => T): T | undefined;
 	/**
-	 * Returns a `<script type="application/json">` VNode for inclusion in the provider's `render()`.
+	 * Returns a `<script type="application/json">` VNode for explicit placement in `render()`.
 	 * **Server only** — returns `null` on the client and when no `id` is set (global no-op state).
 	 *
-	 * Must be placed in the provider component's render output so the data reaches the shadow DOM.
+	 * `provideTransferState` auto-injects this script as the last child of the shadow root in
+	 * `componentDidLoad`, so calling this method is **optional**. Use it only when you need
+	 * explicit control over script placement within the shadow DOM.
 	 *
 	 * @example
 	 * ```tsx
@@ -174,11 +175,10 @@ export const TransferStateContext = createContext<TransferState>(() => _globalSt
 /**
  * Registers the current component as a `TransferState` provider.
  *
- * Creates a scoped state keyed by `id`, provides it to descendants via context, and on the
- * client reads + removes the serialized `<script>` from `shadowRoot`.
- *
- * Returns the `TransferState` instance. Include `{this.#ts.toScriptElement()}` in `render()` to
- * emit the script into the shadow DOM during SSR.
+ * Creates a scoped state keyed by `id`, provides it to descendants via context, and:
+ * - **Server**: auto-injects a `<script type="application/json">` as the last child of the
+ *   shadow root in `componentDidLoad` (after all descendants have completed).
+ * - **Client**: reads + removes the serialized `<script>` from `shadowRoot` on connect.
  *
  * @example
  * ```ts
@@ -186,7 +186,7 @@ export const TransferStateContext = createContext<TransferState>(() => _globalSt
  *
  * render() {
  *   const value = this.#ts.transfer(MY_KEY, () => computeOnServer());
- *   return <>{this.#ts.toScriptElement()}<div>{value}</div></>;
+ *   return <div>{value}</div>;
  * }
  * ```
  */
@@ -214,11 +214,18 @@ export function provideTransferState(id: string): TransferState {
 			// descendants have resolved (children push their $onReadyPromise$ into parent["s-p"]).
 			// Re-serializing here captures lazy values (e.g. dehydrate(queryClient)) that were
 			// populated by children's hostWillLoad — which run after the parent's render().
-			const el = host.getElement();
-			const script = el.shadowRoot?.querySelector(`#${scriptId(id)}`) as HTMLScriptElement | null;
-			if (script?.type === SCRIPT_TYPE) {
-				script.textContent = state.toJSON();
+			const shadowRoot = host.getElement().shadowRoot;
+			if (!shadowRoot) {
+				return;
 			}
+			let script = shadowRoot.querySelector(`#${scriptId(id)}`) as HTMLScriptElement | null;
+			if (!script) {
+				script = document.createElement("script");
+				script.type = SCRIPT_TYPE;
+				script.id = scriptId(id);
+				shadowRoot.append(script);
+			}
+			script.textContent = state.toJSON();
 		},
 	}));
 

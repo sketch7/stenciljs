@@ -137,15 +137,36 @@ describe("provideTransferState", () => {
 			expect(JSON.parse(script.textContent)).toMatchObject({ count: 99 });
 		});
 
-		it("hostDidLoad is a no-op when no script element is present in shadowRoot", async () => {
+		it("hostDidLoad is a no-op when shadowRoot is absent", async () => {
 			using host = new TestHost();
-			(host as unknown as Record<string, unknown>)["shadowRoot"] = { querySelector: () => null };
-			provideTransferState("no-script");
+			provideTransferState("no-shadow");
 			host.dispose();
 			host.connect();
 			await host.willLoad();
 			host.render();
 			expect(() => host.didLoad()).not.toThrow();
+		});
+
+		it("hostDidLoad creates and appends a script when none exists", async () => {
+			const appended: HTMLScriptElement[] = [];
+			using host = new TestHost();
+			(host as unknown as Record<string, unknown>)["shadowRoot"] = {
+				querySelector: () => null,
+				append: (el: HTMLScriptElement) => {
+					appended.push(el);
+				},
+			};
+			const ts = provideTransferState("auto-inject");
+			ts.set(COUNT_KEY, 7);
+			host.dispose();
+			host.connect();
+			await host.willLoad();
+			host.render();
+			host.didLoad();
+			expect(appended).toHaveLength(1);
+			expect(appended[0].type).toBe("application/json");
+			expect(appended[0].id).toBe(scriptId("auto-inject"));
+			expect(JSON.parse(appended[0].textContent!)).toMatchObject({ count: 7 });
 		});
 	});
 

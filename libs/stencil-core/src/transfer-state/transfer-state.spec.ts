@@ -106,6 +106,47 @@ describe("provideTransferState", () => {
 			// Value remains set (not cleared by connect)
 			expect(m.ts.get(TIME_KEY)).toBe("server-value");
 		});
+
+		it("hostDidLoad refreshes script textContent with values written after render()", async () => {
+			const script = makeMockScript(scriptId("did-load"), {});
+			using host = new TestHost();
+			attachShadowRoot(host, [script]);
+			const ts = provideTransferState("did-load");
+			host.dispose();
+			host.connect();
+			await host.willLoad();
+			host.render();
+			ts.set(COUNT_KEY, 55); // simulates a child setting state after parent render()
+			host.didLoad();
+			expect(JSON.parse(script.textContent)).toMatchObject({ count: 55 });
+		});
+
+		it("hostDidLoad re-invokes setLazy factories capturing their value at didLoad time", async () => {
+			const state = { value: 0 };
+			const script = makeMockScript(scriptId("lazy-timing"), {});
+			using host = new TestHost();
+			attachShadowRoot(host, [script]);
+			const ts = provideTransferState("lazy-timing");
+			ts.setLazy(COUNT_KEY, () => state.value);
+			host.dispose();
+			host.connect();
+			await host.willLoad();
+			host.render(); // toJSON() called → captures state.value=0
+			state.value = 99; // simulates child populating state after parent render
+			host.didLoad(); // re-invokes lazy factory → captures state.value=99
+			expect(JSON.parse(script.textContent)).toMatchObject({ count: 99 });
+		});
+
+		it("hostDidLoad is a no-op when no script element is present in shadowRoot", async () => {
+			using host = new TestHost();
+			(host as unknown as Record<string, unknown>)["shadowRoot"] = { querySelector: () => null };
+			provideTransferState("no-script");
+			host.dispose();
+			host.connect();
+			await host.willLoad();
+			host.render();
+			expect(() => host.didLoad()).not.toThrow();
+		});
 	});
 
 	describe("client path", () => {

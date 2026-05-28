@@ -77,5 +77,6 @@ export async function mount<T extends object | void, THost extends TestHost = Te
 	await options?.afterConnect?.(host as unknown as MountReturn<T, THost>);
 	await host.willLoad();
 	host.render();
+	host.didLoad();
 	return host as unknown as MountReturn<T, THost>;
 }

@@ -206,6 +206,20 @@ export function provideTransferState(id: string): TransferState {
 				script.remove();
 			}
 		},
+		hostDidLoad() {
+			if (!detectServer()) {
+				return;
+			}
+			// Stencil SSR guarantees that a parent's componentDidLoad fires only after ALL
+			// descendants have resolved (children push their $onReadyPromise$ into parent["s-p"]).
+			// Re-serializing here captures lazy values (e.g. dehydrate(queryClient)) that were
+			// populated by children's hostWillLoad — which run after the parent's render().
+			const el = host.getElement();
+			const script = el.shadowRoot?.querySelector(`#${scriptId(id)}`) as HTMLScriptElement | null;
+			if (script?.type === SCRIPT_TYPE) {
+				script.textContent = state.toJSON();
+			}
+		},
 	}));
 
 	return state;
@@ -231,6 +245,9 @@ export function useTransferState(): TransferState {
 		},
 		set<T>(key: TransferKey<T>, value: T): void {
 			ref.current.set(key, value);
+		},
+		setLazy<T>(key: TransferKey<T>, factory: () => T): void {
+			ref.current.setLazy(key, factory);
 		},
 		transfer<T>(key: TransferKey<T>, getValue: () => T): T | undefined {
 			return ref.current.transfer(key, getValue);

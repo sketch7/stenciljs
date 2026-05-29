@@ -193,6 +193,28 @@ const sum = computed(() => a() + untracked(() => b()));
 
 Prefer `sig.peek()` for a single read; use `untracked(() => …)` for multiple reads in one expression.
 
+### Referencing the previous value
+
+The `computed()` callback receives its own previously computed value — useful for
+accumulators, "max seen so far", or change-direction logic:
+
+```ts
+import { computed, signal } from "@ssv/stencil-signals";
+
+const value = signal(0);
+
+// Seeded — `initialValue` types `prev` as `T` (never undefined) and infers `T` from the seed.
+const runningTotal = computed(prev => value() + prev, { initialValue: 0 });
+const maxSeen = computed(prev => Math.max(prev, value()), { initialValue: 0 });
+
+// Unseeded — `prev` is `T | undefined`; guard with `?? 0`. `T` can't be inferred from a
+// self-referential body, so annotate it explicitly.
+const delta = computed<number>(prev => value() - (prev ?? value()));
+```
+
+Unlike `computedPrevious(source)` — which tracks the prior value of *another* signal —
+this feeds back the computed's **own** last output.
+
 ### Signal store
 
 Store docs moved to [docs/signal-store.md](docs/signal-store.md): examples, API, `patchState`, `withConfig`, and reusable `signalStoreFeature` patterns.
@@ -246,7 +268,7 @@ Run the dev stack from the repo root: `pnpm dev` (Stencil watch + Vike on port 3
 | Export                    | Description                                                  |
 | ------------------------- | ------------------------------------------------------------ |
 | `signal(value, options?)` | Writable signal; optional `equals`                           |
-| `computed(fn, options?)`  | Read-only derived signal                                     |
+| `computed(fn, options?)`  | Read-only derived signal; `fn(previousValue)` receives its prior result. With `options.initialValue`, `previousValue` is `T` (seeded); otherwise `T \| undefined` |
 | `batch(fn)`               | Coalesce writes (Preact delegates; TC39 relies on scheduler) |
 | `untracked(fn)`           | Run without subscribing to inner reads                       |
 | `scheduler`               | Backend-agnostic microtask queue used by the render watcher  |

@@ -33,8 +33,11 @@ export type SignalOptions<T> = {
 	equals?: (a: T, b: T) => boolean;
 };
 
-/** Options accepted by computed() — same shape as SignalOptions. */
-export type ComputedOptions<T> = SignalOptions<T>;
+/** Options accepted by computed() — same shape as SignalOptions, plus an optional seed. */
+export type ComputedOptions<T> = SignalOptions<T> & {
+	/** Seed for the `previousValue` argument on the first computation. Defaults to `undefined`. */
+	initialValue?: T;
+};
 
 /** Options for adapter `createEffect` (auto-tracking effects). */
 export type AdapterEffectOptions = {

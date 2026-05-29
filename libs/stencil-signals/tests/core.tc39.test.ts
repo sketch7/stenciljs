@@ -115,6 +115,59 @@ describe("computed()", () => {
 		c();
 		expect(fn).toHaveBeenCalledOnce();
 	});
+
+	describe("previousValue argument", () => {
+		it("receives undefined on the first run when not seeded", () => {
+			const seen: (number | undefined)[] = [];
+			const c = computed<number>(prev => {
+				seen.push(prev);
+				return 1;
+			});
+			c();
+			expect(seen).toEqual([undefined]);
+		});
+
+		it("receives options.initialValue (typed T, not undefined) on the first run when seeded", () => {
+			const seen: number[] = [];
+			const c = computed(
+				prev => {
+					expectTypeOf(prev).toEqualTypeOf<number>();
+					seen.push(prev);
+					return prev + 1;
+				},
+				{ initialValue: 10 },
+			);
+			expect(c()).toBe(11);
+			expect(seen).toEqual([10]);
+		});
+
+		it("receives the prior computed result on subsequent runs (accumulator)", () => {
+			const base = signal(1);
+			const acc = computed<number>(prev => base() + (prev ?? 0));
+			expect(acc()).toBe(1); // 1 + undefined→0
+			base.set(2);
+			expect(acc()).toBe(3); // 2 + 1
+			base.set(5);
+			expect(acc()).toBe(8); // 5 + 3
+		});
+
+		it("is still lazy with a previousValue callback", () => {
+			const base = signal(1);
+			const fn = vi.fn((prev: number | undefined) => base() + (prev ?? 0));
+			const c = computed(fn);
+			expect(fn).not.toHaveBeenCalled();
+			c();
+			expect(fn).toHaveBeenCalledOnce();
+		});
+
+		it("remains backwards compatible with zero-arg callbacks", () => {
+			const base = signal(4);
+			const c = computed(() => base() * 2);
+			expect(c()).toBe(8);
+			base.set(5);
+			expect(c()).toBe(10);
+		});
+	});
 });
 
 // ─── untracked() ───────────────────────────────────────────────────────────────

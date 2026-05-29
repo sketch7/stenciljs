@@ -316,9 +316,12 @@ export function usePosts(queryClient?: QueryClient) {
 
 @Component({ tag: 'app-posts', shadow: true })
 export class AppPosts extends SsvElement {
-  readonly #ts = provideTransferState('posts');
-  readonly #qc = provideQueryClient({ withHydration: this.#ts });
+  readonly #qc = provideQueryClient();
   readonly #api = usePosts(this.#qc);
+  readonly _ = this.setup(() => {
+    provideTransferState('posts');
+    useQueryHydration();
+  });
 
   render() {
     const { data, isPending, isError } = this.#api.posts;

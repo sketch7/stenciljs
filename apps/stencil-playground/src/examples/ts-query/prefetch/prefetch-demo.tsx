@@ -1,6 +1,6 @@
 import { SsvElement } from "@ssv/stencil-core";
 import { provideTransferState } from "@ssv/stencil-core/transfer-state";
-import { provideQueryClient, QueryClient } from "@ssv/tanstack.stencil-query";
+import { provideQueryClient, QueryClient, useQueryHydration } from "@ssv/tanstack.stencil-query";
 import { useQueryDevtools } from "@ssv/tanstack.stencil-query/dev-tools";
 import { Component, h } from "@stencil/core";
 
@@ -10,12 +10,10 @@ import { Component, h } from "@stencil/core";
 	shadow: true,
 })
 export class AppTsQueryPrefetchDemo extends SsvElement {
-	readonly #ts = provideTransferState("ts-query-prefetch");
 	readonly _ = this.setup(() => {
-		provideQueryClient({
-			client: new QueryClient({ defaultOptions: { queries: { staleTime: 5 * 60 * 1000 } } }),
-			withHydration: this.#ts,
-		});
+		provideTransferState("ts-query-prefetch");
+		provideQueryClient(new QueryClient({ defaultOptions: { queries: { staleTime: 5 * 60 * 1000 } } }));
+		useQueryHydration();
 		useQueryDevtools({ enabled: true });
 	});
 

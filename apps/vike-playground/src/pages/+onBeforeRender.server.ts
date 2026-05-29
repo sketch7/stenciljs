@@ -1,9 +1,9 @@
 import { collectStartupContext } from "../startup.server";
 
-export function onBeforeRender() {
+export function onBeforeRender(pageContext: { headers?: Record<string, string> }) {
 	return {
 		pageContext: {
-			startupContext: collectStartupContext(),
+			startupContext: collectStartupContext(pageContext.headers?.["cookie"]),
 		},
 	};
 }

@@ -6,23 +6,72 @@ import "../app.css";
 
 import { EnvContext } from "../startup-context";
 
+type ThemePref = "system" | "light" | "dark";
+
 export default function Layout({ children }: { children: React.ReactNode }): JSX.Element {
 	const { startupContext } = usePageContext();
-	const [themeMode, setThemeMode] = useState<"light" | "dark">(startupContext.theme.mode);
 
-	const ctx = useMemo(() => ({ ...startupContext, theme: { mode: themeMode } }), [startupContext, themeMode]);
+	// SSR-safe defaults; effects below sync from localStorage + matchMedia on the client.
+	// sysDark seeds from startupContext so resolvedTheme matches the server-rendered ctx on hydration.
+	const [themePref, setThemePref] = useState<ThemePref>("system");
+	const [sysDark, setSysDark] = useState(startupContext.theme.mode === "dark");
 
+	const resolvedTheme = useMemo(
+		() => (themePref === "system" ? (sysDark ? "dark" : "light") : themePref),
+		[themePref, sysDark],
+	);
+
+	// On mount: read persisted preference + current OS setting.
 	useEffect(() => {
-		document.documentElement.dataset["theme"] = themeMode;
-	}, [themeMode]);
+		const stored = localStorage.getItem("ssv-theme") as ThemePref | null;
+		if (stored === "light" || stored === "dark" || stored === "system") {
+			setThemePref(stored);
+		}
+		setSysDark(globalThis.matchMedia("(prefers-color-scheme: dark)").matches);
+	}, []);
 
-	const toggleTheme = useCallback(() => setThemeMode(prev => (prev === "dark" ? "light" : "dark")), []);
+	// Track OS theme changes while in system mode.
+	useEffect(() => {
+		if (themePref !== "system") {
+			return;
+		}
+		const mq = globalThis.matchMedia("(prefers-color-scheme: dark)");
+		const handler = (e: MediaQueryListEvent) => setSysDark(e.matches);
+		mq.addEventListener("change", handler);
+		return () => mq.removeEventListener("change", handler);
+	}, [themePref]);
+
+	// Apply resolved theme to DOM + persist preference.
+	useEffect(() => {
+		document.documentElement.dataset["theme"] = resolvedTheme;
+		localStorage.setItem("ssv-theme", themePref);
+		// Write a cookie so the server can resolve the correct theme for SSR (no-JS support).
+		// Cookie Store API (Chrome/Edge/Safari 17+). Browsers without it (Firefox) receive
+		// the dark default on no-JS page renders — acceptable for a dev playground.
+		if ("cookieStore" in globalThis) {
+			cookieStore
+				.set({
+					name: "ssv-theme",
+					value: themePref,
+					path: "/",
+					sameSite: "lax",
+					expires: Date.now() + 365 * 24 * 60 * 60 * 1000,
+				})
+				.catch(() => {
+					// ignore — cookie is only a server-side SSR hint, not critical
+				});
+		}
+	}, [resolvedTheme, themePref]);
+
+	const handleThemePrefChange = useCallback((pref: ThemePref) => setThemePref(pref), []);
+
+	const ctx = useMemo(() => ({ ...startupContext, theme: { mode: resolvedTheme } }), [startupContext, resolvedTheme]);
 
 	return (
 		<EnvContext.Provider value={ctx}>
 			<AppStartupContextProvider startupContext={ctx}>
 				<div className="flex min-h-screen bg-(--color-bg) text-(--color-fg)">
-					<Sidebar themeMode={themeMode} onThemeToggle={toggleTheme} />
+					<Sidebar themePref={themePref} onThemePrefChange={handleThemePrefChange} />
 					<main className="max-w-5xl min-w-0 flex-1 px-6 py-8">{children}</main>
 				</div>
 			</AppStartupContextProvider>
@@ -32,7 +81,13 @@ export default function Layout({ children }: { children: React.ReactNode }): JSX
 
 type NavItem = { href: string; label: string };
 type NavSection = { title: string; items: NavItem[] };
-type SidebarProps = { themeMode: "light" | "dark"; onThemeToggle: () => void };
+type SidebarProps = { themePref: ThemePref; onThemePrefChange: (pref: ThemePref) => void };
+
+const THEME_OPTIONS: { pref: ThemePref; icon: string; label: string }[] = [
+	{ pref: "system", icon: "◑", label: "System" },
+	{ pref: "light", icon: "☀", label: "Light" },
+	{ pref: "dark", icon: "☾", label: "Dark" },
+];
 
 const navSections: NavSection[] = [
 	{
@@ -104,8 +159,15 @@ const navSections: NavSection[] = [
 	},
 ];
 
-function Sidebar({ themeMode, onThemeToggle }: SidebarProps): JSX.Element {
+function Sidebar({ themePref, onThemePrefChange }: SidebarProps): JSX.Element {
 	const { urlPathname } = usePageContext();
+
+	const handleThemeClick = useCallback(
+		(e: React.MouseEvent<HTMLButtonElement>) => {
+			onThemePrefChange((e.currentTarget as HTMLButtonElement).dataset["pref"] as ThemePref);
+		},
+		[onThemePrefChange],
+	);
 
 	return (
 		<aside className="sticky top-0 flex h-screen w-52 shrink-0 flex-col overflow-y-auto border-r border-(--color-border) bg-(--color-surface)">
@@ -115,13 +177,26 @@ function Sidebar({ themeMode, onThemeToggle }: SidebarProps): JSX.Element {
 					className="text-sm font-semibold tracking-tight text-(--color-fg) transition-colors hover:text-(--color-primary)">
 					Vike Playground
 				</a>
-				<button
-					type="button"
-					title={`Switch to ${themeMode === "dark" ? "light" : "dark"} mode`}
-					onClick={onThemeToggle}
-					className="ml-auto flex size-6 items-center justify-center rounded-md text-sm text-(--color-muted-fg) transition-colors hover:bg-(--color-surface-hover) hover:text-(--color-fg)">
-					{themeMode === "dark" ? "☀" : "☾"}
-				</button>
+				<fieldset className="ml-auto flex items-center gap-0.5 rounded-md border border-(--color-border) p-0.5">
+					<legend className="sr-only">Color theme</legend>
+					{THEME_OPTIONS.map(({ pref, icon, label }) => (
+						<button
+							key={pref}
+							type="button"
+							data-pref={pref}
+							aria-pressed={themePref === pref}
+							aria-label={label}
+							title={label}
+							onClick={handleThemeClick}
+							className={`flex size-5 items-center justify-center rounded text-[0.65rem] transition-colors ${
+								themePref === pref
+									? "bg-(--color-primary) text-white"
+									: "text-(--color-muted-fg) hover:bg-(--color-surface-hover) hover:text-(--color-fg)"
+							}`}>
+							{icon}
+						</button>
+					))}
+				</fieldset>
 			</div>
 			<nav className="flex flex-1 flex-col gap-3 px-2 py-3">
 				{navSections.map(section => (

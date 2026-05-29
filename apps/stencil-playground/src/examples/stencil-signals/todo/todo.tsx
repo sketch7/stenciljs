@@ -37,14 +37,6 @@ export class AppSignalsTodo extends SsvElement {
 		}
 	}
 
-	private toggleTodo(id: number) {
-		todoStore.toggle(id);
-	}
-
-	private deleteTodo(id: number) {
-		todoStore.remove(id);
-	}
-
 	render() {
 		const todos = todoStore.todos();
 		const completed = todoStore.completedCount();
@@ -82,7 +74,7 @@ export class AppSignalsTodo extends SsvElement {
 									type="button"
 									class={`checkbox ${todo.completed ? "checkbox--checked" : ""}`}
 									aria-label={todo.completed ? "Mark incomplete" : "Mark complete"}
-									onClick={() => this.toggleTodo(todo.id)}>
+									onClick={() => todoStore.toggle(todo.id)}>
 									{todo.completed && (
 										<svg viewBox="0 0 12 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 											<path
@@ -100,7 +92,7 @@ export class AppSignalsTodo extends SsvElement {
 									type="button"
 									class="delete-btn"
 									aria-label="Delete task"
-									onClick={() => this.deleteTodo(todo.id)}>
+									onClick={() => todoStore.remove(todo.id)}>
 									<svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 										<path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
 									</svg>

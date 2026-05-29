@@ -1,6 +1,4 @@
-// ─── Composable signal store (NgRx SignalStore-style) ──────────────────────────
-//
-// Public entry for the `@ssv/stencil-signals/signal-store` export. Compose a
+// Public entry for the `@ssv/stencil-signals/store` export. Compose a
 // store from features: signalStore(withState(), withComputed(), withMethods()).
 // Mutate via patchState() / methods; read snapshots via getState().
 

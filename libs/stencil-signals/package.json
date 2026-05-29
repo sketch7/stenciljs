@@ -24,10 +24,10 @@
       "types": "./dist/extensions.d.ts",
       "import": "./dist/extensions.js"
     },
-    "./signal-store": {
-      "@ssv/source": "./src/signal-store.ts",
-      "types": "./dist/signal-store.d.ts",
-      "import": "./dist/signal-store.js"
+    "./store": {
+      "@ssv/source": "./src/store.ts",
+      "types": "./dist/store.d.ts",
+      "import": "./dist/store.js"
     },
     "./tc39": {
       "types": "./dist/tc39.d.ts",

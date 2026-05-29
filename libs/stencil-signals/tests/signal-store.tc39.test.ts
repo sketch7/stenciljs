@@ -1,7 +1,7 @@
 /**
  * tests/signal-store.tc39.test.ts
  *
- * Unit tests for the composable @ssv/stencil-signals/signal-store API,
+ * Unit tests for the composable @ssv/stencil-signals/store API,
  * running against the TC39 adapter.
  */
 
@@ -18,7 +18,7 @@ import {
 	patchState,
 	getState,
 	getInitialState,
-} from "../src/signal-store";
+} from "../src/store";
 // Import the TC39 entry point first — this sets the TC39 adapter so all
 // utilities that call getAdapter() work correctly in this test file.
 import { computed } from "../src/tc39";

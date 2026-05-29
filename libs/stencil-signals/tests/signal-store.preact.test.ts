@@ -1,7 +1,7 @@
 /**
  * tests/signal-store.preact.test.ts
  *
- * Unit tests for the composable @ssv/stencil-signals/signal-store API,
+ * Unit tests for the composable @ssv/stencil-signals/store API,
  * running against the @preact/signals-core backend.
  */
 
@@ -21,7 +21,7 @@ import {
 	patchState,
 	getState,
 	getInitialState,
-} from "../src/signal-store";
+} from "../src/store";
 
 const tick = () =>
 	new Promise<void>(r => {

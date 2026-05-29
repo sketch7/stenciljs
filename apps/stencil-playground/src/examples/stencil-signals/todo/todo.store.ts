@@ -1,5 +1,5 @@
 import { computed } from "@ssv/stencil-signals";
-import { signalStore, withState, withComputed, withMethods, patchState } from "@ssv/stencil-signals/signal-store";
+import { signalStore, withState, withComputed, withMethods, patchState, withConfig } from "@ssv/stencil-signals/store";
 
 export type Todo = {
 	id: number;
@@ -8,6 +8,7 @@ export type Todo = {
 };
 
 export const todoStore = signalStore(
+	withConfig({ isStateWritable: true }),
 	withState({ todos: [] as Todo[], nextId: 1 }),
 	withComputed(s => ({
 		completedCount: computed(() => s.todos().filter(t => t.completed).length),

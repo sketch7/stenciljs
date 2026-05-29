@@ -96,7 +96,7 @@ export const config: Config = {
 | `@ssv/stencil-signals/preact`     | Yes (Preact)       | `globalScript` only                                                                               |
 | `@ssv/stencil-signals`            | No                 | Primitives, `useSignalWatcher`, `effect`, `derivedAsync`, mixins                                  |
 | `@ssv/stencil-signals/extensions` | No                 | `useSignalProps`, `signalFromEvent` (also re-exported from adapter entries for `signalFromEvent`) |
-| `@ssv/stencil-signals/signal-store` | No               | `signalStore`, `withState`/`withComputed`/`withMethods`, `patchState`, `getState`                 |
+| `@ssv/stencil-signals/store`       | No                 | `signalStore`, `withState`/`withComputed`/`withMethods`, `patchState`, `getState`                 |
 
 The main entry does **not** configure an adapter. Using `signal()` without a prior `globalScript` import throws at runtime.
 
@@ -195,11 +195,11 @@ Prefer `sig.peek()` for a single read; use `untracked(() => …)` for multiple r
 
 ### Signal store
 
-A composable, NgRx-style store from `@ssv/stencil-signals/signal-store`. Build one with `signalStore(...features)` — `withState`, `withComputed`, `withMethods` compose left to right, and each factory sees the store built so far.
+A composable, NgRx-style store from `@ssv/stencil-signals/store`. Build one with `signalStore(...features)` — `withState`, `withComputed`, `withMethods` compose left to right, and each factory sees the store built so far.
 
 ```ts
 import { computed } from "@ssv/stencil-signals";
-import { signalStore, withState, withComputed, withMethods, patchState } from "@ssv/stencil-signals/signal-store";
+import { signalStore, withState, withComputed, withMethods, patchState } from "@ssv/stencil-signals/store";
 
 export const todoStore = signalStore(
   withState({ todos: [] as Todo[], nextId: 1 }),
@@ -328,7 +328,7 @@ Run the dev stack from the repo root: `pnpm dev` (Stencil watch + Vike on port 3
 | `useSignalProps(Host)(config)`    | `@Prop` → signal bridge; `transform`, `twoWay`, `default`, `required`  |
 | `signalFromEvent(name, options?)` | DOM/window events as signals; Stencil `ListenOptions` + optional `map` |
 
-Also exported from main entry: `effect`, `derivedAsync`, `computedPrevious`. The signal store ships as a separate entry — `@ssv/stencil-signals/signal-store`.
+Also exported from main entry: `effect`, `derivedAsync`, `computedPrevious`. The signal store ships as a separate entry — `@ssv/stencil-signals/store`.
 
 ### Effects and async
 
@@ -339,7 +339,7 @@ Also exported from main entry: `effect`, `derivedAsync`, `computedPrevious`. The
 | `derivedAsync(fn, options?)`      | `DisposableSignal` + `whenSettled`; abort prior fetch on dep change             |
 | `computedPrevious(source, init?)` | Previous value of a signal                                                      |
 
-### Signal store (`@ssv/stencil-signals/signal-store`)
+### Signal store (`@ssv/stencil-signals/store`)
 
 | Export                                   | Description                                                         |
 | ---------------------------------------- | ------------------------------------------------------------------- |

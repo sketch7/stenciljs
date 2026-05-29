@@ -16,8 +16,8 @@ export default function Page(): JSX.Element {
 			</div>
 
 			<p className="text-xs text-(--color-muted-fg)">
-				State is managed with <code>signalStore</code> from <code>@ssv/stencil-signals/signal-store</code>, composed
-				from <code>withState</code>, <code>withComputed</code> and <code>withMethods</code>. <code>withComputed</code>{" "}
+				State is managed with <code>signalStore</code> from <code>@ssv/stencil-signals/store</code>, composed from{" "}
+				<code>withState</code>, <code>withComputed</code> and <code>withMethods</code>. <code>withComputed</code>{" "}
 				derives <code>completedCount</code> and <code>pendingCount</code> automatically — no manual sync needed.
 			</p>
 		</div>

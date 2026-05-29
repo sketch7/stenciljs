@@ -4,6 +4,7 @@
 
 export { signalStore } from "./signal-store/signal-store";
 export { signalStoreFeature } from "./signal-store/signal-store-feature";
+export { type } from "./signal-store/type";
 export { withConfig } from "./signal-store/with-config";
 export { withState } from "./signal-store/with-state";
 export { withComputed } from "./signal-store/with-computed";

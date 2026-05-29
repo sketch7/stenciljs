@@ -1,5 +1,6 @@
 export { signalStore } from "./signal-store";
 export { signalStoreFeature } from "./signal-store-feature";
+export { type } from "./type";
 export { withConfig } from "./with-config";
 export { withState } from "./with-state";
 export { withComputed } from "./with-computed";

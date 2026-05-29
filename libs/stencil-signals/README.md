@@ -96,7 +96,7 @@ export const config: Config = {
 | `@ssv/stencil-signals/preact`     | Yes (Preact)       | `globalScript` only                                                                               |
 | `@ssv/stencil-signals`            | No                 | Primitives, `useSignalWatcher`, `effect`, `derivedAsync`, mixins                                  |
 | `@ssv/stencil-signals/extensions` | No                 | `useSignalProps`, `signalFromEvent` (also re-exported from adapter entries for `signalFromEvent`) |
-| `@ssv/stencil-signals/store`       | No                 | `signalStore`, `withState`/`withComputed`/`withMethods`, `patchState`, `getState`                 |
+| `@ssv/stencil-signals/store`      | No                 | `signalStore`, `withState`/`withComputed`/`withMethods`, `patchState`, `getState`                 |
 
 The main entry does **not** configure an adapter. Using `signal()` without a prior `globalScript` import throws at runtime.
 
@@ -199,7 +199,13 @@ A composable, NgRx-style store from `@ssv/stencil-signals/store`. Build one with
 
 ```ts
 import { computed } from "@ssv/stencil-signals";
-import { signalStore, withState, withComputed, withMethods, patchState } from "@ssv/stencil-signals/store";
+import {
+  signalStore,
+  withState,
+  withComputed,
+  withMethods,
+  patchState,
+} from "@ssv/stencil-signals/store";
 
 export const todoStore = signalStore(
   withState({ todos: [] as Todo[], nextId: 1 }),
@@ -214,7 +220,9 @@ export const todoStore = signalStore(
       }));
     },
     toggle(id: number) {
-      s.todos.update(items => items.map(t => (t.id === id ? { ...t, completed: !t.completed } : t)));
+      s.todos.update(items =>
+        items.map(t => (t.id === id ? { ...t, completed: !t.completed } : t)),
+      );
     },
   })),
 );
@@ -242,7 +250,11 @@ Updaters are applied inside a single `batch()`; writing an unknown state key thr
 State is open by default. Compose `withConfig({ isStateWritable: false })` (conventionally first) to expose state externally as read-only `Signal`s — all mutation then goes through `patchState` or `withMethods`, while factories still see writable signals:
 
 ```ts
-signalStore(withConfig({ isStateWritable: false }), withState({ count: 0 }), withMethods(/* … */));
+signalStore(
+  withConfig({ isStateWritable: false }),
+  withState({ count: 0 }),
+  withMethods(/* … */),
+);
 ```
 
 #### Reusable features (`signalStoreFeature`)
@@ -250,10 +262,25 @@ signalStore(withConfig({ isStateWritable: false }), withState({ count: 0 }), wit
 Bundle several features into one reusable unit that folds into any store:
 
 ```ts
-const withCounter = signalStoreFeature(
-  withState({ count: 0 }),
-  withMethods(s => ({ inc: () => s.count.update(n => n + 1) })),
-);
+function withCounter {
+  return signalStoreFeature(
+    withState({ count: 0 }),
+    withMethods(s => ({ inc: () => s.count.update(n => n + 1) })),
+  );
+}
+```
+
+Use `type<Input>()` to declare state/computed/methods a feature reads but does not provide itself — it pins the input shape (no-op at runtime) so the feature stays strongly typed:
+
+```ts
+function withDoubleCount {
+  return signalStoreFeature(
+    type<{ state: { count: number } }>(),
+    withComputed(s => ({ double: computed(() => s.count() * 2) })),
+  );
+}
+// applied to any store that already has `count`:
+const store = signalStore(withState({ count: 3 }), withDoubleCount);
 ```
 
 ## Migration from `@stencil/store`
@@ -341,17 +368,18 @@ Also exported from main entry: `effect`, `derivedAsync`, `computedPrevious`. The
 
 ### Signal store (`@ssv/stencil-signals/store`)
 
-| Export                                   | Description                                                         |
-| ---------------------------------------- | ------------------------------------------------------------------- |
-| `signalStore(...features)`               | Compose a store from features; returns an eager store instance      |
-| `signalStoreFeature(...features)`        | Bundle features into one reusable, foldable feature                 |
-| `withState(initial)`                     | Seed state — one writable signal per key                            |
-| `withComputed(store => ({ … }))`         | Add derived signals; factory sees the store built so far            |
-| `withMethods(store => ({ … }))`          | Add methods; factory sees the store built so far                    |
-| `withConfig({ isStateWritable? })`       | Opt into read-only public state (`false`); defaults open (`true`)   |
-| `patchState(store, ...updaters)`         | Batched update — partials and/or `(state) => partial` updater fns   |
-| `getState(store)`                        | Plain, non-reactive snapshot of all state                           |
-| `getInitialState(store)`                 | Merged initial state (for the reset pattern)                        |
+| Export                             | Description                                                       |
+| ---------------------------------- | ----------------------------------------------------------------- |
+| `signalStore(...features)`         | Compose a store from features; returns an eager store instance    |
+| `signalStoreFeature(...features)`  | Bundle features into one reusable, foldable feature               |
+| `type<Input>()`                    | Declare a feature's required input (no-op runtime; types only)    |
+| `withState(initial)`               | Seed state — one writable signal per key                          |
+| `withComputed(store => ({ … }))`   | Add derived signals; factory sees the store built so far          |
+| `withMethods(store => ({ … }))`    | Add methods; factory sees the store built so far                  |
+| `withConfig({ isStateWritable? })` | Opt into read-only public state (`false`); defaults open (`true`) |
+| `patchState(store, ...updaters)`   | Batched update — partials and/or `(state) => partial` updater fns |
+| `getState(store)`                  | Plain, non-reactive snapshot of all state                         |
+| `getInitialState(store)`           | Merged initial state (for the reset pattern)                      |
 
 ### Low-level
 

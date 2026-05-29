@@ -14,6 +14,7 @@ import { computed } from "../src/preact";
 import {
 	signalStore,
 	signalStoreFeature,
+	type,
 	withState,
 	withComputed,
 	withMethods,
@@ -213,6 +214,17 @@ describe("signalStore() [preact]", () => {
 			store.inc();
 			expect(store.count()).toBe(1);
 			expect(store.isZero()).toBe(false);
+		});
+
+		it("supports input-constrained custom features via type()", () => {
+			const withDoubleCount = signalStoreFeature(
+				type<{ state: { count: number } }>(),
+				withComputed(s => ({ double: computed(() => s.count() * 2) })),
+			);
+			const store = signalStore(withState({ count: 3 }), withDoubleCount);
+			expect(store.double()).toBe(6);
+			store.count.set(5);
+			expect(store.double()).toBe(10);
 		});
 	});
 

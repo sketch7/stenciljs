@@ -8,13 +8,13 @@ import { provideTransferState, useTransferState, makeTransferKey } from "@ssv/st
 
 ## API
 
-| Export                 | Kind | Purpose                                                            |
-| ---------------------- | ---- | ------------------------------------------------------------------ |
-| `provideTransferState` | fn   | Registers the host as provider; returns a `TransferState`          |
-| `useTransferState`     | fn   | Consumes the nearest ancestor provider; returns `TransferState`    |
-| `makeTransferKey<T>`   | fn   | Creates a typed key for `get` / `set` / `transfer`                 |
-| `TransferState`        | type | Shared API: `get`, `set`, `setLazy`, `transfer`, `toScriptElement` |
-| `TransferKey<T>`       | type | Branded string that carries the value type                         |
+| Export                 | Kind | Purpose                                                                       |
+| ---------------------- | ---- | ----------------------------------------------------------------------------- |
+| `provideTransferState` | fn   | Registers the host as provider; returns a `TransferState`                     |
+| `useTransferState`     | fn   | Consumes the nearest ancestor provider; returns `TransferState`               |
+| `makeTransferKey<T>`   | fn   | Creates a typed key for `get` / `set` / `transfer`                            |
+| `TransferState`        | type | Shared API: `get`, `set`, `setLazy`, `transfer`, `toScriptElement` (optional) |
+| `TransferKey<T>`       | type | Branded string that carries the value type                                    |
 
 ## Keys
 
@@ -26,7 +26,7 @@ export const POSTS_KEY = makeTransferKey<Post[]>("posts");
 
 ## Provider
 
-Call `provideTransferState(id)` as a class field and include `toScriptElement()` in `render()`.
+Call `provideTransferState(id)` as a class field. The `<script>` tag is automatically injected into the shadow root in `componentDidLoad` — no manual placement needed.
 
 ```tsx
 @Component({ tag: "app", shadow: true })
@@ -39,7 +39,6 @@ export class AppMyPage extends SsvElement {
 
     return (
       <div>
-        {this.#ts.toScriptElement()}
         <p>{time}</p>
         <ul>{posts?.map(p => <li>{p.title}</li>)}</ul>
       </div>
@@ -55,23 +54,23 @@ export class AppMyPage extends SsvElement {
 | Server      | Calls `getValue()`, stores + returns the value |
 | Client      | Returns the value read from the script tag     |
 
-`toScriptElement()` emits a `<script id="__ssv-state__{id}" type="application/json">` VNode on the server and returns `null` on the client. Place it anywhere inside the shadow root.
+`toScriptElement()` emits a `<script id="__ssv-state__{id}" type="application/json">` VNode on the server and returns `null` on the client. It is **optional** — use it only when you need explicit placement control within the shadow DOM (e.g. to put the script before other children).
 
 ## setLazy
 
-`setLazy(key, factory)` registers a factory that is called **at serialization time** — when `toScriptElement()` calls `toJSON()` during `render()`. Use it when the value is not yet ready at the time `setup()` runs but will be ready by the time `render()` executes.
+`setLazy(key, factory)` registers a factory that is evaluated **in `componentDidLoad`** — after the owning component and all its descendants have fully rendered. Use it when the value is produced by children's `hostWillLoad` (e.g. a dehydrated query cache seeded by descendant prefetch components).
 
 The factory is never called on the client.
 
 ```ts
-// Dehydrate a QueryClient whose cache is populated during hostWillLoad —
-// called in render() so the data is fully settled before serialization.
+// Dehydrate a QueryClient whose cache is populated by children's hostWillLoad —
+// re-evaluated in componentDidLoad so all descendant prefetches are settled.
 ts.setLazy(DEHYDRATED_STATE_KEY, () => dehydrate(queryClient));
 ```
 
 If both `set()` and `setLazy()` target the same key, `setLazy` wins in the serialized output.
 
-> **SSR ordering note:** `setLazy` defers evaluation to `render()` of the **owning component**. Children's `hostWillLoad` still runs after the parent's `render()`, so child-populated state cannot be captured here. Prefetch in the same component that owns `provideTransferState`.
+> **SSR ordering note:** Stencil SSR guarantees that a parent's `componentDidLoad` fires only after all descendants have resolved (`componentOnReady`). This means `setLazy` factories always capture state written by any descendant's `hostWillLoad` — no co-location with `provideTransferState` required.
 
 ## Consumer
 
@@ -97,10 +96,12 @@ export class AppPostList extends SsvElement {
 Server render
   provideTransferState("id")
     └─ transfer(KEY, getValue)  →  calls getValue(), stores result
-    └─ setLazy(KEY, factory)    →  registers factory; called during toScriptElement()
-    └─ toScriptElement()        →  invokes lazy factories, then serializes all values
-                                   <script id="__ssv-state__id">{json}</script>
-                                    emitted inside <template shadowrootmode="open">
+    └─ setLazy(KEY, factory)    →  registers factory (not called yet)
+    └─ render()                 →  toScriptElement() optional; component renders
+    └─ componentDidLoad         →  all descendants settled
+         └─ finds or creates <script id="__ssv-state__id" type="application/json">
+         └─ re-evaluates lazy factories, serializes all values into script.textContent
+              emitted inside <template shadowrootmode="open">
 
 Client hydration
   hostConnected

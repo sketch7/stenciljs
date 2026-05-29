@@ -1,7 +1,7 @@
 import { SsvElement } from "@ssv/stencil-core";
 import { provideTransferState } from "@ssv/stencil-core/transfer-state";
 import { computed, signal, useSignalWatcher } from "@ssv/stencil-signals";
-import { provideQueryClient } from "@ssv/tanstack.stencil-query";
+import { provideQueryClient, useQueryHydration } from "@ssv/tanstack.stencil-query";
 import { useQueryDevtools } from "@ssv/tanstack.stencil-query/dev-tools";
 import { Component, h } from "@stencil/core";
 
@@ -14,11 +14,12 @@ import type { Post } from "./posts-signals.api";
 	shadow: true,
 })
 export class AppTsQueryPostsSignals extends SsvElement {
-	readonly #ts = provideTransferState("ts-query-posts-signals");
-	readonly #queryClient = provideQueryClient({ withHydration: this.#ts });
+	readonly #queryClient = provideQueryClient();
 	readonly #api = $usePosts(this.#queryClient);
 	readonly _ = this.setup(() => {
+		provideTransferState("ts-query-posts-signals");
 		useSignalWatcher();
+		useQueryHydration();
 		useQueryDevtools();
 	});
 
@@ -88,7 +89,6 @@ export class AppTsQueryPostsSignals extends SsvElement {
 
 		return (
 			<div class="posts">
-				{this.#ts.toScriptElement()}
 				<div class="add-row">
 					<input
 						class="post-input"

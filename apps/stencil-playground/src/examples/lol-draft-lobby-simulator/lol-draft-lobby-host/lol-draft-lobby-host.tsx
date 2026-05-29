@@ -3,7 +3,7 @@ import "../shared/logging";
 import { getLogger } from "@logtape/logtape";
 import { SsvElement } from "@ssv/stencil-core";
 import { provideTransferState } from "@ssv/stencil-core/transfer-state";
-import { QueryClient } from "@ssv/tanstack.stencil-query";
+import { QueryClient, useQueryHydration } from "@ssv/tanstack.stencil-query";
 import { useQueryDevtools } from "@ssv/tanstack.stencil-query/dev-tools";
 import { Component, State, h } from "@stencil/core";
 
@@ -20,15 +20,14 @@ const logger = getLogger(["lol"]);
 	shadow: true,
 })
 export class AppLolDraftLobbyHost extends SsvElement {
-	// Transfer state must be declared before provideLolDraftQueryClient.
-	readonly #ts = provideTransferState("lol-draft");
 	readonly _ = this.setup(() => {
+		provideTransferState("lol-draft");
 		// SSE drives real-time invalidation — disable window-focus refetching to avoid noise.
 		provideLolDraftQueryClient({
 			client: new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } }),
-			withHydration: this.#ts,
 		});
-		provideLolDraftContentQueryClient({ withHydration: this.#ts });
+		useQueryHydration();
+		provideLolDraftContentQueryClient();
 		useQueryDevtools({ enabled: true });
 		// Subscribe to per-session SSE once we have a draftId.
 		useDraftSSE(() => this.draftId);
@@ -61,8 +60,6 @@ export class AppLolDraftLobbyHost extends SsvElement {
 	render() {
 		return (
 			<div class="host">
-				{this.#ts.toScriptElement()}
-
 				{/* Global notification overlay */}
 				<app-lol-notification />
 

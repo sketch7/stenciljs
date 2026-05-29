@@ -14,10 +14,10 @@ export const lolDraftQueryClientKey = createContext<QueryClient>(undefined, { na
  *
  * @example
  * ```ts
- * readonly #queryClient = provideLolDraftQueryClient({
+ * provideLolDraftQueryClient({
  *   client: new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } }),
- *   withHydration: this.#ts,
  * });
+ * useQueryHydration();
  * ```
  */
 export function provideLolDraftQueryClient(options?: ProvideQueryClientOptions): QueryClient {

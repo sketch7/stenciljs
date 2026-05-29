@@ -67,7 +67,7 @@ describe("usePrefetchQuery", () => {
 		expect(spy).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ queryKey: ["test"] }));
 	});
 
-	it("does NOT call prefetchQuery when a cache entry already exists", async () => {
+	it("calls prefetchQuery even when a cache entry already exists", async () => {
 		qc.setQueryData(["test"], 42);
 		const spy = vi.spyOn(qc, "prefetchQuery");
 
@@ -75,7 +75,7 @@ describe("usePrefetchQuery", () => {
 			usePrefetchQuery({ queryKey: ["test"], queryFn: vi.fn<() => unknown>() }, qc);
 		});
 
-		expect(spy).not.toHaveBeenCalled();
+		expect(spy).toHaveBeenCalledOnce();
 	});
 
 	// ── re-render ────────────────────────────────────────────────────────────

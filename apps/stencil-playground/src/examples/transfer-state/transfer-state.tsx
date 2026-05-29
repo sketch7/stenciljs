@@ -29,8 +29,6 @@ export class AppTransferState extends SsvElement {
 
 		return (
 			<div class="ts-demo">
-				{this.#ts.toScriptElement()}
-
 				<p class="env-badge" data-env={env}>
 					Rendering on: <strong>{env}</strong>
 				</p>

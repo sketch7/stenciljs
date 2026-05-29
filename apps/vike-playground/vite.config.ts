@@ -7,7 +7,8 @@ import path from "node:path";
 import { visualizer } from "rollup-plugin-visualizer";
 import vike from "vike/plugin";
 import { defineConfig, loadEnv } from "vite";
-import type { Plugin } from "vite";
+
+import { stencilSSRDevLogPlugin } from "./vite.plugins.stencil-ssr-dev-log.js";
 
 function packageSizeReporter(): Plugin {
 	return {
@@ -118,6 +119,7 @@ export default defineConfig(({ command, mode }) => {
 			vike(),
 			react(),
 			tailwindcss(),
+			stencilSSRDevLogPlugin(path.basename(stencilPkgDir)),
 			stencilWatch({
 				apply: "serve",
 				packageDir: stencilPkgDir,
@@ -148,6 +150,7 @@ export default defineConfig(({ command, mode }) => {
 				// conditions.
 				module: import("@app/stencil-playground/react"),
 				from: "@app/stencil-playground/react/server",
+				// from: "@app/stencil-playground/react",
 				hydrateModule: import("@app/stencil-playground/hydrate").then(m => {
 					hydrateModuleRef = m as Record<string, unknown>;
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any

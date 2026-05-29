@@ -36,28 +36,40 @@ export type UseQueryHydrationOptions = {
 /**
  * Wires SSR dehydration and client hydration for a `QueryClient` via `TransferState`.
  *
- * Reads dehydrated state from the nearest `provideTransferState` scope and hydrates the client on connect.
- * On the server, registers a lazy factory to serialize the client cache into the transfer state.
- *
- * Call after `provideTransferState` and `provideQueryClient` so all context providers are registered first.
+ * Call inside `setup()` **after** `provideTransferState` and `provideQueryClient`.
+ * Pair with {@link usePrefetchQuery} to seed the cache on `hostWillLoad` during SSR;
+ * set `staleTime` on the query to prevent an immediate client-side re-fetch.
  *
  * @example
  * ```ts
- * // Basic — hydrates the QueryClient from context:
- * readonly #ts = provideTransferState("my-scope");
+ * // Basic — hydrates the QueryClient from context
  * readonly #qc = provideQueryClient();
- * readonly _ = this.setup(() => useQueryHydration());
+ * readonly _ = this.setup(() => {
+ *   provideTransferState("my-scope");
+ *   useQueryHydration();
+ * });
  * ```
  *
  * @example
  * ```ts
- * // Multiple QueryClients within the same TransferState scope:
- * readonly #ts = provideTransferState("my-scope");
- * readonly #postsClient = provideQueryClient();
- * readonly #usersClient = new QueryClient();
+ * // Full SSR pattern — prefetch on server, transfer to client, skip re-fetch with staleTime
+ * readonly #qc = provideQueryClient();
+ * readonly _prefetch = usePrefetchQuery({ queryKey: QUERY_KEY, queryFn: fetchData, staleTime: 5 * 60_000 });
  * readonly _ = this.setup(() => {
+ *   provideTransferState("my-scope");
+ *   useQueryHydration();
+ * });
+ * ```
+ *
+ * @example
+ * ```ts
+ * // Multiple QueryClients sharing one TransferState scope
+ * readonly #posts = provideQueryClient();
+ * readonly #users = new QueryClient();
+ * readonly _ = this.setup(() => {
+ *   provideTransferState("my-scope");
  *   useQueryHydration({ key: "posts" });
- *   useQueryHydration({ client: this.#usersClient, key: "users" });
+ *   useQueryHydration({ client: this.#users, key: "users" });
  * });
  * ```
  */

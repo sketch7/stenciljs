@@ -127,7 +127,7 @@ readonly #qc = provideQueryClient({ client: existingClient });
 
 ### SSR hydration
 
-Decouple the `QueryClient` from its transfer-state wiring with `useQueryHydration`. Call it inside `setup()` **after** `provideTransferState` and `provideQueryClient` so all providers are registered first.
+Decouple the `QueryClient` from its transfer-state wiring with `useQueryHydration`. Call it inside `setup()` **after** `provideTransferState` and `provideQueryClient`.
 
 ```ts
 import { provideTransferState } from "@ssv/stencil-core/transfer-state";
@@ -143,7 +143,37 @@ export class AppRoot extends SsvElement {
 }
 ```
 
-On the **server**, `useQueryHydration` registers a lazy factory that serializes the client cache into the transfer-state `<script>` tag. On the **client**, it reads that state and calls `hydrate()` before the first render.
+On the **server**, `useQueryHydration` serializes the client cache into the transfer-state `<script>` tag after render. On the **client**, it reads that state and calls `hydrate()` before the first render.
+
+#### Complete SSR pattern
+
+Pair `useQueryHydration` with `usePrefetchQuery` to seed the cache on `hostWillLoad` (Stencil awaits it during SSR before rendering). Set `staleTime` on the query so the client uses the hydrated data instead of immediately refetching.
+
+```ts
+import { provideTransferState } from "@ssv/stencil-core/transfer-state";
+import { provideQueryClient, usePrefetchQuery, useQueryHydration } from "@ssv/tanstack.stencil-query";
+
+const STALE_TIME = 5 * 60_000; // 5 min — data is fresh from SSR, skip immediate refetch
+
+@Component({ tag: "app-posts", shadow: true })
+export class AppPosts extends SsvElement {
+  readonly #qc = provideQueryClient();
+  // Prefetch runs in hostWillLoad — Stencil awaits it on the server before rendering.
+  // On the client it deduplicates against any in-flight request for the same key.
+  readonly _prefetch = usePrefetchQuery({ queryKey: ["posts"], queryFn: fetchPosts, staleTime: STALE_TIME });
+  readonly _ = this.setup(() => {
+    provideTransferState("posts-scope");
+    useQueryHydration();
+  });
+
+  readonly #posts = useQuery(() => ({ queryKey: ["posts"], queryFn: fetchPosts, staleTime: STALE_TIME }));
+
+  render() {
+    const { data, isPending } = this.#posts();
+    // ...
+  }
+}
+```
 
 #### Multiple QueryClients
 

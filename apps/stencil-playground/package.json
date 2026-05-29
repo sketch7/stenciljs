@@ -19,6 +19,16 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs.js"
     },
+    "./startup-context": {
+      "@ssv/source": "./src/startup-context/startup-context.types.ts",
+      "types": "./dist/types/startup-context/startup-context.types.d.ts",
+      "import": "./dist/types/startup-context/startup-context.types.js"
+    },
+    "./startup-context/server": {
+      "@ssv/source": "./src/startup-context/startup-context.server.ts",
+      "types": "./dist/types/startup-context/startup-context.server.d.ts",
+      "import": "./dist/types/startup-context/startup-context.server.js"
+    },
     "./react": {
       "types": "./src/react/components.ts",
       "node": "./src/react/components.server.ts",

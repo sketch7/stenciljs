@@ -4,6 +4,7 @@
     "allowUnusedLabels": false,
     "experimentalDecorators": true,
     "lib": ["dom", "ES2024"],
+    "types": ["node"],
     "moduleResolution": "bundler",
     "module": "esnext",
     "target": "ES2024",

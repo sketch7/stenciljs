@@ -1,7 +1,7 @@
 import { getLogger } from "@logtape/logtape";
 
+import { useConfig } from "../../../startup-context";
 import { useLolDraftQueryClient } from "../shared/lol-query-client";
-import { BASE_URL } from "../shared/lol.constants";
 import { useSSE } from "../stencil-sse";
 
 const logger = getLogger(["lol", "draft", "sse"]);
@@ -13,11 +13,12 @@ type DraftSSEEvents = {
 
 export function useDraftSSE(getDraftId: () => string | null) {
 	const client = useLolDraftQueryClient();
+	const config = useConfig();
 
 	useSSE<DraftSSEEvents>(
 		() => {
 			const id = getDraftId();
-			return id ? `${BASE_URL}/api/lol/drafts/${id}/events` : null;
+			return id ? `${config.current?.baseUrl() ?? ""}/api/lol/drafts/${id}/events` : null;
 		},
 		{
 			onOpen() {

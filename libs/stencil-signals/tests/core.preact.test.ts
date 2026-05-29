@@ -122,7 +122,7 @@ describe("computed() [preact]", () => {
 				return 1;
 			});
 			c();
-			expect(seen).toEqual([undefined]);
+			expect(seen).toStrictEqual([undefined]);
 		});
 
 		it("receives options.initialValue (typed T, not undefined) on the first run when seeded", () => {
@@ -136,7 +136,7 @@ describe("computed() [preact]", () => {
 				{ initialValue: 10 },
 			);
 			expect(c()).toBe(11);
-			expect(seen).toEqual([10]);
+			expect(seen).toStrictEqual([10]);
 		});
 
 		it("receives the prior computed result on subsequent runs (accumulator)", () => {

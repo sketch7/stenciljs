@@ -1,6 +1,7 @@
 export * from "./compose";
 export * from "./ssv-core";
 export * from "./stencil-signals";
+export * from "./startup-context";
 export * from "./transfer-state";
 export * from "./translations";
 export * from "./ts-query";

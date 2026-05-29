@@ -1,15 +1,15 @@
 import { use } from "@ssv/stencil-core";
 import { useQuery } from "@ssv/tanstack.stencil-query";
 
+import { useConfig } from "../../../startup-context";
 import { useLolDraftQueryClient } from "./lol-query-client";
-import { BASE_URL } from "./lol.constants";
 
 export type LolTextMap = Record<string, string>;
 
 const QUERY_KEY = ["lol-text"] as const;
 
-async function fetchLolText(): Promise<LolTextMap> {
-	const url = `${BASE_URL}/api/lol/text`;
+async function fetchLolText(baseUrl: string): Promise<LolTextMap> {
+	const url = `${baseUrl}/api/lol/text`;
 	const res = await fetch(url);
 	if (!res.ok) {
 		throw new Error(`Failed to fetch LoL text: ${res.status}`);
@@ -19,14 +19,23 @@ async function fetchLolText(): Promise<LolTextMap> {
 
 export function useLoLText() {
 	const client = useLolDraftQueryClient();
+	const config = useConfig();
 
 	use({
 		async hostWillLoad() {
-			await client.current?.prefetchQuery({ queryKey: QUERY_KEY, queryFn: fetchLolText, staleTime: Infinity });
+			const baseUrl = config.current?.baseUrl() ?? "";
+			await client.current?.prefetchQuery({
+				queryKey: QUERY_KEY,
+				queryFn: () => fetchLolText(baseUrl),
+				staleTime: Infinity,
+			});
 		},
 	});
 
-	const textRef = useQuery(() => ({ queryKey: QUERY_KEY, staleTime: Infinity, queryFn: fetchLolText }), client);
+	const textRef = useQuery(() => {
+		const baseUrl = config.current?.baseUrl() ?? "";
+		return { queryKey: QUERY_KEY, staleTime: Infinity, queryFn: () => fetchLolText(baseUrl) };
+	}, client);
 
 	function t(key: string, fallback?: string): string {
 		const map = textRef().data ?? {};

@@ -353,6 +353,14 @@ export default defineConfig({
 			},
 		},
 		{
+			// +Head.tsx — dangerouslySetInnerHTML is intentional for the FOUC-prevention
+			// inline script (themeInitScript is a hardcoded constant, not user input).
+			files: ["apps/vike-playground/src/pages/+Head.tsx"],
+			rules: {
+				"react/no-danger": "off",
+			},
+		},
+		{
 			// StencilJS app components — override the general apps override (later wins)
 			// Stencil uses h() not React, class components, HTML attributes (not React attrs)
 			files: ["apps/stencil-playground/src/**/*.tsx", "apps/stencil-playground/src/**/*.ts"],

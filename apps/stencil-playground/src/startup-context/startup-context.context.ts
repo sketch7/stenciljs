@@ -31,6 +31,7 @@ import type {
  * only requires updating that type and `collectStartupContext` — these factories never change.
  */
 function getSSRContext() {
+	// todo: improve this, and possibly pass cookies
 	return collectStartupContext();
 }
 

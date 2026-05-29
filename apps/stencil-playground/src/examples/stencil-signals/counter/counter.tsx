@@ -6,6 +6,9 @@ const count = signal(0);
 const additionalValue = signal(0);
 const doubled = computed(() => additionalValue() * 2);
 const total = computed(() => count() + doubled());
+// `computed` feeds the callback its own previous value. Seeding with
+// `initialValue` types `prev` as `number` (never undefined) and infers `T`.
+const peakTotal = computed(prev => Math.max(prev, total()), { initialValue: 0 });
 
 @Component({
 	tag: "app-signals-counter",
@@ -54,6 +57,13 @@ export class AppSignalsCounter extends SsvElement {
 					<span class="total-label">Total</span>
 					<span class="total-value">
 						{count()} + {additionalValue()} × 2 = <strong>{total()}</strong>
+					</span>
+				</div>
+
+				<div class="total">
+					<span class="total-label">Peak total</span>
+					<span class="total-value">
+						highest total seen so far = <strong>{peakTotal()}</strong>
 					</span>
 				</div>
 			</div>

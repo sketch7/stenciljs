@@ -36,9 +36,22 @@ export function signal<T>(value: T, options?: SignalOptions<T>): WritableSignal<
 	return getAdapter().createState(value, options);
 }
 
-/** Create a read-only derived signal whose value is computed by `fn`. */
-export function computed<T>(fn: () => T, options?: ComputedOptions<T>): Signal<T> {
-	return getAdapter().createComputed(fn, options);
+/**
+ * Create a read-only derived signal whose value is computed by `fn`.
+ *
+ * `fn` receives its previously computed value. When `options.initialValue` is
+ * provided it seeds the first run, so `previousValue` is always `T`; otherwise
+ * `previousValue` is `undefined` on the first run (`T | undefined`).
+ */
+export function computed<T>(fn: (previousValue: T) => T, options: ComputedOptions<T> & { initialValue: T }): Signal<T>;
+export function computed<T>(fn: (previousValue: T | undefined) => T, options?: ComputedOptions<T>): Signal<T>;
+export function computed<T>(fn: (previousValue: T | undefined) => T, options?: ComputedOptions<T>): Signal<T> {
+	let previous: T | undefined = options?.initialValue;
+	return getAdapter().createComputed(() => {
+		const next = fn(previous);
+		previous = next;
+		return next;
+	}, options);
 }
 
 /**

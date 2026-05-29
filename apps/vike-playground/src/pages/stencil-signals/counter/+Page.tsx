@@ -8,6 +8,8 @@ export default function Page(): JSX.Element {
 				<h1 className="text-2xl font-bold text-(--color-fg)">Counter</h1>
 				<p className="text-sm text-(--color-muted-fg)">
 					Click the buttons to change the count. Enter an additional value to see it multiplied by 2 added to the total.
+					The peak total uses <code>computed(prev =&gt; …)</code> to fold in its own previous value, so it only ever
+					climbs.
 				</p>
 			</div>
 

@@ -61,8 +61,6 @@ export class AppLolDraftLobbyHost extends SsvElement {
 	render() {
 		return (
 			<div class="host">
-				{this.#ts.toScriptElement()}
-
 				{/* Global notification overlay */}
 				<app-lol-notification />
 

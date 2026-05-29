@@ -70,6 +70,13 @@ export class TestHost extends EventTarget implements ReactiveControllerHost {
 		}
 	}
 
+	/** Simulates `componentDidLoad` → `hostDidLoad` on each controller. */
+	didLoad(): void {
+		for (const ctrl of this.controllers) {
+			ctrl.hostDidLoad?.();
+		}
+	}
+
 	/** Simulates `disconnectedCallback` → `hostDisconnected` on each controller. Idempotent. */
 	disconnect(): void {
 		if (this.#disconnected) {

@@ -106,6 +106,61 @@ describe("provideTransferState", () => {
 			// Value remains set (not cleared by connect)
 			expect(m.ts.get(TIME_KEY)).toBe("server-value");
 		});
+
+		it("hostDidLoad refreshes script textContent with values written after render()", async () => {
+			const script = makeMockScript(scriptId("did-load"), {});
+			using host = new TestHost();
+			attachShadowRoot(host, [script]);
+			const ts = provideTransferState("did-load");
+			host.dispose();
+			host.connect();
+			await host.willLoad();
+			host.render();
+			ts.set(COUNT_KEY, 55); // simulates a child setting state after parent render()
+			host.didLoad();
+			expect(JSON.parse(script.textContent)).toMatchObject({ count: 55 });
+		});
+
+		it("hostDidLoad re-invokes setLazy factories capturing their value at didLoad time", async () => {
+			const state = { value: 0 };
+			const script = makeMockScript(scriptId("lazy-timing"), {});
+			using host = new TestHost();
+			attachShadowRoot(host, [script]);
+			const ts = provideTransferState("lazy-timing");
+			ts.setLazy(COUNT_KEY, () => state.value);
+			host.dispose();
+			host.connect();
+			await host.willLoad();
+			host.render(); // toJSON() called → captures state.value=0
+			state.value = 99; // simulates child populating state after parent render
+			host.didLoad(); // re-invokes lazy factory → captures state.value=99
+			expect(JSON.parse(script.textContent)).toMatchObject({ count: 99 });
+		});
+
+		it("hostDidLoad is a no-op when shadowRoot is absent", async () => {
+			using host = await mount(() => {
+				provideTransferState("no-shadow");
+			});
+			expect(() => host.didLoad()).not.toThrow();
+		});
+
+		it("hostDidLoad creates and appends a script when none exists", async () => {
+			const appended: HTMLScriptElement[] = [];
+			using _m = await mount(h => {
+				(h as unknown as Record<string, unknown>)["shadowRoot"] = {
+					querySelector: () => null,
+					append: (el: HTMLScriptElement) => {
+						appended.push(el);
+					},
+				};
+				const ts = provideTransferState("auto-inject");
+				ts.set(COUNT_KEY, 7);
+			});
+			expect(appended).toHaveLength(1);
+			expect(appended[0].type).toBe("application/json");
+			expect(appended[0].id).toBe(scriptId("auto-inject"));
+			expect(JSON.parse(appended[0].textContent!)).toMatchObject({ count: 7 });
+		});
 	});
 
 	describe("client path", () => {

@@ -1,6 +1,7 @@
 import { getLogger } from "@logtape/logtape";
 import { useMutation, useQuery } from "@ssv/tanstack.stencil-query";
 
+import { useConfig } from "../../../startup-context";
 import type { DraftSession, Team } from "../lol.types";
 import { useLolDraftQueryClient } from "../shared/lol-query-client";
 import {
@@ -22,9 +23,10 @@ export const draftQueryKey = (draftId: string) => ["lol-draft", draftId] as cons
 // ── useListDrafts ──────────────────────────────────────────────────────────────
 
 export function useListDrafts() {
+	const config = useConfig();
 	const listRef = useQuery(() => ({
 		queryKey: DRAFTS_QUERY_KEY,
-		queryFn: fetchDraftList,
+		queryFn: () => fetchDraftList(config.current?.baseUrl() ?? ""),
 		// SSE (useLobbySSE) drives all invalidations — treat cached data as always fresh.
 		staleTime: Infinity,
 	}));
@@ -39,8 +41,9 @@ export function useListDrafts() {
 
 export function useCreateDraft() {
 	const client = useLolDraftQueryClient();
+	const config = useConfig();
 	const mutation = useMutation({
-		mutationFn: apiCreateDraft,
+		mutationFn: () => apiCreateDraft(config.current?.baseUrl() ?? ""),
 		onSuccess: (session: DraftSession) => {
 			client.current?.setQueryData(draftQueryKey(session.id), session);
 		},
@@ -55,13 +58,18 @@ export function useCreateDraft() {
 // ── useDraftSession ────────────────────────────────────────────────────────────
 
 export function useDraftSession(getDraftId: () => string | null) {
+	const config = useConfig();
 	const sessionRef = useQuery(() => {
 		const id = getDraftId();
 		if (!id) {
 			return { queryKey: ["lol-draft", "__none__"] as const, enabled: false, queryFn: () => null };
 		}
 		// SSE (useDraftSSE) drives all invalidations — treat cached data as always fresh.
-		return { queryKey: draftQueryKey(id), queryFn: () => fetchDraftSession(id), staleTime: Infinity };
+		return {
+			queryKey: draftQueryKey(id),
+			queryFn: () => fetchDraftSession(config.current?.baseUrl() ?? "", id),
+			staleTime: Infinity,
+		};
 	});
 
 	return {
@@ -82,6 +90,7 @@ export type PickArgs = {
 
 export function useDraftMutations(getDraftId: () => string | null) {
 	const client = useLolDraftQueryClient();
+	const config = useConfig();
 
 	const pickRef = useMutation({
 		mutationFn: ({ championId, team }: PickArgs) => {
@@ -89,7 +98,7 @@ export function useDraftMutations(getDraftId: () => string | null) {
 			if (!id) {
 				throw new Error("No active draft session");
 			}
-			return apiPick(id, championId, team);
+			return apiPick(config.current?.baseUrl() ?? "", id, championId, team);
 		},
 		onSuccess: session => {
 			logger.info("Pick OK: phase={phase} turn={turn}", { phase: session.phase, turn: session.currentTurnIndex });
@@ -112,7 +121,7 @@ export function useDraftMutations(getDraftId: () => string | null) {
 			if (!id) {
 				throw new Error("No active draft session");
 			}
-			return apiBan(id, championId, team);
+			return apiBan(config.current?.baseUrl() ?? "", id, championId, team);
 		},
 		onSuccess: session => {
 			logger.info("Ban OK: phase={phase} turn={turn}", { phase: session.phase, turn: session.currentTurnIndex });
@@ -135,7 +144,7 @@ export function useDraftMutations(getDraftId: () => string | null) {
 			if (!id) {
 				throw new Error("No active draft session");
 			}
-			return apiSimulateOpponent(id);
+			return apiSimulateOpponent(config.current?.baseUrl() ?? "", id);
 		},
 		onSuccess: session => {
 			logger.info("Simulate-opponent OK: phase={phase} turn={turn}", {
@@ -172,8 +181,9 @@ export function useDraftMutations(getDraftId: () => string | null) {
 
 export function useJoinDraft() {
 	const client = useLolDraftQueryClient();
+	const config = useConfig();
 	const mutation = useMutation({
-		mutationFn: (draftId: string) => apiJoinDraft(draftId),
+		mutationFn: (draftId: string) => apiJoinDraft(config.current?.baseUrl() ?? "", draftId),
 		onSuccess: (session: DraftSession) => {
 			client.current?.setQueryData(draftQueryKey(session.id), session);
 		},
@@ -189,8 +199,9 @@ export function useJoinDraft() {
 
 export function useEnableSimulation() {
 	const client = useLolDraftQueryClient();
+	const config = useConfig();
 	const mutation = useMutation({
-		mutationFn: (draftId: string) => apiEnableSimulation(draftId),
+		mutationFn: (draftId: string) => apiEnableSimulation(config.current?.baseUrl() ?? "", draftId),
 		onSuccess: session => {
 			logger.info("Simulation enabled: id={id}", { id: session.id });
 			client.current?.setQueryData(draftQueryKey(session.id), session);

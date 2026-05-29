@@ -1,8 +1,8 @@
 import { getLogger } from "@logtape/logtape";
 
+import { useConfig } from "../../../startup-context";
 import type { DraftSession } from "../lol.types";
 import { useLolDraftQueryClient } from "../shared/lol-query-client";
-import { BASE_URL } from "../shared/lol.constants";
 import { useSSE } from "../stencil-sse";
 import { DRAFTS_QUERY_KEY } from "./draft.client";
 
@@ -15,8 +15,9 @@ type LobbySSEEvents = {
 
 export function useDraftsSSE() {
 	const client = useLolDraftQueryClient();
+	const config = useConfig();
 
-	useSSE<LobbySSEEvents>(() => `${BASE_URL}/api/lol/lobby/events`, {
+	useSSE<LobbySSEEvents>(() => `${config.current?.baseUrl() ?? ""}/api/lol/lobby/events`, {
 		onOpen() {
 			logger.info("Creating Lobby SSE connection...");
 		},

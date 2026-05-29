@@ -76,7 +76,7 @@ describe("signalStore() [preact]", () => {
 			{ id: 2, done: false },
 		]);
 		store.toggle(1);
-		expect(store.todos()[0].done).toBe(true);
+		expect(store.todos()[0].done).toBeTruthy();
 		expect(store.nextId()).toBe(3);
 	});
 
@@ -210,10 +210,10 @@ describe("signalStore() [preact]", () => {
 			);
 			const store = signalStore(withCounter);
 			expect(store.count()).toBe(0);
-			expect(store.isZero()).toBe(true);
+			expect(store.isZero()).toBeTruthy();
 			store.inc();
 			expect(store.count()).toBe(1);
-			expect(store.isZero()).toBe(false);
+			expect(store.isZero()).toBeFalsy();
 		});
 
 		it("supports input-constrained custom features via type()", () => {

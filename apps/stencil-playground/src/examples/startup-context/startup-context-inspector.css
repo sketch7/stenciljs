@@ -1,0 +1,43 @@
+:host {
+	display: block;
+}
+
+.inspector {
+	display: flex;
+	flex-direction: column;
+}
+
+.domains {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 1rem;
+}
+
+.domain {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	border: 1px solid var(--color-card-border, #1e2d42);
+	border-radius: var(--radius, 0.5rem);
+	padding: 1rem;
+	background-color: var(--color-card, #0e1828);
+}
+
+.domain-name {
+	margin: 0;
+	font-size: 0.65rem;
+	font-weight: 600;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--color-primary, #6366f1);
+}
+
+.json-block {
+	margin: 0;
+	font-family: ui-monospace, "Cascadia Code", "Fira Code", monospace;
+	font-size: 0.75rem;
+	line-height: 1.6;
+	color: var(--color-fg, #f1f5f9);
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}

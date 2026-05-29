@@ -10,6 +10,9 @@ const config: Config = {
 	// which causes the React tree to suspend. stream: "web" switches vike-react
 	// to React web-streaming SSR so Suspense + async components are supported.
 	stream: "web",
+	// Transfer server-collected startup context (config, theme, auth, locale, tenant, featureFlags)
+	// to the client. Vike serialises these pageContext keys into the initial HTML payload.
+	passToClient: ["startupContext"],
 };
 
 export default config;

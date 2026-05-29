@@ -10,10 +10,7 @@ export default function Layout({ children }: { children: React.ReactNode }): JSX
 	const { startupContext } = usePageContext();
 	const [themeMode, setThemeMode] = useState<"light" | "dark">(startupContext.theme.mode);
 
-	const ctx = useMemo(
-		() => ({ ...startupContext, theme: { mode: themeMode } }),
-		[startupContext, themeMode],
-	);
+	const ctx = useMemo(() => ({ ...startupContext, theme: { mode: themeMode } }), [startupContext, themeMode]);
 
 	useEffect(() => {
 		document.documentElement.dataset["theme"] = themeMode;

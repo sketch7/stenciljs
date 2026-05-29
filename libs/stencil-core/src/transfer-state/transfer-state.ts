@@ -135,10 +135,25 @@ class TransferStateImpl implements TransferState {
 			entries.set(k, factory());
 		}
 		const raw = JSON.stringify(Object.fromEntries(entries));
-		// Escape script tag to avoid break out of <script> tag in serialized output.
-		// Encoding of `<` is the same behavior as G3 script_builders.
-		// Encoding of `/` prevents crawlers from incorrectly indexing relative URLs in inline JSON.
-		return raw.replaceAll("<", String.raw`\u003C`).replaceAll("/", String.raw`\u002F`);
+		// Encode characters that are unsafe when the serialized JSON is embedded inside a JS
+		// template literal (as `@stencil/ssr` does via `dangerouslySetInnerHTML={{ __html: \`…\` }}`).
+		//
+		// `\` MUST be escaped first — before the other replacements add new backslashes — so that
+		// JSON escape sequences (\n, \", \\, \uXXXX …) survive the template-literal round-trip:
+		//   toJSON()       →  script.textContent  →  (template literal eval)  →  JSON.parse
+		//   \u005Cn        →  \u005Cn             →  \n (backslash + n)       →  newline char ✓
+		//   \u005C\u0022   →  \u005C"             →  \"                       →  " char ✓
+		//
+		// `<`  — prevents </script> breakout (same as G3 script_builders).
+		// `/`  — prevents crawlers from indexing relative URLs in inline JSON.
+		// `` ` `` — prevents template literal from closing prematurely.
+		// `${` — prevents template literal expression interpolation.
+		return raw
+			.replaceAll("\\", "\\u005C") // (1) escape \ FIRST
+			.replaceAll("<", String.raw`\u003C`) // (2) prevent </script> breakout
+			.replaceAll("/", String.raw`\u002F`) // (3) prevent URL indexing
+			.replaceAll("`", String.raw`\u0060`) // (4) prevent template literal closing
+			.replaceAll("${", String.raw`\u0024{`); // (5) prevent template literal interpolation
 	}
 
 	/** @internal */

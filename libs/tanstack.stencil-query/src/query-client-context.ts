@@ -1,12 +1,6 @@
 import { createContext, createRef, isRef, provideContext, use, useContext } from "@ssv/stencil-core";
 import type { Ref } from "@ssv/stencil-core";
-import { makeTransferKey } from "@ssv/stencil-core/transfer-state";
-import type { TransferState } from "@ssv/stencil-core/transfer-state";
-import { dehydrate, hydrate, QueryClient } from "@tanstack/query-core";
-import type { DehydratedState } from "@tanstack/query-core";
-
-/** Transfer key used to dehydrate/hydrate the QueryClient via {@link TransferState}. */
-const DEHYDRATED_KEY = makeTransferKey<DehydratedState>("state");
+import { QueryClient } from "@tanstack/query-core";
 
 /**
  * Context key used to distribute a `QueryClient` through the component tree.
@@ -21,29 +15,6 @@ export const queryClientKey = createContext<QueryClient>(undefined, { name: "Que
 export type ProvideQueryClientOptions = {
 	/** An existing `QueryClient` instance to use. Defaults to a new instance. */
 	client?: QueryClient;
-	/**
-	 * Wire up SSR dehydration + client hydration via a `TransferState` created with
-	 * `provideTransferState()` from `@ssv/stencil-core`.
-	 *
-	 * Mirrors React Query's `HydrationBoundary` pattern — the component owns the transfer
-	 * state scope; `provideQueryClient` only wires the dehydrate/hydrate lifecycle hooks.
-	 *
-	 * **Field declaration order matters**: `provideTransferState` must be called before
-	 * `provideQueryClient` so the transfer state is available when wiring up.
-	 *
-	 * @example
-	 * ```ts
-	 * // 1. Create transfer state scope first (owns serialization)
-	 * readonly #ts = provideTransferState('my-scope');
-	 * // 2. Pass it in — no internal TS creation
-	 * readonly #queryClient = provideQueryClient({ withHydration: this.#ts });
-	 *
-	 * render() {
-	 *   return <>{this.#ts.toScriptElement()}...</>;
-	 * }
-	 * ```
-	 */
-	withHydration?: TransferState;
 };
 
 /**
@@ -65,9 +36,12 @@ export type ProvideQueryClientOptions = {
  *
  * @example
  * ```ts
- * // SSR dehydration + client hydration:
- * readonly #ts = provideTransferState('posts');
- * readonly #queryClient = provideQueryClient({ withHydration: this.#ts });
+ * // SSR dehydration + client hydration — call useQueryHydration() after:
+ * readonly #qc = provideQueryClient();
+ * readonly _ = this.setup(() => {
+ *   provideTransferState('posts');
+ *   useQueryHydration();
+ * });
  * ```
  */
 export function provideQueryClient(clientOrOptions?: QueryClient | ProvideQueryClientOptions): QueryClient {
@@ -86,25 +60,6 @@ export function provideQueryClient(clientOrOptions?: QueryClient | ProvideQueryC
 	});
 
 	provideContext(queryClientKey, qc);
-
-	const withHydration =
-		clientOrOptions instanceof QueryClient
-			? undefined
-			: (clientOrOptions as ProvideQueryClientOptions | undefined)?.withHydration;
-
-	if (withHydration) {
-		const ts = withHydration;
-
-		use({
-			hostConnected() {
-				const dehydrated = ts.get(DEHYDRATED_KEY);
-				if (dehydrated !== undefined) {
-					hydrate(qc, dehydrated);
-				}
-			},
-		});
-		ts.setLazy(DEHYDRATED_KEY, () => dehydrate(qc));
-	}
 
 	return qc;
 }

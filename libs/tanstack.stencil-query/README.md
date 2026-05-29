@@ -54,14 +54,15 @@ export class AppPosts extends SsvElement {
 
 ## API
 
-| Export                     | Kind | Purpose                                                              |
-| -------------------------- | ---- | -------------------------------------------------------------------- |
+| Export                     | Kind | Purpose                                                             |
+| -------------------------- | ---- | ------------------------------------------------------------------- |
 | `queryOptions`             | fn   | Type-safe query factory; stamps `DataTag` on `queryKey`             |
 | `useQuery`                 | fn   | Subscribes to a query; returns `Ref<UseQueryResult>`                |
 | `useMutation`              | fn   | Subscribes to a mutation; returns `Ref<UseMutationResult>`          |
 | `usePrefetchQuery`         | fn   | Seeds the cache on `hostWillLoad`; returns `void`                   |
 | `provideQueryClient`       | fn   | Registers a `QueryClient` in context; returns the client            |
 | `useQueryClient`           | fn   | Resolves the nearest `QueryClient` from context                     |
+| `useQueryHydration`        | fn   | Wires SSR dehydration and client-side hydration via `TransferState` |
 | `useQueryClientRef`        | fn   | Returns a `Ref<QueryClient>` from context                           |
 | `Ref<T>`                   | type | Callable ref — `ref()` or `ref.current` reads the live value        |
 | `UseQueryRef<T>`           | type | `Ref<UseQueryResult<T>>` — return type of `useQuery`                |
@@ -118,7 +119,7 @@ export class AppRoot extends SsvElement {
 }
 ```
 
-Pass a `ProvideQueryClientOptions` object to reuse an existing client or add SSR hydration:
+Pass a `QueryClient` instance directly or a `ProvideQueryClientOptions` object to reuse an existing client:
 
 ```ts
 readonly #qc = provideQueryClient({ client: existingClient });
@@ -126,18 +127,39 @@ readonly #qc = provideQueryClient({ client: existingClient });
 
 ### SSR hydration
 
+Decouple the `QueryClient` from its transfer-state wiring with `useQueryHydration`. Call it inside `setup()` **after** `provideTransferState` and `provideQueryClient` so all providers are registered first.
+
 ```ts
 import { provideTransferState } from "@ssv/stencil-core/transfer-state";
+import { provideQueryClient, useQueryHydration } from "@ssv/tanstack.stencil-query";
 
-readonly #ts = provideTransferState("my-scope");
-readonly #qc = provideQueryClient({ withHydration: this.#ts });
-
-render() {
-  return <>{this.#ts.toScriptElement()}</>;
+@Component({ tag: "app-root", shadow: true })
+export class AppRoot extends SsvElement {
+  readonly #qc = provideQueryClient();
+  readonly _ = this.setup(() => {
+    provideTransferState("my-scope");
+    useQueryHydration();
+  });
 }
 ```
 
-The query client dehydrates state to a `<script>` tag on each render and rehydrates from it on connect. See [apps/stencil-playground/src/examples/ts-query/](../../apps/stencil-playground/src/examples/ts-query/) for a full example.
+On the **server**, `useQueryHydration` registers a lazy factory that serializes the client cache into the transfer-state `<script>` tag. On the **client**, it reads that state and calls `hydrate()` before the first render.
+
+#### Multiple QueryClients
+
+When two clients share a single `provideTransferState` scope, pass a `key` option to namespace their transfer-state entries:
+
+```ts
+readonly #posts = provideQueryClient();
+readonly #users = new QueryClient();
+readonly _ = this.setup(() => {
+  provideTransferState("my-scope");
+  useQueryHydration({ key: "posts" });
+  useQueryHydration({ client: this.#users, key: "users" });
+});
+```
+
+See [apps/stencil-playground/src/examples/ts-query/](../../apps/stencil-playground/src/examples/ts-query/) for full examples.
 
 ## Prefetch
 
@@ -237,23 +259,23 @@ export class AppPosts extends SsvElement {
 
 ### Signals API
 
-| Export                 | Kind | Purpose                                                     |
-| ---------------------- | ---- | ----------------------------------------------------------- |
-| `$useQuery`            | fn   | Per-field signal store + `refetch`                          |
-| `$useMutation`         | fn   | Per-field signal store + `mutate` / `mutateAsync` / `reset` |
+| Export                 | Kind | Purpose                                                       |
+| ---------------------- | ---- | ------------------------------------------------------------- |
+| `$useQuery`            | fn   | Per-field signal store + `refetch`                            |
+| `$useMutation`         | fn   | Per-field signal store + `mutate` / `mutateAsync` / `reset`   |
 | `$usePrefetchQuery`    | fn   | Reactive prefetch — re-fires when signal-based options change |
-| `QuerySignalResult`    | type | `Store<QueryStateData> & { refetch }`                       |
-| `MutationSignalResult` | type | `Store<MutationStateData> & { mutate, mutateAsync, reset }` |
+| `QuerySignalResult`    | type | `Store<QueryStateData> & { refetch }`                         |
+| `MutationSignalResult` | type | `Store<MutationStateData> & { mutate, mutateAsync, reset }`   |
 
 ### `$useQuery` vs `useQuery`
 
-|                             | `useQuery`                          | `$useQuery`                                               |
-| --------------------------- | ----------------------------------- | --------------------------------------------------------- |
-| Return                      | `Ref<UseQueryResult>` — single ref  | `Store<QueryStateData> & { refetch }` — per-field signals |
-| Read                        | `ref()` or `ref.current`            | `store.data()`, `store.isPending()`                       |
-| Re-render granularity       | Any field change re-renders         | Only fields read during last render                       |
-| Requires `useSignalWatcher` | No                                  | Yes                                                       |
-| Reactive options            | `useQuery(() => opts)`              | Same                                                      |
+|                             | `useQuery`                         | `$useQuery`                                               |
+| --------------------------- | ---------------------------------- | --------------------------------------------------------- |
+| Return                      | `Ref<UseQueryResult>` — single ref | `Store<QueryStateData> & { refetch }` — per-field signals |
+| Read                        | `ref()` or `ref.current`           | `store.data()`, `store.isPending()`                       |
+| Re-render granularity       | Any field change re-renders        | Only fields read during last render                       |
+| Requires `useSignalWatcher` | No                                 | Yes                                                       |
+| Reactive options            | `useQuery(() => opts)`             | Same                                                      |
 
 ### Reactive options
 

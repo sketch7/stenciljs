@@ -10,7 +10,6 @@
 import { describe, it, expect, vi, expectTypeOf } from "vitest";
 
 import { computedPrevious } from "../src/extensions/computed-previous";
-import { createStore } from "../src/extensions/create-store";
 import { derivedAsync } from "../src/extensions/derived-async";
 import { effect } from "../src/extensions/effect";
 // Import the Preact entry point first — this sets the Preact adapter so all
@@ -172,53 +171,6 @@ describe("createWatcher() [preact]", () => {
 		await tick();
 		expect(notify.mock.calls.length).toBeGreaterThanOrEqual(2);
 		w.dispose();
-	});
-});
-
-// ─── createStore() ────────────────────────────────────────────────────────────
-
-describe("createStore() [preact]", () => {
-	it("reads initial values", () => {
-		const store = createStore({ name: "Alice", age: 30 });
-		expect(store.name()).toBe("Alice");
-		expect(store.age()).toBe(30);
-	});
-
-	it("updates on assignment", () => {
-		const store = createStore({ count: 0 });
-		store.count.set(5);
-		expect(store.count()).toBe(5);
-	});
-
-	it("exposes raw signal via get()", () => {
-		const store = createStore({ x: 10 });
-		const sig = store.get("x");
-		expect(sig()).toBe(10);
-		sig.set(20);
-		expect(store.x()).toBe(20);
-	});
-
-	it("resets to initial values via reset()", () => {
-		const store = createStore({ a: 1, b: 2 });
-		store.a.set(99);
-		store.b.set(99);
-		store.reset();
-		expect(store.a()).toBe(1);
-		expect(store.b()).toBe(2);
-	});
-
-	it("supports computed properties", () => {
-		const store = createStore({ price: 10, qty: 3 }, s => ({ total: computed(() => s.price() * s.qty()) }));
-		expect(store.total()).toBe(30);
-		store.price.set(20);
-		expect(store.total()).toBe(60);
-	});
-
-	it("throws on write to unknown key", () => {
-		const store = createStore({ a: 1 });
-		expect(() => {
-			(store as any).unknown = 2;
-		}).toThrow();
 	});
 });
 

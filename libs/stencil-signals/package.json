@@ -24,6 +24,11 @@
       "types": "./dist/extensions.d.ts",
       "import": "./dist/extensions.js"
     },
+    "./store": {
+      "@ssv/source": "./src/store.ts",
+      "types": "./dist/store.d.ts",
+      "import": "./dist/store.js"
+    },
     "./tc39": {
       "types": "./dist/tc39.d.ts",
       "import": "./dist/tc39.js"

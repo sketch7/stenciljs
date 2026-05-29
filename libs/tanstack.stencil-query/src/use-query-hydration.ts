@@ -62,7 +62,7 @@ export type UseQueryHydrationOptions = {
  * ```
  */
 export function useQueryHydration(options?: UseQueryHydrationOptions): void {
-	const transferKey = options?.key ? `__tsq-${options.key}` : "__tsq";
+	const transferKey = `__tsq${options?.key ? `-${options.key}` : ""}`;
 	const DEHYDRATED_KEY = makeTransferKey<DehydratedState>(transferKey);
 	const ts = useTransferState();
 	const clientRef = useQueryClient(options?.client);

@@ -12,6 +12,15 @@ export { computedPrevious } from "./extensions/computed-previous";
 export { derivedAsync } from "./extensions/derived-async";
 export type { DisposableSignal, DerivedAsyncFn, DerivedAsyncOptions } from "./extensions/derived-async";
 
+// ─── Linked signals ───────────────────────────────────────────────────────────
+export { linkedSignal } from "./extensions/linked-signal";
+export type {
+	LinkedPrevious,
+	LinkedComputation,
+	LinkedSignalOptions,
+	LinkedSignalConfig,
+} from "./extensions/linked-signal";
+
 // ─── Store helpers ────────────────────────────────────────────────────────────
 export { createStore } from "./extensions/create-store";
 export type { Store } from "./extensions/create-store";

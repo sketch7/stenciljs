@@ -392,6 +392,11 @@ export default function Page(): JSX.Element {
 						href="/stencil-signals/computed-previous"
 					/>
 					<FeatureCard
+						title="linkedSignal({ source, computation })"
+						desc="Writable derived signal that resets to the computed value when its source changes, but stays user-overridable in between."
+						href="/stencil-signals/linked-signal"
+					/>
+					<FeatureCard
 						title="signalFromEvent(el, event)"
 						desc="Creates a WritableSignal that stays in sync with a DOM event — e.g. window resize, input value."
 						href="/stencil-signals/mouse-event"

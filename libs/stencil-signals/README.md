@@ -246,6 +246,7 @@ Incremental migration is supported: new features can use signals while existing 
 | `derivedAsync`                            | [derived-async.md](docs/derived-async.md)                                    |
 | `signalFromEvent`                         | [signal-from-event.md](docs/signal-from-event.md)                            |
 | `computedPrevious`                        | Below ([API](#api-reference))                                                |
+| `linkedSignal`                            | Below ([linkedSignal](#linkedsignal))                                        |
 | `createStore`                             | Below ([API](#api-reference))                                                |
 | `scheduler`                               | Microtask batching for `requestUpdate` (internal; exported for advanced use) |
 
@@ -260,9 +261,46 @@ Incremental migration is supported: new features can use signals while existing 
 | Timer + `useSignalProps` + `effect` | [`timer/`](../../apps/stencil-playground/src/examples/stencil-signals/timer/)                         | —                                                                                               |
 | `derivedAsync`                      | [`derived-async/`](../../apps/stencil-playground/src/examples/stencil-signals/derived-async/)         | [`+Page.tsx`](../../apps/vike-playground/src/pages/stencil-signals/derived-async/+Page.tsx)     |
 | `computedPrevious`                  | [`computed-previous/`](../../apps/stencil-playground/src/examples/stencil-signals/computed-previous/) | [`+Page.tsx`](../../apps/vike-playground/src/pages/stencil-signals/computed-previous/+Page.tsx) |
+| `linkedSignal`                      | [`linked-signal/`](../../apps/stencil-playground/src/examples/stencil-signals/linked-signal/)         | [`+Page.tsx`](../../apps/vike-playground/src/pages/stencil-signals/linked-signal/+Page.tsx)     |
 | `signalFromEvent`                   | [`mouse-event/`](../../apps/stencil-playground/src/examples/stencil-signals/mouse-event/)             | [`+Page.tsx`](../../apps/vike-playground/src/pages/stencil-signals/mouse-event/+Page.tsx)       |
 
 Run the dev stack from the repo root: `pnpm dev` (Stencil watch + Vike on port 3100).
+
+## linkedSignal
+
+`linkedSignal` is a **writable** signal whose value is derived from a source, but which **resets**
+to the derived value whenever that source changes. Between source changes it can be locally
+overridden, and a local write wins over a pending source change until the next genuine change.
+Use it for writable derived state — e.g. a selection that follows a list but stays user-editable.
+
+Two forms:
+
+```ts
+import { linkedSignal } from "@ssv/stencil-signals/extensions";
+
+// Simple — the source IS the derived value.
+const choice = linkedSignal(() => options()[0]);
+choice.set("custom"); // overrides until options() changes
+
+// Explicit — derive from a source, with access to the previous { source, value }.
+const quantity = linkedSignal({
+  source: () => selectedCourse(),
+  computation: (code, previous) =>
+    courses.find(c => c.code === code)?.defaultQuantity ?? 1,
+  // equal?: (a, b) => boolean   // honored on TC39; Preact computeds ignore custom equals
+});
+quantity.set(5);              // local override
+quantity.update(n => n + 1);  // applies any pending reset first, then the updater
+quantity.asReadonly();        // read-only view
+```
+
+**Semantics:** lazy + synchronous (like `computed`); `set()`/`update()` win over a pending source
+change; `update()` applies any pending reset before running its updater.
+
+**Limitation:** a source change is detected with `Object.is`. A `source` that returns a fresh
+object/array literal on every read (no identity change when nothing changed) will reset on every
+evaluation and discard local writes. Prefer sources that return primitives or stable references —
+e.g. `() => selected()` rather than `() => ({ selected })`.
 
 ## API reference
 
@@ -304,6 +342,7 @@ Also exported from main entry: `effect`, `derivedAsync`, `computedPrevious`, `cr
 | `effect(deps, fn, { defer? })`    | Explicit dependencies; `defer: true` skips initial run                          |
 | `derivedAsync(fn, options?)`      | `DisposableSignal` + `whenSettled`; abort prior fetch on dep change             |
 | `computedPrevious(source, init?)` | Previous value of a signal                                                      |
+| `linkedSignal(computation \| config)` | Writable derived signal that resets when its source changes                 |
 
 ### Store
 

@@ -1,0 +1,31 @@
+// ─── Composable signal store (NgRx SignalStore-style) ──────────────────────────
+//
+// Public entry for the `@ssv/stencil-signals/signal-store` export. Compose a
+// store from features: signalStore(withState(), withComputed(), withMethods()).
+// Mutate via patchState() / methods; read snapshots via getState().
+
+export { signalStore } from "./signal-store/signal-store";
+export { signalStoreFeature } from "./signal-store/signal-store-feature";
+export { withConfig } from "./signal-store/with-config";
+export { withState } from "./signal-store/with-state";
+export { withComputed } from "./signal-store/with-computed";
+export { withMethods } from "./signal-store/with-methods";
+export { patchState, getState, getInitialState } from "./signal-store/patch-state";
+export type { StateUpdater } from "./signal-store/patch-state";
+export { STATE_SOURCE, INITIAL_STATE } from "./signal-store/state-source";
+export type { StateSource, StateSignals } from "./signal-store/state-source";
+export type {
+	Store,
+	StoreApi,
+	StoreShape,
+	StoreConfig,
+	SignalStoreFeature,
+	EmptyShape,
+	AnyMethod,
+	ComputedDict,
+	MethodsDict,
+	MergeShape,
+	FoldShape,
+	MergeOutput,
+	FoldOutput,
+} from "./signal-store/types";

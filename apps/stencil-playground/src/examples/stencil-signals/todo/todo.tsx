@@ -20,8 +20,7 @@ export class AppSignalsTodo extends SsvElement {
 		() => {
 			const text = this.inputText().trim();
 			if (text) {
-				todoStore.todos.update(todos => [...todos, { id: todoStore.nextId(), text, completed: false }]);
-				todoStore.nextId.update(id => id + 1);
+				todoStore.add(text);
 				this.inputText.set("");
 			}
 		},
@@ -39,11 +38,11 @@ export class AppSignalsTodo extends SsvElement {
 	}
 
 	private toggleTodo(id: number) {
-		todoStore.todos.update(todos => todos.map(t => (t.id === id ? { ...t, completed: !t.completed } : t)));
+		todoStore.toggle(id);
 	}
 
 	private deleteTodo(id: number) {
-		todoStore.todos.update(todos => todos.filter(t => t.id !== id));
+		todoStore.remove(id);
 	}
 
 	render() {

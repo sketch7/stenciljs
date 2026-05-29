@@ -207,12 +207,12 @@ export class UserCard {
   // name & role duplicated across every component
 }`,
 
-	signalStoreAfter: `// @ssv/stencil-signals createStore — reactive proxy, zero boilerplate
-const userStore = createStore(
-  { name: '', role: '' },
-  state => ({
+	signalStoreAfter: `// @ssv/stencil-signals signalStore — composable, zero boilerplate
+const userStore = signalStore(
+  withState({ name: '', role: '' }),
+  withComputed(state => ({
     fullLabel: computed(() => \`\${state.name} (\${state.role})\`)
-  })
+  })),
 );
 
 // Every component that reads userStore.name re-renders on change

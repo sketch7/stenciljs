@@ -20,7 +20,7 @@ Part of the [stenciljs](https://github.com/sketch7/stenciljs) monorepo. Designed
 2. Register **one** adapter in `globalScript` before any component code runs ([Installation](#installation)).
 3. Standardise on `SsvElement` + `useSignalWatcher()` (or `SignalWatcherMixin` when composing mixins).
 4. Document field order: `useSignalWatcher()` before `effect`, `derivedAsync`, `useSignalProps`, `signalFromEvent`.
-5. Place module-level `signal()` / `createStore()` in `*.store.ts` files; keep components thin.
+5. Place module-level `signal()` / `signalStore()` in `*.store.ts` files; keep components thin.
 6. Align SSR: use `derivedAsync` + `initialValue` / transfer-state for hydrate apps ([SSR](#ssr-and-hydration)).
 
 ## Architecture
@@ -35,7 +35,7 @@ flowchart LR
     GS["globalScript: import tc39 or preact"]
   end
   subgraph module["Shared modules"]
-    S["signal / computed / createStore"]
+    S["signal / computed / signalStore"]
   end
   subgraph component["Stencil component"]
     W["useSignalWatcher()"]
@@ -94,8 +94,9 @@ export const config: Config = {
 | --------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------- |
 | `@ssv/stencil-signals/tc39`       | Yes (TC39)         | `globalScript` only                                                                               |
 | `@ssv/stencil-signals/preact`     | Yes (Preact)       | `globalScript` only                                                                               |
-| `@ssv/stencil-signals`            | No                 | Primitives, `useSignalWatcher`, `effect`, `derivedAsync`, `createStore`, mixins                   |
+| `@ssv/stencil-signals`            | No                 | Primitives, `useSignalWatcher`, `effect`, `derivedAsync`, mixins                                  |
 | `@ssv/stencil-signals/extensions` | No                 | `useSignalProps`, `signalFromEvent` (also re-exported from adapter entries for `signalFromEvent`) |
+| `@ssv/stencil-signals/signal-store` | No               | `signalStore`, `withState`/`withComputed`/`withMethods`, `patchState`, `getState`                 |
 
 The main entry does **not** configure an adapter. Using `signal()` without a prior `globalScript` import throws at runtime.
 
@@ -144,7 +145,7 @@ export class MyCounter extends SsvElement {
 | ----------------------------------------------- | ------------------------------------ | ---------------------------------------------------------------------------- |
 | `SsvElement` + `useSignalWatcher()`             | Default for new components           | No mixin ordering issues; works with `use()` hooks from `@ssv/stencil-core`  |
 | `Mixin(SignalWatcherMixin, SsvElementMixin, …)` | Legacy bases or multiple mixins      | Put `SignalWatcherMixin` **first** in `Mixin()`                              |
-| Module-level `signal()` / `createStore()`       | Cross-component shared state         | Import store modules; avoid storing signals on `this` unless instance-scoped |
+| Module-level `signal()` / `signalStore()`       | Cross-component shared state         | Import store modules; avoid storing signals on `this` unless instance-scoped |
 | `useSignalProps`                                | Prop-driven logic without `@Watch`   | Import from `/extensions`; requires watcher first                            |
 | `effect` / `derivedAsync` as class fields       | Side effects and async derived state | Declare **after** `useSignalWatcher()`                                       |
 
@@ -192,35 +193,68 @@ const sum = computed(() => a() + untracked(() => b()));
 
 Prefer `sig.peek()` for a single read; use `untracked(() => …)` for multiple reads in one expression.
 
-### Reactive store
+### Signal store
+
+A composable, NgRx-style store from `@ssv/stencil-signals/signal-store`. Build one with `signalStore(...features)` — `withState`, `withComputed`, `withMethods` compose left to right, and each factory sees the store built so far.
 
 ```ts
 import { computed } from "@ssv/stencil-signals";
-import { createStore } from "@ssv/stencil-signals"; // or "/extensions"
+import { signalStore, withState, withComputed, withMethods, patchState } from "@ssv/stencil-signals/signal-store";
 
-export const todoStore = createStore({ todos: [] as Todo[], nextId: 1 }, s => ({
-  completedCount: computed(() => s.todos().filter(t => t.completed).length),
-}));
+export const todoStore = signalStore(
+  withState({ todos: [] as Todo[], nextId: 1 }),
+  withComputed(s => ({
+    completedCount: computed(() => s.todos().filter(t => t.completed).length),
+  })),
+  withMethods(s => ({
+    add(text: string) {
+      patchState(s, state => ({
+        todos: [...state.todos, { id: state.nextId, text, completed: false }],
+        nextId: state.nextId + 1,
+      }));
+    },
+    toggle(id: number) {
+      s.todos.update(items => items.map(t => (t.id === id ? { ...t, completed: !t.completed } : t)));
+    },
+  })),
+);
 ```
 
-Read with invocation (`store.count()`, `store.completedCount()`). Mutate with `set`/`update` (`store.count.set(1)`, `store.count.update(v => v + 1)`) or assignment (`store.count = 1`). Escape hatches: `get(key)`, `reset()`.
+Read state and computed by invocation (`todoStore.todos()`, `todoStore.completedCount()`). State is **writable by default** — call `.set` / `.update` directly (`todoStore.nextId.update(n => n + 1)`) — or call methods (`todoStore.add("Milk")`).
 
-#### `patch(partial)` — bulk update
+#### `patchState` / `getState` / `getInitialState`
 
-Applies a `Partial<T>` object to the store in a single batched write, coalescing all updates into one re-render pass:
+Free functions operate on the store via a hidden state source — state keys may be named anything:
 
 ```ts
-todoStore.patch({ nextId: 2 }); // partial — only listed keys are updated
-todoStore.patch({ todos: [], nextId: 1 }); // full reset-style update
+patchState(todoStore, { nextId: 2 }); // partial object
+patchState(todoStore, s => ({ nextId: s.nextId + 1 })); // updater fn — receives a snapshot
+patchState(todoStore, fn1, fn2); // multiple updaters, all in one batched write
+
+getState(todoStore); // → plain, non-reactive snapshot { todos, nextId }
+patchState(todoStore, getInitialState(todoStore)); // reset pattern
 ```
 
-**Behaviour per key kind:**
+Updaters are applied inside a single `batch()`; writing an unknown state key throws.
 
-| Key kind               | Behaviour                                           |
-| ---------------------- | --------------------------------------------------- |
-| State key (in initial) | Updated via `.set()` inside `batch()`               |
-| Computed key           | Throws `TypeError` — computed signals are read-only |
-| Unknown key            | `console.warn` and skipped                          |
+#### Protecting state (`withConfig`)
+
+State is open by default. Compose `withConfig({ isStateWritable: false })` (conventionally first) to expose state externally as read-only `Signal`s — all mutation then goes through `patchState` or `withMethods`, while factories still see writable signals:
+
+```ts
+signalStore(withConfig({ isStateWritable: false }), withState({ count: 0 }), withMethods(/* … */));
+```
+
+#### Reusable features (`signalStoreFeature`)
+
+Bundle several features into one reusable unit that folds into any store:
+
+```ts
+const withCounter = signalStoreFeature(
+  withState({ count: 0 }),
+  withMethods(s => ({ inc: () => s.count.update(n => n + 1) })),
+);
+```
 
 ## Migration from `@stencil/store`
 
@@ -246,7 +280,7 @@ Incremental migration is supported: new features can use signals while existing 
 | `derivedAsync`                            | [derived-async.md](docs/derived-async.md)                                    |
 | `signalFromEvent`                         | [signal-from-event.md](docs/signal-from-event.md)                            |
 | `computedPrevious`                        | Below ([API](#api-reference))                                                |
-| `createStore`                             | Below ([API](#api-reference))                                                |
+| `signalStore`                             | Below ([API](#api-reference))                                                |
 | `scheduler`                               | Microtask batching for `requestUpdate` (internal; exported for advanced use) |
 
 **Dual backend:** same API surface; swap adapter by changing the `globalScript` import only.
@@ -256,7 +290,7 @@ Incremental migration is supported: new features can use signals while existing 
 | Example                             | Stencil source                                                                                        | Vike SSR page                                                                                   |
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | Counter                             | [`counter/`](../../apps/stencil-playground/src/examples/stencil-signals/counter/)                     | [`+Page.tsx`](../../apps/vike-playground/src/pages/stencil-signals/counter/+Page.tsx)           |
-| Todo + `createStore`                | [`todo/`](../../apps/stencil-playground/src/examples/stencil-signals/todo/)                           | [`+Page.tsx`](../../apps/vike-playground/src/pages/stencil-signals/todo/+Page.tsx)              |
+| Todo + `signalStore`                | [`todo/`](../../apps/stencil-playground/src/examples/stencil-signals/todo/)                           | [`+Page.tsx`](../../apps/vike-playground/src/pages/stencil-signals/todo/+Page.tsx)              |
 | Timer + `useSignalProps` + `effect` | [`timer/`](../../apps/stencil-playground/src/examples/stencil-signals/timer/)                         | —                                                                                               |
 | `derivedAsync`                      | [`derived-async/`](../../apps/stencil-playground/src/examples/stencil-signals/derived-async/)         | [`+Page.tsx`](../../apps/vike-playground/src/pages/stencil-signals/derived-async/+Page.tsx)     |
 | `computedPrevious`                  | [`computed-previous/`](../../apps/stencil-playground/src/examples/stencil-signals/computed-previous/) | [`+Page.tsx`](../../apps/vike-playground/src/pages/stencil-signals/computed-previous/+Page.tsx) |
@@ -294,7 +328,7 @@ Run the dev stack from the repo root: `pnpm dev` (Stencil watch + Vike on port 3
 | `useSignalProps(Host)(config)`    | `@Prop` → signal bridge; `transform`, `twoWay`, `default`, `required`  |
 | `signalFromEvent(name, options?)` | DOM/window events as signals; Stencil `ListenOptions` + optional `map` |
 
-Also exported from main entry: `effect`, `derivedAsync`, `computedPrevious`, `createStore`.
+Also exported from main entry: `effect`, `derivedAsync`, `computedPrevious`. The signal store ships as a separate entry — `@ssv/stencil-signals/signal-store`.
 
 ### Effects and async
 
@@ -305,11 +339,19 @@ Also exported from main entry: `effect`, `derivedAsync`, `computedPrevious`, `cr
 | `derivedAsync(fn, options?)`      | `DisposableSignal` + `whenSettled`; abort prior fetch on dep change             |
 | `computedPrevious(source, init?)` | Previous value of a signal                                                      |
 
-### Store
+### Signal store (`@ssv/stencil-signals/signal-store`)
 
-| Export                                | Description                        |
-| ------------------------------------- | ---------------------------------- |
-| `createStore(init, computedFactory?)` | Proxy store; `get(key)`, `reset()` |
+| Export                                   | Description                                                         |
+| ---------------------------------------- | ------------------------------------------------------------------- |
+| `signalStore(...features)`               | Compose a store from features; returns an eager store instance      |
+| `signalStoreFeature(...features)`        | Bundle features into one reusable, foldable feature                 |
+| `withState(initial)`                     | Seed state — one writable signal per key                            |
+| `withComputed(store => ({ … }))`         | Add derived signals; factory sees the store built so far            |
+| `withMethods(store => ({ … }))`          | Add methods; factory sees the store built so far                    |
+| `withConfig({ isStateWritable? })`       | Opt into read-only public state (`false`); defaults open (`true`)   |
+| `patchState(store, ...updaters)`         | Batched update — partials and/or `(state) => partial` updater fns   |
+| `getState(store)`                        | Plain, non-reactive snapshot of all state                           |
+| `getInitialState(store)`                 | Merged initial state (for the reset pattern)                        |
 
 ### Low-level
 

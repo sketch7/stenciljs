@@ -1,12 +1,8 @@
 import type { Signal, WritableSignal } from "../adapters/types";
 import type { StateSignals, StateSource } from "./state-source";
 
-// ─── Building blocks ───────────────────────────────────────────────────────────
-
-/** Loose upper bound for store methods — any callable is assignable. */
 export type AnyMethod = (...args: never[]) => unknown;
 
-/** Loose upper bound for a computed record. */
 export type ComputedDict = Record<string, Signal<unknown>>;
 
 /** Loose upper bound for a methods record. */

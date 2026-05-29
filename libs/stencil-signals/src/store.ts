@@ -1,7 +1,3 @@
-// Public entry for the `@ssv/stencil-signals/store` export. Compose a
-// store from features: signalStore(withState(), withComputed(), withMethods()).
-// Mutate via patchState() / methods; read snapshots via getState().
-
 export { signalStore } from "./signal-store/signal-store";
 export { signalStoreFeature } from "./signal-store/signal-store-feature";
 export { type } from "./signal-store/type";

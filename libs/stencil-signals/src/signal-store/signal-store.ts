@@ -11,9 +11,6 @@ import type {
 	StoreShape,
 } from "./types";
 
-/** Shorthand: a feature's inferred output partial. */
-type O = Partial<StoreShape>;
-
 /**
  * Build a Proxy view over the mutable internals. State keys resolve to their
  * writable signal (open) or a cached read-only view (protected); computed and
@@ -92,40 +89,56 @@ function build(features: readonly SignalStoreFeature[]): unknown {
 // Each parameter pins the store shape folded from prior outputs, so factory
 // callbacks (`withComputed`/`withMethods`) receive contextual types.
 export function signalStore(): Store<EmptyShape>;
-export function signalStore<O1 extends O>(...features: SignalStoreFeatureOutputs<[O1]>): Store<FoldOuts<[O1]>>;
-export function signalStore<O1 extends O, O2 extends O>(
+export function signalStore<O1 extends Partial<StoreShape>>(
+	...features: SignalStoreFeatureOutputs<[O1]>
+): Store<FoldOuts<[O1]>>;
+export function signalStore<O1 extends Partial<StoreShape>, O2 extends Partial<StoreShape>>(
 	...features: SignalStoreFeatureOutputs<[O1, O2]>
 ): Store<FoldOuts<[O1, O2]>>;
-export function signalStore<O1 extends O, O2 extends O, O3 extends O>(
-	...features: SignalStoreFeatureOutputs<[O1, O2, O3]>
-): Store<FoldOuts<[O1, O2, O3]>>;
-export function signalStore<O1 extends O, O2 extends O, O3 extends O, O4 extends O>(
-	...features: SignalStoreFeatureOutputs<[O1, O2, O3, O4]>
-): Store<FoldOuts<[O1, O2, O3, O4]>>;
-export function signalStore<O1 extends O, O2 extends O, O3 extends O, O4 extends O, O5 extends O>(
-	...features: SignalStoreFeatureOutputs<[O1, O2, O3, O4, O5]>
-): Store<FoldOuts<[O1, O2, O3, O4, O5]>>;
-export function signalStore<O1 extends O, O2 extends O, O3 extends O, O4 extends O, O5 extends O, O6 extends O>(
-	...features: SignalStoreFeatureOutputs<[O1, O2, O3, O4, O5, O6]>
-): Store<FoldOuts<[O1, O2, O3, O4, O5, O6]>>;
 export function signalStore<
-	O1 extends O,
-	O2 extends O,
-	O3 extends O,
-	O4 extends O,
-	O5 extends O,
-	O6 extends O,
-	O7 extends O,
+	O1 extends Partial<StoreShape>,
+	O2 extends Partial<StoreShape>,
+	O3 extends Partial<StoreShape>,
+>(...features: SignalStoreFeatureOutputs<[O1, O2, O3]>): Store<FoldOuts<[O1, O2, O3]>>;
+export function signalStore<
+	O1 extends Partial<StoreShape>,
+	O2 extends Partial<StoreShape>,
+	O3 extends Partial<StoreShape>,
+	O4 extends Partial<StoreShape>,
+>(...features: SignalStoreFeatureOutputs<[O1, O2, O3, O4]>): Store<FoldOuts<[O1, O2, O3, O4]>>;
+export function signalStore<
+	O1 extends Partial<StoreShape>,
+	O2 extends Partial<StoreShape>,
+	O3 extends Partial<StoreShape>,
+	O4 extends Partial<StoreShape>,
+	O5 extends Partial<StoreShape>,
+>(...features: SignalStoreFeatureOutputs<[O1, O2, O3, O4, O5]>): Store<FoldOuts<[O1, O2, O3, O4, O5]>>;
+export function signalStore<
+	O1 extends Partial<StoreShape>,
+	O2 extends Partial<StoreShape>,
+	O3 extends Partial<StoreShape>,
+	O4 extends Partial<StoreShape>,
+	O5 extends Partial<StoreShape>,
+	O6 extends Partial<StoreShape>,
+>(...features: SignalStoreFeatureOutputs<[O1, O2, O3, O4, O5, O6]>): Store<FoldOuts<[O1, O2, O3, O4, O5, O6]>>;
+export function signalStore<
+	O1 extends Partial<StoreShape>,
+	O2 extends Partial<StoreShape>,
+	O3 extends Partial<StoreShape>,
+	O4 extends Partial<StoreShape>,
+	O5 extends Partial<StoreShape>,
+	O6 extends Partial<StoreShape>,
+	O7 extends Partial<StoreShape>,
 >(...features: SignalStoreFeatureOutputs<[O1, O2, O3, O4, O5, O6, O7]>): Store<FoldOuts<[O1, O2, O3, O4, O5, O6, O7]>>;
 export function signalStore<
-	O1 extends O,
-	O2 extends O,
-	O3 extends O,
-	O4 extends O,
-	O5 extends O,
-	O6 extends O,
-	O7 extends O,
-	O8 extends O,
+	O1 extends Partial<StoreShape>,
+	O2 extends Partial<StoreShape>,
+	O3 extends Partial<StoreShape>,
+	O4 extends Partial<StoreShape>,
+	O5 extends Partial<StoreShape>,
+	O6 extends Partial<StoreShape>,
+	O7 extends Partial<StoreShape>,
+	O8 extends Partial<StoreShape>,
 >(
 	...features: SignalStoreFeatureOutputs<[O1, O2, O3, O4, O5, O6, O7, O8]>
 ): Store<FoldOuts<[O1, O2, O3, O4, O5, O6, O7, O8]>>;

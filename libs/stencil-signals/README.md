@@ -195,93 +195,7 @@ Prefer `sig.peek()` for a single read; use `untracked(() => …)` for multiple r
 
 ### Signal store
 
-A composable, NgRx-style store from `@ssv/stencil-signals/store`. Build one with `signalStore(...features)` — `withState`, `withComputed`, `withMethods` compose left to right, and each factory sees the store built so far.
-
-```ts
-import { computed } from "@ssv/stencil-signals";
-import {
-  signalStore,
-  withState,
-  withComputed,
-  withMethods,
-  patchState,
-} from "@ssv/stencil-signals/store";
-
-export const todoStore = signalStore(
-  withState({ todos: [] as Todo[], nextId: 1 }),
-  withComputed(s => ({
-    completedCount: computed(() => s.todos().filter(t => t.completed).length),
-  })),
-  withMethods(s => ({
-    add(text: string) {
-      patchState(s, state => ({
-        todos: [...state.todos, { id: state.nextId, text, completed: false }],
-        nextId: state.nextId + 1,
-      }));
-    },
-    toggle(id: number) {
-      s.todos.update(items =>
-        items.map(t => (t.id === id ? { ...t, completed: !t.completed } : t)),
-      );
-    },
-  })),
-);
-```
-
-Read state and computed by invocation (`todoStore.todos()`, `todoStore.completedCount()`). State is **writable by default** — call `.set` / `.update` directly (`todoStore.nextId.update(n => n + 1)`) — or call methods (`todoStore.add("Milk")`).
-
-#### `patchState` / `getState` / `getInitialState`
-
-Free functions operate on the store via a hidden state source — state keys may be named anything:
-
-```ts
-patchState(todoStore, { nextId: 2 }); // partial object
-patchState(todoStore, s => ({ nextId: s.nextId + 1 })); // updater fn — receives a snapshot
-patchState(todoStore, fn1, fn2); // multiple updaters, all in one batched write
-
-getState(todoStore); // → plain, non-reactive snapshot { todos, nextId }
-patchState(todoStore, getInitialState(todoStore)); // reset pattern
-```
-
-Updaters are applied inside a single `batch()`; writing an unknown state key throws.
-
-#### Protecting state (`withConfig`)
-
-State is open by default. Compose `withConfig({ isStateWritable: false })` (conventionally first) to expose state externally as read-only `Signal`s — all mutation then goes through `patchState` or `withMethods`, while factories still see writable signals:
-
-```ts
-signalStore(
-  withConfig({ isStateWritable: false }),
-  withState({ count: 0 }),
-  withMethods(/* … */),
-);
-```
-
-#### Reusable features (`signalStoreFeature`)
-
-Bundle several features into one reusable unit that folds into any store:
-
-```ts
-function withCounter {
-  return signalStoreFeature(
-    withState({ count: 0 }),
-    withMethods(s => ({ inc: () => s.count.update(n => n + 1) })),
-  );
-}
-```
-
-Use `type<Input>()` to declare state/computed/methods a feature reads but does not provide itself — it pins the input shape (no-op at runtime) so the feature stays strongly typed:
-
-```ts
-function withDoubleCount {
-  return signalStoreFeature(
-    type<{ state: { count: number } }>(),
-    withComputed(s => ({ double: computed(() => s.count() * 2) })),
-  );
-}
-// applied to any store that already has `count`:
-const store = signalStore(withState({ count: 3 }), withDoubleCount);
-```
+Store docs moved to [docs/signal-store.md](docs/signal-store.md): examples, API, `patchState`, `withConfig`, and reusable `signalStoreFeature` patterns.
 
 ## Migration from `@stencil/store`
 
@@ -307,7 +221,7 @@ Incremental migration is supported: new features can use signals while existing 
 | `derivedAsync`                            | [derived-async.md](docs/derived-async.md)                                    |
 | `signalFromEvent`                         | [signal-from-event.md](docs/signal-from-event.md)                            |
 | `computedPrevious`                        | Below ([API](#api-reference))                                                |
-| `signalStore`                             | Below ([API](#api-reference))                                                |
+| `signalStore`                             | [signal-store.md](docs/signal-store.md)                                      |
 | `scheduler`                               | Microtask batching for `requestUpdate` (internal; exported for advanced use) |
 
 **Dual backend:** same API surface; swap adapter by changing the `globalScript` import only.
@@ -368,18 +282,7 @@ Also exported from main entry: `effect`, `derivedAsync`, `computedPrevious`. The
 
 ### Signal store (`@ssv/stencil-signals/store`)
 
-| Export                             | Description                                                       |
-| ---------------------------------- | ----------------------------------------------------------------- |
-| `signalStore(...features)`         | Compose a store from features; returns an eager store instance    |
-| `signalStoreFeature(...features)`  | Bundle features into one reusable, foldable feature               |
-| `type<Input>()`                    | Declare a feature's required input (no-op runtime; types only)    |
-| `withState(initial)`               | Seed state — one writable signal per key                          |
-| `withComputed(store => ({ … }))`   | Add derived signals; factory sees the store built so far          |
-| `withMethods(store => ({ … }))`    | Add methods; factory sees the store built so far                  |
-| `withConfig({ isStateWritable? })` | Opt into read-only public state (`false`); defaults open (`true`) |
-| `patchState(store, ...updaters)`   | Batched update — partials and/or `(state) => partial` updater fns |
-| `getState(store)`                  | Plain, non-reactive snapshot of all state                         |
-| `getInitialState(store)`           | Merged initial state (for the reset pattern)                      |
+See [docs/signal-store.md](docs/signal-store.md) for the full store API and examples.
 
 ### Low-level
 

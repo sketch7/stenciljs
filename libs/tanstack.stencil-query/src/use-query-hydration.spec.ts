@@ -1,3 +1,4 @@
+// oxlint-disable import/max-dependencies
 import type { Ref } from "@ssv/stencil-core";
 import { mount } from "@ssv/stencil-core/testing";
 import { mountDom } from "@ssv/stencil-core/testing/dom";
@@ -8,6 +9,7 @@ import { QueryClient, dehydrate } from "@tanstack/query-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { provideQueryClient, useQueryClient } from "./query-client-context";
+import { usePrefetchQuery } from "./use-prefetch-query";
 import { useQuery } from "./use-query";
 import { useQueryHydration } from "./use-query-hydration";
 
@@ -42,7 +44,7 @@ function attachShadowRoot(host: object, script: MockScript | null): void {
  * directly, mirroring what the browser sees after the template literal step.
  */
 function decodeSsrScript(content: string): string {
-	return content.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+	return content.replaceAll(/\\u([0-9a-fA-F]{4})/gu, (_, hex) => String.fromCodePoint(Number.parseInt(hex, 16)));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -204,6 +206,25 @@ describe("useQueryHydration", () => {
 		expect(qc.getQueryData(["item"])).toBe("fresh");
 	});
 
+	it("accepts a Ref<QueryClient> as the client option", async () => {
+		const serverQc = new QueryClient();
+		serverQc.setQueryData(["items"], [{ id: 9 }]);
+		const script = makeMockScript("hyd-ref-client", { __tsq: dehydrate(serverQc) });
+		serverQc.clear();
+
+		const qc = new QueryClient();
+
+		using m = await mount(h => {
+			attachShadowRoot(h, script);
+			provideTransferState("hyd-ref-client");
+			const clientRef = useQueryClient(qc); // wraps bare QueryClient in a Ref
+			useQueryHydration({ client: clientRef });
+			return { qc };
+		});
+
+		expect(m.qc.getQueryData(["items"])).toStrictEqual([{ id: 9 }]);
+	});
+
 	describe("server-side serialization", () => {
 		beforeEach(() => {
 			Object.assign(Build, { isServer: true });
@@ -226,7 +247,7 @@ describe("useQueryHydration", () => {
 
 			const stored = JSON.parse(decodeSsrScript(script.textContent)) as Record<
 				string,
-				{ queries: Array<{ queryKey: unknown }> }
+				{ queries: { queryKey: unknown }[] }
 			>;
 			expect(stored["__tsq"].queries).toHaveLength(1);
 			expect(stored["__tsq"].queries[0].queryKey).toStrictEqual(["posts"]);
@@ -249,6 +270,60 @@ describe("useQueryHydration", () => {
 			>;
 			expect(stored["__tsq-users"]?.queries).toHaveLength(1);
 			expect(stored["__tsq"]).toBeUndefined();
+		});
+
+		it("serializes an empty cache", async () => {
+			const qc = new QueryClient();
+			const script = makeMockScript("hyd-server-empty", {});
+
+			using _m = await mount(h => {
+				attachShadowRoot(h, script);
+				provideTransferState("hyd-server-empty");
+				useQueryHydration({ client: qc });
+			});
+
+			const stored = JSON.parse(decodeSsrScript(script.textContent)) as Record<string, { queries: unknown[] }>;
+			expect(stored["__tsq"].queries).toHaveLength(0);
+		});
+
+		it("serializes all queries in the cache", async () => {
+			const qc = new QueryClient();
+			qc.setQueryData(["posts"], [{ id: 1 }]);
+			qc.setQueryData(["users"], [{ id: 10 }]);
+			const script = makeMockScript("hyd-server-multi", {});
+
+			using _m = await mount(h => {
+				attachShadowRoot(h, script);
+				provideTransferState("hyd-server-multi");
+				useQueryHydration({ client: qc });
+			});
+
+			const stored = JSON.parse(decodeSsrScript(script.textContent)) as Record<
+				string,
+				{ queries: { queryKey: unknown }[] }
+			>;
+			const queryKeys = stored["__tsq"].queries.map(q => q.queryKey);
+			expect(queryKeys).toStrictEqual(expect.arrayContaining([["posts"], ["users"]]));
+		});
+
+		it("serializes cache populated by usePrefetchQuery during hostWillLoad", async () => {
+			const qc = new QueryClient();
+			const script = makeMockScript("hyd-prefetch-server", {});
+
+			using _m = await mount(h => {
+				attachShadowRoot(h, script);
+				provideTransferState("hyd-prefetch-server");
+				// prefetchQuery runs in hostWillLoad (awaited by mount before hostDidLoad)
+				usePrefetchQuery({ queryKey: ["items"], queryFn: () => Promise.resolve([{ id: 42 }]) }, qc);
+				// setLazy fires in hostDidLoad — after prefetch has completed
+				useQueryHydration({ client: qc });
+			});
+
+			const stored = JSON.parse(decodeSsrScript(script.textContent)) as Record<
+				string,
+				{ queries: { queryKey: unknown }[] }
+			>;
+			expect(stored["__tsq"].queries[0].queryKey).toStrictEqual(["items"]);
 		});
 	});
 

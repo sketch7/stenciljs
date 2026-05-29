@@ -63,7 +63,6 @@ const navSections: NavSection[] = [
 			{ href: "/stencil-signals/timer", label: "Timer" },
 			{ href: "/stencil-signals/derived-async", label: "derivedAsync" },
 			{ href: "/stencil-signals/computed-previous", label: "computedPrevious" },
-			{ href: "/stencil-signals/computed-self", label: "computed (prev)" },
 			{ href: "/stencil-signals/mouse-event", label: "signalFromEvent" },
 		],
 	},

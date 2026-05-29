@@ -43,10 +43,7 @@ export function signal<T>(value: T, options?: SignalOptions<T>): WritableSignal<
  * provided it seeds the first run, so `previousValue` is always `T`; otherwise
  * `previousValue` is `undefined` on the first run (`T | undefined`).
  */
-export function computed<T>(
-	fn: (previousValue: T) => T,
-	options: ComputedOptions<T> & { initialValue: T },
-): Signal<T>;
+export function computed<T>(fn: (previousValue: T) => T, options: ComputedOptions<T> & { initialValue: T }): Signal<T>;
 export function computed<T>(fn: (previousValue: T | undefined) => T, options?: ComputedOptions<T>): Signal<T>;
 export function computed<T>(fn: (previousValue: T | undefined) => T, options?: ComputedOptions<T>): Signal<T> {
 	let previous: T | undefined = options?.initialValue;

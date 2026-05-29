@@ -28,10 +28,8 @@ export type EmptyShape = {
 	state: Record<never, never>;
 	computed: Record<never, never>;
 	methods: Record<never, never>;
-	isStateWritable: true;
+	isStateWritable: true; // todo: default to false and require opt-in for writable stores?
 };
-
-// ─── Public store surface ────────────────────────────────────────────────────
 
 type WritableStateMembers<State extends object> = {
 	[K in keyof State]: WritableSignal<State[K]>;
@@ -63,8 +61,6 @@ export type Store<Sh extends StoreShape> = (Sh["isStateWritable"] extends false
 	Sh["methods"] &
 	StateSource<Sh["state"]>;
 
-// ─── Feature plumbing ──────────────────────────────────────────────────────────
-
 /** Configuration accepted by `withConfig`. */
 export type StoreConfig = {
 	/** When `false`, the public store exposes state as read-only. Defaults to `true`. */
@@ -91,8 +87,6 @@ export type SignalStoreFeature<
 	(internals: MutableStoreInternals, store: StoreApi<Input>): void;
 	readonly __output?: Output;
 };
-
-// ─── Type-level fold ───────────────────────────────────────────────────────────
 
 type OutputOf<F> = F extends SignalStoreFeature<infer _In, infer Out> ? Out : Record<never, never>;
 
@@ -125,6 +119,13 @@ export type FoldOuts<
 	? FoldOuts<Tail, MergeShape<Base, Head>>
 	: Base;
 
+export type SignalStoreFeatureOutputs<
+	Outs extends readonly Partial<StoreShape>[],
+	Acc extends StoreShape = EmptyShape,
+> = Outs extends readonly [infer Head extends Partial<StoreShape>, ...infer Tail extends readonly Partial<StoreShape>[]]
+	? [SignalStoreFeature<Acc, Head>, ...SignalStoreFeatureOutputs<Tail, FoldOuts<[Head], Acc>>]
+	: [];
+
 /** Merge two output partials together (used to type the result of `signalStoreFeature`). */
 export type MergeOutput<A extends Partial<StoreShape>, B extends Partial<StoreShape>> = {
 	state: (A extends { state: infer S1 extends object } ? S1 : Record<never, never>) &
@@ -155,5 +156,4 @@ export type MergeOutputs<Outs extends readonly Partial<StoreShape>[]> = Outs ext
 	? MergeOutput<Head, MergeOutputs<Tail>>
 	: Record<never, never>;
 
-// Re-export for downstream modules.
 export type { StateSignals, StateSource };

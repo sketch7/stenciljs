@@ -6,6 +6,7 @@ import type {
 	FoldShape,
 	MutableStoreInternals,
 	SignalStoreFeature,
+	SignalStoreFeatureOutputs,
 	Store,
 	StoreShape,
 } from "./types";
@@ -88,42 +89,24 @@ function build(features: readonly SignalStoreFeature[]): unknown {
 	return isWritable ? writableStore : createStoreProxy(internals, true);
 }
 
-// ─── Public overloads (arity 1–8 for full inference, then a variadic fallback) ──
-//
-// Each parameter pins a *concrete* `Input` shape (folded from prior outputs) so
-// factory callbacks (`withComputed`/`withMethods`) receive contextual types;
-// only the per-feature `Output` (O1…On) is inferred from the argument.
-
-export function signalStore<O1 extends O>(f1: SignalStoreFeature<EmptyShape, O1>): Store<FoldOuts<[O1]>>;
+// Each parameter pins the store shape folded from prior outputs, so factory
+// callbacks (`withComputed`/`withMethods`) receive contextual types.
+export function signalStore(): Store<EmptyShape>;
+export function signalStore<O1 extends O>(...features: SignalStoreFeatureOutputs<[O1]>): Store<FoldOuts<[O1]>>;
 export function signalStore<O1 extends O, O2 extends O>(
-	f1: SignalStoreFeature<EmptyShape, O1>,
-	f2: SignalStoreFeature<FoldOuts<[O1]>, O2>,
+	...features: SignalStoreFeatureOutputs<[O1, O2]>
 ): Store<FoldOuts<[O1, O2]>>;
 export function signalStore<O1 extends O, O2 extends O, O3 extends O>(
-	f1: SignalStoreFeature<EmptyShape, O1>,
-	f2: SignalStoreFeature<FoldOuts<[O1]>, O2>,
-	f3: SignalStoreFeature<FoldOuts<[O1, O2]>, O3>,
+	...features: SignalStoreFeatureOutputs<[O1, O2, O3]>
 ): Store<FoldOuts<[O1, O2, O3]>>;
 export function signalStore<O1 extends O, O2 extends O, O3 extends O, O4 extends O>(
-	f1: SignalStoreFeature<EmptyShape, O1>,
-	f2: SignalStoreFeature<FoldOuts<[O1]>, O2>,
-	f3: SignalStoreFeature<FoldOuts<[O1, O2]>, O3>,
-	f4: SignalStoreFeature<FoldOuts<[O1, O2, O3]>, O4>,
+	...features: SignalStoreFeatureOutputs<[O1, O2, O3, O4]>
 ): Store<FoldOuts<[O1, O2, O3, O4]>>;
 export function signalStore<O1 extends O, O2 extends O, O3 extends O, O4 extends O, O5 extends O>(
-	f1: SignalStoreFeature<EmptyShape, O1>,
-	f2: SignalStoreFeature<FoldOuts<[O1]>, O2>,
-	f3: SignalStoreFeature<FoldOuts<[O1, O2]>, O3>,
-	f4: SignalStoreFeature<FoldOuts<[O1, O2, O3]>, O4>,
-	f5: SignalStoreFeature<FoldOuts<[O1, O2, O3, O4]>, O5>,
+	...features: SignalStoreFeatureOutputs<[O1, O2, O3, O4, O5]>
 ): Store<FoldOuts<[O1, O2, O3, O4, O5]>>;
 export function signalStore<O1 extends O, O2 extends O, O3 extends O, O4 extends O, O5 extends O, O6 extends O>(
-	f1: SignalStoreFeature<EmptyShape, O1>,
-	f2: SignalStoreFeature<FoldOuts<[O1]>, O2>,
-	f3: SignalStoreFeature<FoldOuts<[O1, O2]>, O3>,
-	f4: SignalStoreFeature<FoldOuts<[O1, O2, O3]>, O4>,
-	f5: SignalStoreFeature<FoldOuts<[O1, O2, O3, O4]>, O5>,
-	f6: SignalStoreFeature<FoldOuts<[O1, O2, O3, O4, O5]>, O6>,
+	...features: SignalStoreFeatureOutputs<[O1, O2, O3, O4, O5, O6]>
 ): Store<FoldOuts<[O1, O2, O3, O4, O5, O6]>>;
 export function signalStore<
 	O1 extends O,
@@ -133,15 +116,7 @@ export function signalStore<
 	O5 extends O,
 	O6 extends O,
 	O7 extends O,
->(
-	f1: SignalStoreFeature<EmptyShape, O1>,
-	f2: SignalStoreFeature<FoldOuts<[O1]>, O2>,
-	f3: SignalStoreFeature<FoldOuts<[O1, O2]>, O3>,
-	f4: SignalStoreFeature<FoldOuts<[O1, O2, O3]>, O4>,
-	f5: SignalStoreFeature<FoldOuts<[O1, O2, O3, O4]>, O5>,
-	f6: SignalStoreFeature<FoldOuts<[O1, O2, O3, O4, O5]>, O6>,
-	f7: SignalStoreFeature<FoldOuts<[O1, O2, O3, O4, O5, O6]>, O7>,
-): Store<FoldOuts<[O1, O2, O3, O4, O5, O6, O7]>>;
+>(...features: SignalStoreFeatureOutputs<[O1, O2, O3, O4, O5, O6, O7]>): Store<FoldOuts<[O1, O2, O3, O4, O5, O6, O7]>>;
 export function signalStore<
 	O1 extends O,
 	O2 extends O,
@@ -152,14 +127,7 @@ export function signalStore<
 	O7 extends O,
 	O8 extends O,
 >(
-	f1: SignalStoreFeature<EmptyShape, O1>,
-	f2: SignalStoreFeature<FoldOuts<[O1]>, O2>,
-	f3: SignalStoreFeature<FoldOuts<[O1, O2]>, O3>,
-	f4: SignalStoreFeature<FoldOuts<[O1, O2, O3]>, O4>,
-	f5: SignalStoreFeature<FoldOuts<[O1, O2, O3, O4]>, O5>,
-	f6: SignalStoreFeature<FoldOuts<[O1, O2, O3, O4, O5]>, O6>,
-	f7: SignalStoreFeature<FoldOuts<[O1, O2, O3, O4, O5, O6]>, O7>,
-	f8: SignalStoreFeature<FoldOuts<[O1, O2, O3, O4, O5, O6, O7]>, O8>,
+	...features: SignalStoreFeatureOutputs<[O1, O2, O3, O4, O5, O6, O7, O8]>
 ): Store<FoldOuts<[O1, O2, O3, O4, O5, O6, O7, O8]>>;
 export function signalStore<Features extends readonly SignalStoreFeature[]>(
 	...features: Features

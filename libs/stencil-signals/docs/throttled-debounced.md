@@ -10,22 +10,38 @@ Rate-limited signals. **`throttled`** lets a value through at most once per inte
 
 ```ts
 // Source overload → read-only signal that MIRRORS the source, rate-limited
-function throttled<T>(source: Signal<T>, timeMs: number, options?: RateLimitedOptions<T>): RateLimitedSignal<T>;
-function debounced<T>(source: Signal<T>, timeMs: number, options?: RateLimitedOptions<T>): RateLimitedSignal<T>;
+function throttled<T>(
+  source: Signal<T>,
+  timeMs: number,
+  options?: RateLimitedOptions<T>,
+): RateLimitedSignal<T>;
+function debounced<T>(
+  source: Signal<T>,
+  timeMs: number,
+  options?: RateLimitedOptions<T>,
+): RateLimitedSignal<T>;
 
 // Value overload → WRITABLE signal: reads are immediate, set()/update() are rate-limited
-function throttled<T>(value: T, timeMs: number, options?: RateLimitedOptions<T>): RateLimitedWritableSignal<T>;
-function debounced<T>(value: T, timeMs: number, options?: RateLimitedOptions<T>): RateLimitedWritableSignal<T>;
+function throttled<T>(
+  value: T,
+  timeMs: number,
+  options?: RateLimitedOptions<T>,
+): RateLimitedWritableSignal<T>;
+function debounced<T>(
+  value: T,
+  timeMs: number,
+  options?: RateLimitedOptions<T>,
+): RateLimitedWritableSignal<T>;
 
 type RateLimitedOptions<T> = { equals?: (a: T, b: T) => boolean };
 type RateLimitedSignal<T> = Signal<T> & { dispose(): void };
 type RateLimitedWritableSignal<T> = WritableSignal<T> & { dispose(): void };
 ```
 
-| Overload | First arg        | Returns                      | Behavior                                                                 |
-| -------- | ---------------- | ---------------------------- | ----------------------------------------------------------------------- |
-| Source   | an existing signal | read-only `+ dispose()`    | Mirrors the source, but the mirror only updates on the rate-limit schedule |
-| Value    | a plain value    | writable `+ dispose()`       | Reads return the current value immediately; `set`/`update` are rate-limited |
+| Overload | First arg          | Returns                 | Behavior                                                                    |
+| -------- | ------------------ | ----------------------- | --------------------------------------------------------------------------- |
+| Source   | an existing signal | read-only `+ dispose()` | Mirrors the source, but the mirror only updates on the rate-limit schedule  |
+| Value    | a plain value      | writable `+ dispose()`  | Reads return the current value immediately; `set`/`update` are rate-limited |
 
 `timeMs` is a fixed number of milliseconds.
 
@@ -107,17 +123,3 @@ d.dispose();
 
 ✗ **You need the value immediately** — read the original signal; only the rate-limited mirror lags.
 ✗ **Async work with abort-on-change** — use [`derivedAsync`](derived-async.md).
-
-## Low-level helpers
-
-`throttled` / `debounced` are built on two framework-agnostic callback wrappers, also exported for direct use:
-
-```ts
-import { throttleCallback, debounceCallback } from "@ssv/stencil-signals/extensions";
-
-const onResize = throttleCallback(() => layout(), 100);
-window.addEventListener("resize", onResize);
-// onResize.cancel() clears any pending trailing call
-```
-
-Each returns a `Cancelable` — the wrapped function plus a `.cancel()` that clears the pending timer.

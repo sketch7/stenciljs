@@ -1,6 +1,6 @@
 import { SsvElement } from "@ssv/stencil-core";
 import { signal, useSignalWatcher } from "@ssv/stencil-signals";
-import { createNotifier, effect } from "@ssv/stencil-signals/extensions";
+import { createNotifier, debounced, effect } from "@ssv/stencil-signals/extensions";
 import { Component, h } from "@stencil/core";
 
 import { todoStore } from "./todo.store";
@@ -13,6 +13,8 @@ import { todoStore } from "./todo.store";
 export class AppSignalsTodo extends SsvElement {
 	readonly _ = this.setup(useSignalWatcher());
 	readonly inputText = signal("");
+	readonly filterText = signal("");
+	readonly filter = debounced(this.filterText, 250);
 	readonly $addTodo = createNotifier();
 
 	readonly _addTodo = effect(
@@ -42,6 +44,11 @@ export class AppSignalsTodo extends SsvElement {
 		const completed = todoStore.completedCount();
 		const total = todos.length;
 
+		const rawFilter = this.filterText();
+		const activeFilter = this.filter().trim().toLowerCase();
+		const isDebouncing = rawFilter.trim().toLowerCase() !== activeFilter;
+		const visibleTodos = activeFilter ? todos.filter(todo => todo.text.toLowerCase().includes(activeFilter)) : todos;
+
 		return (
 			<div class="todo">
 				<div class="add-row">
@@ -59,16 +66,33 @@ export class AppSignalsTodo extends SsvElement {
 				</div>
 
 				{total > 0 && (
+					<div class="filter-row">
+						<input
+							class="todo-input"
+							type="search"
+							placeholder="Filter tasks (debounced 250ms)…"
+							value={rawFilter}
+							onInput={e => this.filterText.set((e.target as HTMLInputElement).value)}
+						/>
+						{isDebouncing && <span class="filter-hint">filtering…</span>}
+					</div>
+				)}
+
+				{total > 0 && (
 					<p class="stats">
-						{completed} / {total} completed
+						{activeFilter
+							? `${visibleTodos.length} of ${total} shown · ${completed} completed`
+							: `${completed} / ${total} completed`}
 					</p>
 				)}
 
 				{todos.length === 0 ? (
 					<p class="empty">No tasks yet. Add one above!</p>
+				) : visibleTodos.length === 0 ? (
+					<p class="empty">No tasks match “{rawFilter.trim()}”.</p>
 				) : (
 					<ul class="list">
-						{todos.map(todo => (
+						{visibleTodos.map(todo => (
 							<li key={todo.id} class={`item ${todo.completed ? "item--done" : ""}`}>
 								<button
 									type="button"

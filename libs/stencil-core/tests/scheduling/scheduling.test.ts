@@ -18,7 +18,7 @@ describe("debounceCallback", () => {
 		expect(fn).not.toHaveBeenCalled();
 
 		vi.advanceTimersByTime(100);
-		expect(fn).toHaveBeenCalledTimes(1);
+		expect(fn).toHaveBeenCalledOnce();
 		expect(fn).toHaveBeenLastCalledWith(3);
 	});
 
@@ -34,7 +34,7 @@ describe("debounceCallback", () => {
 		expect(fn).not.toHaveBeenCalled();
 
 		vi.advanceTimersByTime(40);
-		expect(fn).toHaveBeenCalledTimes(1);
+		expect(fn).toHaveBeenCalledOnce();
 		expect(fn).toHaveBeenLastCalledWith("b");
 	});
 
@@ -57,7 +57,7 @@ describe("throttleCallback", () => {
 		const throttled = throttleCallback(fn, 100);
 
 		throttled(1);
-		expect(fn).toHaveBeenCalledTimes(1);
+		expect(fn).toHaveBeenCalledOnce();
 		expect(fn).toHaveBeenLastCalledWith(1);
 	});
 
@@ -69,7 +69,7 @@ describe("throttleCallback", () => {
 		throttled(1); // leading
 		throttled(2);
 		throttled(3); // buffered as trailing
-		expect(fn).toHaveBeenCalledTimes(1);
+		expect(fn).toHaveBeenCalledOnce();
 
 		vi.advanceTimersByTime(100);
 		expect(fn).toHaveBeenCalledTimes(2);
@@ -85,6 +85,6 @@ describe("throttleCallback", () => {
 		throttled(2);
 		throttled.cancel();
 		vi.advanceTimersByTime(100);
-		expect(fn).toHaveBeenCalledTimes(1);
+		expect(fn).toHaveBeenCalledOnce();
 	});
 });

@@ -37,8 +37,11 @@ describe("$useQuery", () => {
 
 	it("reads cached data immediately after connect", async () => {
 		qc.setQueryData(["test"], 42);
+		// staleTime keeps the cached entry fresh so no background refetch fires — otherwise the
+		// stale refetch (queryFn returns undefined) would resolve during mount() and overwrite the
+		// eager cached read before the assertions run.
 		using m = await mount(() => ({
-			query: $useQuery({ queryKey: ["test"], queryFn: vi.fn<() => unknown>() }, qc),
+			query: $useQuery({ queryKey: ["test"], queryFn: vi.fn<() => unknown>(), staleTime: Infinity }, qc),
 		}));
 		expect(m.query.data()).toBe(42);
 		expect(m.query.isSuccess()).toBeTruthy();
@@ -131,12 +134,19 @@ describe("$useQuery", () => {
 	});
 
 	it("exposes isLoading — true while pending, false after data arrives", async () => {
+		// A deferred queryFn keeps the fetch in flight across mount() so isLoading is observably true;
+		// a fast-resolving promise would settle during mount()'s awaits and report false immediately.
+		let resolveFn!: (value: string) => void;
+		const pending = new Promise<string>(resolve => {
+			resolveFn = resolve;
+		});
 		using m = await mount(() => ({
-			query: $useQuery({ queryKey: ["loading"], queryFn: () => Promise.resolve("ok") }, qc),
+			query: $useQuery({ queryKey: ["loading"], queryFn: () => pending }, qc),
 		}));
 		// mount() calls render(), establishing subscription → starts fetch → isLoading = true
 		expect(m.query.isLoading()).toBeTruthy();
 
+		resolveFn("ok");
 		await vi.waitFor(() => expect(m.query.isLoading()).toBeFalsy());
 		expect(m.query.isLoading()).toBeFalsy();
 	});

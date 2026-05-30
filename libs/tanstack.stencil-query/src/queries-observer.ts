@@ -240,6 +240,8 @@ export function useBaseQueriesObserver<TCombinedResult>(
 	// each call, matching react-query's per-render behaviour.
 	const combinedFrom = (obs: QueriesObserver<TCombinedResult>, qc: QueryClient): TCombinedResult => {
 		const opts = getOpts();
+		// `combine` is cast to `never` because the user-facing variadic signature is wider than
+		// QueriesObserver's internal single-tuple type; the runtime value is forwarded unchanged.
 		const [, getCombinedResult, trackResult] = obs.getOptimisticResult(
 			defaultedQueries(qc, opts),
 			opts.combine as never,

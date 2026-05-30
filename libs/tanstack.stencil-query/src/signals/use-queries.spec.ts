@@ -18,10 +18,10 @@ describe("$useQueries", () => {
 	});
 
 	it("registers a controller with the host on construction", async () => {
-		using host = await mount(() => {
+		using m = await mount(() => {
 			$useQueries({ queries: [{ queryKey: ["a"], queryFn: vi.fn<() => unknown>() }] }, qc);
 		});
-		expect(host.controllers.size).toBeGreaterThanOrEqual(1);
+		expect(m.controllers.size).toBeGreaterThanOrEqual(1);
 	});
 
 	it("starts every query in pending state on connect — no cached data", async () => {

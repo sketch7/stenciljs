@@ -1,0 +1,67 @@
+:host {
+	display: block;
+}
+
+.intersection-observer {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	padding: 1rem;
+	border: 1px solid var(--color-card-border, #313244);
+	border-radius: 0.5rem;
+	box-sizing: border-box;
+	transition: border-color 0.3s ease;
+}
+
+.intersection-observer.visible {
+	border-color: var(--color-primary, #cba6f7);
+}
+
+.status {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.dot {
+	width: 0.625rem;
+	height: 0.625rem;
+	border-radius: 50%;
+	background: var(--color-muted-fg, #6c7086);
+	transition: background 0.3s ease;
+}
+
+.dot.active {
+	background: var(--color-primary, #cba6f7);
+}
+
+.label {
+	font-size: 0.875rem;
+	font-weight: 600;
+	color: var(--color-muted-fg, #6c7086);
+	transition: color 0.3s ease;
+}
+
+.visible .label {
+	color: var(--color-primary, #cba6f7);
+}
+
+.ratio-bar {
+	height: 0.375rem;
+	background: var(--color-card-border, #313244);
+	border-radius: 9999px;
+	overflow: hidden;
+}
+
+.ratio-fill {
+	height: 100%;
+	background: var(--color-primary, #cba6f7);
+	border-radius: 9999px;
+	transition: width 0.15s ease;
+}
+
+.hint {
+	margin: 0;
+	font-size: 0.75rem;
+	color: var(--color-muted-fg, #6c7086);
+}

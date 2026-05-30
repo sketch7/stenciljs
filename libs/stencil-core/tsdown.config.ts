@@ -7,6 +7,7 @@ export default defineConfig({
 		"src/testing/dom/index.ts",
 		"src/transfer-state/index.ts",
 		"src/dev/index.ts",
+		"src/observer/index.ts",
 	],
 	format: ["esm"],
 	platform: "neutral",

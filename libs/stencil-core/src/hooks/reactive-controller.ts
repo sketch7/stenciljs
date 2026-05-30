@@ -2,6 +2,8 @@ import { forceUpdate } from "@stencil/core";
 import type { ComponentInterface, MixedInCtor } from "@stencil/core";
 
 import { clearCurrentHost, setCurrentHost } from "./host-context";
+import { reactiveController } from "./reactive-controller-ref";
+import type { ReactiveControllerRef } from "./reactive-controller-ref";
 
 /**
  * Lifecycle-aware controller interface for Stencil components.
@@ -89,6 +91,23 @@ export type UseHostContext = ReactiveControllerHost & {
 };
 
 /**
+ * Per-instance {@link ReactiveControllerRef} storage for {@link ReactiveControllerHostMixin}.
+ *
+ * Kept off the class so the mixin's exported anonymous class stays free of private members,
+ * which TypeScript's declaration emit (TS4094) forbids.
+ */
+const hostRefs = new WeakMap<object, ReactiveControllerRef>();
+
+/** Returns the {@link ReactiveControllerRef} bound to a mixin host instance. */
+function refOf(host: object): ReactiveControllerRef {
+	const ref = hostRefs.get(host);
+	if (!ref) {
+		throw new Error("ReactiveController ref missing — host was not initialized by ReactiveControllerHostMixin.");
+	}
+	return ref;
+}
+
+/**
  * Mixin factory that adds `ReactiveController` support to any Stencil component class.
  *
  * @example
@@ -101,20 +120,25 @@ export type UseHostContext = ReactiveControllerHost & {
  */
 export function ReactiveControllerHostMixin<B extends MixedInCtor>(Base: B) {
 	class ReactiveControllerHostClass extends Base implements ComponentInterface, ReactiveControllerHost {
-		readonly controllers = new Set<ReactiveController>();
+		/** Live set of registered controllers. */
+		readonly controllers: ReadonlySet<ReactiveController>;
 
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TypeScript mixin spec requires `any[]`
 		constructor(...args: any[]) {
 			super(...args);
+			// Shared registry + lifecycle dispatcher. The mixin only wires Stencil callbacks to it.
+			const ref = reactiveController();
+			hostRefs.set(this, ref);
+			this.controllers = ref.controllers;
 			setCurrentHost(this as unknown as ReactiveControllerHost);
 			queueMicrotask(clearCurrentHost);
 		}
 		addController(controller: ReactiveController): void {
-			this.controllers.add(controller);
+			refOf(this).add(controller);
 		}
 
 		removeController(controller: ReactiveController): void {
-			this.controllers.delete(controller);
+			refOf(this).remove(controller);
 		}
 
 		/**
@@ -155,62 +179,35 @@ export function ReactiveControllerHostMixin<B extends MixedInCtor>(Base: B) {
 		// ── Stencil lifecycle → controller hooks ─────────────────────────────────
 
 		connectedCallback(): void {
-			this.controllers.forEach(c => c.hostConnected?.());
+			refOf(this).connected();
 		}
 
 		disconnectedCallback(): void {
-			this.controllers.forEach(c => c.hostDisconnected?.());
+			refOf(this).disconnected();
 		}
 
 		componentWillLoad(): Promise<void> | void {
-			const promises: Promise<void>[] = [];
-			this.controllers.forEach(c => {
-				const result = c.hostWillLoad?.();
-				if (result) {
-					promises.push(result);
-				}
-			});
-			if (promises.length > 0) {
-				return Promise.all(promises).then();
-			}
+			return refOf(this).willLoad();
 		}
 
 		componentDidLoad(): void {
-			this.controllers.forEach(c => c.hostDidLoad?.());
+			refOf(this).didLoad();
 		}
 
 		componentWillRender(): Promise<void> | void {
-			const promises: Promise<void>[] = [];
-			this.controllers.forEach(c => {
-				const result = c.hostWillRender?.();
-				if (result) {
-					promises.push(result);
-				}
-			});
-			if (promises.length > 0) {
-				return Promise.all(promises).then();
-			}
+			return refOf(this).willRender();
 		}
 
 		componentDidRender(): void {
-			this.controllers.forEach(c => c.hostDidRender?.());
+			refOf(this).didRender();
 		}
 
 		componentWillUpdate(): Promise<void> | void {
-			const promises: Promise<void>[] = [];
-			this.controllers.forEach(c => {
-				const result = c.hostWillUpdate?.();
-				if (result) {
-					promises.push(result);
-				}
-			});
-			if (promises.length > 0) {
-				return Promise.all(promises).then();
-			}
+			return refOf(this).willUpdate();
 		}
 
 		componentDidUpdate(): void {
-			this.controllers.forEach(c => c.hostDidUpdate?.());
+			refOf(this).didUpdate();
 		}
 	}
 

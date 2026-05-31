@@ -1,0 +1,215 @@
+:host {
+	display: block;
+}
+
+/* ── Layout ── */
+.root {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1.25rem;
+}
+
+@media (max-width: 600px) {
+	.root {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* ── Panel ── */
+.panel {
+	display: flex;
+	flex-direction: column;
+	gap: 0.875rem;
+	padding: 1.25rem;
+	background-color: var(--color-surface, #1e293b);
+	border: 1px solid var(--color-border, #334155);
+	border-radius: 0.75rem;
+}
+
+.panel-header {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.panel-tag {
+	display: inline-block;
+	padding: 0.125rem 0.5rem;
+	background-color: color-mix(in srgb, var(--color-primary, #6366f1) 15%, transparent);
+	color: var(--color-primary, #6366f1);
+	border: 1px solid color-mix(in srgb, var(--color-primary, #6366f1) 30%, transparent);
+	border-radius: 9999px;
+	font-size: 0.6875rem;
+	font-weight: 600;
+	letter-spacing: 0.03em;
+	font-family: monospace;
+	width: fit-content;
+}
+
+.panel-title {
+	margin: 0;
+	font-size: 0.9375rem;
+	font-weight: 600;
+	color: var(--color-fg, #f1f5f9);
+}
+
+.panel-desc {
+	margin: 0;
+	font-size: 0.75rem;
+	color: var(--color-muted-fg, #64748b);
+}
+
+/* ── Size grid ── */
+.size-grid {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	padding: 1rem;
+	background-color: color-mix(in srgb, var(--color-bg, #0f172a) 50%, transparent);
+	border-radius: 0.5rem;
+}
+
+.size-cell {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.25rem;
+	flex: 1;
+}
+
+.size-divider {
+	width: 1px;
+	height: 2.5rem;
+	background-color: var(--color-border, #334155);
+}
+
+.size-label {
+	font-size: 0.6875rem;
+	font-weight: 500;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--color-muted-fg, #64748b);
+}
+
+.size-value {
+	font-size: 1.75rem;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+	color: var(--color-primary, #6366f1);
+	line-height: 1;
+}
+
+.size-unit {
+	font-size: 0.875rem;
+	font-weight: 500;
+	color: var(--color-muted-fg, #64748b);
+	margin-left: 0.125rem;
+}
+
+/* ── Intersection status ── */
+.intersect-status {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+}
+
+.badge {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.25rem 0.75rem;
+	border-radius: 9999px;
+	font-size: 0.75rem;
+	font-weight: 600;
+	transition:
+		background-color 0.3s ease,
+		color 0.3s ease;
+}
+
+.badge--visible {
+	background-color: color-mix(in srgb, #22c55e 15%, transparent);
+	color: #4ade80;
+	border: 1px solid color-mix(in srgb, #22c55e 30%, transparent);
+}
+
+.badge--hidden {
+	background-color: color-mix(in srgb, #94a3b8 12%, transparent);
+	color: var(--color-muted-fg, #64748b);
+	border: 1px solid color-mix(in srgb, #94a3b8 20%, transparent);
+}
+
+.ratio-text {
+	font-size: 0.8125rem;
+	font-variant-numeric: tabular-nums;
+	color: var(--color-muted-fg, #64748b);
+}
+
+/* ── Ratio progress bar ── */
+.ratio-track {
+	height: 6px;
+	background-color: color-mix(in srgb, var(--color-border, #334155) 60%, transparent);
+	border-radius: 9999px;
+	overflow: hidden;
+}
+
+.ratio-fill {
+	height: 100%;
+	background-color: var(--color-primary, #6366f1);
+	border-radius: 9999px;
+	transition: width 0.2s ease;
+}
+
+/* ── Scrollable list ── */
+.sentinel-container {
+	flex: 1;
+	overflow-y: auto;
+	max-height: 240px;
+	border: 1px solid var(--color-border, #334155);
+	border-radius: 0.5rem;
+	scrollbar-width: thin;
+	scrollbar-color: var(--color-border, #334155) transparent;
+}
+
+.item-list {
+	list-style: none;
+	margin: 0;
+	padding: 0.25rem 0;
+}
+
+.item {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.5rem 0.875rem;
+	font-size: 0.8125rem;
+	color: var(--color-fg, #f1f5f9);
+	border-bottom: 1px solid color-mix(in srgb, var(--color-border, #334155) 50%, transparent);
+}
+
+.item:last-of-type {
+	border-bottom: none;
+}
+
+.item-index {
+	min-width: 1.5rem;
+	font-size: 0.6875rem;
+	font-variant-numeric: tabular-nums;
+	color: var(--color-muted-fg, #64748b);
+	text-align: right;
+}
+
+.item-text {
+	flex: 1;
+}
+
+/* ── Sentinel row ── */
+.sentinel-row {
+	display: flex;
+	justify-content: center;
+	padding: 0.625rem 0;
+}
+
+.sentinel-label {
+	font-size: 0.6875rem;
+	color: var(--color-muted-fg, #475569);
+	letter-spacing: 0.05em;
+}

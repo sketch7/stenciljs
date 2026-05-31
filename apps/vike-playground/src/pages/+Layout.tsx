@@ -144,6 +144,7 @@ const navSections: NavSection[] = [
 			{ href: "/stencil-signals/derived-async", label: "derivedAsync" },
 			{ href: "/stencil-signals/computed-previous", label: "computedPrevious" },
 			{ href: "/stencil-signals/mouse-event", label: "signalFromEvent" },
+			{ href: "/stencil-signals/observer-signals", label: "elementSize / intersect" },
 		],
 	},
 	{

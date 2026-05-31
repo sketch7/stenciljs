@@ -22,8 +22,7 @@ export default function Page(): JSX.Element {
 			<p className="text-xs text-(--color-muted-fg)">
 				Both signals are from <code>@ssv/stencil-signals/extensions</code> and bind automatically to the Stencil
 				component lifecycle — no manual <code>disconnect()</code> needed. <code>elementSize</code> defaults to{" "}
-				<code>border-box</code>; <code>intersect</code> accepts the same options as{" "}
-				<code>IntersectionObserver</code>.
+				<code>border-box</code>; <code>intersect</code> accepts the same options as <code>IntersectionObserver</code>.
 			</p>
 		</div>
 	);

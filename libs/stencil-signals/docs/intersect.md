@@ -19,7 +19,9 @@ export class AppBox extends SsvElement {
 
   readonly signalWatcher = useSignalWatcher();
   readonly $intersect = intersect(() => this.el);
-  readonly isVisible = computed(() => this.$intersect()?.isIntersecting ?? false);
+  readonly isVisible = computed(
+    () => this.$intersect()?.isIntersecting ?? false,
+  );
 
   render() {
     return <div class={{ visible: this.isVisible() }}>...</div>;
@@ -46,16 +48,16 @@ readonly $intersect = intersect(() => this.el, {
 
 ## Options
 
-| Option         | Type                             | Default     | Description                                          |
-| -------------- | -------------------------------- | ----------- | ---------------------------------------------------- |
-| `root`         | `Element \| Document \| null`    | `null`      | Viewport element; `null` = browser viewport          |
-| `rootMargin`   | `string`                         | `'0px'`     | CSS-like margin around root                          |
-| `threshold`    | `number \| number[]`             | `0`         | Ratio(s) at which to fire                            |
-| `initialValue` | `IntersectionObserverEntry`      | `undefined` | Value before first observation and after disconnect  |
+| Option         | Type                          | Default     | Description                                         |
+| -------------- | ----------------------------- | ----------- | --------------------------------------------------- |
+| `root`         | `Element \| Document \| null` | `null`      | Viewport element; `null` = browser viewport         |
+| `rootMargin`   | `string`                      | `'0px'`     | CSS-like margin around root                         |
+| `threshold`    | `number \| number[]`          | `0`         | Ratio(s) at which to fire                           |
+| `initialValue` | `IntersectionObserverEntry`   | `undefined` | Value before first observation and after disconnect |
 
 ## API
 
-| Export            | Kind     | Description                                                    |
-| ----------------- | -------- | -------------------------------------------------------------- |
-| `intersect()`     | function | Creates a read-only `Signal<IntersectionObserverEntry \| undefined>` |
-| `IntersectOptions` | type    | Options bag for `intersect()`                                  |
+| Export             | Kind     | Description                                                          |
+| ------------------ | -------- | -------------------------------------------------------------------- |
+| `intersect()`      | function | Creates a read-only `Signal<IntersectionObserverEntry \| undefined>` |
+| `IntersectOptions` | type     | Options bag for `intersect()`                                        |

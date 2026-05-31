@@ -22,7 +22,11 @@ export class AppBox extends SsvElement {
 
   render() {
     const { width, height } = this.size();
-    return <div>{width} × {height}</div>;
+    return (
+      <div>
+        {width} × {height}
+      </div>
+    );
   }
 }
 ```
@@ -37,15 +41,15 @@ Default is `'border-box'`. Use `'content-box'` to exclude padding and border:
 readonly size = elementSize(() => this.el, { box: "content-box" });
 ```
 
-| Option         | Type                       | Default                  | Description                                          |
-| -------------- | -------------------------- | ------------------------ | ---------------------------------------------------- |
-| `box`          | `ResizeObserverBoxOptions` | `'border-box'`           | Which box to observe                                 |
+| Option         | Type                       | Default                   | Description                                         |
+| -------------- | -------------------------- | ------------------------- | --------------------------------------------------- |
+| `box`          | `ResizeObserverBoxOptions` | `'border-box'`            | Which box to observe                                |
 | `initialValue` | `ElementSizeValue`         | `{ width: 0, height: 0 }` | Value before first measurement and after disconnect |
 
 ## API
 
-| Export             | Kind      | Description                                                  |
-| ------------------ | --------- | ------------------------------------------------------------ |
-| `elementSize()`    | function  | Creates a read-only `Signal<ElementSizeValue>`               |
-| `ElementSizeValue` | type      | `{ readonly width: number; readonly height: number }`        |
-| `ElementSizeOptions` | type    | Options bag for `elementSize()`                              |
+| Export               | Kind     | Description                                           |
+| -------------------- | -------- | ----------------------------------------------------- |
+| `elementSize()`      | function | Creates a read-only `Signal<ElementSizeValue>`        |
+| `ElementSizeValue`   | type     | `{ readonly width: number; readonly height: number }` |
+| `ElementSizeOptions` | type     | Options bag for `elementSize()`                       |

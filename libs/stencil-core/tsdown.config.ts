@@ -17,4 +17,7 @@ export default defineConfig({
 	// logging branches (createContextLogger returns noop → entire log(...) calls
 	// become dead code and are removed).
 	define: { DEBUG: "false" },
+	outputOptions: {
+		chunkFileNames: "_internal/[name].js",
+	},
 });

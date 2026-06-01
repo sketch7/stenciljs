@@ -8,7 +8,7 @@ export function SignalWatcherMixin<TBase extends MixedInCtor<ComponentInterface>
 	Base: TBase,
 ): TBase & MixedInCtor<ReactiveControllerHost> {
 	class SignalWatcher extends Base {
-		constructor(...args: unknown[]) {
+		constructor(...args: any[]) {
 			super(...args);
 			useSignalWatcher();
 		}

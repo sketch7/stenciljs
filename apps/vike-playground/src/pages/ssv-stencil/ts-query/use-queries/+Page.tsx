@@ -37,6 +37,10 @@ export default function Page(): JSX.Element {
 						<code>$useQueries</code> is the signals counterpart — it returns a single <code>Signal</code> of the results
 						array (mirrors angular&apos;s <code>injectQueries</code>) and requires <code>useSignalWatcher()</code>.
 					</li>
+					<li>
+						Use <code>combine</code> with <code>$useQueries</code> to derive a plain value signal — the result is not a
+						per-element proxy array but a single <code>Signal&lt;T&gt;</code> of the combined value.
+					</li>
 				</ul>
 			</details>
 		</div>

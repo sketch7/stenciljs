@@ -52,6 +52,15 @@ export class AppTsQueryUseQueriesDemo extends SsvElement {
 					</p>
 					<app-ts-query-use-queries-signals />
 				</section>
+
+				<section class="section">
+					<h2 class="heading">Signals + combine — $usePostsWithCombine</h2>
+					<p class="hint">
+						<code>$useQueries</code> with <code>combine</code> returns a plain value signal — not a per-element proxy
+						array. Useful for deriving summaries without iterating per-element signals.
+					</p>
+					<app-ts-query-use-queries-signals-combine />
+				</section>
 			</div>
 		);
 	}

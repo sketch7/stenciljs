@@ -27,6 +27,10 @@ export type UseLoadEffectContext<TDeps extends object = object> = UseHostContext
  * **With `deps`** — pass a named `{ key: Ref<V> | WritableRef<V> }` object. Each ref's `.current` is verified
  * non-null before setup fires; the unwrapped values are passed as `{ key: V }` to the callback.
  * Setup is silently skipped if any dep is still null/undefined at `hostWillLoad`.
+ * **Reactive re-runs** — on every `hostWillRender`, dep values are compared against the snapshot
+ * taken at the last setup call. When any dep changes, cleanup runs and setup is called again with
+ * the updated values (aligned with React's `useEffect(fn, deps)` semantics). If a dep becomes
+ * null/undefined, cleanup runs and the effect is paused until the next dep change.
  *
  * @example
  * ```ts
@@ -58,25 +62,67 @@ export function useLoadEffect(
 ): void {
 	use(host => {
 		let cleanup: EffectCleanup | void;
+		let prevValues: Record<string, unknown> | undefined;
+
+		/** Reads all dep values; returns `null` if any is null/undefined (skip). */
+		const readValues = (): Record<string, unknown> | null => {
+			const values: Record<string, unknown> = {};
+			for (const [key, ref] of Object.entries(deps ?? {})) {
+				const val = ref.current;
+				if (val === null || val === undefined) {
+					return null;
+				}
+				values[key] = val;
+			}
+			return values;
+		};
+
 		return {
 			hostWillLoad() {
 				if (deps === undefined) {
 					cleanup = setup(host);
 				} else {
-					const values: Record<string, unknown> = {};
-					for (const [key, ref] of Object.entries(deps)) {
-						const val = ref.current;
-						if (val === null || val === undefined) {
-							return;
-						}
-						values[key] = val;
+					const values = readValues();
+					if (values === null) {
+						return;
 					}
+					prevValues = values;
 					cleanup = setup(mergeProxy(host, values));
+				}
+			},
+			hostWillRender() {
+				if (deps === undefined) {
+					return;
+				}
+				if (prevValues === undefined) {
+					// Setup hasn't run (skipped at hostWillLoad or dep became null) — try now
+					const values = readValues();
+					if (values === null) {
+						return;
+					}
+					prevValues = values;
+					cleanup = setup(mergeProxy(host, values));
+				} else {
+					// Setup has run — check for dep changes
+					const changed = Object.entries(deps).some(([k, ref]) => !Object.is(ref.current, prevValues?.[k]));
+					if (!changed) {
+						return;
+					}
+					cleanup?.();
+					cleanup = undefined;
+					const next = readValues();
+					if (next === null) {
+						prevValues = undefined;
+						return;
+					}
+					prevValues = next;
+					cleanup = setup(mergeProxy(host, next));
 				}
 			},
 			hostDisconnected() {
 				cleanup?.();
 				cleanup = undefined;
+				prevValues = undefined;
 			},
 		};
 	});

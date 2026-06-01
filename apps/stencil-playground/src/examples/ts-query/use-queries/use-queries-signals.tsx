@@ -3,7 +3,7 @@ import { computed, signal, useSignalWatcher } from "@ssv/stencil-signals";
 import { Component, h } from "@stencil/core";
 
 import { $usePostsByIds } from "./use-queries.api";
-import { IDS, renderItem } from "./use-queries.shared";
+import { IDS, renderSignalItem } from "./use-queries.shared";
 
 /**
  * Component 3 — **signals**. Uses `$usePostsByIds` (defined outside the component, in
@@ -23,7 +23,7 @@ export class AppTsQueryUseQueriesSignals extends SsvElement {
 	});
 
 	/** Derived signal — recomputes only when the results array changes. */
-	readonly #loadedCount = computed(() => this.#posts().filter(r => r.isSuccess).length);
+	readonly #loadedCount = computed(() => this.#posts().filter(r => r.isSuccess()).length);
 
 	render() {
 		const results = this.#posts();
@@ -32,7 +32,7 @@ export class AppTsQueryUseQueriesSignals extends SsvElement {
 				<p class="summary">
 					Loaded <strong>{this.#loadedCount()}</strong> / {results.length}
 				</p>
-				<ul class="list">{results.map((result, i) => renderItem(result, IDS[i]))}</ul>
+				<ul class="list">{results.map((result, i) => renderSignalItem(result, IDS[i]))}</ul>
 			</div>
 		);
 	}

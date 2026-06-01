@@ -1,8 +1,9 @@
+// oxlint-disable @typescript-eslint/no-explicit-any -- variadic types require any for test assertions
 // oxlint-disable-next-line import/no-unassigned-import -- registers the TC39 signal adapter
 import "@ssv/stencil-signals/tc39";
 import { TestHost, mount } from "@ssv/stencil-core/testing";
 import { QueryClient } from "@tanstack/query-core";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 
 import { $useQueries } from "./use-queries";
 
@@ -41,8 +42,8 @@ describe("$useQueries", () => {
 				afterConnect: mounted => {
 					const results = mounted.queries();
 					expect(results).toHaveLength(2);
-					expect(results[0].isPending).toBeTruthy();
-					expect(results[1].isPending).toBeTruthy();
+					expect(results[0].isPending()).toBeTruthy();
+					expect(results[1].isPending()).toBeTruthy();
 				},
 			},
 		);
@@ -62,8 +63,54 @@ describe("$useQueries", () => {
 				qc,
 			),
 		}));
-		expect(m.queries()[0].data).toBe(1);
-		expect(m.queries()[1].data).toBe(2);
+		expect(m.queries()[0].data()).toBe(1);
+		expect(m.queries()[1].data()).toBe(2);
+	});
+
+	it("each field is a callable signal — fine-grained reactivity", async () => {
+		qc.setQueryData(["a"], "hello");
+		using m = await mount(() => ({
+			queries: $useQueries(
+				{ queries: [{ queryKey: ["a"], queryFn: vi.fn<() => unknown>(), staleTime: Infinity }] },
+				qc,
+			),
+		}));
+		const result = m.queries()[0];
+		expectTypeOf(result.isPending).toBeFunction();
+		expectTypeOf(result.data).toBeFunction();
+		expectTypeOf(result.isError).toBeFunction();
+		expect(result.isPending()).toBeFalsy();
+		expect(result.isSuccess()).toBeTruthy();
+		expect(result.data()).toBe("hello");
+	});
+
+	it("per-element signal updates when cache changes for that query only", async () => {
+		qc.setQueryData(["a"], "a0");
+		qc.setQueryData(["b"], "b0");
+		using m = await mount(() => ({
+			queries: $useQueries(
+				{
+					queries: [
+						{ queryKey: ["a"], queryFn: vi.fn<() => unknown>(), staleTime: Infinity },
+						{ queryKey: ["b"], queryFn: vi.fn<() => unknown>(), staleTime: Infinity },
+					],
+				},
+				qc,
+			),
+		}));
+		const r0 = m.queries()[0];
+		const r1 = m.queries()[1];
+		qc.setQueryData(["a"], "a1");
+		await vi.waitFor(() => expect(r0.data()).toBe("a1"));
+		// r1 proxy object is stable; data for b unchanged
+		expect(r1.data()).toBe("b0");
+	});
+
+	it("refetch is a plain function (not a signal)", async () => {
+		using m = await mount(() => ({
+			queries: $useQueries({ queries: [{ queryKey: ["a"], queryFn: vi.fn<() => unknown>() }] }, qc),
+		}));
+		expectTypeOf(m.queries()[0].refetch).toBeFunction();
 	});
 
 	it("exposes new data via the signal when cache changes", async () => {
@@ -71,7 +118,7 @@ describe("$useQueries", () => {
 			queries: $useQueries({ queries: [{ queryKey: ["a"], queryFn: vi.fn<() => unknown>() }] }, qc),
 		}));
 		qc.setQueryData(["a"], 99);
-		await vi.waitFor(() => expect(m.queries()[0].data).toBe(99));
+		await vi.waitFor(() => expect(m.queries()[0].data()).toBe(99));
 	});
 
 	it("supports combine to derive a single value", async () => {
@@ -92,6 +139,22 @@ describe("$useQueries", () => {
 		expect(m.total()).toBe(30);
 	});
 
+	it("combine path returns a plain value signal (not per-field proxies)", async () => {
+		qc.setQueryData(["a"], 5);
+		using m = await mount(() => ({
+			total: $useQueries(
+				{
+					queries: [{ queryKey: ["a"], queryFn: vi.fn<() => unknown>(), staleTime: Infinity }],
+					combine: results => (results[0].data as number) ?? 0,
+				},
+				qc,
+			),
+		}));
+		// combine path returns a number directly, not a signal
+		expectTypeOf(m.total()).toBeNumber();
+		expect(m.total()).toBe(5);
+	});
+
 	it("reactively adds a query when the queries array grows", async () => {
 		let keys = ["a"];
 		qc.setQueryData(["a"], "ra");
@@ -108,7 +171,7 @@ describe("$useQueries", () => {
 		keys = ["a", "b"];
 		m.render();
 		expect(m.queries()).toHaveLength(2);
-		expect(m.queries()[1].data).toBe("rb");
+		expect(m.queries()[1].data()).toBe("rb");
 	});
 
 	it("clears data and unsubscribes after disconnect", async () => {
@@ -121,7 +184,7 @@ describe("$useQueries", () => {
 		qc.setQueryData(["a"], 2);
 		await Promise.resolve();
 
-		expect(m.queries()[0]?.data).toBeUndefined();
+		expect(m.queries()[0]?.data()).toBeUndefined();
 	});
 
 	it("component subclass pattern — field initializer in class body", async () => {
@@ -130,6 +193,6 @@ describe("$useQueries", () => {
 		}
 		qc.setQueryData(["sub"], "hello");
 		using comp = await mount(() => {}, { hostFactory: () => new ComponentLike() });
-		expect(comp.queries()[0].data).toBe("hello");
+		expect(comp.queries()[0].data()).toBe("hello");
 	});
 });

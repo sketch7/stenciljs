@@ -1,6 +1,8 @@
+import type { Signal } from "@ssv/stencil-signals";
 import { useQueries } from "@ssv/tanstack.stencil-query";
 import type { QueryClient } from "@ssv/tanstack.stencil-query";
 import { $useQueries } from "@ssv/tanstack.stencil-query/signals";
+import type { QuerySignalResult } from "@ssv/tanstack.stencil-query/signals";
 
 export type Post = {
 	userId: number;
@@ -69,6 +71,32 @@ export function usePostsLoadedCount(getIds: () => number[], client?: QueryClient
  * Reusable **signals** hook — the `$useQueries` counterpart, defined outside the component.
  * Returns a single `Signal` of the results array (mirrors angular's `injectQueries`).
  */
-export function $usePostsByIds(getIds: () => number[], client?: QueryClient) {
+export function $usePostsByIds(getIds: () => number[], client?: QueryClient): Signal<QuerySignalResult<Post>[]> {
 	return $useQueries(() => ({ queries: getIds().map(id => postQuery(id)) }), client);
+}
+
+/**
+ * Reusable signals hook with `combine` — derives a summary value from all queries.
+ * Returns a `Signal<{ total, loaded, titles }>` instead of a per-element proxy array.
+ *
+ * @example
+ * ```ts
+ * readonly #summary = $usePostsWithCombine(() => this.#ids());
+ * render() {
+ *   const { total, loaded, titles } = this.#summary();
+ * }
+ * ```
+ */
+export function $usePostsWithCombine(getIds: () => number[], client?: QueryClient) {
+	return $useQueries(
+		() => ({
+			queries: getIds().map(id => postQuery(id)),
+			combine: (results: { isSuccess: boolean; data?: Post }[]) => ({
+				total: results.length,
+				loaded: results.filter(r => r.isSuccess).length,
+				titles: results.map(r => (r.isSuccess ? (r.data?.title ?? "") : null)),
+			}),
+		}),
+		client,
+	);
 }

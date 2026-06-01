@@ -14,6 +14,7 @@ import type {
 	ThrowOnError,
 } from "@tanstack/query-core";
 
+import { useIsRestoring } from "./is-restoring";
 import { useQueryClient } from "./query-client-context";
 import { noObserverRefetch, pendingQueryState } from "./query-observer";
 import type { DefinedUseQueryResult, UseQueryOptions, UseQueryResult } from "./query-observer";
@@ -201,9 +202,16 @@ type AnyQueriesOptions = {
 	combine?: (result: QueryObserverResult[]) => unknown;
 };
 
-/** Applies the client's default options to each query in the list. */
-function defaultedQueries(qc: QueryClient, opts: AnyQueriesOptions): QueryObserverOptions[] {
-	return opts.queries.map(o => qc.defaultQueryOptions(o));
+/**
+ * Applies the client's default options to each query in the list and stamps
+ * `_optimisticResults` so TanStack Query knows whether cache is being restored.
+ */
+function defaultedQueries(qc: QueryClient, opts: AnyQueriesOptions, isRestoring = false): QueryObserverOptions[] {
+	return opts.queries.map(o => {
+		const d = qc.defaultQueryOptions(o);
+		d._optimisticResults = isRestoring ? "isRestoring" : "optimistic";
+		return d;
+	});
 }
 
 /**
@@ -233,17 +241,22 @@ export function useBaseQueriesObserver<TCombinedResult>(
 	const getOpts = typeof getOptions === "function" ? getOptions : () => getOptions;
 
 	const clientRef = useQueryClient(client);
+	const isRestoringRef = useIsRestoring();
 
 	let observer: QueriesObserver<TCombinedResult> | undefined;
 
 	// Computes the combined result via the observer's optimistic path — recomputes `combine`
 	// each call, matching react-query's per-render behaviour.
-	const combinedFrom = (obs: QueriesObserver<TCombinedResult>, qc: QueryClient): TCombinedResult => {
+	const combinedFrom = (
+		obs: QueriesObserver<TCombinedResult>,
+		qc: QueryClient,
+		isRestoring: boolean,
+	): TCombinedResult => {
 		const opts = getOpts();
 		// `combine` is cast to `never` because the user-facing variadic signature is wider than
 		// QueriesObserver's internal single-tuple type; the runtime value is forwarded unchanged.
 		const [, getCombinedResult, trackResult] = obs.getOptimisticResult(
-			defaultedQueries(qc, opts),
+			defaultedQueries(qc, opts, isRestoring),
 			opts.combine as never,
 		);
 		return getCombinedResult(trackResult()) as TCombinedResult;
@@ -254,19 +267,19 @@ export function useBaseQueriesObserver<TCombinedResult>(
 
 	// hostWillLoad: context guaranteed resolved — qc is non-null and auto-unwrapped from clientRef.
 	useLoadEffect(
-		({ qc, requestUpdate }) => {
+		({ qc, isRestoring, requestUpdate }) => {
 			const opts = getOpts();
-			observer = new QueriesObserver<TCombinedResult>(qc, defaultedQueries(qc, opts), {
+			observer = new QueriesObserver<TCombinedResult>(qc, defaultedQueries(qc, opts, isRestoring), {
 				combine: opts.combine as never,
 			});
 
 			// Sync immediately in case data is already cached.
-			handlers.onConnect?.(combinedFrom(observer, qc));
+			handlers.onConnect?.(combinedFrom(observer, qc, isRestoring));
 
 			const unsubscribe = observer.subscribe(
 				notifyManager.batchCalls(() => {
 					if (observer) {
-						handlers.onResult(combinedFrom(observer, qc), requestUpdate);
+						handlers.onResult(combinedFrom(observer, qc, isRestoringRef.current), requestUpdate);
 					}
 				}),
 			);
@@ -278,7 +291,7 @@ export function useBaseQueriesObserver<TCombinedResult>(
 				handlers.onDispose?.();
 			};
 		},
-		{ qc: clientRef },
+		{ qc: clientRef, isRestoring: isRestoringRef },
 	);
 
 	use(() => ({
@@ -288,8 +301,9 @@ export function useBaseQueriesObserver<TCombinedResult>(
 				return;
 			}
 			const opts = getOpts();
-			observer.setQueries(defaultedQueries(qc, opts), { combine: opts.combine as never });
-			handlers.onRender?.(combinedFrom(observer, qc));
+			const isRestoring = isRestoringRef.current;
+			observer.setQueries(defaultedQueries(qc, opts, isRestoring), { combine: opts.combine as never });
+			handlers.onRender?.(combinedFrom(observer, qc, isRestoring));
 		},
 	}));
 
@@ -297,7 +311,7 @@ export function useBaseQueriesObserver<TCombinedResult>(
 		getObserver: () => observer,
 		getCurrentResult: () => {
 			const qc = clientRef.current;
-			return observer && qc ? combinedFrom(observer, qc) : pendingResult();
+			return observer && qc ? combinedFrom(observer, qc, isRestoringRef.current) : pendingResult();
 		},
 	};
 }

@@ -1,5 +1,6 @@
 import { clearCurrentHost, setCurrentHost } from "../hooks/host-context";
 import type { ReactiveController, ReactiveControllerHost } from "../hooks/reactive-controller";
+import { reactiveController } from "../hooks/reactive-controller-ref";
 
 /**
  * Minimal host for unit-testing hooks and controllers without the Stencil runtime.
@@ -16,9 +17,13 @@ import type { ReactiveController, ReactiveControllerHost } from "../hooks/reacti
  * ```
  */
 export class TestHost extends EventTarget implements ReactiveControllerHost {
-	readonly controllers = new Set<ReactiveController>();
+	/** Shared registry + lifecycle dispatcher (same engine used by the production mixin). */
+	readonly #ref = reactiveController();
 	renderCount = 0;
 	#disconnected = false;
+
+	/** Live set of registered controllers. */
+	readonly controllers: ReadonlySet<ReactiveController> = this.#ref.controllers;
 
 	constructor() {
 		super();
@@ -26,21 +31,17 @@ export class TestHost extends EventTarget implements ReactiveControllerHost {
 	}
 
 	addController(ctrl: ReactiveController): void {
-		this.controllers.add(ctrl);
+		this.#ref.add(ctrl);
 	}
 
 	removeController(ctrl: ReactiveController): void {
-		this.controllers.delete(ctrl);
+		this.#ref.remove(ctrl);
 	}
 
 	/** Simulates a full render cycle: `componentWillRender` → `hostWillRender`, then `componentDidRender` → `hostDidRender`. */
 	render(): void {
-		for (const ctrl of this.controllers) {
-			ctrl.hostWillRender?.();
-		}
-		for (const ctrl of this.controllers) {
-			ctrl.hostDidRender?.();
-		}
+		this.#ref.willRender();
+		this.#ref.didRender();
 	}
 
 	/** Simulates a re-render triggered by `requestUpdate`. Increments `renderCount` then runs the render cycle. */
@@ -51,30 +52,17 @@ export class TestHost extends EventTarget implements ReactiveControllerHost {
 
 	/** Simulates `connectedCallback` → `hostConnected` on each controller. */
 	connect(): void {
-		for (const ctrl of this.controllers) {
-			ctrl.hostConnected?.();
-		}
+		this.#ref.connected();
 	}
 
 	/** Simulates `componentWillLoad` → `hostWillLoad` on each controller (awaits promises). */
 	async willLoad(): Promise<void> {
-		const promises: Promise<void>[] = [];
-		for (const ctrl of this.controllers) {
-			const result = ctrl.hostWillLoad?.();
-			if (result) {
-				promises.push(result);
-			}
-		}
-		if (promises.length > 0) {
-			await Promise.all(promises);
-		}
+		await this.#ref.willLoad();
 	}
 
 	/** Simulates `componentDidLoad` → `hostDidLoad` on each controller. */
 	didLoad(): void {
-		for (const ctrl of this.controllers) {
-			ctrl.hostDidLoad?.();
-		}
+		this.#ref.didLoad();
 	}
 
 	/** Simulates `disconnectedCallback` → `hostDisconnected` on each controller. Idempotent. */
@@ -83,9 +71,7 @@ export class TestHost extends EventTarget implements ReactiveControllerHost {
 			return;
 		}
 		this.#disconnected = true;
-		for (const ctrl of this.controllers) {
-			ctrl.hostDisconnected?.();
-		}
+		this.#ref.disconnected();
 	}
 
 	/** Clears the host context. Call in `afterEach` to clean up between tests. */

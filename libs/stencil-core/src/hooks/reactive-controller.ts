@@ -2,6 +2,8 @@ import { forceUpdate } from "@stencil/core";
 import type { ComponentInterface, MixedInCtor } from "@stencil/core";
 
 import { clearCurrentHost, setCurrentHost } from "./host-context";
+import { reactiveController } from "./reactive-controller-ref";
+import type { ReactiveControllerRef } from "./reactive-controller-ref";
 
 /**
  * Lifecycle-aware controller interface for Stencil components.
@@ -101,20 +103,23 @@ export type UseHostContext = ReactiveControllerHost & {
  */
 export function ReactiveControllerHostMixin<B extends MixedInCtor>(Base: B) {
 	class ReactiveControllerHostClass extends Base implements ComponentInterface, ReactiveControllerHost {
-		readonly controllers = new Set<ReactiveController>();
+		// Public field — TS4094 forbids private members on exported anonymous class expressions.
+		readonly __reactiveRef: ReactiveControllerRef;
 
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TypeScript mixin spec requires `any[]`
 		constructor(...args: any[]) {
 			super(...args);
+			// Shared registry + lifecycle dispatcher. The mixin only wires Stencil callbacks to it.
+			this.__reactiveRef = reactiveController();
 			setCurrentHost(this as unknown as ReactiveControllerHost);
 			queueMicrotask(clearCurrentHost);
 		}
 		addController(controller: ReactiveController): void {
-			this.controllers.add(controller);
+			this.__reactiveRef.add(controller);
 		}
 
 		removeController(controller: ReactiveController): void {
-			this.controllers.delete(controller);
+			this.__reactiveRef.remove(controller);
 		}
 
 		/**
@@ -155,62 +160,35 @@ export function ReactiveControllerHostMixin<B extends MixedInCtor>(Base: B) {
 		// ── Stencil lifecycle → controller hooks ─────────────────────────────────
 
 		connectedCallback(): void {
-			this.controllers.forEach(c => c.hostConnected?.());
+			this.__reactiveRef.connected();
 		}
 
 		disconnectedCallback(): void {
-			this.controllers.forEach(c => c.hostDisconnected?.());
+			this.__reactiveRef.disconnected();
 		}
 
 		componentWillLoad(): Promise<void> | void {
-			const promises: Promise<void>[] = [];
-			this.controllers.forEach(c => {
-				const result = c.hostWillLoad?.();
-				if (result) {
-					promises.push(result);
-				}
-			});
-			if (promises.length > 0) {
-				return Promise.all(promises).then();
-			}
+			return this.__reactiveRef.willLoad();
 		}
 
 		componentDidLoad(): void {
-			this.controllers.forEach(c => c.hostDidLoad?.());
+			this.__reactiveRef.didLoad();
 		}
 
 		componentWillRender(): Promise<void> | void {
-			const promises: Promise<void>[] = [];
-			this.controllers.forEach(c => {
-				const result = c.hostWillRender?.();
-				if (result) {
-					promises.push(result);
-				}
-			});
-			if (promises.length > 0) {
-				return Promise.all(promises).then();
-			}
+			return this.__reactiveRef.willRender();
 		}
 
 		componentDidRender(): void {
-			this.controllers.forEach(c => c.hostDidRender?.());
+			this.__reactiveRef.didRender();
 		}
 
 		componentWillUpdate(): Promise<void> | void {
-			const promises: Promise<void>[] = [];
-			this.controllers.forEach(c => {
-				const result = c.hostWillUpdate?.();
-				if (result) {
-					promises.push(result);
-				}
-			});
-			if (promises.length > 0) {
-				return Promise.all(promises).then();
-			}
+			return this.__reactiveRef.willUpdate();
 		}
 
 		componentDidUpdate(): void {
-			this.controllers.forEach(c => c.hostDidUpdate?.());
+			this.__reactiveRef.didUpdate();
 		}
 	}
 

@@ -49,5 +49,17 @@
       }
     }
   ],
+  "release": {
+    "projects": ["libs/*"],
+    "version": {
+      "preserveLocalDependencyProtocols": false,
+      "git": {
+        "stageChanges": false
+      },
+      "versionActionsOptions": {
+        "skipLockFileUpdate": true
+      }
+    }
+  },
   "analytics": false
 }

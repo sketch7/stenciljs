@@ -246,7 +246,7 @@ export function useBaseQueriesObserver<TCombinedResult>(
 	let observer: QueriesObserver<TCombinedResult> | undefined;
 
 	// Computes the combined result via the observer's optimistic path — recomputes `combine`
-	// each call, matching react-query's per-render behaviour.
+	// each call, matching react-query's per-render behavior.
 	const combinedFrom = (
 		obs: QueriesObserver<TCombinedResult>,
 		qc: QueryClient,

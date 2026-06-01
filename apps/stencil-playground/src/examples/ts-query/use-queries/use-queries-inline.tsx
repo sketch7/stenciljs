@@ -5,6 +5,7 @@ import { Component, h } from "@stencil/core";
 
 import { postQueries, userQueries } from "./use-queries.api";
 import type { Post, User } from "./use-queries.api";
+import { renderQueryStatus } from "./use-queries.utils";
 
 /**
  * Demonstrates `useQueries` used inline — query options are defined directly in the class,
@@ -24,11 +25,6 @@ export class AppTsQueryUseQueriesInline extends SsvElement {
 	// Both queries run in parallel — no nesting required.
 	readonly #results = useQueries([postQueries.detail(1), userQueries.detail(1)]);
 
-	private renderStatus(result: QueryObserverResult | undefined) {
-		const cls = `badge badge--${result?.isPending ? "pending" : result?.isError ? "error" : "success"}`;
-		return <span class={cls}>{result?.isPending ? "loading…" : result?.isError ? "error" : "ready"}</span>;
-	}
-
 	render() {
 		const [postResult, userResult] = this.#results();
 		const post = postResult as QueryObserverResult<Post>;
@@ -43,7 +39,7 @@ export class AppTsQueryUseQueriesInline extends SsvElement {
 
 				<div class="results">
 					<div class="result-card">
-						<div class="result-card__label">Post {this.renderStatus(post)}</div>
+						<div class="result-card__label">Post {renderQueryStatus(post)}</div>
 						{post?.data && (
 							<div>
 								<p class="result-card__title">{post.data.title}</p>
@@ -54,7 +50,7 @@ export class AppTsQueryUseQueriesInline extends SsvElement {
 					</div>
 
 					<div class="result-card">
-						<div class="result-card__label">User {this.renderStatus(user)}</div>
+						<div class="result-card__label">User {renderQueryStatus(user)}</div>
 						{user?.data && (
 							<div>
 								<p class="result-card__title">{user.data.name}</p>

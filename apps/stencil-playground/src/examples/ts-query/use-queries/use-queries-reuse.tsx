@@ -4,6 +4,7 @@ import { Component, h } from "@stencil/core";
 
 import { usePostAndUser } from "./use-queries.api";
 import type { Post, User } from "./use-queries.api";
+import { renderQueryStatus } from "./use-queries.utils";
 
 /**
  * Demonstrates `useQueries` via a reusable hook — the `usePostAndUser` helper
@@ -24,11 +25,6 @@ export class AppTsQueryUseQueriesReuse extends SsvElement {
 	// No explicit client → resolves via context from the parent demo host.
 	readonly #results = usePostAndUser(1, 1);
 
-	private renderStatus(result: QueryObserverResult | undefined) {
-		const cls = `badge badge--${result?.isPending ? "pending" : result?.isError ? "error" : "success"}`;
-		return <span class={cls}>{result?.isPending ? "loading…" : result?.isError ? "error" : "ready"}</span>;
-	}
-
 	render() {
 		const [postResult, userResult] = this.#results();
 		const post = postResult as QueryObserverResult<Post>;
@@ -46,7 +42,7 @@ export class AppTsQueryUseQueriesReuse extends SsvElement {
 
 				<div class="results">
 					<div class="result-card">
-						<div class="result-card__label">Post {this.renderStatus(post)}</div>
+						<div class="result-card__label">Post {renderQueryStatus(post)}</div>
 						{post?.data && (
 							<div>
 								<p class="result-card__title">{post.data.title}</p>
@@ -57,7 +53,7 @@ export class AppTsQueryUseQueriesReuse extends SsvElement {
 					</div>
 
 					<div class="result-card">
-						<div class="result-card__label">User {this.renderStatus(user)}</div>
+						<div class="result-card__label">User {renderQueryStatus(user)}</div>
 						{user?.data && (
 							<div>
 								<p class="result-card__title">{user.data.name}</p>

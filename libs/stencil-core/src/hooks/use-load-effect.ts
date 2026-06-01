@@ -1,11 +1,20 @@
 import { mergeProxy } from "../internal";
+import type { DepEntry } from "./dep-tracker";
+import { createNamedTracker } from "./dep-tracker";
 import type { UseHostContext } from "./reactive-controller";
 import { use } from "./use";
 import type { EffectCleanup } from "./use-effect";
 
-/** Maps `{ key: Ref<V> | WritableRef<V> }` → `{ key: NonNullable<V> }` for the deps argument of {@link useLoadEffect}. */
-type RefObjectValues<T extends Record<string, { current: unknown }>> = {
-	[K in keyof T]: T[K] extends { current: infer V } ? NonNullable<V> : never;
+/**
+ * Maps a named `DepEntry` record to its unwrapped, non-nullable values.
+ * Getter functions (`() => T`) resolve to `NonNullable<T>`; refs (`{ current: T }`) do the same.
+ */
+type DepObjectValues<T extends Record<string, DepEntry>> = {
+	[K in keyof T]: T[K] extends () => infer V
+		? NonNullable<V>
+		: T[K] extends { current: infer V }
+			? NonNullable<V>
+			: never;
 };
 
 /**
@@ -24,8 +33,8 @@ export type UseLoadEffectContext<TDeps extends object = object> = UseHostContext
  * There is no React equivalent — this hook addresses the Stencil-specific hydration ordering
  * where context may not be resolved at `hostConnected` (bottom-up init).
  *
- * **With `deps`** — pass a named `{ key: Ref<V> | WritableRef<V> }` object. Each ref's `.current` is verified
- * non-null before setup fires; the unwrapped values are passed as `{ key: V }` to the callback.
+ * **With `deps`** — pass a named `{ key: Ref<V> | WritableRef<V> | (() => V) }` object. Each dep value is
+ * verified non-null before setup fires; the unwrapped values are passed as `{ key: V }` to the callback.
  * Setup is silently skipped if any dep is still null/undefined at `hostWillLoad`.
  * **Reactive re-runs** — on every `hostWillRender`, dep values are compared against the snapshot
  * taken at the last setup call. When any dep changes, cleanup runs and setup is called again with
@@ -50,79 +59,77 @@ export type UseLoadEffectContext<TDeps extends object = object> = UseHostContext
  *   return () => { observer.destroy(); };
  * }, { qc: clientRef });
  * ```
+ *
+ * @example
+ * ```ts
+ * // Getter fn as dep — signal-friendly
+ * useLoadEffect(({ val }) => {
+ *   console.log(val);
+ * }, { val: () => signal.value });
+ * ```
  */
 export function useLoadEffect(setup: (ctx: UseLoadEffectContext) => EffectCleanup | void): void;
-export function useLoadEffect<T extends Record<string, { current: unknown }>>(
-	setup: (ctx: UseLoadEffectContext<RefObjectValues<T>>) => EffectCleanup | void,
+export function useLoadEffect<T extends Record<string, DepEntry>>(
+	setup: (ctx: UseLoadEffectContext<DepObjectValues<T>>) => EffectCleanup | void,
 	deps: T,
 ): void;
 export function useLoadEffect(
 	setup: (ctx: UseLoadEffectContext) => EffectCleanup | void,
-	deps?: Record<string, { current: unknown }>,
+	deps?: Record<string, DepEntry>,
 ): void {
 	use(host => {
 		let cleanup: EffectCleanup | void;
-		let prevValues: Record<string, unknown> | undefined;
 
-		/** Reads all dep values; returns `null` if any is null/undefined (skip). */
-		const readValues = (): Record<string, unknown> | null => {
-			const values: Record<string, unknown> = {};
-			for (const [key, ref] of Object.entries(deps ?? {})) {
-				const val = ref.current;
-				if (val === null || val === undefined) {
-					return null;
-				}
-				values[key] = val;
-			}
-			return values;
-		};
+		if (deps === undefined) {
+			return {
+				hostWillLoad() {
+					cleanup = setup(host);
+				},
+				hostDisconnected() {
+					cleanup?.();
+					cleanup = undefined;
+				},
+			};
+		}
+
+		const tracker = createNamedTracker(deps);
 
 		return {
 			hostWillLoad() {
-				if (deps === undefined) {
-					cleanup = setup(host);
-				} else {
-					const values = readValues();
-					if (values === null) {
-						return;
-					}
-					prevValues = values;
-					cleanup = setup(mergeProxy(host, values));
-				}
-			},
-			hostWillRender() {
-				if (deps === undefined) {
+				const values = tracker.read();
+				if (values === null) {
 					return;
 				}
-				if (prevValues === undefined) {
-					// Setup hasn't run (skipped at hostWillLoad or dep became null) — try now
-					const values = readValues();
+				tracker.commit(values);
+				cleanup = setup(mergeProxy(host, values));
+			},
+			hostWillRender() {
+				const values = tracker.read();
+				if (tracker.isActive) {
 					if (values === null) {
+						cleanup?.();
+						cleanup = undefined;
+						tracker.reset();
 						return;
 					}
-					prevValues = values;
-					cleanup = setup(mergeProxy(host, values));
-				} else {
-					// Setup has run — check for dep changes
-					const changed = Object.entries(deps).some(([k, ref]) => !Object.is(ref.current, prevValues?.[k]));
-					if (!changed) {
+					if (!tracker.hasChanged(values)) {
 						return;
 					}
 					cleanup?.();
-					cleanup = undefined;
-					const next = readValues();
-					if (next === null) {
-						prevValues = undefined;
+					tracker.commit(values);
+					cleanup = setup(mergeProxy(host, values));
+				} else {
+					if (values === null) {
 						return;
 					}
-					prevValues = next;
-					cleanup = setup(mergeProxy(host, next));
+					tracker.commit(values);
+					cleanup = setup(mergeProxy(host, values));
 				}
 			},
 			hostDisconnected() {
 				cleanup?.();
 				cleanup = undefined;
-				prevValues = undefined;
+				tracker.reset();
 			},
 		};
 	});

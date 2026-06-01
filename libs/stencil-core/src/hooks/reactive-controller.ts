@@ -91,23 +91,6 @@ export type UseHostContext = ReactiveControllerHost & {
 };
 
 /**
- * Per-instance {@link ReactiveControllerRef} storage for {@link ReactiveControllerHostMixin}.
- *
- * Kept off the class so the mixin's exported anonymous class stays free of private members,
- * which TypeScript's declaration emit (TS4094) forbids.
- */
-const hostRefs = new WeakMap<object, ReactiveControllerRef>();
-
-/** Returns the {@link ReactiveControllerRef} bound to a mixin host instance. */
-function refOf(host: object): ReactiveControllerRef {
-	const ref = hostRefs.get(host);
-	if (!ref) {
-		throw new Error("ReactiveController ref missing — host was not initialized by ReactiveControllerHostMixin.");
-	}
-	return ref;
-}
-
-/**
  * Mixin factory that adds `ReactiveController` support to any Stencil component class.
  *
  * @example
@@ -120,25 +103,23 @@ function refOf(host: object): ReactiveControllerRef {
  */
 export function ReactiveControllerHostMixin<B extends MixedInCtor>(Base: B) {
 	class ReactiveControllerHostClass extends Base implements ComponentInterface, ReactiveControllerHost {
-		/** Live set of registered controllers. */
-		readonly controllers: ReadonlySet<ReactiveController>;
+		// Public field — TS4094 forbids private members on exported anonymous class expressions.
+		readonly __reactiveRef: ReactiveControllerRef;
 
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TypeScript mixin spec requires `any[]`
 		constructor(...args: any[]) {
 			super(...args);
 			// Shared registry + lifecycle dispatcher. The mixin only wires Stencil callbacks to it.
-			const ref = reactiveController();
-			hostRefs.set(this, ref);
-			this.controllers = ref.controllers;
+			this.__reactiveRef = reactiveController();
 			setCurrentHost(this as unknown as ReactiveControllerHost);
 			queueMicrotask(clearCurrentHost);
 		}
 		addController(controller: ReactiveController): void {
-			refOf(this).add(controller);
+			this.__reactiveRef.add(controller);
 		}
 
 		removeController(controller: ReactiveController): void {
-			refOf(this).remove(controller);
+			this.__reactiveRef.remove(controller);
 		}
 
 		/**
@@ -179,35 +160,35 @@ export function ReactiveControllerHostMixin<B extends MixedInCtor>(Base: B) {
 		// ── Stencil lifecycle → controller hooks ─────────────────────────────────
 
 		connectedCallback(): void {
-			refOf(this).connected();
+			this.__reactiveRef.connected();
 		}
 
 		disconnectedCallback(): void {
-			refOf(this).disconnected();
+			this.__reactiveRef.disconnected();
 		}
 
 		componentWillLoad(): Promise<void> | void {
-			return refOf(this).willLoad();
+			return this.__reactiveRef.willLoad();
 		}
 
 		componentDidLoad(): void {
-			refOf(this).didLoad();
+			this.__reactiveRef.didLoad();
 		}
 
 		componentWillRender(): Promise<void> | void {
-			return refOf(this).willRender();
+			return this.__reactiveRef.willRender();
 		}
 
 		componentDidRender(): void {
-			refOf(this).didRender();
+			this.__reactiveRef.didRender();
 		}
 
 		componentWillUpdate(): Promise<void> | void {
-			return refOf(this).willUpdate();
+			return this.__reactiveRef.willUpdate();
 		}
 
 		componentDidUpdate(): void {
-			refOf(this).didUpdate();
+			this.__reactiveRef.didUpdate();
 		}
 	}
 

@@ -25,14 +25,14 @@ describe("reactiveControllerHostMixin", () => {
 		it("adds a controller", () => {
 			const ctrl: ReactiveController = {};
 			host.addController(ctrl);
-			expect(host.controllers.has(ctrl)).toBeTruthy();
+			expect(host.__reactiveRef.controllers.has(ctrl)).toBeTruthy();
 		});
 
 		it("removes a controller", () => {
 			const ctrl: ReactiveController = {};
 			host.addController(ctrl);
 			host.removeController(ctrl);
-			expect(host.controllers.has(ctrl)).toBeFalsy();
+			expect(host.__reactiveRef.controllers.has(ctrl)).toBeFalsy();
 		});
 
 		it("can add multiple controllers", () => {
@@ -40,7 +40,7 @@ describe("reactiveControllerHostMixin", () => {
 			const ctrl2: ReactiveController = {};
 			host.addController(ctrl1);
 			host.addController(ctrl2);
-			expect(host.controllers.size).toBe(2);
+			expect(host.__reactiveRef.controllers.size).toBe(2);
 		});
 	});
 

@@ -2,7 +2,7 @@ import { defineConfig } from "oxlint";
 
 export default defineConfig({
 	plugins: ["typescript", "import", "react", "react-perf", "jsx-a11y", "vitest", "unicorn"],
-	jsPlugins: ["oxlint-tailwindcss"],
+	jsPlugins: ["oxlint-tailwindcss", "./tools/oxlint-plugins/require-lifecycle-super.js"],
 	env: {
 		browser: true,
 		es2022: true,
@@ -17,6 +17,9 @@ export default defineConfig({
 		pedantic: "warn",
 	},
 	rules: {
+		// ── Stencil lifecycle super enforcement ────────────────────────────────
+		"stencil-lifecycle/require-lifecycle-super": "error",
+
 		// ── General ────────────────────────────────────────────────────────────
 		curly: ["error", "all", "consistent"],
 		"prefer-const": "error",

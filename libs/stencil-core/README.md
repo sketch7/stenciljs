@@ -12,17 +12,18 @@ pnpm add @ssv/stencil-core
 
 ## API
 
-| Export              | Kind   | Purpose                                                             |
-| ------------------- | ------ | ------------------------------------------------------------------- |
-| `SsvElement`        | class  | Base class with controller support (single inheritance)             |
-| `SsvElementMixin`   | mixin  | Same as `SsvElement` but composable via `Mixin()`                   |
-| `.setup()`          | method | Groups side-effect-only hooks under a single `readonly _` field     |
-| `useEffect`         | fn     | Side-effect on every render or mount-only; cleanup on disconnect    |
-| `useLoadEffect`     | fn     | Side-effect in `hostWillLoad` (context guaranteed); has host access |
-| `Ref<T>`            | type   | Callable read-only ref — `ref()` or `ref.current`                   |
-| `WritableRef<T>`    | type   | Writable callable ref — set `.current`, expose via `.asReadonly()`  |
-| `createRef`         | fn     | Creates a `Ref<T>` backed by a getter function                      |
-| `createWritableRef` | fn     | Creates a `WritableRef<T>` backed by a settable value cell          |
+| Export              | Kind   | Purpose                                                                                         |
+| ------------------- | ------ | ----------------------------------------------------------------------------------------------- |
+| `SsvElement`        | class  | Base class with controller support (single inheritance)                                         |
+| `SsvElementMixin`   | mixin  | Same as `SsvElement` but composable via `Mixin()`                                               |
+| `.setup()`          | method | Groups side-effect-only hooks under a single `readonly _` field                                 |
+| `useEffect`         | fn     | Side-effect on every render, mount-only, or reactive dep-tracked; cleanup on disconnect         |
+| `useLoadEffect`     | fn     | Side-effect in `hostWillLoad` (context guaranteed); reactive named-dep re-runs; has host access |
+| `DepEntry`          | type   | Dep source — ref (`{ current: T }`) or getter fn (`() => T`)                                    |
+| `Ref<T>`            | type   | Callable read-only ref — `ref()` or `ref.current`                                               |
+| `WritableRef<T>`    | type   | Writable callable ref — set `.current`, expose via `.asReadonly()`                              |
+| `createRef`         | fn     | Creates a `Ref<T>` backed by a getter function                                                  |
+| `createWritableRef` | fn     | Creates a `WritableRef<T>` backed by a settable value cell                                      |
 
 ## Usage
 

@@ -351,14 +351,14 @@ export class AppPosts extends SsvElement {
 
 ### Signals API
 
-| Export                 | Kind | Purpose                                                       |
-| ---------------------- | ---- | ------------------------------------------------------------- |
-| `$useQuery`            | fn   | Per-field signal store + `refetch`                            |
-| `$useQueries`          | fn   | Single `Signal` of the parallel-queries results array         |
-| `$useMutation`         | fn   | Per-field signal store + `mutate` / `mutateAsync` / `reset`   |
-| `$usePrefetchQuery`    | fn   | Reactive prefetch — re-fires when signal-based options change |
-| `QuerySignalResult`    | type | `Store<QueryStateData> & { refetch }`                         |
-| `MutationSignalResult` | type | `Store<MutationStateData> & { mutate, mutateAsync, reset }`   |
+| Export                 | Kind | Purpose                                                                                |
+| ---------------------- | ---- | -------------------------------------------------------------------------------------- |
+| `$useQuery`            | fn   | Per-field signal store + `refetch`                                                     |
+| `$useQueries`          | fn   | Signal of per-field signal-proxy results (no `combine`) or a derived value (`combine`) |
+| `$useMutation`         | fn   | Per-field signal store + `mutate` / `mutateAsync` / `reset`                            |
+| `$usePrefetchQuery`    | fn   | Reactive prefetch — re-fires when signal-based options change                          |
+| `QuerySignalResult`    | type | `Store<QueryStateData> & { refetch }`                                                  |
+| `MutationSignalResult` | type | `Store<MutationStateData> & { mutate, mutateAsync, reset }`                            |
 
 ### `$useQuery` vs `useQuery`
 
@@ -414,7 +414,13 @@ export class AppHoverList extends SsvElement {
 
 ### `$useQueries`
 
-The signals counterpart of `useQueries` — subscribes to a list of queries in parallel and exposes the combined result as a **single `Signal`** of the results array (mirrors angular's `injectQueries`). Reads inside `render()` or `computed()` are tracked. Requires `useSignalWatcher()`.
+The signals counterpart of `useQueries`. Subscribes to a list of queries in parallel. Requires `useSignalWatcher()` and `@ssv/stencil-signals`.
+
+**Without `combine`** — each element in the returned signal array is a `QuerySignalResult` — every field is a callable signal (`result.isPending()`, `result.data()`, …). Only the component that reads a changed field re-renders.
+
+**With `combine`** — the signal holds the single value returned by the combiner; type narrows to `TCombinedResult`.
+
+Pass a **getter function** for reactive options (e.g. when the query list depends on a signal). When all queries share the same `TData`/`TError` type (e.g. produced by `.map()`), TypeScript infers the element type automatically — no explicit annotation needed.
 
 ```ts
 import { $useQueries } from "@ssv/tanstack.stencil-query/signals";

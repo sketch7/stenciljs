@@ -170,32 +170,49 @@ export class SsvTimerHost extends Mixin(SsvElementMixin) {
 
 ## `useEffect`
 
-Registers a side-effect with React-identical semantics. Two forms:
+Registers a side-effect with React-identical semantics.
 
-| Call                | Lifecycle                                                             | React equivalent    |
-| ------------------- | --------------------------------------------------------------------- | ------------------- |
-| `useEffect(fn)`     | `hostDidRender` → cleanup → `hostDidRender` … → cleanup on disconnect | `useEffect(fn)`     |
-| `useEffect(fn, [])` | `hostConnected` → cleanup on `hostDisconnected`                       | `useEffect(fn, [])` |
+| Call                       | Lifecycle                                                    | React equivalent           |
+| -------------------------- | ------------------------------------------------------------ | -------------------------- |
+| `useEffect(fn)`            | `hostDidRender` → cleanup → repeat … → cleanup on disconnect | `useEffect(fn)`            |
+| `useEffect(fn, [])`        | `hostConnected` once → cleanup on `hostDisconnected`         | `useEffect(fn, [])`        |
+| `useEffect(fn, [dep1, …])` | `hostConnected` + re-runs at `hostDidRender` on dep changes  | `useEffect(fn, [dep1, …])` |
 
 The setup function has no `host` access. Use `@State` mutation (via arrow function in a class field — which captures `this`) for reactivity.
 
 ```ts
 // Every render — e.g. sync document.title with component state
-_title = useEffect(() => {
+readonly _title = useEffect(() => {
   const prev = document.title;
   document.title = `count: ${this._count}`;
   return () => { document.title = prev; };
 });
 
 // Mount-only — persistent event listener
-_ = useEffect(() => {
+readonly _ = useEffect(() => {
   const onResize = () => { this._width = window.innerWidth; };
   window.addEventListener("resize", onResize);
   return () => window.removeEventListener("resize", onResize);
 }, []);
 ```
 
-TypeScript enforces that `deps` is exactly `[]` — non-empty arrays are a compile error.
+### Reactive deps
+
+Pass an array of `DepEntry` — refs (`{ current: T }`) or getter functions (`() => T`). Setup fires on connect when all deps are non-null, then re-fires at `hostDidRender` whenever any value changes. If a dep becomes null/undefined, cleanup runs and the effect pauses until a future dep change resolves it.
+
+```ts
+// Ref deps — re-runs when any value changes
+readonly _ = useEffect(() => {
+  document.title = `${titleRef.current} — ${countRef.current}`;
+}, [titleRef, countRef]);
+```
+
+```ts
+// Getter fn — signal-friendly; no @ssv/stencil-signals import needed
+readonly _ = useEffect(() => {
+  render(signal.value);
+}, [() => signal.value]);
+```
 
 ## `useLoadEffect`
 
@@ -217,7 +234,9 @@ useLoadEffect(host => {
 
 ### Named deps
 
-Pass a `{ key: Ref<V> | WritableRef<V> }` object as the second argument — any value with a `.current` property. Each ref's `.current` is verified non-null before setup fires; the unwrapped values are merged into the context object alongside host methods. Setup is silently skipped if any dep is still null/undefined at `hostWillLoad`.
+Pass a named `{ key: DepEntry }` object as the second argument. A `DepEntry` is a ref (`{ current: V }`) or a getter function (`() => V`). Each dep is verified non-null before setup fires; the unwrapped values are merged into the context object alongside host methods. Setup is silently skipped if any dep is null/undefined at `hostWillLoad`.
+
+On every `hostWillRender`, dep values are compared to the snapshot from the last setup call. Any change triggers cleanup → re-run with new values. A dep becoming null/undefined triggers cleanup and pauses the effect.
 
 ```ts
 useLoadEffect(({ qc }) => {
@@ -234,6 +253,14 @@ useLoadEffect(({ qc, requestUpdate }) => {
   const unsub = observer.subscribe(() => requestUpdate());
   return () => { unsub(); };
 }, { qc: clientRef });
+```
+
+Getter functions work too — useful when a dep comes from a signal:
+
+```ts
+useLoadEffect(({ id }) => {
+  console.log("id changed:", id);
+}, { id: () => signal.value });
 ```
 
 ## Side-effect hooks (`this.setup()`)

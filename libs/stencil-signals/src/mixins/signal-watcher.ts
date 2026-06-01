@@ -8,6 +8,7 @@ export function SignalWatcherMixin<TBase extends MixedInCtor<ComponentInterface>
 	Base: TBase,
 ): TBase & MixedInCtor<ReactiveControllerHost> {
 	class SignalWatcher extends Base {
+		// oxlint-disable-next-line typescript/no-explicit-any
 		constructor(...args: any[]) {
 			super(...args);
 			useSignalWatcher();

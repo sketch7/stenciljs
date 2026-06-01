@@ -1,4 +1,4 @@
-import { peekCurrentHost, use } from "../../hooks";
+import { peekCurrentHost, useEffect } from "../../hooks";
 import { resolveTarget } from "./observer.model";
 import type { ObserverRef, ObserverTarget, SingleObserverTarget } from "./observer.model";
 
@@ -95,18 +95,16 @@ export function intersectionObserver(
 		let observer: IntersectionObserver | null = null;
 		let destroyed = false;
 
-		use({
-			hostConnected(): void {
-				if (destroyed || observer !== null) {
-					return;
-				}
-				observer = createNativeObserver(targets, nativeCb, options);
-			},
-			hostDisconnected(): void {
+		useEffect(() => {
+			if (destroyed) {
+				return;
+			}
+			observer = createNativeObserver(targets, nativeCb, options);
+			return () => {
 				observer?.disconnect();
 				observer = null;
-			},
-		});
+			};
+		}, []);
 
 		return {
 			destroy(): void {

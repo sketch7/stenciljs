@@ -1,4 +1,4 @@
-import { peekCurrentHost, use } from "../../hooks";
+import { peekCurrentHost, useEffect } from "../../hooks";
 import { resolveTarget } from "./observer.model";
 import type { ObserverRef, ObserverTarget, SingleObserverTarget } from "./observer.model";
 
@@ -92,18 +92,16 @@ export function resizeObserver(
 		let observer: ResizeObserver | null = null;
 		let destroyed = false;
 
-		use({
-			hostConnected(): void {
-				if (destroyed || observer !== null) {
-					return;
-				}
-				observer = createNativeObserver(targets, nativeCb, box);
-			},
-			hostDisconnected(): void {
+		useEffect(() => {
+			if (destroyed) {
+				return;
+			}
+			observer = createNativeObserver(targets, nativeCb, box);
+			return () => {
 				observer?.disconnect();
 				observer = null;
-			},
-		});
+			};
+		}, []);
 
 		return {
 			destroy(): void {

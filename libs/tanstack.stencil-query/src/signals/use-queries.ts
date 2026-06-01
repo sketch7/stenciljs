@@ -2,10 +2,10 @@
 import type { Ref } from "@ssv/stencil-core";
 import { computed, signal } from "@ssv/stencil-signals";
 import type { Signal, WritableSignal } from "@ssv/stencil-signals";
-import type { QueryClient, QueriesObserver, QueryObserverResult } from "@tanstack/query-core";
+import type { DefaultError, QueryClient, QueryKey, QueriesObserver, QueryObserverResult } from "@tanstack/query-core";
 
 import { pendingQueriesResult, useBaseQueriesObserver } from "../queries-observer";
-import type { QueriesResults, UseQueriesOptions } from "../queries-observer";
+import type { QueriesResults, UseQueriesOptions, UseQueryOptionsForUseQueries } from "../queries-observer";
 import { noObserverRefetch, pendingQueryState } from "../query-observer";
 import { createSignalResult } from "./signal-result";
 import type { QuerySignalResult } from "./use-query";
@@ -67,6 +67,38 @@ export type QueriesSignalResults<T extends any[]> = {
  * }
  * ```
  */
+/**
+ * Overload for a **homogeneous array** of queries (e.g. produced by `.map()`).
+ * When all elements share the same `TData`/`TError`, TypeScript infers the concrete types
+ * directly and returns `Signal<QuerySignalResult<TData, TError>[]>` without requiring an
+ * explicit annotation at the call site.
+ *
+ * @example
+ * ```ts
+ * function $usePostsByIds(getIds: () => number[]) {
+ *   return $useQueries(() => ({ queries: getIds().map(id => postQuery(id)) }));
+ *   // ↑ inferred as Signal<QuerySignalResult<Post>[]> — no annotation needed
+ * }
+ * ```
+ */
+export function $useQueries<
+	TQueryFnData,
+	TError = DefaultError,
+	TData = TQueryFnData,
+	TQueryKey extends QueryKey = QueryKey,
+>(
+	getOptions:
+		| {
+				queries: readonly UseQueryOptionsForUseQueries<TQueryFnData, TError, TData, TQueryKey>[];
+				combine?: never;
+		  }
+		| (() => {
+				queries: readonly UseQueryOptionsForUseQueries<TQueryFnData, TError, TData, TQueryKey>[];
+				combine?: never;
+		  }),
+	client?: QueryClient | Ref<QueryClient>,
+): Signal<QuerySignalResult<NoInfer<TData>, NoInfer<TError>>[]>;
+
 export function $useQueries<T extends any[]>(
 	getOptions: UseQueriesOptions<T> | (() => UseQueriesOptions<T>),
 	client?: QueryClient | Ref<QueryClient>,

@@ -1,8 +1,6 @@
-import type { Signal } from "@ssv/stencil-signals";
 import { useQueries } from "@ssv/tanstack.stencil-query";
 import type { QueryClient } from "@ssv/tanstack.stencil-query";
 import { $useQueries } from "@ssv/tanstack.stencil-query/signals";
-import type { QuerySignalResult } from "@ssv/tanstack.stencil-query/signals";
 
 export type Post = {
 	userId: number;
@@ -71,7 +69,7 @@ export function usePostsLoadedCount(getIds: () => number[], client?: QueryClient
  * Reusable **signals** hook — the `$useQueries` counterpart, defined outside the component.
  * Returns a single `Signal` of the results array (mirrors angular's `injectQueries`).
  */
-export function $usePostsByIds(getIds: () => number[], client?: QueryClient): Signal<QuerySignalResult<Post>[]> {
+export function $usePostsByIds(getIds: () => number[], client?: QueryClient) {
 	return $useQueries(() => ({ queries: getIds().map(id => postQuery(id)) }), client);
 }
 

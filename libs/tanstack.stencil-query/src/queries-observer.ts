@@ -25,10 +25,10 @@ import type { DefinedUseQueryResult, UseQueryOptions, UseQueryResult } from "./q
 // https://github.com/TanStack/query/blob/main/packages/react-query/src/useQueries.ts
 
 /**
- * The {@link UseQueryOptions} accepted inside a `queries` array element.
+ * {@link UseQueryOptions} accepted inside a `queries` array element.
  * `placeholderData` always receives `undefined` here (no previous element data).
  */
-type UseQueryOptionsForUseQueries<
+export type UseQueryOptionsForUseQueries<
 	TQueryFnData = unknown,
 	TError = DefaultError,
 	TData = TQueryFnData,

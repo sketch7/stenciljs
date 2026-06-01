@@ -1,6 +1,7 @@
 import { queryOptions, useQueries } from "@ssv/tanstack.stencil-query";
-import type { QueryClient } from "@ssv/tanstack.stencil-query";
+import type { QueryClient, UseQueriesRef } from "@ssv/tanstack.stencil-query";
 import { $useQueries } from "@ssv/tanstack.stencil-query/signals";
+import type { UseQueriesSignalResult } from "@ssv/tanstack.stencil-query/signals";
 
 export type Post = {
 	userId: number;
@@ -60,7 +61,7 @@ export const userQueries = {
  * }
  * ```
  */
-export function usePostAndUser(postId: number, userId: number, queryClient?: QueryClient) {
+export function usePostAndUser(postId: number, userId: number, queryClient?: QueryClient): UseQueriesRef<Post | User> {
 	return useQueries([postQueries.detail(postId), userQueries.detail(userId)], queryClient);
 }
 
@@ -76,7 +77,11 @@ export function usePostAndUser(postId: number, userId: number, queryClient?: Que
  * }
  * ```
  */
-export function $usePostAndUser(postId: number, userId: number, queryClient?: QueryClient) {
+export function $usePostAndUser(
+	postId: number,
+	userId: number,
+	queryClient?: QueryClient,
+): UseQueriesSignalResult<Post | User> {
 	return $useQueries([postQueries.detail(postId), userQueries.detail(userId)], queryClient);
 }
 

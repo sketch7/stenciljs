@@ -100,8 +100,5 @@ export function useQueries<TData = unknown, TError = DefaultError>(
 		},
 	}));
 
-	return createRef(
-		() =>
-			((observer?.getCurrentResult() as QueryObserverResult<TData, TError>[]) ?? []) as UseQueriesResult<TData, TError>,
-	);
+	return createRef(() => (observer?.getCurrentResult() as QueryObserverResult<TData, TError>[]) ?? []);
 }

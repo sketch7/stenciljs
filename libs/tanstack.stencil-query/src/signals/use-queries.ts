@@ -11,7 +11,9 @@ import type { UseQueryOptions } from "../query-observer";
 // ── $useQueries types ─────────────────────────────────────────────────────────
 
 /** Return type of {@link $useQueries} — a signal wrapping an array of {@link QueryObserverResult}. */
-export type QueriesSignalResult<TData = unknown, TError = DefaultError> = Signal<QueryObserverResult<TData, TError>[]>;
+export type UseQueriesSignalResult<TData = unknown, TError = DefaultError> = Signal<
+	QueryObserverResult<TData, TError>[]
+>;
 
 // ── $useQueries ───────────────────────────────────────────────────────────────
 
@@ -48,7 +50,7 @@ export type QueriesSignalResult<TData = unknown, TError = DefaultError> = Signal
 export function $useQueries<TData = unknown, TError = DefaultError>(
 	getQueries: UseQueryOptions[] | (() => UseQueryOptions[]),
 	client?: QueryClient | Ref<QueryClient>,
-): QueriesSignalResult<TData, TError> {
+): UseQueriesSignalResult<TData, TError> {
 	const getOpts = typeof getQueries === "function" ? getQueries : () => getQueries;
 	const clientRef = useQueryClient(client);
 	const state = signal<QueryObserverResult<TData, TError>[]>([]);

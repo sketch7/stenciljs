@@ -6,6 +6,7 @@ import { h } from "@stencil/core";
  * Shared across the `useQueries` demo components.
  */
 export function renderQueryStatus(result: QueryObserverResult | undefined) {
-	const cls = `badge badge--${result?.isPending ? "pending" : result?.isError ? "error" : "success"}`;
-	return <span class={cls}>{result?.isPending ? "loading…" : result?.isError ? "error" : "ready"}</span>;
+	const status = result?.isPending ? "pending" : result?.isError ? "error" : "success";
+	const label = status === "pending" ? "loading…" : status;
+	return <span class={`badge badge--${status}`}>{label}</span>;
 }

@@ -2,6 +2,6 @@ export { $useMutation } from "./mutation";
 export type { MutationSignalResult } from "./mutation";
 export { $usePrefetchQuery } from "./use-prefetch-query";
 export { $useQueries } from "./use-queries";
-export type { QueriesSignalResult } from "./use-queries";
+export type { UseQueriesSignalResult } from "./use-queries";
 export { $useQuery } from "./use-query";
 export type { QuerySignalResult } from "./use-query";

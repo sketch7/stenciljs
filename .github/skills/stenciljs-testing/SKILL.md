@@ -202,7 +202,7 @@ describe("FeatureName", () => {
   });
 
   describe("method or scenario", () => {
-    it("fact about behaviour", async () => {
+    it("fact about behavior", async () => {
       using m = await mount(() => ({ ... }));
       expect(m...).toBe(...);
     });
@@ -252,5 +252,5 @@ vi.mock(import("@stencil/core"), () => ({
 | `new ComponentLike()` + manual lifecycle | `mount(() => {}, { hostFactory: () => new ComponentLike() })` |
 | Inline `TestHost` subclass with more than 5 lines of code in its body | Extract to `<feature>.test-utils.ts` |
 | `describe.skip` / `it.skip` as parking lot | Delete or fix |
-| Asserting private/internal state | Assert public behaviour only |
+| Asserting private/internal state | Assert public behavior only |
 | `vi.fn()` without type param | `vi.fn<() => void>()` |

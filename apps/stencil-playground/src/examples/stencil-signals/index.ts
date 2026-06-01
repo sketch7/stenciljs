@@ -6,3 +6,4 @@ export { AppTimerCounter } from "./timer/timer-counter";
 export { AppSignalsDerivedAsync } from "./derived-async/derived-async";
 export { AppSignalsComputedPrevious } from "./computed-previous/computed-previous";
 export { AppSignalsMouseEvent } from "./mouse-event/mouse-event";
+export { AppSignalsObserverSignals } from "./observer-signals/observer-signals";

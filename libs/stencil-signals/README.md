@@ -90,13 +90,13 @@ export const config: Config = {
 
 ## Package layout and imports
 
-| Import path                       | Activates adapter? | Typical use                                                                                       |
-| --------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------- |
-| `@ssv/stencil-signals/tc39`       | Yes (TC39)         | `globalScript` only                                                                               |
-| `@ssv/stencil-signals/preact`     | Yes (Preact)       | `globalScript` only                                                                               |
-| `@ssv/stencil-signals`            | No                 | Primitives, `useSignalWatcher`, `effect`, `derivedAsync`, mixins                                  |
-| `@ssv/stencil-signals/extensions` | No                 | `useSignalProps`, `signalFromEvent` (also re-exported from adapter entries for `signalFromEvent`) |
-| `@ssv/stencil-signals/store`      | No                 | `signalStore`, `withState`/`withComputed`/`withMethods`, `patchState`, `getState`                 |
+| Import path                       | Activates adapter? | Typical use                                                                       |
+| --------------------------------- | ------------------ | --------------------------------------------------------------------------------- |
+| `@ssv/stencil-signals/tc39`       | Yes (TC39)         | `globalScript` only                                                               |
+| `@ssv/stencil-signals/preact`     | Yes (Preact)       | `globalScript` only                                                               |
+| `@ssv/stencil-signals`            | No                 | Primitives, `useSignalWatcher`, `effect`, `derivedAsync`, mixins                  |
+| `@ssv/stencil-signals/extensions` | No                 | `useSignalProps`, `signalFromEvent`, `elementSize`, `intersect`                   |
+| `@ssv/stencil-signals/store`      | No                 | `signalStore`, `withState`/`withComputed`/`withMethods`, `patchState`, `getState` |
 
 The main entry does **not** configure an adapter. Using `signal()` without a prior `globalScript` import throws at runtime.
 
@@ -212,7 +212,7 @@ const maxSeen = computed(prev => Math.max(prev, value()), { initialValue: 0 });
 const delta = computed<number>(prev => value() - (prev ?? value()));
 ```
 
-Unlike `computedPrevious(source)` — which tracks the prior value of *another* signal —
+Unlike `computedPrevious(source)` — which tracks the prior value of _another_ signal —
 this feeds back the computed's **own** last output.
 
 ### Signal store
@@ -267,13 +267,13 @@ Run the dev stack from the repo root: `pnpm dev` (Stencil watch + Vike on port 3
 
 ### Primitives
 
-| Export                    | Description                                                  |
-| ------------------------- | ------------------------------------------------------------ |
-| `signal(value, options?)` | Writable signal; optional `equals`                           |
+| Export                    | Description                                                                                                                                                       |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `signal(value, options?)` | Writable signal; optional `equals`                                                                                                                                |
 | `computed(fn, options?)`  | Read-only derived signal; `fn(previousValue)` receives its prior result. With `options.initialValue`, `previousValue` is `T` (seeded); otherwise `T \| undefined` |
-| `batch(fn)`               | Coalesce writes (Preact delegates; TC39 relies on scheduler) |
-| `untracked(fn)`           | Run without subscribing to inner reads                       |
-| `scheduler`               | Backend-agnostic microtask queue used by the render watcher  |
+| `batch(fn)`               | Coalesce writes (Preact delegates; TC39 relies on scheduler)                                                                                                      |
+| `untracked(fn)`           | Run without subscribing to inner reads                                                                                                                            |
+| `scheduler`               | Backend-agnostic microtask queue used by the render watcher                                                                                                       |
 
 `Signal<T>`: `()`, `.get()`, `.peek()`.
 `WritableSignal<T>`: `.set()`, `.update()`, `.asReadonly()`.
@@ -288,14 +288,16 @@ Run the dev stack from the repo root: `pnpm dev` (Stencil watch + Vike on port 3
 
 ### Extensions (`@ssv/stencil-signals/extensions`)
 
-| Export                            | Description                                                            |
-| --------------------------------- | ---------------------------------------------------------------------- |
-| `useSignalProps(Host)(config)`    | `@Prop` → signal bridge; `transform`, `twoWay`, `default`, `required`  |
-| `signalFromEvent(name, options?)` | DOM/window events as signals; Stencil `ListenOptions` + optional `map` |
-| `proxySignal(source, handler, options?)` | Wrap a signal with custom `get`/`set`; two-way projections & write interception |
-| `throttled(value\|signal, ms, options?)` | Rate-limited signal — leading + trailing edge                          |
-| `debounced(value\|signal, ms, options?)` | Rate-limited signal — trailing edge                                    |
-| `throttleCallback` / `debounceCallback`  | Framework-agnostic `Cancelable` callback wrappers (no signals)         |
+| Export                                   | Description                                                                         |
+| ---------------------------------------- | ----------------------------------------------------------------------------------- |
+| `useSignalProps(Host)(config)`           | `@Prop` → signal bridge; `transform`, `twoWay`, `default`, `required`               |
+| `signalFromEvent(name, options?)`        | DOM/window events as signals; Stencil `ListenOptions` + optional `map`              |
+| `proxySignal(source, handler, options?)` | Wrap a signal with custom `get`/`set`; two-way projections & write interception     |
+| `throttled(value\|signal, ms, options?)` | Rate-limited signal — leading + trailing edge                                       |
+| `debounced(value\|signal, ms, options?)` | Rate-limited signal — trailing edge                                                 |
+| `throttleCallback` / `debounceCallback`  | Framework-agnostic `Cancelable` callback wrappers (no signals)                      |
+| `elementSize(target, options?)`          | `ResizeObserver`-backed signal of element dimensions — [docs](docs/element-size.md) |
+| `intersect(target, options?)`            | `IntersectionObserver`-backed signal of entry — [docs](docs/intersect.md)           |
 
 Also exported from main entry: `effect`, `derivedAsync`, `computedPrevious`. The signal store ships as a separate entry — `@ssv/stencil-signals/store`.
 

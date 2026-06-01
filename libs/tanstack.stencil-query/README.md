@@ -58,6 +58,7 @@ export class AppPosts extends SsvElement {
 | -------------------------- | ---- | ------------------------------------------------------------------- |
 | `queryOptions`             | fn   | Type-safe query factory; stamps `DataTag` on `queryKey`             |
 | `useQuery`                 | fn   | Subscribes to a query; returns `Ref<UseQueryResult>`                |
+| `useQueries`               | fn   | Subscribes to a list of queries in parallel; returns `Ref<results>` |
 | `useMutation`              | fn   | Subscribes to a mutation; returns `Ref<UseMutationResult>`          |
 | `usePrefetchQuery`         | fn   | Seeds the cache on `hostWillLoad`; returns `void`                   |
 | `provideQueryClient`       | fn   | Registers a `QueryClient` in context; returns the client            |
@@ -70,6 +71,9 @@ export class AppPosts extends SsvElement {
 | `UseMutationRef<T,E,V>`    | type | `Ref<UseMutationResult<T,E,V>>` — return type of `useMutation`      |
 | `UseQueryResult<T>`        | type | Full query result shape (`data`, `isPending`, `isError`, …)         |
 | `UseMutationResult<T,E,V>` | type | Full mutation result shape + `mutate` + `mutateAsync`               |
+| `UseQueriesOptions<T,R>`   | type | Options for `useQueries` — `queries` array + optional `combine`     |
+| `QueriesResults<T>`        | type | Tuple of `UseQueryResult`s inferred from the `queries` array        |
+| `QueriesOptions<T>`        | type | Tuple of per-query options inferred from the `queries` array        |
 | `DefinedQueryOptions`      | type | `UseQueryOptions` variant asserting `queryFn` is never `skipToken`  |
 
 All `@tanstack/query-core` exports are also re-exported from this package.
@@ -227,6 +231,64 @@ readonly _prefetch = prefetchPosts();
 readonly #posts = usePrefetchedPosts();
 ```
 
+## `useQueries`
+
+Subscribes to a **list of queries in parallel** and schedules a re-render whenever any result changes — the analogue of react-query's `useQueries` / angular's `injectQueries`. Returns a `Ref` whose value is the **tuple of results** (one `UseQueryResult` per query), with each element's `data` / `error` types preserved.
+
+```ts
+@Component({ tag: "app-posts", shadow: true })
+export class AppPosts extends SsvElement {
+  readonly #posts = useQueries(() => ({
+    queries: this.ids.map(id => ({ queryKey: ["post", id], queryFn: () => fetchPost(id) })),
+  }));
+
+  render() {
+    const results = this.#posts(); // () reads the live tuple of results
+    const allLoaded = results.every(r => r.isSuccess);
+    return <ul>{results.map(r => r.isSuccess && <li>{r.data.title}</li>)}</ul>;
+  }
+}
+```
+
+Pass a **getter function** for reactive options (e.g. when the query list depends on a `@Prop`). Pass an explicit `client` to bypass context — useful in unit tests.
+
+### `combine`
+
+Provide a `combine` function to derive a single value from all results; the return type narrows accordingly:
+
+```ts
+readonly #summary = useQueries({
+  queries: [a, b, c],
+  combine: results => ({
+    total: results.length,
+    loaded: results.filter(r => r.isSuccess).length,
+    pending: results.some(r => r.isPending),
+  }),
+});
+
+render() {
+  const { loaded, total } = this.#summary();
+}
+```
+
+### Reusable wrapper pattern
+
+Like `useQuery`, define the hook outside the component so any tree can compose the same parallel queries:
+
+```ts
+// posts.api.ts
+export function usePostsByIds(getIds: () => number[], client?: QueryClient) {
+  return useQueries(() => ({ queries: getIds().map(id => postQueries.detail(id)) }), client);
+}
+```
+
+```ts
+// posts.tsx
+readonly #posts = usePostsByIds(() => this.ids);
+```
+
+See the full example: [apps/stencil-playground/src/examples/ts-query/use-queries/](../../apps/stencil-playground/src/examples/ts-query/use-queries/)
+
 ## Devtools
 
 Install the peer dependency:
@@ -289,13 +351,14 @@ export class AppPosts extends SsvElement {
 
 ### Signals API
 
-| Export                 | Kind | Purpose                                                       |
-| ---------------------- | ---- | ------------------------------------------------------------- |
-| `$useQuery`            | fn   | Per-field signal store + `refetch`                            |
-| `$useMutation`         | fn   | Per-field signal store + `mutate` / `mutateAsync` / `reset`   |
-| `$usePrefetchQuery`    | fn   | Reactive prefetch — re-fires when signal-based options change |
-| `QuerySignalResult`    | type | `Store<QueryStateData> & { refetch }`                         |
-| `MutationSignalResult` | type | `Store<MutationStateData> & { mutate, mutateAsync, reset }`   |
+| Export                 | Kind | Purpose                                                                                |
+| ---------------------- | ---- | -------------------------------------------------------------------------------------- |
+| `$useQuery`            | fn   | Per-field signal store + `refetch`                                                     |
+| `$useQueries`          | fn   | Signal of per-field signal-proxy results (no `combine`) or a derived value (`combine`) |
+| `$useMutation`         | fn   | Per-field signal store + `mutate` / `mutateAsync` / `reset`                            |
+| `$usePrefetchQuery`    | fn   | Reactive prefetch — re-fires when signal-based options change                          |
+| `QuerySignalResult`    | type | `Store<QueryStateData> & { refetch }`                                                  |
+| `MutationSignalResult` | type | `Store<MutationStateData> & { mutate, mutateAsync, reset }`                            |
 
 ### `$useQuery` vs `useQuery`
 
@@ -348,6 +411,41 @@ export class AppHoverList extends SsvElement {
   readonly #hoveredPost = useHoveredPost(this.#hoveredId);
 }
 ```
+
+### `$useQueries`
+
+The signals counterpart of `useQueries`. Subscribes to a list of queries in parallel. Requires `useSignalWatcher()` and `@ssv/stencil-signals`.
+
+**Without `combine`** — each element in the returned signal array is a `QuerySignalResult` — every field is a callable signal (`result.isPending()`, `result.data()`, …). Only the component that reads a changed field re-renders.
+
+**With `combine`** — the signal holds the single value returned by the combiner; type narrows to `TCombinedResult`.
+
+Pass a **getter function** for reactive options (e.g. when the query list depends on a signal). When all queries share the same `TData`/`TError` type (e.g. produced by `.map()`), TypeScript infers the element type automatically — no explicit annotation needed.
+
+```ts
+import { $useQueries } from "@ssv/tanstack.stencil-query/signals";
+import { computed, signal, useSignalWatcher } from "@ssv/stencil-signals";
+
+@Component({ tag: "app-posts", shadow: true })
+export class AppPosts extends SsvElement {
+  readonly _signalWatcher = useSignalWatcher();
+  readonly #ids = signal([1, 2, 3]);
+
+  // Getter form — re-subscribes when #ids changes
+  readonly #posts = $useQueries(() => ({
+    queries: this.#ids().map(id => ({ queryKey: ["post", id], queryFn: () => fetchPost(id) })),
+  }));
+
+  readonly #loadedCount = computed(() => this.#posts().filter(r => r.isSuccess).length);
+
+  render() {
+    const results = this.#posts();
+    return <p>Loaded {this.#loadedCount()} / {results.length}</p>;
+  }
+}
+```
+
+Provide a `combine` function to derive a single value from all results — the signal's type narrows accordingly, exactly like `useQueries`.
 
 ### Derived signals with `computed`
 

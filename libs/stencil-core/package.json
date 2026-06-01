@@ -37,6 +37,11 @@
       "@ssv/source": "./src/dev/index.ts",
       "types": "./dist/dev/index.d.ts",
       "import": "./dist/dev/index.js"
+    },
+    "./dom": {
+      "@ssv/source": "./src/dom/index.ts",
+      "types": "./dist/dom/index.d.ts",
+      "import": "./dist/dom/index.js"
     }
   },
   "scripts": {

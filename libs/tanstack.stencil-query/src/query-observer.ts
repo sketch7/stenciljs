@@ -15,6 +15,7 @@ import type {
 	RefetchOptions,
 } from "@tanstack/query-core";
 
+import { useIsRestoring } from "./is-restoring";
 import { useQueryClient } from "./query-client-context";
 
 // ── useQuery types ────────────────────────────────────────────────────────────
@@ -145,18 +146,32 @@ export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey exte
 			: () => getOptions as UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>;
 
 	const clientRef = useQueryClient(client);
+	const isRestoringRef = useIsRestoring();
 
 	let observer: QueryObserver<TQueryFnData, TError, TData, TQueryFnData, TQueryKey> | undefined;
 
 	const refetch: QueryObserverResult<TData, TError>["refetch"] = (options?: RefetchOptions) =>
 		observer?.refetch(options) ?? noObserverRefetch();
 
+	/** Returns defaulted options with `_optimisticResults` stamped. */
+	const defaultedOptions = (qc: QueryClient, isRestoring: boolean) => {
+		const d = qc.defaultQueryOptions(getOpts()) as QueryObserverOptions<
+			TQueryFnData,
+			TError,
+			TData,
+			TQueryFnData,
+			TQueryKey
+		>;
+		d._optimisticResults = isRestoring ? "isRestoring" : "optimistic";
+		return d;
+	};
+
 	// hostWillLoad: context guaranteed resolved — qc is non-null and auto-unwrapped from clientRef.
 	useLoadEffect(
-		({ qc, requestUpdate }) => {
+		({ qc, isRestoring, requestUpdate }) => {
 			observer = new QueryObserver<TQueryFnData, TError, TData, TQueryFnData, TQueryKey>(
 				qc,
-				qc.defaultQueryOptions(getOpts()),
+				defaultedOptions(qc, isRestoring),
 			);
 
 			// Sync immediately in case data is already cached.
@@ -178,7 +193,7 @@ export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey exte
 				handlers.onDispose?.();
 			};
 		},
-		{ qc: clientRef },
+		{ qc: clientRef, isRestoring: isRestoringRef },
 	);
 
 	use(() => ({
@@ -188,7 +203,7 @@ export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey exte
 				return;
 			}
 			// TODO(perf): skip setOptions when options is static (not a function) — mirrors Lit BaseController.onHostUpdate()
-			observer.setOptions(qc.defaultQueryOptions(getOpts()));
+			observer.setOptions(defaultedOptions(qc, isRestoringRef.current));
 			// Sync latest result before each render — mirrors useQuery's lazy Ref read.
 			// Ensures SSR/hydration sees the cached data even if the subscription
 			// callback was batched as a microtask and not yet flushed.

@@ -7,6 +7,7 @@ export default defineConfig({
 		"src/testing/dom/index.ts",
 		"src/transfer-state/index.ts",
 		"src/dev/index.ts",
+		"src/dom/index.ts",
 	],
 	format: ["esm"],
 	platform: "neutral",
@@ -16,4 +17,7 @@ export default defineConfig({
 	// logging branches (createContextLogger returns noop → entire log(...) calls
 	// become dead code and are removed).
 	define: { DEBUG: "false" },
+	outputOptions: {
+		chunkFileNames: "_internal/[name].js",
+	},
 });

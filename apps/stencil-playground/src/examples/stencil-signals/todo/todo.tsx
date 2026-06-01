@@ -1,5 +1,5 @@
 import { SsvElement } from "@ssv/stencil-core";
-import { signal, useSignalWatcher } from "@ssv/stencil-signals";
+import { computed, signal, useSignalWatcher } from "@ssv/stencil-signals";
 import { createNotifier, debounced, effect } from "@ssv/stencil-signals/extensions";
 import { Component, h } from "@stencil/core";
 
@@ -16,6 +16,14 @@ export class AppSignalsTodo extends SsvElement {
 	readonly filterText = signal("");
 	readonly filter = debounced(this.filterText, 250);
 	readonly $addTodo = createNotifier();
+	readonly activeFilter = computed(() => this.filter().trim().toLowerCase());
+	readonly isDebouncing = computed(() => this.activeFilter() !== this.filterText().trim().toLowerCase());
+	readonly todoCount = computed(() => todoStore.todos().length);
+	readonly visibleTodos = computed(() => {
+		const activeFilter = this.activeFilter();
+		const todos = todoStore.todos();
+		return activeFilter ? todos.filter(todo => todo.text.toLowerCase().includes(activeFilter)) : todos;
+	});
 
 	readonly _addTodo = effect(
 		[this.$addTodo.listen],
@@ -42,12 +50,12 @@ export class AppSignalsTodo extends SsvElement {
 	render() {
 		const todos = todoStore.todos();
 		const completed = todoStore.completedCount();
-		const total = todos.length;
+		const total = this.todoCount();
 
 		const rawFilter = this.filterText();
-		const activeFilter = this.filter().trim().toLowerCase();
-		const isDebouncing = rawFilter.trim().toLowerCase() !== activeFilter;
-		const visibleTodos = activeFilter ? todos.filter(todo => todo.text.toLowerCase().includes(activeFilter)) : todos;
+		const activeFilter = this.activeFilter();
+		const isDebouncing = this.isDebouncing();
+		const visibleTodos = this.visibleTodos();
 
 		return (
 			<div class="todo">

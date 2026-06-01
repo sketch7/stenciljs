@@ -23,6 +23,41 @@ type HookName = (typeof HOOK_NAMES)[number];
 /** Hooks that may return a `Promise` to defer the corresponding lifecycle phase. */
 type AsyncHookName = "hostWillLoad" | "hostWillRender" | "hostWillUpdate";
 
+/** Per-hook controller buckets. Entries are created lazily on first use. */
+type Buckets = Partial<Record<HookName, Set<ReactiveController>>>;
+
+/**
+ * Module-level dispatch helpers — avoids allocating two closures per {@link reactiveController} call.
+ */
+function runSync(buckets: Buckets, hook: Exclude<HookName, AsyncHookName>): void {
+	const bucket = buckets[hook];
+	if (!bucket) {
+		return;
+	}
+	for (const controller of bucket) {
+		const fn = controller[hook];
+		fn?.call(controller);
+	}
+}
+
+function runAsync(buckets: Buckets, hook: AsyncHookName): Promise<void> | void {
+	const bucket = buckets[hook];
+	if (!bucket || bucket.size === 0) {
+		return;
+	}
+	let promises: Promise<void>[] | undefined;
+	for (const controller of bucket) {
+		const fn = controller[hook];
+		const result = fn?.call(controller);
+		if (result) {
+			(promises ??= []).push(result);
+		}
+	}
+	if (promises) {
+		return Promise.all(promises).then();
+	}
+}
+
 /**
  * Reusable controller registry + lifecycle dispatcher — the shared core behind
  * {@link ReactiveControllerHostMixin} and the test hosts.
@@ -63,7 +98,8 @@ export type ReactiveControllerRef = {
  *
  * **Performance** — controllers are bucketed per hook on registration. Each dispatch iterates
  * only the controllers that implement that specific hook, so unimplemented hooks cost nothing.
- * This matters because lifecycle dispatch is the hot path under every hook in the framework.
+ * Buckets are allocated lazily — only created when the first controller implementing a given
+ * hook is registered, so components with few controllers pay no upfront allocation cost.
  *
  * @example
  * ```ts
@@ -74,46 +110,9 @@ export type ReactiveControllerRef = {
  */
 export function reactiveController(): ReactiveControllerRef {
 	const controllers = new Set<ReactiveController>();
-
-	// One bucket per hook — a controller appears in a bucket only if it implements that hook.
-	const buckets = {
-		hostConnected: new Set<ReactiveController>(),
-		hostDisconnected: new Set<ReactiveController>(),
-		hostWillLoad: new Set<ReactiveController>(),
-		hostDidLoad: new Set<ReactiveController>(),
-		hostWillRender: new Set<ReactiveController>(),
-		hostDidRender: new Set<ReactiveController>(),
-		hostWillUpdate: new Set<ReactiveController>(),
-		hostDidUpdate: new Set<ReactiveController>(),
-	} satisfies Record<HookName, Set<ReactiveController>>;
-
-	function runSync(hook: Exclude<HookName, AsyncHookName>): void {
-		for (const controller of buckets[hook]) {
-			// Bucket membership guarantees the hook is implemented; the guard keeps it null-safe.
-			const fn = controller[hook];
-			if (fn) {
-				fn.call(controller);
-			}
-		}
-	}
-
-	function runAsync(hook: AsyncHookName): Promise<void> | void {
-		const bucket = buckets[hook];
-		if (bucket.size === 0) {
-			return;
-		}
-		let promises: Promise<void>[] | undefined;
-		for (const controller of bucket) {
-			const fn = controller[hook];
-			const result = fn?.call(controller);
-			if (result) {
-				(promises ??= []).push(result);
-			}
-		}
-		if (promises) {
-			return Promise.all(promises).then();
-		}
-	}
+	// Buckets are created lazily — only allocated when the first controller implementing
+	// a given hook is registered. Components with few controllers pay no allocation cost.
+	const buckets: Buckets = {};
 
 	return {
 		controllers,
@@ -124,7 +123,7 @@ export function reactiveController(): ReactiveControllerRef {
 			controllers.add(controller);
 			for (const hook of HOOK_NAMES) {
 				if (typeof controller[hook] === "function") {
-					buckets[hook].add(controller);
+					(buckets[hook] ??= new Set()).add(controller);
 				}
 			}
 		},
@@ -133,16 +132,16 @@ export function reactiveController(): ReactiveControllerRef {
 				return;
 			}
 			for (const hook of HOOK_NAMES) {
-				buckets[hook].delete(controller);
+				buckets[hook]?.delete(controller);
 			}
 		},
-		connected: () => runSync("hostConnected"),
-		disconnected: () => runSync("hostDisconnected"),
-		willLoad: () => runAsync("hostWillLoad"),
-		didLoad: () => runSync("hostDidLoad"),
-		willRender: () => runAsync("hostWillRender"),
-		didRender: () => runSync("hostDidRender"),
-		willUpdate: () => runAsync("hostWillUpdate"),
-		didUpdate: () => runSync("hostDidUpdate"),
+		connected: () => runSync(buckets, "hostConnected"),
+		disconnected: () => runSync(buckets, "hostDisconnected"),
+		willLoad: () => runAsync(buckets, "hostWillLoad"),
+		didLoad: () => runSync(buckets, "hostDidLoad"),
+		willRender: () => runAsync(buckets, "hostWillRender"),
+		didRender: () => runSync(buckets, "hostDidRender"),
+		willUpdate: () => runAsync(buckets, "hostWillUpdate"),
+		didUpdate: () => runSync(buckets, "hostDidUpdate"),
 	};
 }

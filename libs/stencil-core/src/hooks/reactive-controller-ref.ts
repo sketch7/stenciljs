@@ -63,7 +63,7 @@ function runAsync(buckets: Buckets, hook: AsyncHookName): Promise<void> | void {
  * {@link ReactiveControllerHostMixin} and the test hosts.
  *
  * Hosts delegate to this ref instead of re-implementing the controller `Set` and the
- * eight lifecycle fan-out loops, so the behaviour lives in exactly one place.
+ * eight lifecycle fan-out loops, so the behavior lives in exactly one place.
  *
  * Returned by {@link reactiveController}.
  */

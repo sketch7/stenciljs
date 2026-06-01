@@ -47,7 +47,7 @@ export class AppMyPage extends SsvElement {
 }
 ```
 
-`transfer(key, getValue)` behaviour:
+`transfer(key, getValue)` behavior:
 
 | Environment | Action                                         |
 | ----------- | ---------------------------------------------- |

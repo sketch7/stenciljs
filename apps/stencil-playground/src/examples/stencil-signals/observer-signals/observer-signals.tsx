@@ -75,9 +75,9 @@ export class AppSignalsObserverSignals extends SsvElement {
 						<span class="ratio-text">{ratio}% visible</span>
 					</div>
 
-					<div class="ratio-track" role="progressbar" aria-valuenow={ratio} aria-valuemin={0} aria-valuemax={100}>
+					<progress class="ratio-track" value={ratio} max={100}>
 						<div class="ratio-fill" style={{ width: `${ratio}%` }} />
-					</div>
+					</progress>
 
 					<div class="sentinel-container" aria-label="Task list">
 						<ul class="item-list">

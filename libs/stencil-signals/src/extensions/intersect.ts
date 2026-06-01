@@ -1,4 +1,4 @@
-import { peekCurrentHost, use } from "@ssv/stencil-core";
+import { ensureReactiveContext, use } from "@ssv/stencil-core";
 import { intersectionObserver } from "@ssv/stencil-core/dom";
 import type { SingleObserverTarget } from "@ssv/stencil-core/dom";
 
@@ -52,9 +52,7 @@ export function intersect(
 		threshold: options?.threshold,
 	});
 
-	if (peekCurrentHost() === null) {
-		throw new Error("intersect() must be used within a component's reactive context");
-	}
+	ensureReactiveContext();
 
 	use({
 		hostDisconnected(): void {

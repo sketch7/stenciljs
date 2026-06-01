@@ -1,4 +1,4 @@
-import { peekCurrentHost, useEffect } from "../../hooks";
+import { isInReactiveContext, useEffect } from "../../hooks";
 import { resolveTarget } from "./observer.model";
 import type { ObserverRef, ObserverTarget, SingleObserverTarget } from "./observer.model";
 
@@ -91,7 +91,7 @@ export function intersectionObserver(
 		? (callback as (entries: readonly IntersectionObserverEntry[]) => void)
 		: entries => (callback as (entry: IntersectionObserverEntry) => void)(entries[0] as IntersectionObserverEntry);
 
-	if (peekCurrentHost() !== null) {
+	if (isInReactiveContext()) {
 		let observer: IntersectionObserver | null = null;
 		let destroyed = false;
 

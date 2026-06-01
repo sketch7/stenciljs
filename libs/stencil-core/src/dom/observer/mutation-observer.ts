@@ -1,4 +1,4 @@
-import { peekCurrentHost, useEffect } from "../../hooks";
+import { isInReactiveContext, useEffect } from "../../hooks";
 import { resolveTarget } from "./observer.model";
 import type { ObserverRef, ObserverTarget } from "./observer.model";
 
@@ -91,7 +91,7 @@ export function mutationObserver(
 	// Wrap to strip the second `observer` argument the native API passes.
 	const nativeCb = (mutations: MutationRecord[]): void => callback(mutations);
 
-	if (peekCurrentHost() !== null) {
+	if (isInReactiveContext()) {
 		let observer: MutationObserver | null = null;
 		let destroyed = false;
 

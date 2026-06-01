@@ -1,4 +1,4 @@
-import { peekCurrentHost, useEffect } from "../../hooks";
+import { isInReactiveContext, useEffect } from "../../hooks";
 import { resolveTarget } from "./observer.model";
 import type { ObserverRef, ObserverTarget, SingleObserverTarget } from "./observer.model";
 
@@ -88,7 +88,7 @@ export function resizeObserver(
 		? (callback as (entries: readonly ResizeObserverEntry[]) => void)
 		: entries => (callback as (entry: ResizeObserverEntry) => void)(entries[0] as ResizeObserverEntry);
 
-	if (peekCurrentHost() !== null) {
+	if (isInReactiveContext()) {
 		let observer: ResizeObserver | null = null;
 		let destroyed = false;
 

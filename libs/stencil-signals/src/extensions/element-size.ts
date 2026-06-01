@@ -1,4 +1,4 @@
-import { peekCurrentHost, use } from "@ssv/stencil-core";
+import { ensureReactiveContext, use } from "@ssv/stencil-core";
 import { resizeObserver } from "@ssv/stencil-core/dom";
 import type { SingleObserverTarget } from "@ssv/stencil-core/dom";
 
@@ -69,9 +69,7 @@ export function elementSize(target: SingleObserverTarget, options?: ElementSizeO
 
 	resizeObserver(target, updateSize, { box });
 
-	if (peekCurrentHost() === null) {
-		throw new Error("elementSize() must be used within a component's reactive context");
-	}
+	ensureReactiveContext();
 
 	use({
 		hostDisconnected(): void {

@@ -24,6 +24,24 @@ export function peekCurrentHost(): ReactiveControllerHost | null {
 	return currentHost;
 }
 
+/** Returns `true` when called within a component constructor (reactive context). */
+export function isInReactiveContext(): boolean {
+	return peekCurrentHost() !== null;
+}
+
+/**
+ * Throws if not called within a reactive context.
+ * Use for utilities that strictly require lifecycle binding.
+ */
+export function ensureReactiveContext(): void {
+	if (!isInReactiveContext()) {
+		throw new Error(
+			"Must be called within a component's reactive context (class field initializer). " +
+				"If you are writing tests, call setCurrentHost(host) before invoking hooks.",
+		);
+	}
+}
+
 /**
  * Returns the host currently being constructed.
  * Throws if called outside a component constructor context.

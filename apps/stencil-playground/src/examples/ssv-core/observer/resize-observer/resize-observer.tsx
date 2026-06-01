@@ -1,5 +1,5 @@
 import { SsvElement } from "@ssv/stencil-core";
-import { resizeObserver } from "@ssv/stencil-core/observer";
+import { resizeObserver } from "@ssv/stencil-core/dom";
 import { Component, Element, State, h } from "@stencil/core";
 
 @Component({

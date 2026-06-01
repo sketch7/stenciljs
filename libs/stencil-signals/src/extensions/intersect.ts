@@ -1,6 +1,6 @@
 import { peekCurrentHost, use } from "@ssv/stencil-core";
-import { intersectionObserver } from "@ssv/stencil-core/observer";
-import type { SingleObserverTarget } from "@ssv/stencil-core/observer";
+import { intersectionObserver } from "@ssv/stencil-core/dom";
+import type { SingleObserverTarget } from "@ssv/stencil-core/dom";
 
 import type { Signal } from "../adapters/types";
 import { signal } from "../signals/core";

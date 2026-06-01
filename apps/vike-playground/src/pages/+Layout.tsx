@@ -109,7 +109,7 @@ const navSections: NavSection[] = [
 	},
 	{
 		title: "@ssv / Core / Observer",
-		items: [{ href: "/ssv-stencil/core/observers", label: "Observers" }],
+		items: [{ href: "/ssv-stencil/core/doms", label: "Observers" }],
 	},
 	{
 		title: "@ssv / Core / Context",

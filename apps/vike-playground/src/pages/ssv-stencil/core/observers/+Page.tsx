@@ -10,7 +10,7 @@ export default function Page(): JSX.Element {
 					Lifecycle-aware wrappers for <code className="text-(--color-primary)">ResizeObserver</code>,{" "}
 					<code className="text-(--color-primary)">IntersectionObserver</code>, and{" "}
 					<code className="text-(--color-primary)">MutationObserver</code>. All utilities bind automatically to the
-					Stencil component lifecycle via <code className="text-(--color-primary)">@ssv/stencil-core/observer</code>.
+					Stencil component lifecycle via <code className="text-(--color-primary)">@ssv/stencil-core/dom</code>.
 				</p>
 			</div>
 

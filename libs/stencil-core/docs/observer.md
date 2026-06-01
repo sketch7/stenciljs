@@ -3,9 +3,9 @@
 Lifecycle-aware wrappers for the native `ResizeObserver`, `IntersectionObserver`, and `MutationObserver` APIs.
 All utilities bind automatically to the Stencil component lifecycle when called in a constructor, and work standalone otherwise.
 
-**Import:** `@ssv/stencil-core/observer`
+**Import:** `@ssv/stencil-core/dom`
 
-**Example:** [observer](../../apps/stencil-playground/src/examples/ssv-core/observer/), Vike [`+Page.tsx`](../../apps/vike-playground/src/pages/ssv-stencil/core/observers/+Page.tsx).
+**Example:** [observer](../../apps/stencil-playground/src/examples/ssv-core/dom/), Vike [`+Page.tsx`](../../apps/vike-playground/src/pages/ssv-stencil/core/doms/+Page.tsx).
 
 Observer attaches on `hostConnected`, detaches on `hostDisconnected`, and re-attaches on reconnect.
 

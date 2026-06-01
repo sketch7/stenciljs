@@ -1,4 +1,4 @@
-import type { ResizeObserverOptions } from "@ssv/stencil-core/observer";
+import type { ResizeObserverOptions } from "@ssv/stencil-core/dom";
 import { TestHost } from "@ssv/stencil-core/testing";
 // oxlint-disable-next-line import/no-unassigned-import
 import "../src/tc39";

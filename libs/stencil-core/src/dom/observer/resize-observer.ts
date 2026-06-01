@@ -1,40 +1,32 @@
-import { peekCurrentHost, use } from "../hooks";
+import { peekCurrentHost, use } from "../../hooks";
 import { resolveTarget } from "./observer.model";
 import type { ObserverRef, ObserverTarget, SingleObserverTarget } from "./observer.model";
 
 // ─── Public types ─────────────────────────────────────────────────────────────
 
-/** Options for {@link intersectionObserver}. */
-export type IntersectionObserverOptions = {
-	/** Element or document used as the viewport. Defaults to the browser viewport. */
-	readonly root?: Element | Document | null;
-	/** Margin around the root. Accepts CSS-like values (e.g. `'10px 20px'`). */
-	readonly rootMargin?: string;
-	/** Threshold(s) at which the callback fires. */
-	readonly threshold?: number | number[];
+/** Options for {@link resizeObserver}. */
+export type ResizeObserverOptions = {
+	/** Box model to measure when reporting size changes. Default: `'content-box'`. */
+	readonly box?: ResizeObserverBoxOptions;
 };
 
 // ─── Internal helpers ─────────────────────────────────────────────────────────
 
 function createNativeObserver(
 	targets: ObserverTarget[],
-	callback: (entries: readonly IntersectionObserverEntry[]) => void,
-	options: IntersectionObserverOptions | undefined,
-): IntersectionObserver | null {
-	if (typeof IntersectionObserver === "undefined") {
+	callback: (entries: readonly ResizeObserverEntry[]) => void,
+	box: ResizeObserverBoxOptions | undefined,
+): ResizeObserver | null {
+	if (typeof ResizeObserver === "undefined") {
 		return null;
 	}
 	const els = targets.flatMap(t => resolveTarget(t));
 	if (els.length === 0) {
 		return null;
 	}
-	const observer = new IntersectionObserver(callback, {
-		root: options?.root,
-		rootMargin: options?.rootMargin,
-		threshold: options?.threshold,
-	});
+	const observer = new ResizeObserver(callback);
 	for (const el of els) {
-		observer.observe(el);
+		observer.observe(el, { box });
 	}
 	return observer;
 }
@@ -42,7 +34,7 @@ function createNativeObserver(
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 /**
- * Observe element intersection with the viewport via `IntersectionObserver`.
+ * Low-level utility for observing element size changes via `ResizeObserver`.
  * Binds automatically to the Stencil component lifecycle when called in a constructor.
  *
  * @example
@@ -50,16 +42,20 @@ function createNativeObserver(
  * @Component({ tag: "app-box", shadow: true })
  * export class AppBox extends SsvElement {
  *   @Element() el!: HTMLElement;
- *   readonly _ = intersectionObserver(
+ *   readonly $size = signal({ width: 0, height: 0 });
+ *   readonly _ = resizeObserver(
  *     () => this.el,
- *     entry => { ... },
+ *     entries => {
+ *       const { width, height } = entries[0]!.contentRect;
+ *       this.$size.set({ width, height });
+ *     },
  *   );
  * }
  * ```
  *
  * @example Multiple targets via array getter
  * ```ts
- * readonly _ = intersectionObserver(
+ * readonly _ = resizeObserver(
  *   () => [this.header, this.body],
  *   entries => { ... },
  * );
@@ -67,32 +63,33 @@ function createNativeObserver(
  *
  * @example Standalone — element already exists, pass directly
  * ```ts
- * const ref = intersectionObserver(document.querySelector("#box")!, entry => { ... });
+ * const ref = resizeObserver(document.querySelector("#box")!, entry => { ... });
  * ```
  */
-export function intersectionObserver(
+export function resizeObserver(
 	target: SingleObserverTarget,
-	callback: (entry: IntersectionObserverEntry) => void,
-	options?: IntersectionObserverOptions,
+	callback: (entry: ResizeObserverEntry) => void,
+	options?: ResizeObserverOptions,
 ): ObserverRef;
-export function intersectionObserver(
+export function resizeObserver(
 	target: (() => (Element | null | undefined)[]) | ObserverTarget[],
-	callback: (entries: readonly IntersectionObserverEntry[]) => void,
-	options?: IntersectionObserverOptions,
+	callback: (entries: readonly ResizeObserverEntry[]) => void,
+	options?: ResizeObserverOptions,
 ): ObserverRef;
-export function intersectionObserver(
+export function resizeObserver(
 	target: ObserverTarget | ObserverTarget[],
-	callback: ((entry: IntersectionObserverEntry) => void) | ((entries: readonly IntersectionObserverEntry[]) => void),
-	options?: IntersectionObserverOptions,
+	callback: ((entry: ResizeObserverEntry) => void) | ((entries: readonly ResizeObserverEntry[]) => void),
+	options?: ResizeObserverOptions,
 ): ObserverRef {
 	const isMulti = Array.isArray(target) || (typeof target === "function" && Array.isArray(target()));
 	const targets = Array.isArray(target) ? target : [target];
-	const nativeCb: (entries: readonly IntersectionObserverEntry[]) => void = isMulti
-		? (callback as (entries: readonly IntersectionObserverEntry[]) => void)
-		: entries => (callback as (entry: IntersectionObserverEntry) => void)(entries[0] as IntersectionObserverEntry);
+	const box = options?.box;
+	const nativeCb: (entries: readonly ResizeObserverEntry[]) => void = isMulti
+		? (callback as (entries: readonly ResizeObserverEntry[]) => void)
+		: entries => (callback as (entry: ResizeObserverEntry) => void)(entries[0] as ResizeObserverEntry);
 
 	if (peekCurrentHost() !== null) {
-		let observer: IntersectionObserver | null = null;
+		let observer: ResizeObserver | null = null;
 		let destroyed = false;
 
 		use({
@@ -100,7 +97,7 @@ export function intersectionObserver(
 				if (destroyed || observer !== null) {
 					return;
 				}
-				observer = createNativeObserver(targets, nativeCb, options);
+				observer = createNativeObserver(targets, nativeCb, box);
 			},
 			hostDisconnected(): void {
 				observer?.disconnect();
@@ -118,7 +115,7 @@ export function intersectionObserver(
 	}
 
 	// Standalone (non-host-bound): caller owns the lifecycle.
-	const observer = createNativeObserver(targets, nativeCb, options);
+	const observer = createNativeObserver(targets, nativeCb, box);
 	return {
 		destroy(): void {
 			observer?.disconnect();

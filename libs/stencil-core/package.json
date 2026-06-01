@@ -38,10 +38,10 @@
       "types": "./dist/dev/index.d.ts",
       "import": "./dist/dev/index.js"
     },
-    "./observer": {
-      "@ssv/source": "./src/observer/index.ts",
-      "types": "./dist/observer/index.d.ts",
-      "import": "./dist/observer/index.js"
+    "./dom": {
+      "@ssv/source": "./src/dom/index.ts",
+      "types": "./dist/dom/index.d.ts",
+      "import": "./dist/dom/index.js"
     }
   },
   "scripts": {

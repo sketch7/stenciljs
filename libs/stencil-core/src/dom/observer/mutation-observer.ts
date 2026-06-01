@@ -1,4 +1,4 @@
-import { peekCurrentHost, use } from "../hooks";
+import { peekCurrentHost, use } from "../../hooks";
 import { resolveTarget } from "./observer.model";
 import type { ObserverRef, ObserverTarget } from "./observer.model";
 

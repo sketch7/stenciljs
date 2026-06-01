@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { TestHost } from "../testing/test-host";
+import { TestHost } from "../../testing/test-host";
 import { intersectionObserver } from "./intersection-observer";
 
 // ─── Mock IntersectionObserver ────────────────────────────────────────────────

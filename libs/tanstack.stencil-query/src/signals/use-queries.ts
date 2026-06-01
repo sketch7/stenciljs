@@ -10,12 +10,6 @@ import { noObserverRefetch, pendingQueryState } from "../query-observer";
 import { createSignalResult } from "./signal-result";
 import type { QuerySignalResult } from "./use-query";
 
-// ── Module helpers ─────────────────────────────────────────────────────────────
-
-/** Returns a fresh pending-state element result (no observer attached). */
-const pendingElement = (): QueryObserverResult =>
-	({ ...pendingQueryState, refetch: noObserverRefetch }) as unknown as QueryObserverResult;
-
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 /**
@@ -45,28 +39,6 @@ export type QueriesSignalResults<T extends any[]> = {
 
 // ── API ────────────────────────────────────────────────────────────────────────
 
-/**
- * Subscribes to a list of queries in parallel and exposes each result as a per-field signal proxy.
- *
- * Without `combine`, each element in the returned signal array is a {@link QuerySignalResult} —
- * every field is a callable signal (`result.isPending()`, `result.data()`, …) so only the
- * component that reads a changed field re-renders. Requires `useSignalWatcher()` to be active.
- *
- * Pass a **getter function** for reactive options (e.g. when the query list depends on a signal).
- *
- * @example
- * ```ts
- * readonly #posts = $useQueries(() => ({
- *   queries: this.ids().map(id => ({ queryKey: ['post', id], queryFn: () => fetchPost(id) })),
- * }));
- *
- * render() {
- *   return this.#posts().map(r =>
- *     r.isPending() ? <span>Loading…</span> : <span>{r.data()?.title}</span>
- *   );
- * }
- * ```
- */
 /**
  * Overload for a **homogeneous array** of queries (e.g. produced by `.map()`).
  * When all elements share the same `TData`/`TError`, TypeScript infers the concrete types
@@ -99,6 +71,28 @@ export function $useQueries<
 	client?: QueryClient | Ref<QueryClient>,
 ): Signal<QuerySignalResult<NoInfer<TData>, NoInfer<TError>>[]>;
 
+/**
+ * Subscribes to a list of queries in parallel and exposes each result as a per-field signal proxy.
+ *
+ * Without `combine`, each element in the returned signal array is a {@link QuerySignalResult} —
+ * every field is a callable signal (`result.isPending()`, `result.data()`, …) so only the
+ * component that reads a changed field re-renders. Requires `useSignalWatcher()` to be active.
+ *
+ * Pass a **getter function** for reactive options (e.g. when the query list depends on a signal).
+ *
+ * @example
+ * ```ts
+ * readonly #posts = $useQueries(() => ({
+ *   queries: this.ids().map(id => ({ queryKey: ['post', id], queryFn: () => fetchPost(id) })),
+ * }));
+ *
+ * render() {
+ *   return this.#posts().map(r =>
+ *     r.isPending() ? <span>Loading…</span> : <span>{r.data()?.title}</span>
+ *   );
+ * }
+ * ```
+ */
 export function $useQueries<T extends any[]>(
 	getOptions: UseQueriesOptions<T> | (() => UseQueriesOptions<T>),
 	client?: QueryClient | Ref<QueryClient>,
@@ -166,7 +160,10 @@ export function $useQueries<T extends any[], TCombinedResult = QueriesResults<T>
 	/** Creates and registers a single pending element + proxy at position `elementSrcs.length`. */
 	const addElement = (): void => {
 		const i = elementSrcs.length;
-		const src = signal<QueryObserverResult>(pendingElement());
+		const src = signal<QueryObserverResult>({
+			...pendingQueryState,
+			refetch: noObserverRefetch,
+		} as unknown as QueryObserverResult);
 		const proxy = createSignalResult(src as never, {
 			refetch: () => obsRef.fn?.()?.getObservers()[i]?.refetch(),
 		}) as unknown as QuerySignalResult;
@@ -181,20 +178,22 @@ export function $useQueries<T extends any[], TCombinedResult = QueriesResults<T>
 	};
 
 	const syncElements = (results: QueryObserverResult[]): void => {
-		// Grow element signals and proxies for any new queries.
 		growElements(results.length);
 		results.forEach((r, i) => elementSrcs[i].set(r));
 		lengthSig.set(results.length);
 	};
 
 	// Pre-initialize with pending elements so callers at afterConnect see the correct length.
-	growElements(getOpts().queries.length);
-	lengthSig.set(getOpts().queries.length);
+	const initialCount = getOpts().queries.length;
+	growElements(initialCount);
+	lengthSig.set(initialCount);
+
+	const syncResults = (results: QueriesResults<T>): void => syncElements(results as QueryObserverResult[]);
 
 	const handle = useBaseQueriesObserver<QueriesResults<T>>(getOptions as never, client, {
-		onResult: results => syncElements(results as QueryObserverResult[]),
-		onConnect: results => syncElements(results as QueryObserverResult[]),
-		onRender: results => syncElements(results as QueryObserverResult[]),
+		onResult: syncResults,
+		onConnect: syncResults,
+		onRender: syncResults,
 		onDispose: () => syncElements(pendingQueriesResult<QueriesResults<T>>(getOpts()) as QueryObserverResult[]),
 	});
 	obsRef.fn = handle.getObserver;

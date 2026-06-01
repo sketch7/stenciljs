@@ -262,9 +262,6 @@ export function useBaseQueriesObserver<TCombinedResult>(
 		return getCombinedResult(trackResult()) as TCombinedResult;
 	};
 
-	// Pending fallback before the observer connects (or after disconnect).
-	const pendingResult = (): TCombinedResult => pendingQueriesResult<TCombinedResult>(getOpts());
-
 	// hostWillLoad: context guaranteed resolved — qc is non-null and auto-unwrapped from clientRef.
 	useLoadEffect(
 		({ qc, isRestoring, requestUpdate }) => {
@@ -311,7 +308,9 @@ export function useBaseQueriesObserver<TCombinedResult>(
 		getObserver: () => observer,
 		getCurrentResult: () => {
 			const qc = clientRef.current;
-			return observer && qc ? combinedFrom(observer, qc, isRestoringRef.current) : pendingResult();
+			return observer && qc
+				? combinedFrom(observer, qc, isRestoringRef.current)
+				: pendingQueriesResult<TCombinedResult>(getOpts());
 		},
 	};
 }

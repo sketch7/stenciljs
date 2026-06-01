@@ -195,4 +195,17 @@ describe("$useQueries", () => {
 		using comp = await mount(() => {}, { hostFactory: () => new ComponentLike() });
 		expect(comp.queries()[0].data()).toBe("hello");
 	});
+
+	it("homogeneous .map() call infers Signal<QuerySignalResult<TData>[]> without annotation", async () => {
+		using m = await mount(() => ({
+			queries: $useQueries(
+				() => ({ queries: [1, 2].map(id => ({ queryKey: ["p", id], queryFn: async () => id * 10 })) }),
+				qc,
+			),
+		}));
+		// Type check: result is Signal<QuerySignalResult<number>[]> — data() is Signal<number | undefined>
+		expectTypeOf(m.queries).toEqualTypeOf<() => import("../signals/use-query").QuerySignalResult<number>[]>();
+		qc.setQueryData(["p", 1], 100);
+		await vi.waitFor(() => expect(m.queries()[0].data()).toBe(100));
+	});
 });

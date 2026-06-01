@@ -18,10 +18,6 @@ export type { ProxySignalHandler, ProxySignalOptions } from "./extensions/proxy-
 export { throttled, debounced } from "./extensions/rate-limited";
 export type { RateLimitedOptions, RateLimitedSignal, RateLimitedWritableSignal } from "./extensions/rate-limited";
 
-// ─── Scheduling primitives ──────────────────────────────────────────────────
-export { throttleCallback, debounceCallback } from "@ssv/stencil-core";
-export type { Cancelable } from "@ssv/stencil-core";
-
 // ─── Prop / model bindings ────────────────────────────────────────────────────
 export { useSignalProps } from "./extensions/signal-prop";
 export type { SignalPropOptions, SignalPropsResult } from "./extensions/signal-prop";

@@ -6,4 +6,7 @@ export default defineConfig({
 	platform: "neutral",
 	hash: false,
 	tsconfig: "tsconfig.lib.json",
+	outputOptions: {
+		chunkFileNames: "_internal/[name].js",
+	},
 });

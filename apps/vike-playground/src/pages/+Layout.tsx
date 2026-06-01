@@ -108,6 +108,10 @@ const navSections: NavSection[] = [
 		],
 	},
 	{
+		title: "@ssv / Core / Observer",
+		items: [{ href: "/ssv-stencil/core/doms", label: "Observers" }],
+	},
+	{
 		title: "@ssv / Core / Context",
 		items: [{ href: "/ssv-stencil/core/context/counter", label: "Counter" }],
 	},
@@ -140,6 +144,7 @@ const navSections: NavSection[] = [
 			{ href: "/stencil-signals/derived-async", label: "derivedAsync" },
 			{ href: "/stencil-signals/computed-previous", label: "computedPrevious" },
 			{ href: "/stencil-signals/mouse-event", label: "signalFromEvent" },
+			{ href: "/stencil-signals/observer-signals", label: "elementSize / intersect" },
 		],
 	},
 	{

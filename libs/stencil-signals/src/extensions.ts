@@ -19,3 +19,9 @@ export type { SignalPropOptions, SignalPropsResult } from "./extensions/signal-p
 // ─── DOM event listeners ──────────────────────────────────────────────────────
 export { signalFromEvent } from "./extensions/signal-from-event";
 export type { SignalFromEventOptions } from "./extensions/signal-from-event";
+
+// ─── DOM element observers ────────────────────────────────────────────────────
+export { elementSize } from "./extensions/element-size";
+export type { ElementSizeValue, ElementSizeOptions } from "./extensions/element-size";
+export { intersect } from "./extensions/intersect";
+export type { IntersectOptions } from "./extensions/intersect";

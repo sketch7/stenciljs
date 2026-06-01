@@ -25,5 +25,7 @@ export type { UsePrefetchQueryOptions } from "./use-prefetch-query";
 export { useMutation } from "./use-mutation";
 export { usePrefetchQuery } from "./use-prefetch-query";
 export { useQuery } from "./use-query";
+export { useQueries } from "./use-queries";
+export type { UseQueriesQueryOption, UseQueriesRef, UseQueriesResult } from "./use-queries";
 export { useQueryHydration } from "./use-query-hydration";
 export type { UseQueryHydrationOptions } from "./use-query-hydration";

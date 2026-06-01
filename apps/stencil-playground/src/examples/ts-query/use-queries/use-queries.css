@@ -1,0 +1,104 @@
+:host {
+	display: block;
+}
+
+.use-queries-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 1.25rem;
+}
+
+.section {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.use-queries {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.heading {
+	margin: 0;
+	font-size: 1rem;
+	font-weight: 600;
+}
+
+.hint {
+	margin: 0;
+	font-size: 0.8125rem;
+	color: var(--color-muted, #6b7280);
+}
+
+.status {
+	margin: 0;
+	font-size: 0.875rem;
+	color: var(--color-muted, #6b7280);
+}
+
+.status--error {
+	color: var(--color-error, #dc2626);
+}
+
+/* ── Results grid ────────────────────────────────────────────────────── */
+.results {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.result-card {
+	padding: 0.75rem;
+	border-radius: 0.375rem;
+	background: var(--color-surface, #f9fafb);
+	border: 1px solid color-mix(in oklab, var(--color-fg, #111827) 10%, transparent);
+	font-size: 0.875rem;
+}
+
+.result-card__label {
+	font-size: 0.7rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--color-muted, #6b7280);
+	margin-bottom: 0.375rem;
+}
+
+.result-card__title {
+	font-weight: 500;
+	color: var(--color-fg, #111827);
+	margin: 0 0 0.25rem;
+}
+
+.result-card__detail {
+	color: var(--color-muted, #6b7280);
+	margin: 0;
+	font-size: 0.8125rem;
+}
+
+.badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	padding: 0.125rem 0.375rem;
+	border-radius: 9999px;
+	font-size: 0.6875rem;
+	font-weight: 500;
+}
+
+.badge--pending {
+	background: color-mix(in oklab, var(--color-muted, #6b7280) 15%, transparent);
+	color: var(--color-muted, #6b7280);
+}
+
+.badge--success {
+	background: color-mix(in oklab, #16a34a 15%, transparent);
+	color: #16a34a;
+}
+
+.badge--error {
+	background: color-mix(in oklab, var(--color-error, #dc2626) 15%, transparent);
+	color: var(--color-error, #dc2626);
+}

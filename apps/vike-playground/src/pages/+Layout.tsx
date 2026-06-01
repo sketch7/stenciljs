@@ -131,6 +131,7 @@ const navSections: NavSection[] = [
 		items: [
 			{ href: "/ssv-stencil/ts-query/posts", label: "Posts" },
 			{ href: "/ssv-stencil/ts-query/posts-signals", label: "Posts (Signals)" },
+			{ href: "/ssv-stencil/ts-query/use-queries", label: "useQueries" },
 			{ href: "/ssv-stencil/ts-query/translations", label: "Translations" },
 			{ href: "/ssv-stencil/ts-query/prefetch", label: "Prefetch" },
 		],

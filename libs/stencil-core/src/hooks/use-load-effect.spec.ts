@@ -135,4 +135,157 @@ describe("useLoadEffect — named deps", () => {
 		await host.willLoad();
 		expect(capturedN).toBe(7);
 	});
+
+	describe("reactive re-runs on dep change", () => {
+		it("re-runs setup when a dep value changes between renders", async () => {
+			using host = new TestHost();
+			const valRef = createWritableRef<number>(1);
+			const setup = vi.fn();
+			useLoadEffect(setup, { val: valRef });
+			await host.willLoad();
+			expect(setup).toHaveBeenCalledOnce();
+
+			valRef.current = 2;
+			host.render();
+			expect(setup).toHaveBeenCalledTimes(2);
+		});
+
+		it("does not re-run setup when dep values are unchanged", async () => {
+			using host = new TestHost();
+			const valRef = createWritableRef<number>(1);
+			const setup = vi.fn();
+			useLoadEffect(setup, { val: valRef });
+			await host.willLoad();
+			expect(setup).toHaveBeenCalledOnce();
+
+			host.render();
+			host.render();
+			expect(setup).toHaveBeenCalledOnce();
+		});
+
+		it("calls cleanup before re-running setup on dep change", async () => {
+			using host = new TestHost();
+			const valRef = createWritableRef<number>(1);
+			const cleanup = vi.fn();
+			useLoadEffect(() => cleanup, { val: valRef });
+			await host.willLoad();
+
+			valRef.current = 2;
+			host.render();
+			expect(cleanup).toHaveBeenCalledOnce();
+		});
+
+		it("re-run setup receives new dep values", async () => {
+			using host = new TestHost();
+			const valRef = createWritableRef<number>(1);
+			const captured: number[] = [];
+			useLoadEffect(
+				({ val }) => {
+					captured.push(val);
+				},
+				{ val: valRef },
+			);
+			await host.willLoad();
+
+			valRef.current = 42;
+			host.render();
+			expect(captured).toStrictEqual([1, 42]);
+		});
+
+		it("runs cleanup and pauses effect when dep becomes null", async () => {
+			using host = new TestHost();
+			const valRef = createWritableRef<string | null>("hello");
+			const setup = vi.fn();
+			const cleanup = vi.fn();
+			setup.mockReturnValue(cleanup);
+			useLoadEffect(setup, { val: valRef });
+			await host.willLoad();
+			expect(setup).toHaveBeenCalledOnce();
+
+			valRef.current = null;
+			host.render();
+			expect(cleanup).toHaveBeenCalledOnce();
+			// no re-run while dep is null
+			host.render();
+			expect(setup).toHaveBeenCalledOnce();
+		});
+
+		it("resumes effect when dep becomes non-null again after being null", async () => {
+			using host = new TestHost();
+			const valRef = createWritableRef<string | null>("hello");
+			const setup = vi.fn();
+			useLoadEffect(setup, { val: valRef });
+			await host.willLoad();
+
+			valRef.current = null;
+			host.render();
+
+			valRef.current = "world";
+			host.render();
+			expect(setup).toHaveBeenCalledTimes(2);
+		});
+	});
+});
+
+// ── useLoadEffect — getter fn deps ────────────────────────────────────────────
+
+describe("useLoadEffect — getter fn deps", () => {
+	it("setup receives value from a getter fn dep", async () => {
+		using host = new TestHost();
+		const signalVal = "hello";
+		let captured: string | undefined;
+		useLoadEffect(
+			({ val }) => {
+				captured = val;
+			},
+			{ val: () => signalVal },
+		);
+		await host.willLoad();
+		expect(captured).toBe("hello");
+	});
+
+	it("setup is skipped when a getter fn dep returns undefined", async () => {
+		using host = new TestHost();
+		const setup = vi.fn();
+		useLoadEffect(setup, { val: () => undefined as string | undefined });
+		await host.willLoad();
+		expect(setup).not.toHaveBeenCalled();
+	});
+
+	it("re-runs when getter fn returns a new value", async () => {
+		using host = new TestHost();
+		let signalVal = 1;
+		const setup = vi.fn();
+		useLoadEffect(setup, { val: () => signalVal });
+		await host.willLoad();
+		signalVal = 2;
+		host.render();
+		expect(setup).toHaveBeenCalledTimes(2);
+	});
+
+	it("does not re-run when getter fn returns the same value", async () => {
+		using host = new TestHost();
+		const signalVal = 1;
+		const setup = vi.fn();
+		useLoadEffect(setup, { val: () => signalVal });
+		await host.willLoad();
+		host.render();
+		host.render();
+		expect(setup).toHaveBeenCalledOnce();
+	});
+
+	it("pauses and runs cleanup when getter fn returns null", async () => {
+		using host = new TestHost();
+		let signalVal: number | null = 42;
+		const setup = vi.fn();
+		const cleanup = vi.fn();
+		setup.mockReturnValue(cleanup);
+		useLoadEffect(setup, { val: () => signalVal });
+		await host.willLoad();
+		signalVal = null;
+		host.render();
+		expect(cleanup).toHaveBeenCalledOnce();
+		host.render();
+		expect(setup).toHaveBeenCalledOnce(); // still paused
+	});
 });

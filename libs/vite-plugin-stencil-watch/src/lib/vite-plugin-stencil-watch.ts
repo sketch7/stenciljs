@@ -199,7 +199,7 @@ export function stencilWatch(options: StencilWatchOptions): Plugin {
 			debounceTimer = null;
 			const withPreBuild = pendingNeedsPreBuild;
 			pendingNeedsPreBuild = false;
-			build(server, withPreBuild);
+			void build(server, withPreBuild);
 		}, debounceMs);
 	}
 
@@ -256,7 +256,7 @@ export function stencilWatch(options: StencilWatchOptions): Plugin {
 			// transformed output, breaking the BFS importer chain above so that
 			// page modules (e.g. +Page.tsx) are never reached. The transform hook
 			// records these modules before the import is stripped.
-			const ssrEnv = server.environments["ssr"];
+			const ssrEnv = server.environments.ssr;
 			if (ssrEnv) {
 				for (const trackedId of stencilImporterIds) {
 					const trackedMod = ssrEnv.moduleGraph.idToModuleMap.get(trackedId);

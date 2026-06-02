@@ -29,7 +29,7 @@ export type SignalPropOptions<T = unknown> = {
  *     then excludes `undefined` when a non-undefined `default` is provided
  *  3. `unknown`   — fallback when neither is available
  */
-type PropValue<H, K extends string, Opts extends SignalPropOptions<unknown>> = Opts extends {
+type PropValue<H, K extends string, Opts extends SignalPropOptions> = Opts extends {
 	transform: (v: unknown) => infer R;
 }
 	? R
@@ -39,7 +39,7 @@ type PropValue<H, K extends string, Opts extends SignalPropOptions<unknown>> = O
 			: Exclude<(H & Record<K, unknown>)[K], undefined>
 		: (H & Record<K, unknown>)[K];
 
-type PropSignal<H, K extends string, Opts extends SignalPropOptions<unknown>> = Opts extends { twoWay: boolean }
+type PropSignal<H, K extends string, Opts extends SignalPropOptions> = Opts extends { twoWay: boolean }
 	? WritableSignal<PropValue<H, K, Opts>>
 	: Signal<PropValue<H, K, Opts>>;
 
@@ -56,7 +56,7 @@ type PropEntry = {
 	propName: string;
 	inner: WritableSignal<unknown>;
 	isSyncing: { value: boolean };
-	options: SignalPropOptions<unknown>;
+	options: SignalPropOptions;
 	/** Last value received from the external @Prop — used by twoWay to detect genuine external changes. */
 	lastExternalPropValue: unknown;
 };
@@ -176,7 +176,7 @@ function makeStableTwoWayFacade<T>(
 	return wrapper;
 }
 
-function buildEntry(host: AnyHost, propName: string, options: SignalPropOptions<unknown>): PropEntry {
+function buildEntry(host: AnyHost, propName: string, options: SignalPropOptions): PropEntry {
 	const initial = applyTransform(host[propName], options);
 	const inner = createSignal(initial);
 	const isSyncing = { value: false };

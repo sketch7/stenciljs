@@ -88,6 +88,6 @@ export function useQuery<
 			(getObserver()?.getCurrentResult() ?? {
 				...pendingQueryState,
 				refetch: noObserverRefetch,
-			}) as unknown as QueryObserverResult<TData, TError>,
+			}) as QueryObserverResult<TData, TError>,
 	);
 }

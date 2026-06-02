@@ -24,7 +24,7 @@ import {
 	getInitialState,
 } from "../src/store";
 
-const tick = () =>
+const tick = async () =>
 	new Promise<void>(r => {
 		queueMicrotask(r);
 	});

@@ -24,7 +24,7 @@ import {
 // utilities that call getAdapter() work correctly in this test file.
 import { computed } from "../src/tc39";
 
-const tick = () =>
+const tick = async () =>
 	new Promise<void>(r => {
 		queueMicrotask(r);
 	});

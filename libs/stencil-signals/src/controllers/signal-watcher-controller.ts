@@ -134,5 +134,5 @@ export class SignalWatcherController implements ReactiveController {
 
 /** Install a `SignalWatcherController` on the current host; use as a class-property initializer. */
 export function useSignalWatcher() {
-	return use(host => new SignalWatcherController(host));
+	use(host => new SignalWatcherController(host));
 }

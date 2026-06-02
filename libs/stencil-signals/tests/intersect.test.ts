@@ -95,7 +95,7 @@ describe("intersect", () => {
 		const $entry = intersect(() => ({}) as Element);
 		host.connect();
 		const entry = makeEntry(true, 0.75);
-		MockIntersectionObserver.instances[0]!.fire([entry]);
+		MockIntersectionObserver.instances[0].fire([entry]);
 
 		expect($entry()).toBe(entry);
 	});
@@ -107,7 +107,7 @@ describe("intersect", () => {
 		const host = new TestHost();
 		const $entry = intersect(() => ({}) as Element);
 		host.connect();
-		MockIntersectionObserver.instances[0]!.fire([makeEntry(isIntersecting, ratio)]);
+		MockIntersectionObserver.instances[0].fire([makeEntry(isIntersecting, ratio)]);
 
 		expect($entry()?.isIntersecting).toBe(isIntersecting);
 		expect($entry()?.intersectionRatio).toBe(ratio);
@@ -119,7 +119,7 @@ describe("intersect", () => {
 		intersect(() => ({}) as Element, { root, rootMargin: "10px", threshold: [0, 0.5, 1] });
 		host.connect();
 
-		expect(MockIntersectionObserver.instances[0]!.options).toStrictEqual({
+		expect(MockIntersectionObserver.instances[0].options).toStrictEqual({
 			root,
 			rootMargin: "10px",
 			threshold: [0, 0.5, 1],
@@ -130,7 +130,7 @@ describe("intersect", () => {
 		const host = new TestHost();
 		const $entry = intersect(() => ({}) as Element);
 		host.connect();
-		MockIntersectionObserver.instances[0]!.fire([makeEntry()]);
+		MockIntersectionObserver.instances[0].fire([makeEntry()]);
 		expect($entry()).toBeDefined();
 
 		host.disconnect();
@@ -143,7 +143,7 @@ describe("intersect", () => {
 		const initial = makeEntry(false, 0);
 		const $entry = intersect(() => ({}) as Element, { initialValue: initial });
 		host.connect();
-		MockIntersectionObserver.instances[0]!.fire([makeEntry(true, 1)]);
+		MockIntersectionObserver.instances[0].fire([makeEntry(true, 1)]);
 		host.disconnect();
 
 		expect($entry()).toBe(initial);

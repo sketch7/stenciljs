@@ -58,7 +58,7 @@ function attachSignalFromEvent<TEvent extends Event, TStored>(
 	const passive = resolvePassiveOption(eventName, options.passive);
 	const listenerOpts = toAddEventListenerOptions(capture, passive);
 
-	const host = getCurrentHost() as ReactiveControllerHost;
+	const host = getCurrentHost();
 	const target = resolveEventTarget(options.target, host);
 
 	const inner = createSignal<TStored | undefined>(config.initialValue as TStored | undefined);
@@ -80,7 +80,7 @@ function attachSignalFromEvent<TEvent extends Event, TStored>(
 		},
 	});
 
-	const readonly = inner.asReadonly() as Signal<TStored | undefined>;
+	const readonly = inner.asReadonly();
 
 	const listen = Object.assign(readonly, {
 		dispose: detach,
@@ -104,11 +104,13 @@ export function signalFromEvent<TEvent extends Event = Event>(
 	options: ListenOptions & { initialValue: TEvent; map?: undefined },
 ): Signal<TEvent>;
 
+// oxlint-disable-next-line typescript/no-unnecessary-type-parameters -- TEvent lets callers constrain the map callback (e.g. signalFromEvent<MouseEvent, ...>)
 export function signalFromEvent<TEvent extends Event, T>(
 	eventName: string,
 	options: ListenOptions & { map: (ev: TEvent) => T },
 ): Signal<T | undefined>;
 
+// oxlint-disable-next-line typescript/no-unnecessary-type-parameters -- TEvent lets callers constrain the map callback (e.g. signalFromEvent<MouseEvent, ...>)
 export function signalFromEvent<TEvent extends Event, T>(
 	eventName: string,
 	options: ListenOptions & { map: (ev: TEvent) => T; initialValue: T },

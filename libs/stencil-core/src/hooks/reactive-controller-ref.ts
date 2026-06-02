@@ -1,3 +1,4 @@
+// oxlint-disable typescript/promise-function-async
 import type { ReactiveController } from "./reactive-controller";
 
 /**

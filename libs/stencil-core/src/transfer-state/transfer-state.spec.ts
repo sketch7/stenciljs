@@ -23,7 +23,7 @@ function makeMockScript(id: string, data: unknown): MockScript {
 }
 
 function attachShadowRoot(host: TestHost, scripts: MockScript[]): void {
-	(host as unknown as Record<string, unknown>)["shadowRoot"] = {
+	(host as unknown as Record<string, unknown>).shadowRoot = {
 		querySelector: (sel: string) => scripts.find(s => sel === `#${s.id}`) ?? null,
 	};
 }
@@ -147,7 +147,7 @@ describe("provideTransferState", () => {
 		it("hostDidLoad creates and appends a script when none exists", async () => {
 			const appended: HTMLScriptElement[] = [];
 			using _m = await mount(h => {
-				(h as unknown as Record<string, unknown>)["shadowRoot"] = {
+				(h as unknown as Record<string, unknown>).shadowRoot = {
 					querySelector: () => null,
 					append: (el: HTMLScriptElement) => {
 						appended.push(el);
@@ -159,7 +159,7 @@ describe("provideTransferState", () => {
 			expect(appended).toHaveLength(1);
 			expect(appended[0].type).toBe("application/json");
 			expect(appended[0].id).toBe(scriptId("auto-inject"));
-			expect(JSON.parse(appended[0].textContent!)).toMatchObject({ count: 7 });
+			expect(JSON.parse(appended[0].textContent)).toMatchObject({ count: 7 });
 		});
 	});
 

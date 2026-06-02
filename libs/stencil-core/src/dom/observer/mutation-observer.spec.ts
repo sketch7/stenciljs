@@ -68,7 +68,7 @@ describe("mutationObserver", () => {
 
 		host.connect();
 		const records = [makeRecord("childList")];
-		MockMutationObserver.instances[0]!.fire(records);
+		MockMutationObserver.instances[0].fire(records);
 
 		expect(callback).toHaveBeenCalledWith(records);
 	});
@@ -96,7 +96,7 @@ describe("mutationObserver", () => {
 
 		host.connect();
 
-		expect(MockMutationObserver.instances[0]!.observed[0]!.options).toMatchObject(options);
+		expect(MockMutationObserver.instances[0].observed[0].options).toMatchObject(options);
 	});
 
 	it("multiple targets: all elements observed", () => {
@@ -107,7 +107,7 @@ describe("mutationObserver", () => {
 
 		host.connect();
 
-		const observedTargets = MockMutationObserver.instances[0]!.observed.map(o => o.target);
+		const observedTargets = MockMutationObserver.instances[0].observed.map(o => o.target);
 		expect(observedTargets).toStrictEqual([t1, t2]);
 	});
 
@@ -119,7 +119,7 @@ describe("mutationObserver", () => {
 
 		host.connect();
 
-		const observedTargets = MockMutationObserver.instances[0]!.observed.map(o => o.target);
+		const observedTargets = MockMutationObserver.instances[0].observed.map(o => o.target);
 		expect(observedTargets).toStrictEqual([t1, t2]);
 	});
 
@@ -130,7 +130,7 @@ describe("mutationObserver", () => {
 		host.connect();
 		host.disconnect();
 
-		expect(MockMutationObserver.instances[0]!.isDisconnected).toBeTruthy();
+		expect(MockMutationObserver.instances[0].isDisconnected).toBeTruthy();
 	});
 
 	it("reconnect re-creates observer and callback fires again", () => {
@@ -139,11 +139,11 @@ describe("mutationObserver", () => {
 		mutationObserver(() => ({}) as Element, callback, { childList: true });
 
 		host.connect();
-		MockMutationObserver.instances[0]!.fire([makeRecord("childList")]);
+		MockMutationObserver.instances[0].fire([makeRecord("childList")]);
 		host.disconnect();
 
 		host.connect();
-		MockMutationObserver.instances[1]!.fire([makeRecord("attributes")]);
+		MockMutationObserver.instances[1].fire([makeRecord("attributes")]);
 
 		expect(callback).toHaveBeenCalledTimes(2);
 	});
@@ -157,7 +157,7 @@ describe("mutationObserver", () => {
 		host.connect();
 		ref.destroy();
 
-		expect(MockMutationObserver.instances[0]!.isDisconnected).toBeTruthy();
+		expect(MockMutationObserver.instances[0].isDisconnected).toBeTruthy();
 	});
 
 	it("destroy() prevents new observer on reconnect", () => {

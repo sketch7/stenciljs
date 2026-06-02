@@ -169,7 +169,7 @@ export async function mountDom<T = void>(
 	}
 
 	// willLoad all nodes in parallel
-	await Promise.all(collectNodes(rootInternal).map(n => n.host.willLoad()));
+	await Promise.all(collectNodes(rootInternal).map(async n => n.host.willLoad()));
 
 	return {
 		host: rootHost,

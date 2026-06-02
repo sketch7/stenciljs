@@ -218,7 +218,7 @@ export function provideTransferState(id: string): TransferState {
 			if (!shadowRoot) {
 				return;
 			}
-			let script = shadowRoot.querySelector(`#${scriptId(id)}`) as HTMLScriptElement | null;
+			let script = shadowRoot.querySelector<HTMLScriptElement>(`#${scriptId(id)}`);
 			if (!script) {
 				script = document.createElement("script");
 				script.type = SCRIPT_TYPE;

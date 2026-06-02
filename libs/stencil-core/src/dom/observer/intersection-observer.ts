@@ -97,7 +97,7 @@ export function intersectionObserver(
 
 		useEffect(() => {
 			if (destroyed) {
-				return;
+				return undefined;
 			}
 			observer = createNativeObserver(targets, nativeCb, options);
 			return () => {

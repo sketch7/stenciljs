@@ -45,10 +45,7 @@ export type ProvideQueryClientOptions = {
  * ```
  */
 export function provideQueryClient(clientOrOptions?: QueryClient | ProvideQueryClientOptions): QueryClient {
-	const qc =
-		clientOrOptions instanceof QueryClient
-			? clientOrOptions
-			: ((clientOrOptions as ProvideQueryClientOptions | undefined)?.client ?? new QueryClient());
+	const qc = clientOrOptions instanceof QueryClient ? clientOrOptions : (clientOrOptions?.client ?? new QueryClient());
 
 	use({
 		hostConnected() {
@@ -85,5 +82,5 @@ export function useQueryClient(client?: QueryClient | Ref<QueryClient>): Ref<Que
 	if (isRef<QueryClient>(client)) {
 		return client;
 	}
-	return createRef(() => client as QueryClient);
+	return createRef(() => client);
 }

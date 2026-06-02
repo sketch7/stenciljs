@@ -12,6 +12,7 @@ export default defineConfig({
 	format: ["esm"],
 	platform: "neutral",
 	hash: false,
+	dts: true,
 	tsconfig: "tsconfig.lib.json",
 	// Replace DEBUG with `false` at build time so the bundler can fold away all
 	// logging branches (createContextLogger returns noop → entire log(...) calls

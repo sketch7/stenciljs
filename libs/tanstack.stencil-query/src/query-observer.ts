@@ -104,7 +104,7 @@ export const pendingQueryState = {
 };
 
 /** Rejection used by `refetch` before the observer is connected to the host. */
-export const noObserverRefetch = (): Promise<never> =>
+export const noObserverRefetch = async (): Promise<never> =>
 	Promise.reject(new Error("[ssv:query] Cannot refetch — observer not yet connected."));
 
 /** Result-surfacing hooks invoked by {@link useBaseQueryObserver} at the appropriate lifecycle points. */
@@ -140,17 +140,14 @@ export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey exte
 	client: QueryClient | Ref<QueryClient> | undefined,
 	handlers: QueryObserverHandlers<TData, TError>,
 ): QueryObserverHandle<TQueryFnData, TError, TData, TQueryKey> {
-	const getOpts =
-		typeof getOptions === "function"
-			? getOptions
-			: () => getOptions as UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>;
+	const getOpts = typeof getOptions === "function" ? getOptions : () => getOptions;
 
 	const clientRef = useQueryClient(client);
 	const isRestoringRef = useIsRestoring();
 
 	let observer: QueryObserver<TQueryFnData, TError, TData, TQueryFnData, TQueryKey> | undefined;
 
-	const refetch: QueryObserverResult<TData, TError>["refetch"] = (options?: RefetchOptions) =>
+	const refetch: QueryObserverResult<TData, TError>["refetch"] = async (options?: RefetchOptions) =>
 		observer?.refetch(options) ?? noObserverRefetch();
 
 	/** Returns defaulted options with `_optimisticResults` stamped. */
@@ -168,6 +165,7 @@ export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey exte
 
 	// hostWillLoad: context guaranteed resolved — qc is non-null and auto-unwrapped from clientRef.
 	useLoadEffect(
+		// oxlint-disable-next-line typescript/unbound-method -- requestUpdate is a pre-bound function provided by the framework context
 		({ qc, isRestoring, requestUpdate }) => {
 			observer = new QueryObserver<TQueryFnData, TError, TData, TQueryFnData, TQueryKey>(
 				qc,

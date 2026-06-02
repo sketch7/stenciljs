@@ -4,7 +4,7 @@ import { effectOnceIf } from "../src/extensions/effect-once-if";
 import { signal, computed } from "../src/tc39";
 
 // Helper: flush all pending microtasks
-const tick = () =>
+const tick = async () =>
 	new Promise<void>(r => {
 		queueMicrotask(r);
 	});
@@ -73,7 +73,7 @@ describe("effectOnceIf", () => {
 		["", "empty string"],
 		[null, "null"],
 		[undefined, "undefined"],
-	])("does not execute for falsy value: %o", falsy => {
+	])("does not execute for falsy value: %o", (falsy, _label: string) => {
 		const condition = signal(falsy);
 		const execution = vi.fn();
 

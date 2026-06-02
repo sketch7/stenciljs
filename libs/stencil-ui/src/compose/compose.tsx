@@ -74,8 +74,7 @@ export class SsvCompose extends SsvElement {
 		}
 		const ElementClass =
 			customElements === null || customElements === undefined ? undefined : customElements.get(definition.tag);
-		const isWrapper =
-			ElementClass !== undefined && (ElementClass as unknown as typeof ComposeWidget).isComposeWrapper === true;
+		const isWrapper = (ElementClass as unknown as typeof ComposeWidget)?.isComposeWrapper === true;
 		let resolvedProps: Record<string, unknown>;
 		if (definition.mapProps) {
 			resolvedProps = definition.mapProps(this.props);

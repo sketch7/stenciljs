@@ -7,7 +7,7 @@ import { useQuery } from "./use-query";
 describe("hydration", () => {
 	it("dehydrate captures query state", async () => {
 		const qc = new QueryClient();
-		await qc.prefetchQuery({ queryKey: ["posts"], queryFn: () => Promise.resolve([{ id: 1, title: "Hello" }]) });
+		await qc.prefetchQuery({ queryKey: ["posts"], queryFn: async () => Promise.resolve([{ id: 1, title: "Hello" }]) });
 
 		const state = dehydrate(qc);
 
@@ -17,7 +17,7 @@ describe("hydration", () => {
 
 	it("hydrate restores query state into a fresh client", async () => {
 		const source = new QueryClient();
-		await source.prefetchQuery({ queryKey: ["posts"], queryFn: () => Promise.resolve([{ id: 1 }]) });
+		await source.prefetchQuery({ queryKey: ["posts"], queryFn: async () => Promise.resolve([{ id: 1 }]) });
 		const state = dehydrate(source);
 		source.clear();
 
@@ -37,7 +37,7 @@ describe("hydration", () => {
 		hydrate(target, state);
 
 		using m = await mount(() => ({
-			query: useQuery({ queryKey: ["posts"], queryFn: () => Promise.resolve([]), staleTime: Infinity }, target),
+			query: useQuery({ queryKey: ["posts"], queryFn: async () => Promise.resolve([]), staleTime: Infinity }, target),
 		}));
 
 		expect(m.query().data).toStrictEqual([{ id: 1, title: "SSR post" }]);
@@ -52,7 +52,7 @@ describe("hydration", () => {
 
 	it("hydrate merges into existing cache without overwriting fresh data", async () => {
 		const source = new QueryClient();
-		await source.prefetchQuery({ queryKey: ["item"], queryFn: () => Promise.resolve("stale") });
+		await source.prefetchQuery({ queryKey: ["item"], queryFn: async () => Promise.resolve("stale") });
 		const state = dehydrate(source);
 		source.clear();
 

@@ -40,7 +40,7 @@ export class TestHost extends EventTarget implements ReactiveControllerHost {
 
 	/** Simulates a full render cycle: `componentWillRender` → `hostWillRender`, then `componentDidRender` → `hostDidRender`. */
 	render(): void {
-		this.#ref.willRender();
+		void this.#ref.willRender();
 		this.#ref.didRender();
 	}
 

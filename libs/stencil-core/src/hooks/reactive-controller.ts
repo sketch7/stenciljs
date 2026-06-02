@@ -146,7 +146,7 @@ export function ReactiveControllerHostMixin<B extends MixedInCtor>(Base: B) {
 		// oxlint-disable-next-line @typescript-eslint/no-explicit-any -- spread accepts any hook return value
 		setup(..._hooks: any[]): void;
 		// oxlint-disable-next-line @typescript-eslint/no-explicit-any -- overload implementation
-		setup(init?: (() => void) | any): void {
+		setup(init?: any): void {
 			if (typeof init === "function") {
 				init();
 			}

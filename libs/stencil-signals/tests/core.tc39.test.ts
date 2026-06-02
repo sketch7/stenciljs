@@ -16,11 +16,11 @@ import { effect } from "../src/extensions/effect";
 import { signal, computed, createWatcher, untracked } from "../src/tc39";
 
 // Helper: flush all pending microtasks
-const flush = () =>
+const flush = async () =>
 	new Promise<void>(r => {
 		setTimeout(r, 0);
 	});
-const tick = () =>
+const tick = async () =>
 	new Promise<void>(r => {
 		queueMicrotask(r);
 	});
@@ -904,7 +904,7 @@ describe("host lifecycle — effect (explicit deps)", () => {
 		const log: number[] = [];
 
 		effect([a], ([v]) => {
-			log.push(v as number);
+			log.push(v);
 		});
 		host.connect(); // hostConnected → starts effect, fn runs synchronously
 		expect(log).toStrictEqual([1]);

@@ -78,7 +78,7 @@ describe("intersectionObserver", () => {
 
 		host.connect();
 		const entries = [makeEntry(true, 1)];
-		MockIntersectionObserver.instances[0]!.fire(entries);
+		MockIntersectionObserver.instances[0].fire(entries);
 
 		expect(callback).toHaveBeenCalledWith(entries[0]);
 	});
@@ -100,7 +100,7 @@ describe("intersectionObserver", () => {
 
 			host.connect();
 
-			expect(MockIntersectionObserver.instances[0]!.options).toMatchObject(options);
+			expect(MockIntersectionObserver.instances[0].options).toMatchObject(options);
 		},
 	);
 
@@ -112,7 +112,7 @@ describe("intersectionObserver", () => {
 
 		host.connect();
 
-		expect(MockIntersectionObserver.instances[0]!.observed).toStrictEqual([t1, t2]);
+		expect(MockIntersectionObserver.instances[0].observed).toStrictEqual([t1, t2]);
 	});
 
 	it("array-getter target: all elements observed", () => {
@@ -123,7 +123,7 @@ describe("intersectionObserver", () => {
 
 		host.connect();
 
-		expect(MockIntersectionObserver.instances[0]!.observed).toStrictEqual([t1, t2]);
+		expect(MockIntersectionObserver.instances[0].observed).toStrictEqual([t1, t2]);
 	});
 
 	it("hostDisconnected disconnects the observer", () => {
@@ -133,7 +133,7 @@ describe("intersectionObserver", () => {
 		host.connect();
 		host.disconnect();
 
-		expect(MockIntersectionObserver.instances[0]!.isDisconnected).toBeTruthy();
+		expect(MockIntersectionObserver.instances[0].isDisconnected).toBeTruthy();
 	});
 
 	it("reconnect re-creates observer and callback fires again", () => {
@@ -142,11 +142,11 @@ describe("intersectionObserver", () => {
 		intersectionObserver(() => ({}) as Element, callback);
 
 		host.connect();
-		MockIntersectionObserver.instances[0]!.fire([makeEntry(true)]);
+		MockIntersectionObserver.instances[0].fire([makeEntry(true)]);
 		host.disconnect();
 
 		host.connect();
-		MockIntersectionObserver.instances[1]!.fire([makeEntry(false)]);
+		MockIntersectionObserver.instances[1].fire([makeEntry(false)]);
 
 		expect(callback).toHaveBeenCalledTimes(2);
 	});
@@ -158,7 +158,7 @@ describe("intersectionObserver", () => {
 		host.connect();
 		ref.destroy();
 
-		expect(MockIntersectionObserver.instances[0]!.isDisconnected).toBeTruthy();
+		expect(MockIntersectionObserver.instances[0].isDisconnected).toBeTruthy();
 	});
 
 	it("destroy() prevents new observer on reconnect", () => {

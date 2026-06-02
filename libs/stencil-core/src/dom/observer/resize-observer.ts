@@ -94,7 +94,7 @@ export function resizeObserver(
 
 		useEffect(() => {
 			if (destroyed) {
-				return;
+				return undefined;
 			}
 			observer = createNativeObserver(targets, nativeCb, box);
 			return () => {

@@ -17,11 +17,11 @@ import { effect } from "../src/extensions/effect";
 import { signal, computed, createWatcher, untracked } from "../src/preact";
 
 // Helper: flush all pending microtasks
-const flush = () =>
+const flush = async () =>
 	new Promise<void>(r => {
 		setTimeout(r, 0);
 	});
-const tick = () =>
+const tick = async () =>
 	new Promise<void>(r => {
 		queueMicrotask(r);
 	});
@@ -360,7 +360,7 @@ describe("watchEffect() — explicit deps [preact]", () => {
 	it("does NOT re-run for signals read inside fn but not in deps", async () => {
 		const dep = signal(0); // in deps list
 		const other = signal(100); // NOT in deps list, but read inside fn
-		const fn = vi.fn(([_d]: number[]) => {
+		const fn = vi.fn(([_d]: readonly [number]) => {
 			other();
 		});
 		const cleanup = effect([dep], fn);
@@ -449,7 +449,7 @@ describe("watchEffect() — explicit deps [preact]", () => {
 		b.set(20);
 		await tick();
 		await tick();
-		expect(fn.mock.calls.at(-1)[0]).toStrictEqual([1, 20, 3]);
+		expect(fn.mock.calls.at(-1)![0]).toStrictEqual([1, 20, 3]);
 		cleanup.dispose();
 	});
 });

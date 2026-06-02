@@ -218,6 +218,7 @@ function defaultedQueries(qc: QueryClient, opts: AnyQueriesOptions, isRestoring 
  * Builds the pending fallback result used before the observer connects (or after disconnect):
  * one `pendingQueryState` per query, passed through `combine` when present.
  */
+// oxlint-disable-next-line typescript/no-unnecessary-type-parameters -- generic needed for caller to specify the combined result type
 export function pendingQueriesResult<TCombinedResult>(opts: AnyQueriesOptions): TCombinedResult {
 	const arr = opts.queries.map(
 		() => ({ ...pendingQueryState, refetch: noObserverRefetch }) as unknown as QueryObserverResult,
@@ -259,11 +260,12 @@ export function useBaseQueriesObserver<TCombinedResult>(
 			defaultedQueries(qc, opts, isRestoring),
 			opts.combine as never,
 		);
-		return getCombinedResult(trackResult()) as TCombinedResult;
+		return getCombinedResult(trackResult());
 	};
 
 	// hostWillLoad: context guaranteed resolved — qc is non-null and auto-unwrapped from clientRef.
 	useLoadEffect(
+		// oxlint-disable-next-line typescript/unbound-method -- requestUpdate is a pre-bound function provided by the framework context
 		({ qc, isRestoring, requestUpdate }) => {
 			const opts = getOpts();
 			observer = new QueriesObserver<TCombinedResult>(qc, defaultedQueries(qc, opts, isRestoring), {

@@ -50,7 +50,7 @@ class EventTargetHost extends TestHost {
 		}
 		const key = optsKey(options);
 		const rec = byOpts.get(key);
-		if (rec && rec.fn === listener) {
+		if (rec?.fn === listener) {
 			byOpts.delete(key);
 		}
 	}
@@ -70,7 +70,9 @@ class EventTargetHost extends TestHost {
 
 describe("signalFromEvent", () => {
 	beforeEach(() => {
-		vi.spyOn(stencilCore, "getElement").mockImplementation(host => host as unknown as HTMLStencilElement);
+		vi.spyOn(stencilCore, "getElement").mockImplementation(
+			host => host as unknown as ReturnType<typeof stencilCore.getElement>,
+		);
 	});
 
 	afterEach(() => {
@@ -140,7 +142,7 @@ describe("signalFromEvent", () => {
 
 		expect(add).toHaveBeenCalledWith("scroll", expect.any(Function), scrollOpts);
 
-		const handler = add.mock.calls[0]![1] as EventListener;
+		const handler = add.mock.calls[0][1] as EventListener;
 		handler(new Event("scroll"));
 		expect($scroll()).toBeInstanceOf(Event);
 

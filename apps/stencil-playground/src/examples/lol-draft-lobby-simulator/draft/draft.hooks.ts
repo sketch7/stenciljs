@@ -110,7 +110,7 @@ export function useDraftMutations(getDraftId: () => string | null) {
 		onSettled: () => {
 			const id = getDraftId();
 			if (id) {
-				client.current?.invalidateQueries({ queryKey: draftQueryKey(id) });
+				void client.current?.invalidateQueries({ queryKey: draftQueryKey(id) });
 			}
 		},
 	});
@@ -133,7 +133,7 @@ export function useDraftMutations(getDraftId: () => string | null) {
 		onSettled: () => {
 			const id = getDraftId();
 			if (id) {
-				client.current?.invalidateQueries({ queryKey: draftQueryKey(id) });
+				void client.current?.invalidateQueries({ queryKey: draftQueryKey(id) });
 			}
 		},
 	});
@@ -159,7 +159,7 @@ export function useDraftMutations(getDraftId: () => string | null) {
 		onSettled: () => {
 			const id = getDraftId();
 			if (id) {
-				client.current?.invalidateQueries({ queryKey: draftQueryKey(id) });
+				void client.current?.invalidateQueries({ queryKey: draftQueryKey(id) });
 			}
 		},
 	});

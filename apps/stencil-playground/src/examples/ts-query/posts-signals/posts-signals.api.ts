@@ -64,7 +64,7 @@ export function $usePosts(queryClient?: QueryClient) {
 		{
 			mutationFn: async (title: string) => apiCreatePost(title),
 			onSuccess: () => {
-				client.current?.invalidateQueries({ queryKey: QUERY_KEY });
+				void client.current?.invalidateQueries({ queryKey: QUERY_KEY });
 			},
 		},
 		queryClient,

@@ -1,5 +1,5 @@
 import { honoLogger } from "@logtape/hono";
-import { addVikeMiddleware } from "@vikejs/hono";
+import addVikeMiddleware from "@vikejs/hono";
 import { Hono } from "hono";
 import type { Server } from "vike/types";
 

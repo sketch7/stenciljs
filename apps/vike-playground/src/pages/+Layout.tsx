@@ -32,13 +32,13 @@ export default function Layout({ children }: { children: React.ReactNode }): JSX
 
 	// Track OS theme changes while in system mode.
 	useEffect(() => {
-		if (themePref !== "system") {
-			return;
+		if (themePref === "system") {
+			const mq = globalThis.matchMedia("(prefers-color-scheme: dark)");
+			const handler = (e: MediaQueryListEvent) => setSysDark(e.matches);
+			mq.addEventListener("change", handler);
+			return () => mq.removeEventListener("change", handler);
 		}
-		const mq = globalThis.matchMedia("(prefers-color-scheme: dark)");
-		const handler = (e: MediaQueryListEvent) => setSysDark(e.matches);
-		mq.addEventListener("change", handler);
-		return () => mq.removeEventListener("change", handler);
+		return undefined;
 	}, [themePref]);
 
 	// Apply resolved theme to DOM + persist preference.

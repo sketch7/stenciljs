@@ -72,7 +72,7 @@ export class AppSignalsDerivedAsync extends SsvElement {
 				{readError !== undefined && (
 					<div class="state state-error">
 						<span class="state-icon">✕</span>
-						<span>{String(readError)}</span>
+						<span>{readError instanceof Error ? readError.message : "Unknown error"}</span>
 					</div>
 				)}
 

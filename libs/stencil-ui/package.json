@@ -3,6 +3,19 @@
   "version": "0.0.0-PLACEHOLDER",
   "description": "Registry-driven composition for StencilJS — render components by name via a context-scoped registry.",
   "license": "MIT",
+  "author": {
+    "name": "sketch7",
+    "url": "https://github.com/sketch7"
+  },
+  "contributors": [
+    "Stephen Lautier (https://github.com/stephenlautier)",
+    "Kurt Aquilina (https://github.com/kurtaqui)"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sketch7/stenciljs.git",
+    "directory": "libs/stencil-ui"
+  },
   "files": [
     "dist",
     "loader",

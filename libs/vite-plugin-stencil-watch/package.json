@@ -26,5 +26,8 @@
   },
   "peerDependencies": {
     "vite": ">=5"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

@@ -47,6 +47,9 @@
       "import": "./dist/components/*.js"
     }
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "stencil build",
     "dev": "NODE_ENV=development stencil build --dev --watch",

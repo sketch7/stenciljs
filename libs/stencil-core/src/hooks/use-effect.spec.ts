@@ -34,9 +34,7 @@ describe("useEffect — no deps", () => {
 		const order: string[] = [];
 		useEffect(() => {
 			order.push("setup");
-			return () => {
-				order.push("cleanup");
-			};
+			return () => order.push("cleanup");
 		});
 		host.render();
 		host.render();
@@ -146,9 +144,7 @@ describe("useEffect — [] deps (mount-only)", () => {
 		const order: string[] = [];
 		useEffect(() => {
 			order.push("setup");
-			return () => {
-				order.push("cleanup");
-			};
+			return () => order.push("cleanup");
 		}, []);
 		host.connect();
 		host.disconnect();
@@ -319,9 +315,7 @@ describe("useEffect — reactive deps", () => {
 		const order: string[] = [];
 		useEffect(() => {
 			order.push("setup");
-			return () => {
-				order.push("cleanup");
-			};
+			return () => order.push("cleanup");
 		}, [myRef]);
 		host.connect();
 		host.disconnect();

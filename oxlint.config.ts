@@ -197,6 +197,14 @@ export default defineConfig({
 	},
 	overrides: [
 		{
+			// TSX files — JSX event handlers commonly use concise arrow assignment bodies (e.g. onClick={() => (this.x = y)})
+			files: ["**/*.tsx"],
+			rules: {
+				// onClick={() => (this.prop = value)} is idiomatic JSX — the void return context is intentional
+				"typescript/strict-void-return": "off",
+			},
+		},
+		{
 			// StencilJS components — class-based, uses h() not React, HTML attrs not React attrs
 			files: ["libs/*/src/**/*.tsx", "libs/*/src/**/*.ts", "libs/*/tests/**/*.tsx", "libs/*/tests/**/*.ts"],
 			rules: {

@@ -69,12 +69,7 @@ export class AppMutationObserver extends SsvElement {
 					</div>
 				</div>
 
-				<div
-					class="list-container"
-					ref={el => {
-						this.listEl = el ?? null;
-					}}
-				/>
+				<div class="list-container" ref={el => (this.listEl = el ?? null)} />
 
 				<div class="actions">
 					<button type="button" class="btn btn-add" onClick={() => this.addNode()}>

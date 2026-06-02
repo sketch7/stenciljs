@@ -46,7 +46,7 @@ export function useTranslations(queryClient?: QueryClient) {
 		const map = translationsRef().data ?? {};
 		let value = map[key] ?? key;
 		if (params) {
-			value = value.replaceAll(/\{\{(\w+)\}\}/gu, (_: string, p: string) => params[p] ?? `{{${p}}}`);
+			value = value.replaceAll(/\{\{(\w+)\}\}/gu, (_, p) => params[p] ?? `{{${p}}}`);
 		}
 		return value;
 	}

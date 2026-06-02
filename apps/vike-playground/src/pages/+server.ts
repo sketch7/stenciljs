@@ -25,7 +25,7 @@ app.route("/", translationsApi);
 app.route("/", lolApi);
 addVikeMiddleware(app);
 
-const port = Number.parseInt(process.env["PORT"] ?? "3100", 10);
+const port = Number.parseInt(process.env.PORT ?? "3100", 10);
 
 export default {
 	fetch: app.fetch,

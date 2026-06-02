@@ -135,7 +135,7 @@ describe("useQueryHydration", () => {
 			provideTransferState("hyd-usequery");
 			useQueryHydration({ client: qc });
 			return {
-				query: useQuery({ queryKey: ["posts"], queryFn: async () => Promise.resolve([]), staleTime: Infinity }, qc),
+				query: useQuery({ queryKey: ["posts"], queryFn: async () => [], staleTime: Infinity }, qc),
 			};
 		});
 
@@ -314,7 +314,7 @@ describe("useQueryHydration", () => {
 				attachShadowRoot(h, script);
 				provideTransferState("hyd-prefetch-server");
 				// prefetchQuery runs in hostWillLoad (awaited by mount before hostDidLoad)
-				usePrefetchQuery({ queryKey: ["items"], queryFn: async () => Promise.resolve([{ id: 42 }]) }, qc);
+				usePrefetchQuery({ queryKey: ["items"], queryFn: async () => [{ id: 42 }] }, qc);
 				// setLazy fires in hostDidLoad — after prefetch has completed
 				useQueryHydration({ client: qc });
 			});

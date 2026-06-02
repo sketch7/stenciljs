@@ -86,7 +86,7 @@ export function resizeObserver(
 	const box = options?.box;
 	const nativeCb: (entries: readonly ResizeObserverEntry[]) => void = isMulti
 		? (callback as (entries: readonly ResizeObserverEntry[]) => void)
-		: entries => (callback as (entry: ResizeObserverEntry) => void)(entries[0] as ResizeObserverEntry);
+		: entries => (callback as (entry: ResizeObserverEntry) => void)(entries[0]);
 
 	if (isInReactiveContext()) {
 		let observer: ResizeObserver | null = null;

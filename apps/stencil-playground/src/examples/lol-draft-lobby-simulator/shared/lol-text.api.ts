@@ -26,7 +26,7 @@ export function useLoLText() {
 			const baseUrl = config.current?.baseUrl() ?? "";
 			await client.current?.prefetchQuery({
 				queryKey: QUERY_KEY,
-				queryFn: () => fetchLolText(baseUrl),
+				queryFn: async () => fetchLolText(baseUrl),
 				staleTime: Infinity,
 			});
 		},
@@ -34,7 +34,7 @@ export function useLoLText() {
 
 	const textRef = useQuery(() => {
 		const baseUrl = config.current?.baseUrl() ?? "";
-		return { queryKey: QUERY_KEY, staleTime: Infinity, queryFn: () => fetchLolText(baseUrl) };
+		return { queryKey: QUERY_KEY, staleTime: Infinity, queryFn: async () => fetchLolText(baseUrl) };
 	}, client);
 
 	function t(key: string, fallback?: string): string {

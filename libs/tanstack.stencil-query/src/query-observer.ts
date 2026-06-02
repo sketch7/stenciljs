@@ -104,8 +104,9 @@ export const pendingQueryState = {
 };
 
 /** Rejection used by `refetch` before the observer is connected to the host. */
-export const noObserverRefetch = async (): Promise<never> =>
-	Promise.reject(new Error("[ssv:query] Cannot refetch — observer not yet connected."));
+export const noObserverRefetch = async (): Promise<never> => {
+	throw new Error("[ssv:query] Cannot refetch — observer not yet connected.");
+};
 
 /** Result-surfacing hooks invoked by {@link useBaseQueryObserver} at the appropriate lifecycle points. */
 export type QueryObserverHandlers<TData, TError> = {

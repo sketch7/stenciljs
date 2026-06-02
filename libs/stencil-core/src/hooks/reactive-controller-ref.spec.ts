@@ -128,7 +128,7 @@ describe("reactiveController", () => {
 			ref.add({ hostWillRender: vi.fn<() => void>() });
 			expect(ref.willRender()).toBeUndefined();
 
-			ref.add({ hostWillRender: async () => Promise.resolve() });
+			ref.add({ hostWillRender: async () => {} });
 			expect(ref.willRender()).toBeInstanceOf(Promise);
 		});
 	});

@@ -24,7 +24,7 @@ export async function fetchPost(id: number): Promise<Post> {
 function postQuery(id: number) {
 	return {
 		queryKey: ["use-queries", "post", id] as const,
-		queryFn: () => fetchPost(id),
+		queryFn: async () => fetchPost(id),
 		staleTime: STALE_TIME,
 	};
 }

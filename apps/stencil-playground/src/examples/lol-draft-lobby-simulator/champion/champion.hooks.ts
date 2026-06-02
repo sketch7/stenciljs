@@ -15,7 +15,7 @@ export function useChampions() {
 			const baseUrl = config.current?.baseUrl() ?? "";
 			await client.current?.prefetchQuery({
 				queryKey: CHAMPIONS_QUERY_KEY,
-				queryFn: () => fetchChampions(baseUrl),
+				queryFn: async () => fetchChampions(baseUrl),
 				staleTime: Infinity,
 			});
 		},
@@ -25,7 +25,7 @@ export function useChampions() {
 		() => ({
 			queryKey: CHAMPIONS_QUERY_KEY,
 			staleTime: Infinity,
-			queryFn: () => fetchChampions(config.current?.baseUrl() ?? ""),
+			queryFn: async () => fetchChampions(config.current?.baseUrl() ?? ""),
 		}),
 		client,
 	);

@@ -27,7 +27,7 @@ export function useTranslations(queryClient?: QueryClient) {
 			const baseUrl = config.current?.baseUrl() ?? "";
 			await client.current?.prefetchQuery({
 				queryKey: QUERY_KEY,
-				queryFn: () => fetchTranslations(baseUrl),
+				queryFn: async () => fetchTranslations(baseUrl),
 				staleTime: STALE_TIME,
 			});
 		},
@@ -37,7 +37,7 @@ export function useTranslations(queryClient?: QueryClient) {
 		() => ({
 			queryKey: QUERY_KEY,
 			staleTime: STALE_TIME,
-			queryFn: () => fetchTranslations(config.current?.baseUrl() ?? ""),
+			queryFn: async () => fetchTranslations(config.current?.baseUrl() ?? ""),
 		}),
 		queryClient,
 	);

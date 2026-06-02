@@ -89,7 +89,7 @@ export function intersectionObserver(
 	const targets = Array.isArray(target) ? target : [target];
 	const nativeCb: (entries: readonly IntersectionObserverEntry[]) => void = isMulti
 		? (callback as (entries: readonly IntersectionObserverEntry[]) => void)
-		: entries => (callback as (entry: IntersectionObserverEntry) => void)(entries[0] as IntersectionObserverEntry);
+		: entries => (callback as (entry: IntersectionObserverEntry) => void)(entries[0]);
 
 	if (isInReactiveContext()) {
 		let observer: IntersectionObserver | null = null;

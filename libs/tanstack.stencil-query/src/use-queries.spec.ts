@@ -82,8 +82,8 @@ describe("useQueries", () => {
 			queries: useQueries(
 				{
 					queries: [
-						{ queryKey: ["ok"], queryFn: () => Promise.resolve("good") },
-						{ queryKey: ["bad"], queryFn: () => Promise.reject(new Error("boom")), retry: false },
+						{ queryKey: ["ok"], queryFn: async () => Promise.resolve("good") },
+						{ queryKey: ["bad"], queryFn: async () => Promise.reject(new Error("boom")), retry: false },
 					],
 				},
 				qc,

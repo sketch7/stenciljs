@@ -3,6 +3,19 @@
   "version": "0.0.0-PLACEHOLDER",
   "description": "TanStack Store bindings for StencilJS — useSelector and useAtom with lifecycle-aware subscriptions.",
   "license": "MIT",
+  "author": {
+    "name": "sketch7",
+    "url": "https://github.com/sketch7"
+  },
+  "contributors": [
+    "Stephen Lautier (https://github.com/stephenlautier)",
+    "Kurt Aquilina (https://github.com/kurtaqui)"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sketch7/stenciljs.git",
+    "directory": "libs/tanstack.stencil-store"
+  },
   "files": [
     "dist"
   ],
@@ -15,6 +28,9 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     }
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "build": "tsdown",

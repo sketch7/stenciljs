@@ -93,9 +93,9 @@ export type SSEController<TEvents extends object = SSEEventMap> = {
 	/** Signal-backed last received event, or `null` if none yet. */
 	readonly lastEvent: () => SSELastEvent | null;
 	/** Manually open (or re-open) the connection. */
-	connect(): void;
+	connect: () => void;
 	/** Close the connection. */
-	disconnect(): void;
+	disconnect: () => void;
 	/**
 	 * Attach a typed event listener at runtime.
 	 * Returns an unsubscribe function.
@@ -106,7 +106,7 @@ export type SSEController<TEvents extends object = SSEEventMap> = {
 	 * off(); // remove listener
 	 * ```
 	 */
-	on<K extends keyof TEvents & string>(event: K, handler: SSEEventHandler<TEvents[K]>): () => void;
+	on: <K extends keyof TEvents & string>(event: K, handler: SSEEventHandler<TEvents[K]>) => () => void;
 };
 
 /** Shape of {@link SSEController.lastEvent}. */

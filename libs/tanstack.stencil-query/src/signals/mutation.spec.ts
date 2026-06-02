@@ -61,7 +61,7 @@ describe("$useMutation", () => {
 		await m.mutation.mutateAsync().catch(noop);
 		await vi.waitFor(() => expect(m.mutation.isError()).toBeTruthy());
 
-		expect((m.mutation.error() as Error).message).toBe("fail");
+		expect(m.mutation.error()!.message).toBe("fail");
 	});
 
 	it("mutate() fire-and-forget — does not throw", async () => {

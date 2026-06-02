@@ -92,7 +92,7 @@ describe("mutationObserver", () => {
 	])("options forwarded to observe(): %o", options => {
 		const host = new TestHost();
 		const target = {} as Element;
-		mutationObserver(() => target, vi.fn(), options);
+		mutationObserver(() => target, vi.fn<() => void>(), options);
 
 		host.connect();
 

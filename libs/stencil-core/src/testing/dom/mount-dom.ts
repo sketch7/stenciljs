@@ -34,7 +34,7 @@ export type DomTreeNode = {
 	 * Hooks inside `setup` bind to the child's host.
 	 * Returns whatever `setup` returns.
 	 */
-	child<T>(setup: (node: DomTreeNode) => T): T;
+	child: <T>(setup: (node: DomTreeNode) => T) => T;
 };
 
 // ── Internal helpers ──────────────────────────────────────────────────────────

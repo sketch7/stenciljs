@@ -7,7 +7,7 @@ export function withState<State extends object>(initialState: State): SignalStor
 		const adapter = getAdapter();
 		for (const key of Object.keys(initialState) as (keyof State)[]) {
 			const k = key as string;
-			internals.stateSignals[k] = adapter.createState(initialState[key]);
+			internals.stateSignals[k] = adapter.createState(initialState[key]) as never;
 			internals.initial[k] = initialState[key];
 		}
 	};

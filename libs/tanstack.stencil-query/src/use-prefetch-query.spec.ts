@@ -98,7 +98,7 @@ describe("usePrefetchQuery", () => {
 
 	it("does NOT trigger a re-render after the prefetch resolves", async () => {
 		using m = await mount(() => {
-			usePrefetchQuery({ queryKey: ["test"], queryFn: async () => Promise.resolve("data") }, qc);
+			usePrefetchQuery({ queryKey: ["test"], queryFn: async () => "data" }, qc);
 		});
 
 		const rendersBefore = m.renderCount;

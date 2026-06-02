@@ -74,7 +74,7 @@ function addSseClient(sessionId: string, send: SseSendFn): void {
 	if (!sseClients.has(sessionId)) {
 		sseClients.set(sessionId, new Set());
 	}
-	sseClients.get(sessionId)!.add(send);
+	sseClients.get(sessionId)?.add(send);
 }
 
 function removeSseClient(sessionId: string, send: SseSendFn): void {

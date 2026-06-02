@@ -44,7 +44,9 @@ function attachShadowRoot(host: object, script: MockScript | null): void {
  * directly, mirroring what the browser sees after the template literal step.
  */
 function decodeSsrScript(content: string): string {
-	return content.replaceAll(/\\u([0-9a-fA-F]{4})/gu, (_, hex) => String.fromCodePoint(Number.parseInt(hex, 16)));
+	return content.replaceAll(/\\u(?<hex>[0-9a-fA-F]{4})/gu, (_, hex: string) =>
+		String.fromCodePoint(Number.parseInt(hex, 16)),
+	);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

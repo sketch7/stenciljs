@@ -123,7 +123,8 @@ export default defineConfig({
 		"typescript/no-unsafe-type-assertion": "off",
 		"typescript/no-wrapper-object-types": "error",
 		"typescript/parameter-properties": ["error", { prefer: "parameter-property" }],
-		"typescript/no-confusing-void-expression": ["warn", { ignoreArrowShorthand: true }],
+		// SsvElement pattern: `readonly _ = useEffect(...)`, `readonly signalWatcher = useSignalWatcher()` — void hooks in class property initializers
+		"typescript/no-confusing-void-expression": "off",
 
 		// ── React (disabled globally — enabled in app overrides as needed) ─────
 		"react/react-in-jsx-scope": "off",

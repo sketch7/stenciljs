@@ -93,7 +93,7 @@ export const preactAdapter: SignalAdapter = {
 	createEffect(
 		fn: (onCleanup: (cb: () => void) => void) => (() => void) | void,
 		options?: AdapterEffectOptions,
-	): { dispose(): void } {
+	): { dispose: () => void } {
 		const flushBetweenRuns = options?.flushBetweenRuns !== false;
 
 		if (flushBetweenRuns) {

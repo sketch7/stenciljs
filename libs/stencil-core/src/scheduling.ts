@@ -7,7 +7,7 @@
 /** A wrapped callback that can be cancelled, clearing any pending invocation. */
 export type Cancelable<A extends unknown[]> = ((...args: A) => void) & {
 	/** Clear the pending timer (if any) and drop buffered trailing args. */
-	cancel(): void;
+	cancel: () => void;
 };
 
 /**

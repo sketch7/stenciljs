@@ -48,13 +48,17 @@ export class AppComposeDemo extends SsvElement {
 						<button
 							type="button"
 							class={`tab ${this.activeType === "timer" ? "tab--active" : ""}`}
-							onClick={() => (this.activeType = "timer")}>
+							onClick={() => {
+								this.activeType = "timer";
+							}}>
 							Timer widget
 						</button>
 						<button
 							type="button"
 							class={`tab ${this.activeType === "count" ? "tab--active" : ""}`}
-							onClick={() => (this.activeType = "count")}>
+							onClick={() => {
+								this.activeType = "count";
+							}}>
 							Count widget
 						</button>
 					</div>
@@ -62,7 +66,12 @@ export class AppComposeDemo extends SsvElement {
 					{(this.activeType === "timer" || this.activeType === "countdown") && (
 						<div class="props-controls">
 							<span>Duration: {this.timerDuration}s</span>
-							<button class="btn btn-outline" type="button" onClick={() => (this.timerDuration += 10)}>
+							<button
+								class="btn btn-outline"
+								type="button"
+								onClick={() => {
+									this.timerDuration += 10;
+								}}>
 								+10s
 							</button>
 						</div>

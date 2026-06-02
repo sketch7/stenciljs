@@ -8,7 +8,7 @@ import { bindToHostEffect } from "./host-bind";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type WatcherRef = {
-	dispose(): void;
+	dispose: () => void;
 };
 
 export type CleanupFn = () => void;

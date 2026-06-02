@@ -6,7 +6,7 @@ import type { AdapterWatcher, Signal, WritableSignal } from "../adapters/types";
 import { scheduler, setActiveOwner } from "../signals/core";
 
 type RenderReactiveControllerHost = ReactiveControllerHost & {
-	render?(): unknown;
+	render?: () => unknown;
 };
 
 // ─── Controller ───────────────────────────────────────────────────────────────

@@ -12,19 +12,19 @@ export type Signal<T> = {
 	/** Read the computed value (tracked inside computeds / effects). */
 	(): T;
 	/** Read the computed value (tracked inside computeds / effects). Alias for calling the signal as a function. */
-	get(): T;
+	get: () => T;
 	/** Read the computed value WITHOUT tracking. */
-	peek(): T;
+	peek: () => T;
 };
 
 /** Writable signal — common interface over TC39 Signal.State and Preact signal(). */
 export type WritableSignal<T> = {
 	/** Write a new value. */
-	set(value: T): void;
+	set: (value: T) => void;
 	/** Derive the next value from the current one. Uses an untracked read. */
-	update(fn: (current: T) => T): void;
+	update: (fn: (current: T) => T) => void;
 	/** Return a read-only view of this signal. */
-	asReadonly(): Signal<T>;
+	asReadonly: () => Signal<T>;
 } & Signal<T>;
 
 /** Options accepted by signal() — both backends support at least `equals`. */
@@ -59,21 +59,21 @@ export type AdapterEffectOptions = {
  */
 export type AdapterWatcher = {
 	/** Start watching a signal for changes. Idempotent for already-watched signals. */
-	watch(sig: WritableSignal<unknown> | Signal<unknown>): void;
+	watch: (sig: WritableSignal<unknown> | Signal<unknown>) => void;
 	/** Stop watching a signal. No-op if not currently watched. */
-	unwatch(sig: WritableSignal<unknown> | Signal<unknown>): void;
+	unwatch: (sig: WritableSignal<unknown> | Signal<unknown>) => void;
 	/** Dispose the watcher and stop all watching. */
-	dispose(): void;
+	dispose: () => void;
 };
 
 // ─── Adapter interface ────────────────────────────────────────────────────────
 
 export type SignalAdapter = {
 	/** Create a writable signal holding an initial value. */
-	createState<T>(value: T, options?: SignalOptions<T>): WritableSignal<T>;
+	createState: <T>(value: T, options?: SignalOptions<T>) => WritableSignal<T>;
 
 	/** Create a read-only derived signal whose value is computed by `fn`. */
-	createComputed<T>(fn: () => T, options?: ComputedOptions<T>): Signal<T>;
+	createComputed: <T>(fn: () => T, options?: ComputedOptions<T>) => Signal<T>;
 
 	/**
 	 * Run `fn` as a reactive effect. `fn` is called immediately and re-runs
@@ -82,21 +82,21 @@ export type SignalAdapter = {
 	 * With default `flushBetweenRuns`, prior `onCleanup` runs first, then return cleanup, before each re-run and on dispose.
 	 * With `flushBetweenRuns: false`, those run only on dispose (final run).
 	 */
-	createEffect(
+	createEffect: (
 		fn: (onCleanup: (fn: () => void) => void) => (() => void) | void,
 		options?: AdapterEffectOptions,
-	): { dispose(): void };
+	) => { dispose: () => void };
 
 	/** Read signals inside `fn` without creating tracking subscriptions. */
-	untrack<T>(fn: () => T): T;
+	untrack: <T>(fn: () => T) => T;
 
 	/**
 	 * Batch multiple signal writes so dependents only update once.
 	 * TC39: no-op (microtask scheduler already coalesces updates).
 	 * Preact: delegates to Preact's batch().
 	 */
-	batch<T>(fn: () => T): T;
+	batch: <T>(fn: () => T) => T;
 
 	/** Create a low-level watcher that fires `notify` when a watched signal changes. */
-	createWatcher(notify: () => void): AdapterWatcher;
+	createWatcher: (notify: () => void) => AdapterWatcher;
 };

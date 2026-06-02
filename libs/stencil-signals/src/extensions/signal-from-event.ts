@@ -21,7 +21,7 @@ export type SignalFromEventOptions<TEvent extends Event = Event, TStored = TEven
 // ─── Internal types ───────────────────────────────────────────────────────────
 
 type ListenInner<T> = Signal<T> & {
-	dispose(): void;
+	dispose: () => void;
 };
 
 type AttachConfig<TEvent extends Event> = {
@@ -34,6 +34,7 @@ type AttachConfig<TEvent extends Event> = {
 
 function resolveEventTarget(target: ListenOptions["target"], host: ReactiveControllerHost): EventTarget {
 	const g = globalThis as Window & typeof globalThis;
+	// oxlint-disable-next-line typescript/switch-exhaustiveness-check -- default handles undefined case
 	switch (target) {
 		case "window": {
 			return g.window;

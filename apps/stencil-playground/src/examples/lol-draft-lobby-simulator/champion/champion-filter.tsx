@@ -44,7 +44,13 @@ export class AppLolChampionFilter extends SsvElement {
 						/>
 					</div>
 					{hasActiveFilters && (
-						<button type="button" class="btn-clear" onClick={() => this.clearFilters.emit()} title="Clear filters">
+						<button
+							type="button"
+							class="btn-clear"
+							onClick={() => {
+								this.clearFilters.emit();
+							}}
+							title="Clear filters">
 							✕
 						</button>
 					)}
@@ -54,7 +60,9 @@ export class AppLolChampionFilter extends SsvElement {
 					<button
 						type="button"
 						class={`role-btn ${this.activeRoles.length === 0 ? "role-btn--active" : ""}`}
-						onClick={() => this.clearFilters.emit()}>
+						onClick={() => {
+							this.clearFilters.emit();
+						}}>
 						All
 					</button>
 					{ROLES.map(role => (
@@ -62,7 +70,9 @@ export class AppLolChampionFilter extends SsvElement {
 							key={role}
 							type="button"
 							class={`role-btn role-btn--${role} ${this.activeRoles.includes(role) ? "role-btn--active" : ""}`}
-							onClick={() => this.roleToggle.emit(role)}>
+							onClick={() => {
+								this.roleToggle.emit(role);
+							}}>
 							{role.charAt(0).toUpperCase() + role.slice(1)}
 						</button>
 					))}

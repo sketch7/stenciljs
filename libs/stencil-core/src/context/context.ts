@@ -28,7 +28,7 @@ export const createContextLogger = (name: string): ((msg: () => string) => void)
 /** @internal Payload carried by a `CONTEXT_EVENT` custom event. */
 export type ContextEventDetail<T> = {
 	readonly contextId: symbol;
-	callback(value: T): void;
+	callback: (value: T) => void;
 };
 
 /** @internal Payload carried by a `PROVIDER_CONNECTED_EVENT` window event. */
@@ -48,13 +48,13 @@ export type ContextKey<T> = {
 	 * Created lazily from `defaultFactory` on first call, then cached.
 	 * Throws if the context was created without a `defaultFactory`.
 	 */
-	getDefault(): T;
+	getDefault: () => T;
 	/**
 	 * Creates a fresh instance from `defaultFactory` (no caching).
 	 * Used by {@link provideContext} when called without an explicit value.
 	 * Throws if the context was created without a `defaultFactory`.
 	 */
-	createInstance(): T;
+	createInstance: () => T;
 };
 
 /**

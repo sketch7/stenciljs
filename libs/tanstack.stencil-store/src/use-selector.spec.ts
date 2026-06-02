@@ -117,7 +117,7 @@ describe("useSelector", () => {
 		const store = createStore(1);
 		using m = await mount(() => {
 			useSelector(() => store, undefined, {
-				compare: (a, b) => Math.abs((a as number) - (b as number)) < 5,
+				compare: (a, b) => Math.abs(a! - b!) < 5,
 			});
 		});
 
@@ -131,7 +131,7 @@ describe("useSelector", () => {
 		const store = createStore(1);
 		using m = await mount(() => ({
 			getValue: useSelector(() => store, undefined, {
-				compare: (a, b) => Math.abs((a as number) - (b as number)) < 5,
+				compare: (a, b) => Math.abs(a! - b!) < 5,
 			}),
 		}));
 

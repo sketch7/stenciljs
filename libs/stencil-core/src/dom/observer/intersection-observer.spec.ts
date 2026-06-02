@@ -96,7 +96,7 @@ describe("intersectionObserver", () => {
 		"options forwarded to native constructor: %o",
 		options => {
 			const host = new TestHost();
-			intersectionObserver(() => ({}) as Element, vi.fn(), options);
+			intersectionObserver(() => ({}) as Element, vi.fn<() => void>(), options);
 
 			host.connect();
 

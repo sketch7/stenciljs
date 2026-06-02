@@ -82,15 +82,21 @@ describe("useQueries", () => {
 			queries: useQueries(
 				{
 					queries: [
-						{ queryKey: ["ok"], queryFn: async () => Promise.resolve("good") },
-						{ queryKey: ["bad"], queryFn: async () => Promise.reject(new Error("boom")), retry: false },
+						{ queryKey: ["ok"], queryFn: async () => "good" },
+						{
+							queryKey: ["bad"],
+							queryFn: async () => {
+								throw new Error("boom");
+							},
+							retry: false,
+						},
 					],
 				},
 				qc,
 			),
 		}));
 		await vi.waitFor(() => expect(m.queries()[1].isError).toBeTruthy());
-		expect((m.queries()[1].error as Error).message).toBe("boom");
+		expect(m.queries()[1].error!.message).toBe("boom");
 		await vi.waitFor(() => expect(m.queries()[0].isSuccess).toBeTruthy());
 	});
 

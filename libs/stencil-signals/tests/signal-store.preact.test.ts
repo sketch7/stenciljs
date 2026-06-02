@@ -134,7 +134,7 @@ describe("signalStore() [preact]", () => {
 			const store = signalStore(withState({ a: 1 }));
 			expect(() => {
 				patchState(store, { unknown: 2 } as never);
-			}).toThrow(/unknown state key/);
+			}).toThrow(/unknown state key/u);
 		});
 	});
 

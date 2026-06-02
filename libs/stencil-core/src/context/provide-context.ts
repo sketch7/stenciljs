@@ -29,11 +29,7 @@ const log = createContextLogger("provideContext");
  */
 export function provideContext<T>(key: ContextKey<T>, valueOrFactory?: T | (() => T)): T {
 	const value =
-		typeof valueOrFactory === "function"
-			? (valueOrFactory as () => T)()
-			: valueOrFactory === undefined
-				? key.createInstance()
-				: valueOrFactory;
+		typeof valueOrFactory === "function" ? (valueOrFactory as () => T)() : (valueOrFactory ?? key.createInstance());
 
 	const handleRequest = (event: Event): void => {
 		const e = event as CustomEvent<ContextEventDetail<T>>;

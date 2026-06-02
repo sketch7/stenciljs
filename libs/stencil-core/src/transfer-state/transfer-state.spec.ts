@@ -287,6 +287,7 @@ describe("provideTransferState", () => {
 					return { ts };
 				});
 				// toJSON() is @internal — used here to assert serialized content directly.
+				// oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-call, typescript/no-unsafe-member-access
 				expect(JSON.parse((m.ts as any).toJSON())).toMatchObject({ count: 77 });
 			});
 
@@ -298,6 +299,7 @@ describe("provideTransferState", () => {
 					return { ts };
 				});
 				state.value = 99;
+				// oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-call, typescript/no-unsafe-member-access
 				expect(JSON.parse((m.ts as any).toJSON())).toMatchObject({ count: 99 });
 			});
 
@@ -308,6 +310,7 @@ describe("provideTransferState", () => {
 					ts.setLazy(COUNT_KEY, () => 2);
 					return { ts };
 				});
+				// oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-call, typescript/no-unsafe-member-access
 				expect(JSON.parse((m.ts as any).toJSON())).toMatchObject({ count: 2 });
 			});
 		});

@@ -144,7 +144,7 @@ function _derivedAsyncCore<T>(fn: DerivedAsyncFn<T>, options: DerivedAsyncOption
 					value => {
 						settleValue(value as T);
 					},
-					error => {
+					(error: unknown) => {
 						settleError(error);
 					},
 				);

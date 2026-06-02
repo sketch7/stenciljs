@@ -1,11 +1,12 @@
-// oxlint-disable @typescript-eslint/no-explicit-any -- variadic types require any for test assertions
 // oxlint-disable-next-line import/no-unassigned-import -- registers the TC39 signal adapter
 import "@ssv/stencil-signals/tc39";
 import { TestHost, mount } from "@ssv/stencil-core/testing";
+import type { Signal } from "@ssv/stencil-signals";
 import { QueryClient } from "@tanstack/query-core";
 import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 
 import { $useQueries } from "./use-queries";
+import type { QuerySignalResult } from "./use-query";
 
 describe("$useQueries", () => {
 	let qc: QueryClient;
@@ -204,7 +205,7 @@ describe("$useQueries", () => {
 			),
 		}));
 		// Type check: result is Signal<QuerySignalResult<number>[]> — data() is Signal<number | undefined>
-		expectTypeOf(m.queries).toEqualTypeOf<() => import("../signals/use-query").QuerySignalResult<number>[]>();
+		expectTypeOf(m.queries).toEqualTypeOf<Signal<QuerySignalResult<number>[]>>();
 		qc.setQueryData(["p", 1], 100);
 		await vi.waitFor(() => expect(m.queries()[0].data()).toBe(100));
 	});

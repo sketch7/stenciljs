@@ -159,12 +159,7 @@ describe("useQueries", () => {
 			readonly queries = useQueries({ queries: [{ queryKey: ["sub"], queryFn: vi.fn<() => unknown>() }] }, qc);
 		}
 		qc.setQueryData(["sub"], "hello");
-		using comp = await mount(
-			() => {
-				/* noop */
-			},
-			{ hostFactory: () => new ComponentLike() },
-		);
+		using comp = await mount(() => {}, { hostFactory: () => new ComponentLike() });
 		expect(comp.queries()[0].data).toBe("hello");
 		comp.disconnect();
 		expect(comp.queries()[0].isPending).toBeTruthy();

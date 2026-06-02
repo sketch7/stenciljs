@@ -243,6 +243,8 @@ Incremental migration is supported: new features can use signals while existing 
 | `derivedAsync`                            | [derived-async.md](docs/derived-async.md)                                    |
 | `signalFromEvent`                         | [signal-from-event.md](docs/signal-from-event.md)                            |
 | `computedPrevious`                        | Below ([API](#api-reference))                                                |
+| `proxySignal`                             | [proxy-signal.md](docs/proxy-signal.md)                                      |
+| `throttled` / `debounced`                 | [throttled-debounced.md](docs/throttled-debounced.md)                        |
 | `signalStore`                             | [signal-store.md](docs/signal-store.md)                                      |
 | `scheduler`                               | Microtask batching for `requestUpdate` (internal; exported for advanced use) |
 
@@ -253,7 +255,7 @@ Incremental migration is supported: new features can use signals while existing 
 | Example                             | Stencil source                                                                                        | Vike SSR page                                                                                   |
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | Counter                             | [`counter/`](../../apps/stencil-playground/src/examples/stencil-signals/counter/)                     | [`+Page.tsx`](../../apps/vike-playground/src/pages/stencil-signals/counter/+Page.tsx)           |
-| Todo + `signalStore`                | [`todo/`](../../apps/stencil-playground/src/examples/stencil-signals/todo/)                           | [`+Page.tsx`](../../apps/vike-playground/src/pages/stencil-signals/todo/+Page.tsx)              |
+| Todo + `signalStore` + `debounced`  | [`todo/`](../../apps/stencil-playground/src/examples/stencil-signals/todo/)                           | [`+Page.tsx`](../../apps/vike-playground/src/pages/stencil-signals/todo/+Page.tsx)              |
 | Timer + `useSignalProps` + `effect` | [`timer/`](../../apps/stencil-playground/src/examples/stencil-signals/timer/)                         | —                                                                                               |
 | `derivedAsync`                      | [`derived-async/`](../../apps/stencil-playground/src/examples/stencil-signals/derived-async/)         | [`+Page.tsx`](../../apps/vike-playground/src/pages/stencil-signals/derived-async/+Page.tsx)     |
 | `computedPrevious`                  | [`computed-previous/`](../../apps/stencil-playground/src/examples/stencil-signals/computed-previous/) | [`+Page.tsx`](../../apps/vike-playground/src/pages/stencil-signals/computed-previous/+Page.tsx) |
@@ -286,12 +288,16 @@ Run the dev stack from the repo root: `pnpm dev` (Stencil watch + Vike on port 3
 
 ### Extensions (`@ssv/stencil-signals/extensions`)
 
-| Export                            | Description                                                                         |
-| --------------------------------- | ----------------------------------------------------------------------------------- |
-| `useSignalProps(Host)(config)`    | `@Prop` → signal bridge; `transform`, `twoWay`, `default`, `required`               |
-| `signalFromEvent(name, options?)` | DOM/window events as signals; Stencil `ListenOptions` + optional `map`              |
-| `elementSize(target, options?)`   | `ResizeObserver`-backed signal of element dimensions — [docs](docs/element-size.md) |
-| `intersect(target, options?)`     | `IntersectionObserver`-backed signal of entry — [docs](docs/intersect.md)           |
+| Export                                   | Description                                                                         |
+| ---------------------------------------- | ----------------------------------------------------------------------------------- |
+| `useSignalProps(Host)(config)`           | `@Prop` → signal bridge; `transform`, `twoWay`, `default`, `required`               |
+| `signalFromEvent(name, options?)`        | DOM/window events as signals; Stencil `ListenOptions` + optional `map`              |
+| `proxySignal(source, handler, options?)` | Wrap a signal with custom `get`/`set`; two-way projections & write interception     |
+| `throttled(value\|signal, ms, options?)` | Rate-limited signal — leading + trailing edge                                       |
+| `debounced(value\|signal, ms, options?)` | Rate-limited signal — trailing edge                                                 |
+| `throttleCallback` / `debounceCallback`  | Framework-agnostic `Cancelable` callback wrappers (no signals)                      |
+| `elementSize(target, options?)`          | `ResizeObserver`-backed signal of element dimensions — [docs](docs/element-size.md) |
+| `intersect(target, options?)`            | `IntersectionObserver`-backed signal of entry — [docs](docs/intersect.md)           |
 
 Also exported from main entry: `effect`, `derivedAsync`, `computedPrevious`. The signal store ships as a separate entry — `@ssv/stencil-signals/store`.
 

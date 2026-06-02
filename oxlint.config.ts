@@ -298,6 +298,8 @@ export default defineConfig({
 			// Test files — relax some rules
 			files: ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
 			rules: {
+				// cleanup functions like `return () => arr.push(x)` are common in test setups — void return context is intentional
+				"typescript/strict-void-return": "off",
 				"typescript/no-explicit-any": "off",
 				"typescript/no-non-null-assertion": "off",
 				"typescript/no-extraneous-class": "off", // expect(obj.method).toHaveBeenCalled() is idiomatic vitest — unbound access is intentional here

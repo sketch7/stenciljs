@@ -204,7 +204,9 @@ describe("$useQueries", () => {
 			),
 		}));
 		// Type check: result is Signal<QuerySignalResult<number>[]> — data() is Signal<number | undefined>
-		expectTypeOf(m.queries).toEqualTypeOf<() => import("../signals/use-query").QuerySignalResult<number>[]>();
+		expectTypeOf(m.queries).toEqualTypeOf<
+			import("@ssv/stencil-signals").Signal<import("../signals/use-query").QuerySignalResult<number>[]>
+		>();
 		qc.setQueryData(["p", 1], 100);
 		await vi.waitFor(() => expect(m.queries()[0].data()).toBe(100));
 	});

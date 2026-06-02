@@ -2,10 +2,15 @@
 import type { Ref } from "@ssv/stencil-core";
 import { computed, signal } from "@ssv/stencil-signals";
 import type { Signal, WritableSignal } from "@ssv/stencil-signals";
-import type { DefaultError, QueryClient, QueryKey, QueriesObserver, QueryObserverResult } from "@tanstack/query-core";
+import type { QueryClient, QueriesObserver, QueryObserverResult } from "@tanstack/query-core";
 
 import { pendingQueriesResult, useBaseQueriesObserver } from "../queries-observer";
-import type { QueriesResults, UseQueriesOptions, UseQueryOptionsForUseQueries } from "../queries-observer";
+import type {
+	GetUseQueryResult,
+	QueriesResults,
+	UseQueriesOptions,
+	UseQueryOptionsForUseQueries,
+} from "../queries-observer";
 import { noObserverRefetch, pendingQueryState } from "../query-observer";
 import { createSignalResult } from "./signal-result";
 import type { QuerySignalResult } from "./use-query";
@@ -34,16 +39,16 @@ type ElementToSignalResult<R> =
  * ```
  */
 export type QueriesSignalResults<T extends any[]> = {
-	[K in keyof QueriesResults<T>]: ElementToSignalResult<QueriesResults<T>[K]>;
+	[K in keyof T]: ElementToSignalResult<GetUseQueryResult<T[K]>>;
 };
 
 // ── API ────────────────────────────────────────────────────────────────────────
 
 /**
  * Overload for a **homogeneous array** of queries (e.g. produced by `.map()`).
- * When all elements share the same `TData`/`TError`, TypeScript infers the concrete types
- * directly and returns `Signal<QuerySignalResult<TData, TError>[]>` without requiring an
- * explicit annotation at the call site.
+ * TypeScript infers the concrete data/error types from the element option type and returns
+ * `Signal<QuerySignalResult<TData, TError>[]>` without requiring an explicit annotation
+ * at the call site.
  *
  * @example
  * ```ts
@@ -53,23 +58,41 @@ export type QueriesSignalResults<T extends any[]> = {
  * }
  * ```
  */
-export function $useQueries<
-	TQueryFnData,
-	TError = DefaultError,
-	TData = TQueryFnData,
-	TQueryKey extends QueryKey = QueryKey,
->(
+export function $useQueries<TOption extends UseQueryOptionsForUseQueries<any, any, any, any>>(
+	getOptions:
+		| { queries: readonly TOption[]; combine?: never }
+		| (() => { queries: readonly TOption[]; combine?: never }),
+	client?: QueryClient | Ref<QueryClient>,
+): Signal<ElementToSignalResult<GetUseQueryResult<TOption>>[]>;
+
+/**
+ * Overload for a **homogeneous array** of queries with a `combine` function.
+ * `results` in the combiner is inferred as `UseQueryResult<TData, TError>[]` — no
+ * annotation needed at the call site.
+ *
+ * @example
+ * ```ts
+ * readonly #summary = $useQueries(() => ({
+ *   queries: ids.map(id => postQuery(id)),
+ *   combine: results => ({
+ *     total: results.length,
+ *     loaded: results.filter(r => r.isSuccess).length,
+ *   }),
+ * }));
+ * ```
+ */
+export function $useQueries<TOption extends UseQueryOptionsForUseQueries<any, any, any, any>, TCombinedResult>(
 	getOptions:
 		| {
-				queries: readonly UseQueryOptionsForUseQueries<TQueryFnData, TError, TData, TQueryKey>[];
-				combine?: never;
+				queries: readonly TOption[];
+				combine: (result: GetUseQueryResult<TOption>[]) => TCombinedResult;
 		  }
 		| (() => {
-				queries: readonly UseQueryOptionsForUseQueries<TQueryFnData, TError, TData, TQueryKey>[];
-				combine?: never;
+				queries: readonly TOption[];
+				combine: (result: GetUseQueryResult<TOption>[]) => TCombinedResult;
 		  }),
 	client?: QueryClient | Ref<QueryClient>,
-): Signal<QuerySignalResult<NoInfer<TData>, NoInfer<TError>>[]>;
+): Signal<TCombinedResult>;
 
 /**
  * Subscribes to a list of queries in parallel and exposes each result as a per-field signal proxy.
@@ -83,7 +106,7 @@ export function $useQueries<
  * @example
  * ```ts
  * readonly #posts = $useQueries(() => ({
- *   queries: this.ids().map(id => ({ queryKey: ['post', id], queryFn: () => fetchPost(id) })),
+ *   queries: this.ids().map(id => postQuery(id)),
  * }));
  *
  * render() {
@@ -198,5 +221,5 @@ export function $useQueries<T extends any[], TCombinedResult = QueriesResults<T>
 	});
 	obsRef.fn = handle.getObserver;
 
-	return computed(() => elementProxies.slice(0, lengthSig())) as unknown as Signal<QueriesSignalResults<T>>;
+	return computed(() => elementProxies.slice(0, lengthSig())) as unknown as Signal<TCombinedResult>;
 }

@@ -94,7 +94,7 @@ type GetDefinedOrUndefinedQueryResult<T, TData, TError = unknown> = T extends {
 				: UseQueryResult<TData, TError>
 	: UseQueryResult<TData, TError>;
 
-type GetUseQueryResult<T> =
+export type GetUseQueryResult<T> =
 	// Part 1: object syntax
 	T extends { queryFnData: any; error?: infer TError; data: infer TData }
 		? GetDefinedOrUndefinedQueryResult<T, TData, TError>

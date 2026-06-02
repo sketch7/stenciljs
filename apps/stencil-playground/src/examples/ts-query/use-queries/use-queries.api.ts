@@ -89,7 +89,7 @@ export function $usePostsWithCombine(getIds: () => number[], client?: QueryClien
 	return $useQueries(
 		() => ({
 			queries: getIds().map(id => postQuery(id)),
-			combine: (results: { isSuccess: boolean; data?: Post }[]) => ({
+			combine: results => ({
 				total: results.length,
 				loaded: results.filter(r => r.isSuccess).length,
 				titles: results.map(r => (r.isSuccess ? (r.data?.title ?? "") : null)),

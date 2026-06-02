@@ -64,7 +64,7 @@ function attachSignalFromEvent<TEvent extends Event, TStored>(
 	const inner = createSignal<TStored | undefined>(config.initialValue as TStored | undefined);
 
 	const handler = (ev: Event): void => {
-		const next = options.map ? (options.map(ev as TEvent) as TStored) : (ev as unknown as TStored);
+		const next = options.map ? (options.map(ev as TEvent) as unknown as TStored) : (ev as unknown as TStored);
 		inner.set(next);
 	};
 
@@ -131,8 +131,8 @@ export function signalFromEvent<TEvent extends Event = Event>(
 					options: opts,
 					initialValue: snapshot,
 				}),
-			read: inner => inner(),
-			peek: inner => inner.peek(),
+			read: inner => inner() as TEvent | undefined,
+			peek: inner => inner.peek() as TEvent | undefined,
 			disposeInner: inner => inner.dispose(),
 		}) as DisposableSignal<unknown>;
 	}

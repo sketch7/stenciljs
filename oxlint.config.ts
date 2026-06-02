@@ -3,6 +3,15 @@ import { defineConfig } from "oxlint";
 export default defineConfig({
 	plugins: ["typescript", "import", "react", "react-perf", "jsx-a11y", "vitest", "unicorn"],
 	jsPlugins: ["oxlint-tailwindcss", "./tools/oxlint-plugins/require-lifecycle-super.js"],
+	settings: {
+		tailwindcss: {
+			// oxlint-tailwindcss v1 requires an explicit entryPoint.
+			// The glob is matched against the path relative to process.cwd() (the project dir).
+			// vike-playground:lint runs from apps/vike-playground, so src/** covers all its files.
+			// The `use` path is also resolved from process.cwd(), so src/app.css is correct.
+			entryPoint: [{ files: "src/**", use: "src/app.css" }],
+		},
+	},
 	env: {
 		browser: true,
 		es2022: true,

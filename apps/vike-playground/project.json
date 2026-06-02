@@ -37,7 +37,8 @@
       "options": {
         "command": "pnpm oxlint src/",
         "cwd": "apps/vike-playground"
-      }
+      },
+      "dependsOn": ["stencil-playground:build"]
     },
     "fmt": {
       "executor": "nx:run-commands",

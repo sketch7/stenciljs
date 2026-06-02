@@ -275,6 +275,7 @@ export default defineConfig({
 				"typescript/no-explicit-any": "off",
 				"typescript/no-non-null-assertion": "off",
 				"typescript/no-extraneous-class": "off",
+				"no-empty-function": "off",
 				"max-statements": "off",
 				// jest plugin rules that fire via pedantic category — too opinionated for vitest usage
 				"jest/prefer-lowercase-title": "off", // PascalCase describe names are idiomatic

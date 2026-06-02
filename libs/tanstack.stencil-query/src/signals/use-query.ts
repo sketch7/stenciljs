@@ -1,6 +1,6 @@
 import type { Ref } from "@ssv/stencil-core";
 import { signal } from "@ssv/stencil-signals";
-import type { DefaultError, NoInfer, QueryClient, QueryKey, QueryObserverResult } from "@tanstack/query-core";
+import type { DefaultError, QueryClient, QueryKey, QueryObserverResult } from "@tanstack/query-core";
 
 import { pendingQueryState, useBaseQueryObserver } from "../query-observer";
 import type { UseQueryOptions } from "../query-observer";

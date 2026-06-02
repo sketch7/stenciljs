@@ -197,7 +197,7 @@ export type QueriesObserverHandle<TCombinedResult> = {
 	getCurrentResult: () => TCombinedResult;
 };
 
-type AnyQueriesOptions = {
+export type AnyQueriesOptions = {
 	queries: readonly QueryObserverOptions[];
 	combine?: (result: QueryObserverResult[]) => unknown;
 };

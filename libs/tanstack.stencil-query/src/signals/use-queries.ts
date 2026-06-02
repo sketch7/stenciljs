@@ -6,6 +6,7 @@ import type { QueryClient, QueriesObserver, QueryObserverResult } from "@tanstac
 
 import { pendingQueriesResult, useBaseQueriesObserver } from "../queries-observer";
 import type {
+	AnyQueriesOptions,
 	GetUseQueryResult,
 	QueriesResults,
 	UseQueriesOptions,
@@ -158,12 +159,12 @@ export function $useQueries<T extends any[], TCombinedResult = QueriesResults<T>
 
 	// ── Combine path ────────────────────────────────────────────────────────────
 	if (getOpts().combine !== undefined) {
-		const state = signal<TCombinedResult>(pendingQueriesResult<TCombinedResult>(getOpts()));
+		const state = signal<TCombinedResult>(pendingQueriesResult<TCombinedResult>(getOpts() as AnyQueriesOptions));
 		useBaseQueriesObserver<TCombinedResult>(getOptions as never, client, {
 			onResult: result => state.set(result),
 			onConnect: result => state.set(result),
 			onRender: result => state.set(result),
-			onDispose: () => state.set(pendingQueriesResult<TCombinedResult>(getOpts())),
+			onDispose: () => state.set(pendingQueriesResult<TCombinedResult>(getOpts() as AnyQueriesOptions)),
 		});
 		return state.asReadonly();
 	}
@@ -217,7 +218,8 @@ export function $useQueries<T extends any[], TCombinedResult = QueriesResults<T>
 		onResult: syncResults,
 		onConnect: syncResults,
 		onRender: syncResults,
-		onDispose: () => syncElements(pendingQueriesResult<QueriesResults<T>>(getOpts()) as QueryObserverResult[]),
+		onDispose: () =>
+			syncElements(pendingQueriesResult<QueriesResults<T>>(getOpts() as AnyQueriesOptions) as QueryObserverResult[]),
 	});
 	obsRef.fn = handle.getObserver;
 

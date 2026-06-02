@@ -43,7 +43,8 @@ type PropSignal<H, K extends string, Opts extends SignalPropOptions<unknown>> = 
 	? WritableSignal<PropValue<H, K, Opts>>
 	: Signal<PropValue<H, K, Opts>>;
 
-export type SignalPropsResult<H, C extends Record<string, SignalPropOptions<unknown>>> = {
+// oxlint-disable-next-line typescript/no-explicit-any
+export type SignalPropsResult<H, C extends Record<string, SignalPropOptions<any> | undefined>> = {
 	[K in keyof C & string]: PropSignal<H, K, NonNullable<C[K]>>;
 };
 
@@ -265,7 +266,8 @@ export function useSignalProps(_hostClass: abstract new (...args: unknown[]) => 
 	const bundleRef = createWritableRef<PropsBundle | null>(null);
 	const getBundle = (): PropsBundle | null => bundleRef.current;
 
-	return <C extends Record<string, SignalPropOptions<unknown>>>(config: C) => {
+	// oxlint-disable-next-line typescript/no-explicit-any
+	return <C extends Record<string, SignalPropOptions<any>>>(config: C) => {
 		const snapshotBag: HostPropsSnapshotBag = { values: {} };
 		const stableProps = {} as Record<string, Signal<unknown> | WritableSignal<unknown>>;
 

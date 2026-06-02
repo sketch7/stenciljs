@@ -25,7 +25,7 @@ function optsKey(opts: boolean | AddEventListenerOptions | undefined): string {
 class EventTargetHost extends TestHost {
 	private readonly listeners = new Map<string, Map<string, ListenerRecord>>();
 
-	addEventListener(
+	override addEventListener(
 		type: string,
 		listener: EventListenerOrEventListenerObject,
 		options?: boolean | AddEventListenerOptions,
@@ -39,7 +39,7 @@ class EventTargetHost extends TestHost {
 		byOpts.set(key, { fn: listener, opts: options ?? false });
 	}
 
-	removeEventListener(
+	override removeEventListener(
 		type: string,
 		listener: EventListenerOrEventListenerObject,
 		options?: boolean | AddEventListenerOptions,
@@ -55,7 +55,7 @@ class EventTargetHost extends TestHost {
 		}
 	}
 
-	dispatchEvent(event: Event): boolean {
+	override dispatchEvent(event: Event): boolean {
 		const byOpts = this.listeners.get(event.type);
 		byOpts?.forEach(rec => {
 			listenerFn(rec).call(this, event);

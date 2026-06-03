@@ -27,7 +27,7 @@ export function useDraftsSSE() {
 			},
 			"lobby-updated"(sessions) {
 				logger.debug("Lobby updated: {count} sessions", { count: sessions.length });
-				client.current?.invalidateQueries({ queryKey: DRAFTS_QUERY_KEY });
+				void client.current?.invalidateQueries({ queryKey: DRAFTS_QUERY_KEY });
 			},
 		},
 	});

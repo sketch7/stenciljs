@@ -16,11 +16,11 @@ import { effect } from "../src/extensions/effect";
 import { signal, computed, createWatcher, untracked } from "../src/tc39";
 
 // Helper: flush all pending microtasks
-const flush = () =>
+const flush = async () =>
 	new Promise<void>(r => {
 		setTimeout(r, 0);
 	});
-const tick = () =>
+const tick = async () =>
 	new Promise<void>(r => {
 		queueMicrotask(r);
 	});
@@ -72,8 +72,9 @@ describe("signal()", () => {
 
 	it("respects custom equals — skips notify when equal", async () => {
 		const s = signal({ v: 1 }, { equals: (a: { v: number }, b: { v: number }) => a.v === b.v });
-		const notify = vi.fn();
+		const notify = vi.fn<() => void>();
 		const w = createWatcher(notify);
+		// oxlint-disable-next-line typescript/no-unsafe-argument
 		w.watch(s as any);
 		s.set({ v: 1 }); // same value by custom equality
 		await tick();
@@ -195,8 +196,9 @@ describe("untracked()", () => {
 describe("createWatcher()", () => {
 	it("calls notify when a watched signal changes", async () => {
 		const s = signal(0);
-		const notify = vi.fn();
+		const notify = vi.fn<() => void>();
 		const w = createWatcher(notify);
+		// oxlint-disable-next-line typescript/no-unsafe-argument
 		w.watch(s as any);
 		s.set(1);
 		await tick();
@@ -206,8 +208,9 @@ describe("createWatcher()", () => {
 
 	it("does not call notify after dispose", async () => {
 		const s = signal(0);
-		const notify = vi.fn();
+		const notify = vi.fn<() => void>();
 		const w = createWatcher(notify);
+		// oxlint-disable-next-line typescript/no-unsafe-argument
 		w.watch(s as any);
 		w.dispose();
 		s.set(99);
@@ -217,8 +220,9 @@ describe("createWatcher()", () => {
 
 	it("calls notify for each distinct change", async () => {
 		const s = signal(0);
-		const notify = vi.fn();
+		const notify = vi.fn<() => void>();
 		const w = createWatcher(notify);
+		// oxlint-disable-next-line typescript/no-unsafe-argument
 		w.watch(s as any);
 		s.set(1);
 		await tick();
@@ -255,7 +259,7 @@ describe("watchEffect() — auto-tracking", () => {
 
 	it("calls returned cleanup before re-run", async () => {
 		const s = signal(0);
-		const innerCleanup = vi.fn();
+		const innerCleanup = vi.fn<() => void>();
 		const cleanup = effect(_onCleanup => {
 			s();
 			return innerCleanup;
@@ -315,7 +319,7 @@ describe("watchEffect() — auto-tracking", () => {
 
 	it("calls onCleanup() registered inside fn", async () => {
 		const s = signal(0);
-		const registered = vi.fn();
+		const registered = vi.fn<() => void>();
 		const cleanup = effect(onCleanup => {
 			s();
 			onCleanup(registered);
@@ -332,8 +336,12 @@ describe("watchEffect() — auto-tracking", () => {
 		const order: string[] = [];
 		const cleanup = effect(onCleanup => {
 			s();
-			onCleanup(() => order.push("onCleanup"));
-			return () => order.push("return");
+			onCleanup(() => {
+				order.push("onCleanup");
+			});
+			return () => {
+				order.push("return");
+			};
 		});
 		s.set(1);
 		await tick();
@@ -404,7 +412,7 @@ describe("watchEffect() — explicit deps", () => {
 
 	it("calls return-value cleanup before re-run", async () => {
 		const s = signal(0);
-		const innerCleanup = vi.fn();
+		const innerCleanup = vi.fn<() => void>();
 		const cleanup = effect([s], () => innerCleanup);
 		s.set(1);
 		await tick();
@@ -415,7 +423,7 @@ describe("watchEffect() — explicit deps", () => {
 
 	it("calls onCleanup() registered inside fn", async () => {
 		const s = signal(0);
-		const registered = vi.fn();
+		const registered = vi.fn<() => void>();
 		const cleanup = effect([s], (_vals, onCleanup) => {
 			onCleanup(registered);
 		});
@@ -430,8 +438,12 @@ describe("watchEffect() — explicit deps", () => {
 		const s = signal(0);
 		const order: string[] = [];
 		const cleanup = effect([s], (_vals, onCleanup) => {
-			onCleanup(() => order.push("onCleanup"));
-			return () => order.push("return");
+			onCleanup(() => {
+				order.push("onCleanup");
+			});
+			return () => {
+				order.push("return");
+			};
 		});
 		s.set(1);
 		await tick();
@@ -650,6 +662,7 @@ describe("derivedAsync()", () => {
 
 	it("returns sync value when fn returns non-Promise", async () => {
 		const flag = signal(true);
+		// oxlint-disable-next-line typescript/promise-function-async
 		const result = derivedAsync(_abortSig => {
 			if (flag()) {
 				return "sync-value";
@@ -829,7 +842,7 @@ describe("host lifecycle — effect cleanup (destroy-only teardown)", () => {
 		const host = new TestHost();
 		useSignalWatcher();
 		const count = signal(0);
-		const cleanup = vi.fn();
+		const cleanup = vi.fn<() => void>();
 		effect(onCleanup => {
 			count();
 			onCleanup(cleanup);
@@ -852,7 +865,7 @@ describe("host lifecycle — effect cleanup (destroy-only teardown)", () => {
 		const host = new TestHost();
 		useSignalWatcher();
 		const count = signal(0);
-		const cleanup = vi.fn();
+		const cleanup = vi.fn<() => void>();
 		const ref = effect(onCleanup => {
 			count();
 			onCleanup(cleanup);
@@ -877,7 +890,7 @@ describe("host lifecycle — effect cleanup (destroy-only teardown)", () => {
 		const host = new TestHost();
 		useSignalWatcher();
 		const s = signal(0);
-		const cleanup = vi.fn();
+		const cleanup = vi.fn<() => void>();
 		effect([s], (_vals, onCleanup) => {
 			onCleanup(cleanup);
 		});
@@ -904,7 +917,7 @@ describe("host lifecycle — effect (explicit deps)", () => {
 		const log: number[] = [];
 
 		effect([a], ([v]) => {
-			log.push(v as number);
+			log.push(v);
 		});
 		host.connect(); // hostConnected → starts effect, fn runs synchronously
 		expect(log).toStrictEqual([1]);

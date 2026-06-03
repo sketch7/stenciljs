@@ -29,7 +29,8 @@
       "options": {
         "command": "pnpm oxlint src/",
         "cwd": "libs/tanstack.stencil-store"
-      }
+      },
+      "dependsOn": []
     },
     "fmt": {
       "executor": "nx:run-commands",

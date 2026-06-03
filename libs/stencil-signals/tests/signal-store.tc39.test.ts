@@ -24,7 +24,7 @@ import {
 // utilities that call getAdapter() work correctly in this test file.
 import { computed } from "../src/tc39";
 
-const tick = () =>
+const tick = async () =>
 	new Promise<void>(r => {
 		queueMicrotask(r);
 	});
@@ -134,7 +134,7 @@ describe("signalStore() [tc39]", () => {
 			const store = signalStore(withState({ a: 1 }));
 			expect(() => {
 				patchState(store, { unknown: 2 } as never);
-			}).toThrow(/unknown state key/);
+			}).toThrow(/unknown state key/u);
 		});
 	});
 

@@ -75,7 +75,7 @@ export function useQueryDevtools(options?: UseQueryDevtoolsOptions): void {
 		return;
 	}
 
-	const enabled = options?.enabled ?? process.env.NODE_ENV === "development";
+	const enabled = options?.enabled ?? Build.isDev;
 	if (!enabled) {
 		return;
 	}
@@ -88,7 +88,7 @@ export function useQueryDevtools(options?: UseQueryDevtoolsOptions): void {
 			let devtools: TanstackQueryDevtools | undefined;
 			let container: HTMLDivElement | undefined;
 
-			(async () => {
+			void (async () => {
 				const { TanstackQueryDevtools: DevtoolsClass } = await import("@tanstack/query-devtools");
 				if (!active) {
 					return;

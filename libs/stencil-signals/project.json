@@ -29,7 +29,8 @@
       "options": {
         "command": "pnpm oxlint src/ tests/",
         "cwd": "libs/stencil-signals"
-      }
+      },
+      "dependsOn": []
     },
     "fmt": {
       "executor": "nx:run-commands",

@@ -15,9 +15,8 @@
  * `derivedAsync`). Standalone usage returns `dispose()` for manual teardown.
  */
 
-import { peekCurrentHost, use } from "@ssv/stencil-core";
+import { peekCurrentHost, use, debounceCallback, throttleCallback } from "@ssv/stencil-core";
 import type { Cancelable } from "@ssv/stencil-core";
-import { debounceCallback, throttleCallback } from "@ssv/stencil-core";
 
 import type { Signal, SignalOptions, WritableSignal } from "../adapters/types";
 import { signal } from "../signals/core";

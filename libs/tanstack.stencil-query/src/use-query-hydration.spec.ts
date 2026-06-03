@@ -32,7 +32,7 @@ function makeMockScript(scope: string, data: unknown): MockScript {
 }
 
 function attachShadowRoot(host: object, script: MockScript | null): void {
-	(host as Record<string, unknown>)["shadowRoot"] = {
+	(host as Record<string, unknown>).shadowRoot = {
 		querySelector: (sel: string) => (script && sel === `#${script.id}` ? script : null),
 	};
 }
@@ -44,7 +44,9 @@ function attachShadowRoot(host: object, script: MockScript | null): void {
  * directly, mirroring what the browser sees after the template literal step.
  */
 function decodeSsrScript(content: string): string {
-	return content.replaceAll(/\\u([0-9a-fA-F]{4})/gu, (_, hex) => String.fromCodePoint(Number.parseInt(hex, 16)));
+	return content.replaceAll(/\\u(?<hex>[0-9a-fA-F]{4})/gu, (_, hex: string) =>
+		String.fromCodePoint(Number.parseInt(hex, 16)),
+	);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -135,7 +137,7 @@ describe("useQueryHydration", () => {
 			provideTransferState("hyd-usequery");
 			useQueryHydration({ client: qc });
 			return {
-				query: useQuery({ queryKey: ["posts"], queryFn: () => Promise.resolve([]), staleTime: Infinity }, qc),
+				query: useQuery({ queryKey: ["posts"], queryFn: async () => [], staleTime: Infinity }, qc),
 			};
 		});
 
@@ -249,8 +251,8 @@ describe("useQueryHydration", () => {
 				string,
 				{ queries: { queryKey: unknown }[] }
 			>;
-			expect(stored["__tsq"].queries).toHaveLength(1);
-			expect(stored["__tsq"].queries[0].queryKey).toStrictEqual(["posts"]);
+			expect(stored.__tsq.queries).toHaveLength(1);
+			expect(stored.__tsq.queries[0].queryKey).toStrictEqual(["posts"]);
 		});
 
 		it("uses a custom transfer-state key when the key option is provided", async () => {
@@ -269,7 +271,7 @@ describe("useQueryHydration", () => {
 				{ queries: unknown[] } | undefined
 			>;
 			expect(stored["__tsq-users"]?.queries).toHaveLength(1);
-			expect(stored["__tsq"]).toBeUndefined();
+			expect(stored.__tsq).toBeUndefined();
 		});
 
 		it("serializes an empty cache", async () => {
@@ -283,7 +285,7 @@ describe("useQueryHydration", () => {
 			});
 
 			const stored = JSON.parse(decodeSsrScript(script.textContent)) as Record<string, { queries: unknown[] }>;
-			expect(stored["__tsq"].queries).toHaveLength(0);
+			expect(stored.__tsq.queries).toHaveLength(0);
 		});
 
 		it("serializes all queries in the cache", async () => {
@@ -302,7 +304,7 @@ describe("useQueryHydration", () => {
 				string,
 				{ queries: { queryKey: unknown }[] }
 			>;
-			const queryKeys = stored["__tsq"].queries.map(q => q.queryKey);
+			const queryKeys = stored.__tsq.queries.map(q => q.queryKey);
 			expect(queryKeys).toStrictEqual(expect.arrayContaining([["posts"], ["users"]]));
 		});
 
@@ -314,7 +316,7 @@ describe("useQueryHydration", () => {
 				attachShadowRoot(h, script);
 				provideTransferState("hyd-prefetch-server");
 				// prefetchQuery runs in hostWillLoad (awaited by mount before hostDidLoad)
-				usePrefetchQuery({ queryKey: ["items"], queryFn: () => Promise.resolve([{ id: 42 }]) }, qc);
+				usePrefetchQuery({ queryKey: ["items"], queryFn: async () => [{ id: 42 }] }, qc);
 				// setLazy fires in hostDidLoad — after prefetch has completed
 				useQueryHydration({ client: qc });
 			});
@@ -323,7 +325,7 @@ describe("useQueryHydration", () => {
 				string,
 				{ queries: { queryKey: unknown }[] }
 			>;
-			expect(stored["__tsq"].queries[0].queryKey).toStrictEqual(["items"]);
+			expect(stored.__tsq.queries[0].queryKey).toStrictEqual(["items"]);
 		});
 	});
 

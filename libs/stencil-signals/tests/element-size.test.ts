@@ -100,7 +100,7 @@ describe("elementSize", () => {
 		const host = new TestHost();
 		const size = elementSize(() => ({}) as Element, { box });
 		host.connect();
-		MockResizeObserver.instances[0]!.fire([makeEntry(300, 150)]);
+		MockResizeObserver.instances[0].fire([makeEntry(300, 150)]);
 
 		expect(size()).toStrictEqual({ width: expectedWidth, height: expectedHeight });
 	});
@@ -112,11 +112,12 @@ describe("elementSize", () => {
 			const size = elementSize(() => ({}) as Element, { box });
 			host.connect();
 			const emptyEntry = {
+				// oxlint-disable-next-line typescript/no-misused-spread -- intentionally spreading a DOM class instance in tests to override specific properties
 				...makeEntry(300, 150),
 				borderBoxSize: [],
 				contentBoxSize: [],
 			} as unknown as ResizeObserverEntry;
-			MockResizeObserver.instances[0]!.fire([emptyEntry]);
+			MockResizeObserver.instances[0].fire([emptyEntry]);
 
 			expect(size()).toStrictEqual({ width: 300, height: 150 });
 		},
@@ -132,14 +133,14 @@ describe("elementSize", () => {
 		elementSize(() => target, { box });
 		host.connect();
 
-		expect(MockResizeObserver.instances[0]!.observed[0]!.options).toStrictEqual({ box: expectedBox });
+		expect(MockResizeObserver.instances[0].observed[0].options).toStrictEqual({ box: expectedBox });
 	});
 
 	it("resets to initialValue on disconnect", () => {
 		const host = new TestHost();
 		const size = elementSize(() => ({}) as Element);
 		host.connect();
-		MockResizeObserver.instances[0]!.fire([makeEntry(300, 150)]);
+		MockResizeObserver.instances[0].fire([makeEntry(300, 150)]);
 		expect(size()).toStrictEqual({ width: 320, height: 160 });
 
 		host.disconnect();
@@ -151,7 +152,7 @@ describe("elementSize", () => {
 		const host = new TestHost();
 		const size = elementSize(() => ({}) as Element, { initialValue: { width: 10, height: 5 } });
 		host.connect();
-		MockResizeObserver.instances[0]!.fire([makeEntry(300, 150)]);
+		MockResizeObserver.instances[0].fire([makeEntry(300, 150)]);
 		host.disconnect();
 
 		expect(size()).toStrictEqual({ width: 10, height: 5 });

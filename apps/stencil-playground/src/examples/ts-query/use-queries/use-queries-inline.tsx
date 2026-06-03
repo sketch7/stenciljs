@@ -16,7 +16,7 @@ function useTopPosts() {
 	return useQueries(() => ({
 		queries: IDS.map(id => ({
 			queryKey: ["use-queries", "post", id] as const,
-			queryFn: () => fetchPost(id),
+			queryFn: async () => fetchPost(id),
 		})),
 	}));
 }

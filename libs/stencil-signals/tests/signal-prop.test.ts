@@ -23,13 +23,13 @@ class PropTestHost extends TestHost {
 
 function runHostWillLoad(host: TestHost): void {
 	for (const ctrl of host.controllers) {
-		ctrl.hostWillLoad?.();
+		void ctrl.hostWillLoad?.();
 	}
 }
 
 function runHostWillUpdate(host: TestHost): void {
 	for (const ctrl of host.controllers) {
-		ctrl.hostWillUpdate?.();
+		void ctrl.hostWillUpdate?.();
 	}
 }
 
@@ -140,7 +140,7 @@ describe("useSignalProps", () => {
 
 	it("twoWay dispatches Change event when connected", () => {
 		const host = new PropTestHost();
-		vi.spyOn(stencilCore, "getElement").mockReturnValue(host as unknown as HTMLStencilElement);
+		vi.spyOn(stencilCore, "getElement").mockReturnValue(host as unknown as ReturnType<typeof stencilCore.getElement>);
 
 		useSignalWatcher();
 		const $props = useSignalProps(PropTestHost)({ isRunning: { twoWay: true } });

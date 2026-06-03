@@ -7,8 +7,8 @@ import { CounterContext } from "./counter.context";
 export type UseCounter = {
 	readonly store: CounterStore;
 	readonly count: number;
-	increment(): void;
-	decrement(): void;
+	increment: () => void;
+	decrement: () => void;
 };
 
 /** Composable hook — resolves the nearest {@link CounterContext} and subscribes to its count. */

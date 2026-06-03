@@ -39,10 +39,12 @@
       "import": "./dist/store.js"
     },
     "./tc39": {
+      "@ssv/source": "./src/tc39.ts",
       "types": "./dist/tc39.d.ts",
       "import": "./dist/tc39.js"
     },
     "./preact": {
+      "@ssv/source": "./src/preact.ts",
       "types": "./dist/preact.d.ts",
       "import": "./dist/preact.js"
     }

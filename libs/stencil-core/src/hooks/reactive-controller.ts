@@ -21,21 +21,21 @@ import type { ReactiveControllerRef } from "./reactive-controller-ref";
  */
 export type ReactiveController = {
 	/** Called every time the host connects to the DOM. May be called more than once if the element is moved. */
-	hostConnected?(): void;
+	hostConnected?: () => void;
 	/** Called every time the host disconnects from the DOM. May be called more than once. */
-	hostDisconnected?(): void;
+	hostDisconnected?: () => void;
 	/** Called once just before the first render. Return a `Promise` to delay rendering. */
-	hostWillLoad?(): Promise<void> | void;
+	hostWillLoad?: () => Promise<void> | void;
 	/** Called once just after the first render. */
-	hostDidLoad?(): void;
+	hostDidLoad?: () => void;
 	/** Called before every render. Return a `Promise` to delay rendering. */
-	hostWillRender?(): Promise<void> | void;
+	hostWillRender?: () => Promise<void> | void;
 	/** Called after every render. */
-	hostDidRender?(): void;
+	hostDidRender?: () => void;
 	/** Called before a re-render when `Prop` or `State` changes. Never called on first render. Return a `Promise` to delay the update. */
-	hostWillUpdate?(): Promise<void> | void;
+	hostWillUpdate?: () => Promise<void> | void;
 	/** Called after a re-render when `Prop` or `State` changes. Never called on first render. */
-	hostDidUpdate?(): void;
+	hostDidUpdate?: () => void;
 };
 
 /**
@@ -49,11 +49,11 @@ export type ReactiveController = {
  */
 export type ReactiveControllerHost = {
 	/** Registers a controller with this host. */
-	addController(controller: ReactiveController): void;
+	addController: (controller: ReactiveController) => void;
 	/** Unregisters a controller from this host. */
-	removeController(controller: ReactiveController): void;
+	removeController: (controller: ReactiveController) => void;
 	/** Schedules a re-render of the host component. */
-	requestUpdate(): void;
+	requestUpdate: () => void;
 };
 
 /**
@@ -81,13 +81,13 @@ export type ReactiveHostElement = ReactiveControllerHost & HTMLElement;
  */
 export type UseHostContext = ReactiveControllerHost & {
 	/** Returns the host's underlying DOM element. Call during lifecycle hooks — not at construction time. */
-	getElement(): ReactiveHostElement;
+	getElement: () => ReactiveHostElement;
 	/**
 	 * Returns `true` when the component is being client-side hydrated from SSR-rendered HTML.
 	 * Stencil stores the `s-id` hydration marker as a JS property (removing the DOM attribute
 	 * early in `connectedCallback`), so this is safe to call inside any lifecycle hook.
 	 */
-	isHydrating(): boolean;
+	isHydrating: () => boolean;
 };
 
 /**
@@ -108,6 +108,7 @@ export function ReactiveControllerHostMixin<B extends MixedInCtor>(Base: B) {
 
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TypeScript mixin spec requires `any[]`
 		constructor(...args: any[]) {
+			// oxlint-disable-next-line typescript/no-unsafe-argument -- mixin spec requires spreading any[]
 			super(...args);
 			// Shared registry + lifecycle dispatcher. The mixin only wires Stencil callbacks to it.
 			this.__reactiveRef = reactiveController();
@@ -146,8 +147,9 @@ export function ReactiveControllerHostMixin<B extends MixedInCtor>(Base: B) {
 		// oxlint-disable-next-line @typescript-eslint/no-explicit-any -- spread accepts any hook return value
 		setup(..._hooks: any[]): void;
 		// oxlint-disable-next-line @typescript-eslint/no-explicit-any -- overload implementation
-		setup(init?: (() => void) | any): void {
+		setup(init?: any): void {
 			if (typeof init === "function") {
+				// oxlint-disable-next-line typescript/no-unsafe-call -- init typed as any for overload flexibility
 				init();
 			}
 			// spread form: arguments already evaluated → hooks already self-registered

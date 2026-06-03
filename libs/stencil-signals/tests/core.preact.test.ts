@@ -17,11 +17,11 @@ import { effect } from "../src/extensions/effect";
 import { signal, computed, createWatcher, untracked } from "../src/preact";
 
 // Helper: flush all pending microtasks
-const flush = () =>
+const flush = async () =>
 	new Promise<void>(r => {
 		setTimeout(r, 0);
 	});
-const tick = () =>
+const tick = async () =>
 	new Promise<void>(r => {
 		queueMicrotask(r);
 	});
@@ -59,8 +59,9 @@ describe("signal() [preact]", () => {
 
 	it("update() respects custom equals — skips notify when result is equal", async () => {
 		const s = signal({ v: 1 }, { equals: (a, b) => a.v === b.v });
-		const notify = vi.fn();
+		const notify = vi.fn<() => void>();
 		const w = createWatcher(notify);
+		// oxlint-disable-next-line typescript/no-unsafe-argument
 		w.watch(s as any);
 		s.update(_curr => ({ v: 1 })); // same by custom equality
 		await tick();
@@ -70,8 +71,9 @@ describe("signal() [preact]", () => {
 
 	it("respects custom equals — skips notify when equal", async () => {
 		const s = signal({ v: 1 }, { equals: (a, b) => a.v === b.v });
-		const notify = vi.fn();
+		const notify = vi.fn<() => void>();
 		const w = createWatcher(notify);
+		// oxlint-disable-next-line typescript/no-unsafe-argument
 		w.watch(s as any);
 		s.set({ v: 1 }); // same value by custom equality
 		await tick();
@@ -184,8 +186,9 @@ describe("untracked() [preact]", () => {
 describe("createWatcher() [preact]", () => {
 	it("calls notify when a watched signal changes", async () => {
 		const s = signal(0);
-		const notify = vi.fn();
+		const notify = vi.fn<() => void>();
 		const w = createWatcher(notify);
+		// oxlint-disable-next-line typescript/no-unsafe-argument
 		w.watch(s as any);
 		s.set(1);
 		await tick();
@@ -195,8 +198,9 @@ describe("createWatcher() [preact]", () => {
 
 	it("does not call notify after dispose", async () => {
 		const s = signal(0);
-		const notify = vi.fn();
+		const notify = vi.fn<() => void>();
 		const w = createWatcher(notify);
+		// oxlint-disable-next-line typescript/no-unsafe-argument
 		w.watch(s as any);
 		w.dispose();
 		s.set(99);
@@ -206,8 +210,9 @@ describe("createWatcher() [preact]", () => {
 
 	it("calls notify for each distinct change", async () => {
 		const s = signal(0);
-		const notify = vi.fn();
+		const notify = vi.fn<() => void>();
 		const w = createWatcher(notify);
+		// oxlint-disable-next-line typescript/no-unsafe-argument
 		w.watch(s as any);
 		s.set(1);
 		await tick();
@@ -244,7 +249,7 @@ describe("watchEffect() — auto-tracking [preact]", () => {
 
 	it("calls returned cleanup before re-run", async () => {
 		const s = signal(0);
-		const innerCleanup = vi.fn();
+		const innerCleanup = vi.fn<() => void>();
 		const cleanup = effect(_onCleanup => {
 			s();
 			return innerCleanup;
@@ -304,7 +309,7 @@ describe("watchEffect() — auto-tracking [preact]", () => {
 
 	it("calls onCleanup() registered inside fn", async () => {
 		const s = signal(0);
-		const registered = vi.fn();
+		const registered = vi.fn<() => void>();
 		const cleanup = effect(onCleanup => {
 			s();
 			onCleanup(registered);
@@ -321,8 +326,12 @@ describe("watchEffect() — auto-tracking [preact]", () => {
 		const order: string[] = [];
 		const cleanup = effect(onCleanup => {
 			s();
-			onCleanup(() => order.push("onCleanup"));
-			return () => order.push("return");
+			onCleanup(() => {
+				order.push("onCleanup");
+			});
+			return () => {
+				order.push("return");
+			};
 		});
 		s.set(1);
 		await tick();
@@ -360,7 +369,7 @@ describe("watchEffect() — explicit deps [preact]", () => {
 	it("does NOT re-run for signals read inside fn but not in deps", async () => {
 		const dep = signal(0); // in deps list
 		const other = signal(100); // NOT in deps list, but read inside fn
-		const fn = vi.fn(([_d]: number[]) => {
+		const fn = vi.fn(([_d]: readonly [number]) => {
 			other();
 		});
 		const cleanup = effect([dep], fn);
@@ -392,7 +401,7 @@ describe("watchEffect() — explicit deps [preact]", () => {
 
 	it("calls return-value cleanup before re-run", async () => {
 		const s = signal(0);
-		const innerCleanup = vi.fn();
+		const innerCleanup = vi.fn<() => void>();
 		const cleanup = effect([s], () => innerCleanup);
 		s.set(1);
 		await tick();
@@ -403,7 +412,7 @@ describe("watchEffect() — explicit deps [preact]", () => {
 
 	it("calls onCleanup() registered inside fn", async () => {
 		const s = signal(0);
-		const registered = vi.fn();
+		const registered = vi.fn<() => void>();
 		const cleanup = effect([s], (_vals, onCleanup) => {
 			onCleanup(registered);
 		});
@@ -418,8 +427,12 @@ describe("watchEffect() — explicit deps [preact]", () => {
 		const s = signal(0);
 		const order: string[] = [];
 		const cleanup = effect([s], (_vals, onCleanup) => {
-			onCleanup(() => order.push("onCleanup"));
-			return () => order.push("return");
+			onCleanup(() => {
+				order.push("onCleanup");
+			});
+			return () => {
+				order.push("return");
+			};
 		});
 		s.set(1);
 		await tick();
@@ -449,7 +462,7 @@ describe("watchEffect() — explicit deps [preact]", () => {
 		b.set(20);
 		await tick();
 		await tick();
-		expect(fn.mock.calls.at(-1)[0]).toStrictEqual([1, 20, 3]);
+		expect(fn.mock.calls.at(-1)![0]).toStrictEqual([1, 20, 3]);
 		cleanup.dispose();
 	});
 });
@@ -635,6 +648,7 @@ describe("derivedAsync() [preact]", () => {
 
 	it("returns sync value when fn returns non-Promise", async () => {
 		const flag = signal(true);
+		// oxlint-disable-next-line typescript/promise-function-async
 		const result = derivedAsync(_abortSig => {
 			if (flag()) {
 				return "sync-value";

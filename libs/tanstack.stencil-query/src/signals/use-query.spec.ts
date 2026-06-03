@@ -65,14 +65,16 @@ describe("$useQuery", () => {
 			query: $useQuery(
 				{
 					queryKey: ["failing"],
-					queryFn: () => Promise.reject(new Error("boom")),
+					queryFn: async () => {
+						throw new Error("boom");
+					},
 					retry: false,
 				},
 				qc,
 			),
 		}));
 		await vi.waitFor(() => expect(m.query.isError()).toBeTruthy());
-		expect((m.query.error() as Error).message).toBe("boom");
+		expect(m.query.error()!.message).toBe("boom");
 	});
 
 	it("updates options reactively — switches queryKey on re-render", async () => {
@@ -141,7 +143,7 @@ describe("$useQuery", () => {
 			resolveFn = resolve;
 		});
 		using m = await mount(() => ({
-			query: $useQuery({ queryKey: ["loading"], queryFn: () => pending }, qc),
+			query: $useQuery({ queryKey: ["loading"], queryFn: async () => pending }, qc),
 		}));
 		// mount() calls render(), establishing subscription → starts fetch → isLoading = true
 		expect(m.query.isLoading()).toBeTruthy();
@@ -152,17 +154,16 @@ describe("$useQuery", () => {
 	});
 
 	it("exposes isFetched — false before first fetch, true after data arrives", async () => {
-		using m = await mount(
-			() => ({ query: $useQuery({ queryKey: ["fetched"], queryFn: () => Promise.resolve("done") }, qc) }),
-			{ afterConnect: mounted => expect(mounted.query.isFetched()).toBeFalsy() },
-		);
+		using m = await mount(() => ({ query: $useQuery({ queryKey: ["fetched"], queryFn: async () => "done" }, qc) }), {
+			afterConnect: mounted => expect(mounted.query.isFetched()).toBeFalsy(),
+		});
 		await vi.waitFor(() => expect(m.query.isFetched()).toBeTruthy());
 	});
 
 	it("delivers updated data via signals when queryFn returns a new value for the same key", async () => {
 		let value = "initial";
 		// oxlint-disable-next-line vitest/prefer-mock-promise-shorthand -- closure must re-read `value` at call time; mockResolvedValue captures it once at setup
-		const queryFn = vi.fn<() => Promise<string>>().mockImplementation(() => Promise.resolve(value));
+		const queryFn = vi.fn<() => Promise<string>>().mockImplementation(async () => value);
 
 		using m = await mount(() => ({
 			query: $useQuery({ queryKey: ["test"], queryFn }, qc),
@@ -181,7 +182,7 @@ describe("$useQuery", () => {
 	it("re-requests and delivers new data via signals when queryKey changes", async () => {
 		let key = "a";
 		// oxlint-disable-next-line vitest/prefer-mock-promise-shorthand -- closure must re-read `key` at call time; mockResolvedValue captures it once at setup
-		const queryFn = vi.fn<() => Promise<string>>().mockImplementation(() => Promise.resolve(`data-for-${key}`));
+		const queryFn = vi.fn<() => Promise<string>>().mockImplementation(async () => `data-for-${key}`);
 
 		using m = await mount(() => ({
 			query: $useQuery(() => ({ queryKey: [key], queryFn }), qc),
@@ -205,7 +206,7 @@ describe("$useQuery", () => {
 			query: $useQuery(
 				{
 					queryKey: ["refetch"],
-					queryFn: () =>
+					queryFn: async () =>
 						new Promise<string>(r => {
 							resolve = r;
 						}),

@@ -57,11 +57,11 @@ export function createCompositionDefs<const T extends CompositionDefsMap>(defs: 
 }
 
 export type ComposeRegistry = {
-	register<TProps>(type: string, definition: ComposeDef<TProps>): ComposeRegistry;
-	registerFromDefs(defs: CompositionDefsMap): ComposeRegistry;
-	resolve(type: string): ComposeDefInternal | undefined;
+	register: <TProps>(type: string, definition: ComposeDef<TProps>) => ComposeRegistry;
+	registerFromDefs: (defs: CompositionDefsMap) => ComposeRegistry;
+	resolve: (type: string) => ComposeDefInternal | undefined;
 	/** @internal Dev-only; lists registered primary keys (not every alias). */
-	listTypes(): string[];
+	listTypes: () => string[];
 };
 
 /** Normalized output event detail emitted by ssv-compose. */

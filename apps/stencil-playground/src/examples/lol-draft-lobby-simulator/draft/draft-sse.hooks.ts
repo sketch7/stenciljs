@@ -42,7 +42,7 @@ export function useDraftSSE(getDraftId: () => string | null) {
 						phase: data.phase,
 						turn: data.currentTurnIndex,
 					});
-					client.current?.invalidateQueries({ queryKey: ["lol-draft", id] });
+					void client.current?.invalidateQueries({ queryKey: ["lol-draft", id] });
 				},
 			},
 		},

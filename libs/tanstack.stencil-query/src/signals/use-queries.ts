@@ -189,7 +189,7 @@ export function $useQueries<T extends any[], TCombinedResult = QueriesResults<T>
 			refetch: noObserverRefetch,
 		} as unknown as QueryObserverResult);
 		const proxy = createSignalResult(src as never, {
-			refetch: () => obsRef.fn?.()?.getObservers()[i]?.refetch(),
+			refetch: async () => obsRef.fn?.()?.getObservers()[i]?.refetch(),
 		}) as unknown as QuerySignalResult;
 		elementSrcs.push(src);
 		elementProxies.push(proxy);

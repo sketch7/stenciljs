@@ -63,7 +63,7 @@ export function usePosts(queryClient?: QueryClient) {
 		() => ({
 			queryKey: QUERY_KEY,
 			staleTime: STALE_TIME,
-			queryFn: () => {
+			queryFn: async () => {
 				console.warn(">>>> useQuery fetchPosts");
 				return fetchPosts();
 			},
@@ -73,9 +73,9 @@ export function usePosts(queryClient?: QueryClient) {
 
 	const createRef = useMutation(
 		{
-			mutationFn: (title: string) => apiCreatePost(title),
+			mutationFn: async (title: string) => apiCreatePost(title),
 			onSuccess: () => {
-				client.current?.invalidateQueries({ queryKey: QUERY_KEY });
+				void client.current?.invalidateQueries({ queryKey: QUERY_KEY });
 			},
 		},
 		queryClient,

@@ -39,7 +39,8 @@
       "options": {
         "command": "pnpm oxlint src/ tests/",
         "cwd": "libs/stencil-core"
-      }
+      },
+      "dependsOn": []
     },
     "fmt": {
       "executor": "nx:run-commands",

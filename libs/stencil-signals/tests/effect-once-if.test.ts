@@ -4,7 +4,7 @@ import { effectOnceIf } from "../src/extensions/effect-once-if";
 import { signal, computed } from "../src/tc39";
 
 // Helper: flush all pending microtasks
-const tick = () =>
+const tick = async () =>
 	new Promise<void>(r => {
 		queueMicrotask(r);
 	});
@@ -12,7 +12,7 @@ const tick = () =>
 describe("effectOnceIf", () => {
 	it("executes once when condition becomes truthy", async () => {
 		const condition = signal(false);
-		const execution = vi.fn();
+		const execution = vi.fn<(value: boolean) => void>();
 
 		effectOnceIf(() => condition(), execution);
 
@@ -20,22 +20,20 @@ describe("effectOnceIf", () => {
 
 		condition.set(true);
 		await tick();
-		expect(execution).toHaveBeenCalledOnce();
-		expect(execution).toHaveBeenCalledWith(true);
+		expect(execution).toHaveBeenCalledExactlyOnceWith(true);
 	});
 
 	it("executes immediately if condition is truthy on first run", () => {
-		const execution = vi.fn();
+		const execution = vi.fn<(value: boolean) => void>();
 
 		effectOnceIf(() => true, execution);
 
-		expect(execution).toHaveBeenCalledOnce();
-		expect(execution).toHaveBeenCalledWith(true);
+		expect(execution).toHaveBeenCalledExactlyOnceWith(true);
 	});
 
 	it("disposes after execution", async () => {
 		const condition = signal(false);
-		const execution = vi.fn();
+		const execution = vi.fn<(value: boolean) => void>();
 
 		const ref = effectOnceIf(() => condition(), execution);
 
@@ -55,7 +53,7 @@ describe("effectOnceIf", () => {
 	});
 
 	it("passes non-nullish value to execution", async () => {
-		const execution = vi.fn();
+		const execution = vi.fn<(value: number) => void>();
 		const condition = signal<number | null>(null);
 
 		effectOnceIf(() => condition(), execution);
@@ -73,10 +71,9 @@ describe("effectOnceIf", () => {
 		["", "empty string"],
 		[null, "null"],
 		[undefined, "undefined"],
-	])("does not execute for falsy value: %o", falsy => {
+	])("does not execute for falsy value: %o", (falsy, _label: string) => {
 		const condition = signal(falsy);
-		const execution = vi.fn();
-
+		const execution = vi.fn<(value: unknown) => void>();
 		effectOnceIf(() => condition(), execution);
 
 		expect(execution).not.toHaveBeenCalled();
@@ -84,7 +81,7 @@ describe("effectOnceIf", () => {
 
 	it("tracks signal reads in condition", async () => {
 		const count = signal(0);
-		const execution = vi.fn();
+		const execution = vi.fn<(value: boolean) => void>();
 		let conditionRunCount = 0;
 
 		effectOnceIf(() => {
@@ -113,7 +110,7 @@ describe("effectOnceIf", () => {
 	it("executes in untracked context", async () => {
 		const counter = signal(0);
 		const condition = signal(false);
-		const execution = vi.fn();
+		const execution = vi.fn<(value: boolean) => void>();
 
 		effectOnceIf(() => condition(), execution);
 
@@ -142,7 +139,7 @@ describe("effectOnceIf", () => {
 		const threshold = signal(10);
 		const value = signal(5);
 		const isAboveThreshold = computed(() => value() > threshold());
-		const execution = vi.fn();
+		const execution = vi.fn<(value: boolean) => void>();
 
 		effectOnceIf(() => isAboveThreshold(), execution);
 
@@ -150,15 +147,14 @@ describe("effectOnceIf", () => {
 
 		value.set(15);
 		await tick();
-		expect(execution).toHaveBeenCalledOnce();
-		expect(execution).toHaveBeenCalledWith(true);
+		expect(execution).toHaveBeenCalledExactlyOnceWith(true);
 	});
 
 	it("supports multiple independent effectOnceIf instances", async () => {
 		const cond1 = signal(false);
 		const cond2 = signal(false);
-		const exec1 = vi.fn();
-		const exec2 = vi.fn();
+		const exec1 = vi.fn<(value: boolean) => void>();
+		const exec2 = vi.fn<(value: boolean) => void>();
 
 		effectOnceIf(() => cond1(), exec1);
 		effectOnceIf(() => cond2(), exec2);
@@ -176,7 +172,7 @@ describe("effectOnceIf", () => {
 
 	it("can be manually disposed before condition is met", () => {
 		const condition = signal(false);
-		const execution = vi.fn();
+		const execution = vi.fn<(value: boolean) => void>();
 
 		const ref = effectOnceIf(() => condition(), execution);
 
@@ -187,7 +183,7 @@ describe("effectOnceIf", () => {
 	});
 
 	it("handles object/array truthy values correctly", async () => {
-		const execution = vi.fn();
+		const execution = vi.fn<(value: Record<string, number>) => void>();
 		const condition = signal<Record<string, number> | null>(null);
 
 		effectOnceIf(() => condition(), execution);
@@ -203,8 +199,8 @@ describe("effectOnceIf", () => {
 	it("executes multiple conditions independently", async () => {
 		const user = signal<{ id: number } | null>(null);
 		const theme = signal<string | null>(null);
-		const userLoaded = vi.fn();
-		const themeLoaded = vi.fn();
+		const userLoaded = vi.fn<(value: { id: number }) => void>();
+		const themeLoaded = vi.fn<(value: string) => void>();
 
 		effectOnceIf(() => user(), userLoaded);
 		effectOnceIf(() => theme(), themeLoaded);

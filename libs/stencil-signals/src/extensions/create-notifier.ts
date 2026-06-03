@@ -9,11 +9,11 @@ export type CreateNotifierOptions = {
 };
 
 export type Notifier = {
-	notify(): void;
+	notify: () => void;
 	/** Read-only signal. Track this inside effects or computeds to react on each notify/dep change. */
 	listen: Signal<number>;
 	/** Stops the inner dep-tracking effect. No-op when no deps were provided. */
-	dispose(): void;
+	dispose: () => void;
 };
 
 /**
@@ -38,7 +38,9 @@ export function createNotifier(options?: CreateNotifierOptions): Notifier {
 	if (deps.length > 0) {
 		let isFirst = true;
 		innerRef = effect(() => {
-			deps.forEach(dep => dep());
+			deps.forEach(dep => {
+				dep();
+			});
 			if (isFirst) {
 				isFirst = false;
 				return;

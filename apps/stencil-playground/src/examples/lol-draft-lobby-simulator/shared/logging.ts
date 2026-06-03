@@ -82,7 +82,7 @@ if (globalThis.window !== undefined) {
 	//   lolLog.setLevel("draft", "trace")       → then refresh
 	//   lolLog.setLevel("champion", "off")      → silence champion logs
 	// oxlint-disable eslint/no-console -- intentional devtools helper
-	(globalThis as Record<string, unknown>)["lolLog"] = {
+	(globalThis as Record<string, unknown>).lolLog = {
 		setLevel(category: LolLogCategory, level: LolLogLevel): void {
 			localStorage.setItem(STORAGE_PREFIX + category, level);
 			console.info(`[lol-log] ${category} → ${level}  (refresh to apply)`);

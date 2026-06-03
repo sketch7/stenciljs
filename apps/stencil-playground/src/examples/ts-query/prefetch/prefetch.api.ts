@@ -22,7 +22,7 @@ export const postQueries = {
 	detail: (id: number) =>
 		queryOptions({
 			queryKey: postKeys.detail(id),
-			queryFn: () => fetchPostById(id),
+			queryFn: async () => fetchPostById(id),
 		}),
 };
 

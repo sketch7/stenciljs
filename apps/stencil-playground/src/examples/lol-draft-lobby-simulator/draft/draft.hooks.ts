@@ -26,7 +26,7 @@ export function useListDrafts() {
 	const config = useConfig();
 	const listRef = useQuery(() => ({
 		queryKey: DRAFTS_QUERY_KEY,
-		queryFn: () => fetchDraftList(config.current?.baseUrl() ?? ""),
+		queryFn: async () => fetchDraftList(config.current?.baseUrl() ?? ""),
 		// SSE (useLobbySSE) drives all invalidations — treat cached data as always fresh.
 		staleTime: Infinity,
 	}));
@@ -43,7 +43,7 @@ export function useCreateDraft() {
 	const client = useLolDraftQueryClient();
 	const config = useConfig();
 	const mutation = useMutation({
-		mutationFn: () => apiCreateDraft(config.current?.baseUrl() ?? ""),
+		mutationFn: async () => apiCreateDraft(config.current?.baseUrl() ?? ""),
 		onSuccess: (session: DraftSession) => {
 			client.current?.setQueryData(draftQueryKey(session.id), session);
 		},
@@ -67,7 +67,7 @@ export function useDraftSession(getDraftId: () => string | null) {
 		// SSE (useDraftSSE) drives all invalidations — treat cached data as always fresh.
 		return {
 			queryKey: draftQueryKey(id),
-			queryFn: () => fetchDraftSession(config.current?.baseUrl() ?? "", id),
+			queryFn: async () => fetchDraftSession(config.current?.baseUrl() ?? "", id),
 			staleTime: Infinity,
 		};
 	});
@@ -93,7 +93,7 @@ export function useDraftMutations(getDraftId: () => string | null) {
 	const config = useConfig();
 
 	const pickRef = useMutation({
-		mutationFn: ({ championId, team }: PickArgs) => {
+		mutationFn: async ({ championId, team }: PickArgs) => {
 			const id = getDraftId();
 			if (!id) {
 				throw new Error("No active draft session");
@@ -110,13 +110,13 @@ export function useDraftMutations(getDraftId: () => string | null) {
 		onSettled: () => {
 			const id = getDraftId();
 			if (id) {
-				client.current?.invalidateQueries({ queryKey: draftQueryKey(id) });
+				void client.current?.invalidateQueries({ queryKey: draftQueryKey(id) });
 			}
 		},
 	});
 
 	const banRef = useMutation({
-		mutationFn: ({ championId, team }: PickArgs) => {
+		mutationFn: async ({ championId, team }: PickArgs) => {
 			const id = getDraftId();
 			if (!id) {
 				throw new Error("No active draft session");
@@ -133,13 +133,13 @@ export function useDraftMutations(getDraftId: () => string | null) {
 		onSettled: () => {
 			const id = getDraftId();
 			if (id) {
-				client.current?.invalidateQueries({ queryKey: draftQueryKey(id) });
+				void client.current?.invalidateQueries({ queryKey: draftQueryKey(id) });
 			}
 		},
 	});
 
 	const simulateRef = useMutation({
-		mutationFn: () => {
+		mutationFn: async () => {
 			const id = getDraftId();
 			if (!id) {
 				throw new Error("No active draft session");
@@ -159,7 +159,7 @@ export function useDraftMutations(getDraftId: () => string | null) {
 		onSettled: () => {
 			const id = getDraftId();
 			if (id) {
-				client.current?.invalidateQueries({ queryKey: draftQueryKey(id) });
+				void client.current?.invalidateQueries({ queryKey: draftQueryKey(id) });
 			}
 		},
 	});
@@ -183,7 +183,7 @@ export function useJoinDraft() {
 	const client = useLolDraftQueryClient();
 	const config = useConfig();
 	const mutation = useMutation({
-		mutationFn: (draftId: string) => apiJoinDraft(config.current?.baseUrl() ?? "", draftId),
+		mutationFn: async (draftId: string) => apiJoinDraft(config.current?.baseUrl() ?? "", draftId),
 		onSuccess: (session: DraftSession) => {
 			client.current?.setQueryData(draftQueryKey(session.id), session);
 		},
@@ -201,7 +201,7 @@ export function useEnableSimulation() {
 	const client = useLolDraftQueryClient();
 	const config = useConfig();
 	const mutation = useMutation({
-		mutationFn: (draftId: string) => apiEnableSimulation(config.current?.baseUrl() ?? "", draftId),
+		mutationFn: async (draftId: string) => apiEnableSimulation(config.current?.baseUrl() ?? "", draftId),
 		onSuccess: session => {
 			logger.info("Simulation enabled: id={id}", { id: session.id });
 			client.current?.setQueryData(draftQueryKey(session.id), session);

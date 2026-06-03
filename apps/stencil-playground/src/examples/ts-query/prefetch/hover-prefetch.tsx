@@ -20,7 +20,7 @@ export class AppTsQueryHoverPrefetch extends SsvElement {
 		$usePrefetchQuery(() => {
 			const id = this.#hoveredId();
 			if (!id) {
-				return;
+				return undefined;
 			}
 			return postQueries.detail(id);
 		});

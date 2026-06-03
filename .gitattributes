@@ -22,6 +22,10 @@
 # Lockfiles — keep LF, mark as generated for diff/PR collapsing
 pnpm-lock.yaml -diff linguist-generated=true
 
+# Generated files — collapse in diffs/PRs
+**/components.d.ts linguist-generated=true
+**/src/react/* linguist-generated=true
+
 # Shell scripts must always be LF
 *.sh    text eol=lf
 

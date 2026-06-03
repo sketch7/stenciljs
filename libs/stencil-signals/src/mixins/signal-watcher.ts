@@ -10,6 +10,7 @@ export function SignalWatcherMixin<TBase extends MixedInCtor<ComponentInterface>
 	class SignalWatcher extends Base {
 		// oxlint-disable-next-line typescript/no-explicit-any
 		constructor(...args: any[]) {
+			// oxlint-disable-next-line typescript/no-unsafe-argument
 			super(...args);
 			useSignalWatcher();
 		}

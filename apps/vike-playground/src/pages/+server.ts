@@ -1,5 +1,5 @@
 import { honoLogger } from "@logtape/hono";
-import { addVikeMiddleware } from "@vikejs/hono";
+import addVikeMiddleware from "@vikejs/hono";
 import { Hono } from "hono";
 import type { Server } from "vike/types";
 
@@ -25,7 +25,7 @@ app.route("/", translationsApi);
 app.route("/", lolApi);
 addVikeMiddleware(app);
 
-const port = Number.parseInt(process.env["PORT"] ?? "3100", 10);
+const port = Number.parseInt(process.env.PORT ?? "3100", 10);
 
 export default {
 	fetch: app.fetch,

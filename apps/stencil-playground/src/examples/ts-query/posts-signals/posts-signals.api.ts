@@ -62,9 +62,9 @@ export function $usePosts(queryClient?: QueryClient) {
 
 	const create = $useMutation(
 		{
-			mutationFn: (title: string) => apiCreatePost(title),
+			mutationFn: async (title: string) => apiCreatePost(title),
 			onSuccess: () => {
-				client.current?.invalidateQueries({ queryKey: QUERY_KEY });
+				void client.current?.invalidateQueries({ queryKey: QUERY_KEY });
 			},
 		},
 		queryClient,

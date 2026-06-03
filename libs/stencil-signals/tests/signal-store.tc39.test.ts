@@ -19,6 +19,7 @@ import {
 	patchState,
 	getState,
 	getInitialState,
+	watchState,
 } from "../src/store";
 // Import the TC39 entry point first — this sets the TC39 adapter so all
 // utilities that call getAdapter() work correctly in this test file.
@@ -135,6 +136,45 @@ describe("signalStore() [tc39]", () => {
 			expect(() => {
 				patchState(store, { unknown: 2 } as never);
 			}).toThrow(/unknown state key/u);
+		});
+	});
+
+	describe("watchState()", () => {
+		it("fires once immediately with the current state", () => {
+			const store = signalStore(withState({ a: 1, b: 2, c: 3 }));
+			const fn = vi.fn();
+			const { dispose } = watchState(store, fn);
+			expect(fn).toHaveBeenCalledOnce();
+			expect(fn).toHaveBeenLastCalledWith({ a: 1, b: 2, c: 3 });
+			dispose();
+		});
+
+		it("triggers once when patchState changes three props at the same time", async () => {
+			const store = signalStore(withState({ a: 1, b: 2, c: 3 }));
+			const fn = vi.fn();
+			const { dispose } = watchState(store, fn);
+			// Drop the immediate initial call so we can assert the batch in isolation.
+			fn.mockClear();
+
+			patchState(store, { a: 10, b: 20, c: 30 });
+			await tick();
+			await tick();
+
+			// Three props changed in one batch → exactly one re-run, not three.
+			expect(fn).toHaveBeenCalledOnce();
+			expect(fn).toHaveBeenLastCalledWith({ a: 10, b: 20, c: 30 });
+			dispose();
+		});
+
+		it("stops firing after dispose()", async () => {
+			const store = signalStore(withState({ count: 0 }));
+			const fn = vi.fn();
+			const { dispose } = watchState(store, fn);
+			dispose();
+			patchState(store, { count: 1 });
+			await tick();
+			await tick();
+			expect(fn).toHaveBeenCalledOnce();
 		});
 	});
 

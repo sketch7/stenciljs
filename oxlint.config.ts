@@ -378,7 +378,13 @@ export default defineConfig({
 			},
 		},
 		{
-			// Stencil globalScript — requires a default export and side-effect imports
+			// TypeScript declaration files — not modules, ambient-only; module ambiguity rules don't apply
+			files: ["**/*.d.ts"],
+			rules: {
+				"import/unambiguous": "off",
+			},
+		},
+		{
 			files: ["apps/stencil-playground/src/global.ts"],
 			rules: {
 				"import/no-default-export": "off",

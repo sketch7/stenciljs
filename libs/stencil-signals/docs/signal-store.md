@@ -60,7 +60,7 @@ Use `patchState` for partial updates and updater functions.
 import { watchState } from "@ssv/stencil-signals/store";
 
 // standalone — dispose manually
-const { destroy } = watchState(todoStore, state => {
+const { dispose } = watchState(todoStore, state => {
   localStorage.setItem("todos", JSON.stringify(state.todos));
 });
 ```

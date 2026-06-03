@@ -1,4 +1,4 @@
-import { use } from "@ssv/stencil-core";
+import { useLoadEffect } from "@ssv/stencil-core";
 import type { Ref } from "@ssv/stencil-core";
 import { makeTransferKey, useTransferState } from "@ssv/stencil-core/transfer-state";
 import { dehydrate, hydrate } from "@tanstack/query-core";
@@ -79,13 +79,16 @@ export function useQueryHydration(options?: UseQueryHydrationOptions): void {
 	const ts = useTransferState();
 	const clientRef = useQueryClient(options?.client);
 
-	use({
-		hostConnected() {
+	useLoadEffect(
+		({ client }) => {
 			const dehydrated = ts.get(DEHYDRATED_KEY);
 			if (dehydrated !== undefined) {
-				hydrate(clientRef.current, dehydrated);
+				hydrate(client, dehydrated);
 			}
-			ts.setLazy(DEHYDRATED_KEY, () => dehydrate(clientRef.current));
+			ts.setLazy(DEHYDRATED_KEY, () => dehydrate(client));
 		},
-	});
+		{
+			client: clientRef,
+		},
+	);
 }

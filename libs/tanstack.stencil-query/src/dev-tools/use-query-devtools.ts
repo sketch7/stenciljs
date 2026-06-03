@@ -1,4 +1,5 @@
 import { useLoadEffect } from "@ssv/stencil-core";
+import type { Ref } from "@ssv/stencil-core";
 import { Build } from "@stencil/core";
 import { onlineManager } from "@tanstack/query-core";
 import type { QueryClient } from "@tanstack/query-core";
@@ -30,7 +31,7 @@ export type UseQueryDevtoolsOptions = {
 	 */
 	enabled?: boolean;
 	/** Use an explicit `QueryClient` instead of the one from context. */
-	client?: QueryClient;
+	client?: QueryClient | Ref<QueryClient>;
 	/** Position of the TanStack logo button. Defaults to `'bottom-right'`. */
 	buttonPosition?: DevtoolsButtonPosition;
 	/** Position of the devtools panel. Defaults to `'bottom'`. */

@@ -50,10 +50,11 @@ export function watchState<State extends object>(
 	watcher: (state: State) => void,
 ): WatcherRef {
 	const signals = store[STATE_SOURCE];
+	const keys = Object.keys(signals) as (keyof State)[];
 
 	return effect(() => {
 		const state = {} as State;
-		for (const key of Object.keys(signals) as (keyof State)[]) {
+		for (const key of keys) {
 			state[key] = signals[key]();
 		}
 		watcher(state);

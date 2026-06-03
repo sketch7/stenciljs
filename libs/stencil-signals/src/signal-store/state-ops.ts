@@ -1,5 +1,6 @@
 import type { WritableSignal } from "../adapters/types";
 import { effect } from "../extensions/effect";
+import type { WatcherRef } from "../extensions/effect";
 import { batch } from "../signals/core";
 import { INITIAL_STATE, STATE_SOURCE, snapshotState } from "./state-source";
 import type { StateSource } from "./types";
@@ -42,21 +43,19 @@ export function getInitialState<State extends object>(store: StateSource<State>)
 /**
  * Reactively watches a store's state, calling `watcher` immediately with the
  * current state and again on every subsequent change.
- * The returned `destroy()` allows manual teardown.
+ * The returned `dispose()` allows manual teardown.
  */
 export function watchState<State extends object>(
 	store: StateSource<State>,
 	watcher: (state: State) => void,
-): { destroy: () => void } {
+): WatcherRef {
 	const signals = store[STATE_SOURCE];
 
-	const ref = effect(() => {
+	return effect(() => {
 		const state = {} as State;
 		for (const key of Object.keys(signals) as (keyof State)[]) {
 			state[key] = signals[key]();
 		}
 		watcher(state);
 	});
-
-	return { destroy: ref.dispose };
 }

@@ -148,4 +148,4 @@ Use `type<Input>()` when a feature depends on fields that another feature provid
 | `patchState(store, ...updaters)`   | function | Apply batched partial and updater-function writes  |
 | `getState(store)`                  | function | Read a plain, non-reactive state snapshot          |
 | `getInitialState(store)`           | function | Read merged initial state for reset flows          |
-| `watchState(store, watcher)`       | function | React to every state change; returns `{ destroy }` |
+| `watchState(store, watcher)`       | function | React to every state change; returns `{ dispose }` |

@@ -59,6 +59,5 @@ Thumbs.db
 
 # stencil
 .stencil/
-**/components.d.ts
 **/*/loader/
 **/*/hydrate/

@@ -16,7 +16,12 @@ const SCRIPT_TYPE = "application/json";
  * - `!("window" in globalThis)` — `true` in plain Node.js without a DOM environment, enabling
  *   use of this utility outside the Stencil hydrate bundle.
  *
- * @internal
+ * @example
+ * ```ts
+ * if (detectServer()) {
+ *   // server-only path
+ * }
+ * ```
  */
 export const detectServer: () => boolean = () => Build.isServer || !("window" in globalThis);
 

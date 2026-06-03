@@ -145,6 +145,34 @@ describe("useQueryHydration", () => {
 		expect(m.query().isSuccess).toBeTruthy();
 	});
 
+	it("hydrates before observer subscription — queryFn not called when useQuery is registered first", async () => {
+		// RED-GREEN: This test fails with the old useLoadEffect-only approach because the observer
+		// subscribes in hostWillLoad before hydration runs, sees an empty cache, and triggers a
+		// client fetch. It passes with the hostConnected approach which hydrates before any
+		// hostWillLoad observer subscription.
+		const serverData = [{ id: 99, title: "SSR post" }];
+		const serverQc = new QueryClient();
+		serverQc.setQueryData(["ssr-posts"], serverData);
+		const script = makeMockScript("hyd-order", { __tsq: dehydrate(serverQc) });
+		serverQc.clear();
+
+		const qc = new QueryClient();
+		const queryFn = vi.fn<() => Promise<typeof serverData>>().mockResolvedValue([]);
+
+		// useQuery is registered FIRST — mirrors real field-initializer order where
+		// usePrefetchQuery / useQuery are class fields and useQueryHydration is in setup().
+		using m = await mount(h => {
+			attachShadowRoot(h, script);
+			provideTransferState("hyd-order");
+			const query = useQuery({ queryKey: ["ssr-posts"], queryFn, staleTime: Infinity }, qc);
+			useQueryHydration({ client: qc });
+			return { query };
+		});
+
+		expect(m.query().data).toStrictEqual(serverData);
+		expect(queryFn).not.toHaveBeenCalled();
+	});
+
 	it("uses a custom key when the key option is provided", async () => {
 		const serverQc = new QueryClient();
 		serverQc.setQueryData(["users"], [{ id: 10 }]);
@@ -334,6 +362,41 @@ describe("useQueryHydration", () => {
 			{ label: "top-down", mode: "default" as DomTestMode },
 			{ label: "bottom-up", mode: "hydrate" as DomTestMode },
 		];
+
+		it("bottom-up: child-scoped useQueryHydration hydrates via fallback when client from ancestor context", async () => {
+			// Tests the hostWillLoad fallback path: when useQueryHydration is on a child and the
+			// QueryClient comes from an ancestor context, hostConnected may not resolve
+			// clientRef.current yet in bottom-up (hydration) mode. The fallback fires in hostWillLoad.
+			const serverQc = new QueryClient();
+			serverQc.setQueryData(["child-items"], [{ id: 55 }]);
+			const script = makeMockScript("hyd-child", { __tsq: dehydrate(serverQc) });
+			serverQc.clear();
+
+			const qc = new QueryClient();
+
+			using _tree = await mountDom(
+				root => {
+					Object.defineProperty(root.host, "shadowRoot", {
+						configurable: true,
+						get: () => ({
+							querySelector: (sel: string) => (sel === `#${script.id}` ? script : null),
+						}),
+					});
+					provideQueryClient({ client: qc });
+					provideTransferState("hyd-child");
+
+					// useQueryHydration on the child — client resolves from ancestor context.
+					// In bottom-up mode the child hostConnected fires before the ancestor
+					// provides its context, so the hostWillLoad fallback path handles hydration.
+					root.child(() => {
+						useQueryHydration();
+					});
+				},
+				{ mode: "hydrate" },
+			);
+
+			expect(qc.getQueryData(["child-items"])).toStrictEqual([{ id: 55 }]);
+		});
 
 		it.each(connectModes)(
 			"$label: hydrates root QueryClient; child components resolve it from context",

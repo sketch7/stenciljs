@@ -435,6 +435,7 @@ export default defineConfig({
 		"libs/*/src/vue/**",
 		"libs/*/src/angular/**",
 		"apps/stencil-playground/src/react/**",
+		"src/react/**", // bare path for when oxlint runs from within the project dir
 		"apps/stencil-playground/src/components.d.ts",
 		"loader/**",
 		"hydrate/**",

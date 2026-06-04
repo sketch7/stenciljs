@@ -115,6 +115,9 @@ export default defineConfig(({ command, mode }) => {
 	const isAnalyze = env["ANALYZE"] === "true";
 
 	return {
+		define: {
+			DEBUG: String(process.env["SSV_DEBUG"] === "true"),
+		},
 		plugins: [
 			vike(),
 			react(),
@@ -124,7 +127,7 @@ export default defineConfig(({ command, mode }) => {
 				apply: "serve",
 				packageDir: stencilPkgDir,
 				watchDirs: [path.resolve(__dirname, "../../libs/stencil-core/src")],
-				preBuildCommand: "pnpm nx run stencil-core:build",
+				preBuildCommand: "pnpm nx run-many -t build --projects=stencil-core,tanstack-stencil-query",
 				preBuildCommandCwd: path.resolve(__dirname, "../.."),
 				onRebuildDone: async server => {
 					// Reload the hydrate module through Vite's SSR pipeline so the

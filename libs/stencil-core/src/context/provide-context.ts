@@ -1,8 +1,9 @@
 import { use } from "../hooks/use";
-import { CONTEXT_EVENT, PROVIDER_CONNECTED_EVENT, createContextLogger } from "./context";
+import { createLogger } from "../internal";
+import { CONTEXT_EVENT, PROVIDER_CONNECTED_EVENT } from "./context";
 import type { ContextEventDetail, ContextKey, ProviderConnectedDetail } from "./context";
 
-const log = createContextLogger("provideContext");
+const log = createLogger("context");
 
 /**
  * Registers the current component as a provider for the given context.
@@ -42,7 +43,7 @@ export function provideContext<T>(key: ContextKey<T>, valueOrFactory?: T | (() =
 	use(host => ({
 		hostConnected() {
 			const hydrating = host.isHydrating();
-			log(
+			log.log(
 				() =>
 					`hostConnected  tag=${host.getElement().tagName?.toLowerCase() ?? "?"}  contextId=${key.name}  hydrating=${hydrating}`,
 			);
@@ -51,11 +52,11 @@ export function provideContext<T>(key: ContextKey<T>, valueOrFactory?: T | (() =
 			if (!hydrating) {
 				// Not hydrating: init is top-down — all consumers connect after their provider,
 				// so no waiting consumers exist yet. Skip the global broadcast.
-				log(() => `hostConnected  not hydrating → skip PROVIDER_CONNECTED_EVENT  contextId=${key.name}`);
+				log.log(() => `hostConnected  not hydrating → skip PROVIDER_CONNECTED_EVENT  contextId=${key.name}`);
 				return;
 			}
 			// Hydration: bottom-up init may have left consumers waiting on the global event.
-			log(() => `hostConnected  hydrating → dispatching PROVIDER_CONNECTED_EVENT  contextId=${key.name}`);
+			log.log(() => `hostConnected  hydrating → dispatching PROVIDER_CONNECTED_EVENT  contextId=${key.name}`);
 			globalThis.dispatchEvent(
 				new CustomEvent<ProviderConnectedDetail>(PROVIDER_CONNECTED_EVENT, {
 					detail: { contextId: key.id },

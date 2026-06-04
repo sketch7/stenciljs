@@ -5,3 +5,5 @@ export * from "./ref";
 export * from "./scheduling";
 export * from "./pending-tasks";
 export { detectServer } from "./transfer-state";
+export { createLogger } from "./internal";
+export type { Logger } from "./internal";

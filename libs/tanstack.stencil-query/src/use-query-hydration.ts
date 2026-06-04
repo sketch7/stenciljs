@@ -1,10 +1,12 @@
-import { detectServer, use } from "@ssv/stencil-core";
+import { createLogger, detectServer, use } from "@ssv/stencil-core";
 import type { Ref } from "@ssv/stencil-core";
 import { makeTransferKey, useTransferState } from "@ssv/stencil-core/transfer-state";
 import { dehydrate, hydrate } from "@tanstack/query-core";
 import type { DehydratedState, QueryClient } from "@tanstack/query-core";
 
 import { useQueryClient } from "./query-client-context";
+
+const log = createLogger("query-hydration");
 
 /**
  * Options for {@link useQueryHydration}.
@@ -96,6 +98,7 @@ export function useQueryHydration(options?: UseQueryHydrationOptions): void {
 				}
 				const dehydrated = ts.get(DEHYDRATED_KEY);
 				if (dehydrated !== undefined) {
+					log.log(() => `[${transferKey}] hostConnected  client: hydrating from transferred state`);
 					hydrate(client, dehydrated);
 				}
 				// Mark as handled even when no data — avoids redundant ts.get() in the fallback.
@@ -108,6 +111,7 @@ export function useQueryHydration(options?: UseQueryHydrationOptions): void {
 					// serialized snapshot captures fully prefetched cache state.
 					const client = clientRef.current;
 					if (client) {
+						log.log(() => `[${transferKey}] hostWillLoad  server: registering lazy dehydration factory`);
 						ts.setLazy(DEHYDRATED_KEY, () => dehydrate(client));
 					}
 					return;
@@ -121,6 +125,7 @@ export function useQueryHydration(options?: UseQueryHydrationOptions): void {
 					}
 					const dehydrated = ts.get(DEHYDRATED_KEY);
 					if (dehydrated !== undefined) {
+						log.log(() => `[${transferKey}] hostWillLoad  client fallback: hydrating from transferred state`);
 						hydrate(client, dehydrated);
 					}
 				}

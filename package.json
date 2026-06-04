@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "nx run vike-playground:dev",
-    "dev:debug": "cross-env SSV_DEBUG=true pnpm dev",
+    "dev:debug": "cross-env SSV_DEBUG=transfer-state,query-hydration pnpm dev",
     "build": "nx run vike-playground:build",
     "build:analyze": "ANALYZE=true nx run vike-playground:build",
     "cost:libs": "node --import @swc-node/register/esm scripts/bundle-cost.ts",

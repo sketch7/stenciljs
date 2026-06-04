@@ -116,7 +116,7 @@ export default defineConfig(({ command, mode }) => {
 
 	return {
 		define: {
-			DEBUG: String(process.env["SSV_DEBUG"] === "true"),
+			DEBUG: JSON.stringify(process.env["SSV_DEBUG"] ?? "false"),
 		},
 		plugins: [
 			vike(),

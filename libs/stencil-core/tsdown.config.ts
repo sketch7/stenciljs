@@ -17,7 +17,7 @@ export default defineConfig({
 	// Replace DEBUG with `false` at build time so the bundler can fold away all
 	// logging branches (createContextLogger returns noop → entire log(...) calls
 	// become dead code and are removed).
-	define: { DEBUG: "false" },
+	define: { DEBUG: String(process.env["SSV_DEBUG"] === "true") },
 	outputOptions: {
 		chunkFileNames: "_internal/[name].js",
 	},

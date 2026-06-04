@@ -1,5 +1,8 @@
 import { use } from "../hooks/use";
+import { createLogger } from "../internal";
 import { detectServer } from "../transfer-state";
+
+const log = createLogger("pending-tasks");
 
 /**
  * Handle returned by {@link usePendingTasks}. Each `add()` call registers an async factory
@@ -62,6 +65,7 @@ export function usePendingTasks(): PendingTasksHandle {
 						return;
 					}
 					const r = factory();
+					log.log(() => `hostWillLoad  factory triggered  hasPromise=${r !== null && r !== undefined}`);
 					return r === null || r === undefined ? undefined : (r as Promise<void>);
 				},
 			}));

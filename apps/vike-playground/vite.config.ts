@@ -126,8 +126,15 @@ export default defineConfig(({ command, mode }) => {
 			stencilWatch({
 				apply: "serve",
 				packageDir: stencilPkgDir,
-				watchDirs: [path.resolve(__dirname, "../../libs/stencil-core/src")],
-				preBuildCommand: "pnpm nx run-many -t build --projects=stencil-core,tanstack-stencil-query",
+				watchDirs: [
+					path.resolve(__dirname, "../../libs/stencil-core/src"),
+					path.resolve(__dirname, "../../libs/stencil-signals/src"),
+					path.resolve(__dirname, "../../libs/stencil-ui/src"),
+					path.resolve(__dirname, "../../libs/tanstack.stencil-query/src"),
+					path.resolve(__dirname, "../../libs/tanstack.stencil-store/src"),
+				],
+				preBuildCommand:
+					"pnpm nx run-many -t build --projects=stencil-core,stencil-signals,stencil-ui,tanstack-stencil-query,tanstack-stencil-store",
 				preBuildCommandCwd: path.resolve(__dirname, "../.."),
 				onRebuildDone: async server => {
 					// Reload the hydrate module through Vite's SSR pipeline so the
@@ -164,7 +171,24 @@ export default defineConfig(({ command, mode }) => {
 		],
 
 		resolve: {
+			// In dev, use source files for @ssv/* packages so Vite's `define: { DEBUG: ... }`
+			// actually takes effect. Without this, Vite loads pre-built dist files where DEBUG
+			// is already replaced by tsdown, making the SSV_DEBUG env var ineffective.
+			conditions: isDev ? ["@ssv/source"] : [],
 			alias: [
+				// In dev, redirect @app/stencil-playground/hydrate to the dev wrapper so that
+				// renderToString is always called with runtimeLogging:true. This is needed because
+				// @app/stencil-playground is SSR-externalized (Node.js resolves it directly),
+				// so the @ssv/source export condition in package.json is ignored for SSR.
+				// A resolve.alias fires before the SSR externalization check, so this wins.
+				...(isDev
+					? [
+							{
+								find: "@app/stencil-playground/hydrate",
+								replacement: path.resolve(stencilPkgDir, "hydrate-dev.ts"),
+							},
+						]
+					: []),
 				{
 					find: "@/",
 					replacement: `${path.resolve(__dirname, "./src")}/`,

@@ -1,6 +1,7 @@
 import { SsvElement } from "@ssv/stencil-core";
 import { computed, signal, useSignalWatcher } from "@ssv/stencil-signals";
 import { createNotifier, debounced, effect } from "@ssv/stencil-signals/extensions";
+import { watchState } from "@ssv/stencil-signals/store";
 import { Component, h } from "@stencil/core";
 
 import { todoStore } from "./todo.store";
@@ -23,6 +24,10 @@ export class AppSignalsTodo extends SsvElement {
 		const activeFilter = this.activeFilter();
 		const todos = todoStore.todos();
 		return activeFilter ? todos.filter(todo => todo.text.toLowerCase().includes(activeFilter)) : todos;
+	});
+
+	readonly _stateLog = watchState(todoStore, state => {
+		console.warn("[todoStore] state changed", state);
 	});
 
 	readonly _addTodo = effect(

@@ -5,7 +5,7 @@ export { withConfig } from "./with-config";
 export { withState } from "./with-state";
 export { withComputed } from "./with-computed";
 export { withMethods } from "./with-methods";
-export { patchState, getState, getInitialState } from "./state-ops";
+export { patchState, getState, getInitialState, watchState } from "./state-ops";
 export type { StateUpdater } from "./state-ops";
 export { STATE_SOURCE, INITIAL_STATE } from "./state-source";
 export type { StateSource, StateSignals } from "./state-source";

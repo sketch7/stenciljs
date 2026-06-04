@@ -98,7 +98,7 @@ export function useQueryHydration(options?: UseQueryHydrationOptions): void {
 				}
 				const dehydrated = ts.get(DEHYDRATED_KEY);
 				if (dehydrated !== undefined) {
-					log.log(() => `[${transferKey}] hostConnected  client: hydrating from transferred state`);
+					log.log(() => `[${transferKey}] hostConnected client: hydrating from transferred state`);
 					hydrate(client, dehydrated);
 				}
 				// Mark as handled even when no data — avoids redundant ts.get() in the fallback.

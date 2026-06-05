@@ -262,11 +262,12 @@ export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey exte
 	// the populated cache before render() (hostWillRender may not fire in test environments
 	// that wrap render() — e.g. when useSignalWatcher() replaces host.render).
 	//
-	// Chained/dependent queries: a query whose key derives from not-yet-resolved upstream data is
-	// *held* (its queryKey has an `undefined` segment) at hostWillLoad time. Rather than fetching
-	// with that undefined key, the settle reactively waits for the key to resolve — driven by the
-	// same signals the key getter reads, so an upstream query resolving (and updating its signal)
-	// re-evaluates this query's key — then prefetches once. Bounded by SSR_HELD_QUERY_TIMEOUT_MS.
+	// Held queries: a query whose key is derived from a signal that is not ready yet (a prop, route
+	// param, another query's data, etc.) has an `undefined` segment in its queryKey at hostWillLoad
+	// time. Rather than fetching with that undefined key, the settle reactively waits for the key to
+	// resolve — driven by the same signals the key getter reads, so when that signal changes (for
+	// whatever reason) this query's key is re-evaluated — then prefetches once. On timeout it logs a
+	// console.error and renders without the query. Bounded by SSR_HELD_QUERY_TIMEOUT_MS.
 	use(() => ({
 		hostWillLoad(): Promise<void> | void {
 			if (!detectServer()) {
@@ -331,7 +332,19 @@ export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey exte
 				// Reading a (computed) signal is forbidden inside the watcher's synchronous notify
 				// phase, so defer re-evaluation to a microtask.
 				const watcher = createWatcher(() => queueMicrotask(check));
-				const timer = setTimeout(finish, SSR_HELD_QUERY_TIMEOUT_MS);
+				const timer = setTimeout(() => {
+					if (done) {
+						return;
+					}
+					// The key never resolved within the budget — surface it loudly rather than
+					// silently dropping the query from the SSR output.
+					console.error(
+						`[ssv:query] held query timed out after ${SSR_HELD_QUERY_TIMEOUT_MS}ms during SSR — its ` +
+							`key never resolved, so it is excluded from the server-rendered output. ` +
+							`queryKey: ${JSON.stringify(getOpts().queryKey)}`,
+					);
+					finish();
+				}, SSR_HELD_QUERY_TIMEOUT_MS);
 
 				readiness();
 				watcher.watch(readiness);

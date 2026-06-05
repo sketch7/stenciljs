@@ -73,7 +73,7 @@ See: [apps/stencil-playground/src/examples/stencil-store/counter/](../../../apps
 
 ## Reactive Controllers (@ssv/stencil-core)
 
-Use `ReactiveController` for lifecycle-aware, reusable behaviour (event listeners, intervals, subscriptions). The controller calls `host.requestUpdate()` to trigger re-renders.
+Use `ReactiveController` for lifecycle-aware, reusable behavior (event listeners, intervals, subscriptions). The controller calls `host.requestUpdate()` to trigger re-renders.
 
 Use `use(factory)` from `@ssv/stencil-core` — the factory receives `host` and returns `{ hooks: ReactiveController; value? }`. The `hooks` object is registered as the controller; `value` is returned to the caller with lifecycle methods stripped from its type. Omit `value` for side-effect-only hooks.
 

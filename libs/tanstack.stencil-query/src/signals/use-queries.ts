@@ -157,6 +157,7 @@ export function $useQueries<T extends any[], TCombinedResult = QueriesResults<T>
 		TCombinedResult
 	>;
 
+	// todo: handle reactive getOpts (signal)
 	// ── Combine path ────────────────────────────────────────────────────────────
 	if (getOpts().combine !== undefined) {
 		const state = signal<TCombinedResult>(pendingQueriesResult<TCombinedResult>(getOpts() as AnyQueriesOptions));

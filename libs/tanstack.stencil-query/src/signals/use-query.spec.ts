@@ -1,6 +1,7 @@
 // oxlint-disable-next-line import/no-unassigned-import -- registers the TC39 signal adapter
 import "@ssv/stencil-signals/tc39";
 import { TestHost, mount } from "@ssv/stencil-core/testing";
+import { signal } from "@ssv/stencil-signals";
 import { QueryClient } from "@tanstack/query-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -223,5 +224,45 @@ describe("$useQuery", () => {
 		resolve("updated");
 		await vi.waitFor(() => expect(m.query.isRefetching()).toBeFalsy());
 		expect(m.query.isRefetching()).toBeFalsy();
+	});
+
+	describe("signal-derived options — client-side reactivity", () => {
+		it("retriggeres query when a signal queryKey changes — without explicit re-render", async () => {
+			const userId = signal(1);
+			// oxlint-disable-next-line vitest/prefer-mock-promise-shorthand -- closure must re-read `userId` at call time; mockResolvedValue captures it once at setup
+			const queryFn = vi.fn<() => Promise<string>>().mockImplementation(async () => `user-${userId()}`);
+
+			using m = await mount(() => ({
+				query: $useQuery(() => ({ queryKey: ["user", userId()], queryFn }), qc),
+			}));
+
+			await vi.waitFor(() => expect(m.query.isSuccess()).toBeTruthy());
+			expect(m.query.data()).toBe("user-1");
+
+			// Signal changes — should retrigger without an explicit m.render()
+			userId.set(2);
+
+			await vi.waitFor(() => expect(m.query.data()).toBe("user-2"));
+			expect(queryFn).toHaveBeenCalledTimes(2);
+		});
+
+		it("enables query when a signal-derived `enabled` changes from false to true — without explicit re-render", async () => {
+			const isEnabled = signal(false);
+			const queryFn = vi.fn<() => Promise<string>>().mockResolvedValue("data");
+
+			using m = await mount(() => ({
+				query: $useQuery(() => ({ queryKey: ["test"], queryFn, enabled: isEnabled() }), qc),
+			}));
+
+			// Initially disabled — query stays pending, queryFn never called
+			expect(m.query.isPending()).toBeTruthy();
+			expect(queryFn).not.toHaveBeenCalled();
+
+			// Enable via signal — should trigger fetch without m.render()
+			isEnabled.set(true);
+
+			await vi.waitFor(() => expect(m.query.isSuccess()).toBeTruthy());
+			expect(m.query.data()).toBe("data");
+		});
 	});
 });

@@ -124,7 +124,31 @@ export type QueryObserverHandlers<TData, TError> = {
 export type QueryObserverHandle<TQueryFnData, TError, TData, TQueryKey extends QueryKey> = {
 	refetch: QueryObserverResult<TData, TError>["refetch"];
 	getObserver: () => QueryObserver<TQueryFnData, TError, TData, TQueryFnData, TQueryKey> | undefined;
+	/** Re-applies current defaulted options to the observer — used by the signals hook after a held key resolves. */
+	reArm: () => void;
+	/** The resolved query client ref — exposed so `$useQuery` can access it in its own lifecycle block. */
+	clientRef: Ref<QueryClient>;
 };
+
+/**
+ * A query is **held** when its key is not yet resolvable — `undefined`, or an array with an
+ * `undefined` segment (a signal-derived key that is not ready yet — from a prop, route param,
+ * another query's data, etc.). Held queries are gated rather than fetched with an undefined key
+ * (mirrors Angular `resource`, whose `undefined` params keep the resource idle). `null` segments are
+ * treated as valid values: use `null` (not `undefined`) for a key part that is legitimately
+ * optional/absent so it still fetches.
+ *
+ * See the "Signal-dependent queries & SSR" section of the README for the full behavior and convention.
+ */
+export function isQueryKeyHeld(queryKey: unknown): boolean {
+	if (queryKey === undefined) {
+		return true;
+	}
+	if (Array.isArray(queryKey)) {
+		return queryKey.some(segment => segment === undefined);
+	}
+	return false;
+}
 
 /**
  * Shared observer lifecycle for the classic and signals query hooks.
@@ -137,6 +161,13 @@ export type QueryObserverHandle<TQueryFnData, TError, TData, TQueryKey extends Q
  * **SSR auto-prefetch** — on the server, automatically calls `qc.prefetchQuery(opts)` in
  * `hostWillLoad` so Stencil's `componentWillLoad` awaits data before `render()`.
  * Set `enabled: false` to opt a query out of SSR prefetching.
+ *
+ * **Held queries** — when the `queryKey` has an `undefined` segment (a signal-derived key that is
+ * not ready yet — from a prop, route param, another query's data, etc.; see {@link isQueryKeyHeld}),
+ * the observer stays idle instead of fetching with an undefined key. During SSR the base skips
+ * prefetch for held keys — the signals hook (`$useQuery`) owns the reactive settle in its own
+ * lifecycle block, keeping `@ssv/stencil-signals` out of the classic `useQuery` bundle.
+ * See the "Signal-dependent queries & SSR" section of the README.
  */
 export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey extends QueryKey>(
 	getOptions:
@@ -164,6 +195,12 @@ export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey exte
 			TQueryFnData,
 			TQueryKey
 		>;
+		// Held query (key not yet resolved): keep the observer idle so it never fetches with an
+		// undefined key. When the key resolves, a later setOptions (hostWillRender on the client, or
+		// the SSR settle below) re-evaluates this and lets the observer fetch.
+		if (isQueryKeyHeld(d.queryKey)) {
+			d.enabled = false;
+		}
 		d._optimisticResults = isRestoring ? "isRestoring" : "optimistic";
 		return d;
 	};
@@ -199,6 +236,7 @@ export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey exte
 		{ qc: clientRef, isRestoring: isRestoringRef },
 	);
 
+	// todo: consider to remove for signal query (and handle by the effect - or move to the useQuery lifecycle) - this is currently needed to trigger the fetch when the key is held and then resolved on the client, but for signals it might be possible to just trigger a refetch when the key resolves instead of relying on this hostWillRender step
 	use(() => ({
 		hostWillRender() {
 			const qc = clientRef.current;
@@ -220,6 +258,10 @@ export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey exte
 	// After prefetch resolves, re-syncs the observer result into handlers so signals see
 	// the populated cache before render() (hostWillRender may not fire in test environments
 	// that wrap render() — e.g. when useSignalWatcher() replaces host.render).
+	//
+	// Held queries (key has an `undefined` segment) are skipped here — the signals hook
+	// (`$useQuery`) owns the reactive held-settle in its own lifecycle block, keeping the
+	// @ssv/stencil-signals dependency out of the classic useQuery bundle.
 	use(() => ({
 		hostWillLoad(): Promise<void> | void {
 			if (!detectServer()) {
@@ -229,17 +271,27 @@ export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey exte
 			if (!qc) {
 				return;
 			}
-			const opts = getOpts();
-			if (opts.enabled === false) {
-				return;
-			}
-			return qc.prefetchQuery(opts).then(() => {
+
+			const syncResult = (): void => {
 				if (observer) {
 					handlers.onConnect?.(observer.getCurrentResult());
 				}
-			});
+			};
+
+			const initial = getOpts();
+			if (initial.enabled === false || isQueryKeyHeld(initial.queryKey)) {
+				return;
+			}
+			return qc.prefetchQuery(initial).then(syncResult);
 		},
 	}));
 
-	return { refetch, getObserver: () => observer };
+	const reArm = (): void => {
+		const qc = clientRef.current;
+		if (observer && qc) {
+			observer.setOptions(defaultedOptions(qc, isRestoringRef.current));
+		}
+	};
+
+	return { refetch, getObserver: () => observer, reArm, clientRef };
 }

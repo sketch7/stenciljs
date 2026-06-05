@@ -305,6 +305,7 @@ export function useBaseQueriesObserver<TCombinedResult>(
 			handlers.onRender?.(combinedFrom(observer, qc, isRestoring));
 		},
 	}));
+	// todo: handle SSR prefetching (same as useQuery)
 
 	return {
 		getObserver: () => observer,

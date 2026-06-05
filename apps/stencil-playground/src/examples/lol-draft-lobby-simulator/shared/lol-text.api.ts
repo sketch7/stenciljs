@@ -1,4 +1,3 @@
-import { use } from "@ssv/stencil-core";
 import { useQuery } from "@ssv/tanstack.stencil-query";
 
 import { useConfig } from "../../../startup-context";
@@ -20,17 +19,6 @@ async function fetchLolText(baseUrl: string): Promise<LolTextMap> {
 export function useLoLText() {
 	const client = useLolDraftQueryClient();
 	const config = useConfig();
-
-	use({
-		async hostWillLoad() {
-			const baseUrl = config.current?.baseUrl() ?? "";
-			await client.current?.prefetchQuery({
-				queryKey: QUERY_KEY,
-				queryFn: async () => fetchLolText(baseUrl),
-				staleTime: Infinity,
-			});
-		},
-	});
 
 	const textRef = useQuery(() => {
 		const baseUrl = config.current?.baseUrl() ?? "";

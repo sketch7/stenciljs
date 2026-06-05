@@ -1,4 +1,3 @@
-import { use } from "@ssv/stencil-core";
 import { useQueryClient } from "@ssv/tanstack.stencil-query";
 import type { QueryClient } from "@ssv/tanstack.stencil-query";
 import { $useMutation, $useQuery } from "@ssv/tanstack.stencil-query/signals";
@@ -45,19 +44,13 @@ async function apiCreatePost(title: string): Promise<Post> {
 export function $usePosts(queryClient?: QueryClient) {
 	const client = useQueryClient(queryClient);
 
-	use({
-		async hostWillLoad() {
-			await client.current?.prefetchQuery({ queryKey: QUERY_KEY, queryFn: fetchPosts, staleTime: STALE_TIME });
-		},
-	});
-
 	const posts = $useQuery(
 		() => ({
 			queryKey: QUERY_KEY,
 			staleTime: STALE_TIME,
 			queryFn: fetchPosts,
 		}),
-		queryClient,
+		client,
 	);
 
 	const create = $useMutation(
@@ -67,7 +60,7 @@ export function $usePosts(queryClient?: QueryClient) {
 				void client.current?.invalidateQueries({ queryKey: QUERY_KEY });
 			},
 		},
-		queryClient,
+		client,
 	);
 
 	return { posts, create };

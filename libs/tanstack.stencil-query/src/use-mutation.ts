@@ -31,7 +31,7 @@ export function useMutation<TData = unknown, TError = DefaultError, TVariables =
 	getOptions:
 		| UseMutationOptions<TData, TError, TVariables, TContext>
 		| (() => UseMutationOptions<TData, TError, TVariables, TContext>),
-	client?: QueryClient,
+	client?: QueryClient | Ref<QueryClient>,
 ): Ref<UseMutationResult<TData, TError, TVariables, TContext>> {
 	const { mutate, mutateAsync, getObserver } = useMutationObserver<TData, TError, TVariables, TContext>(
 		getOptions,

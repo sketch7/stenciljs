@@ -1,4 +1,3 @@
-import { use } from "@ssv/stencil-core";
 import { useQuery, useMutation, useQueryClient } from "@ssv/tanstack.stencil-query";
 import type { QueryClient } from "@ssv/tanstack.stencil-query";
 
@@ -50,15 +49,6 @@ async function apiCreatePost(title: string): Promise<Post> {
 export function usePosts(queryClient?: QueryClient) {
 	const client = useQueryClient(queryClient);
 
-	// Client-side prefetch for non-SSR navigation. staleTime prevents re-fetching data
-	// that was already hydrated from the server.
-	use({
-		async hostWillLoad() {
-			console.warn(">>>> hostWillLoad prefetchQuery");
-			await client.current?.prefetchQuery({ queryKey: QUERY_KEY, queryFn: fetchPosts, staleTime: STALE_TIME });
-		},
-	});
-
 	const postsRef = useQuery(
 		() => ({
 			queryKey: QUERY_KEY,
@@ -68,7 +58,7 @@ export function usePosts(queryClient?: QueryClient) {
 				return fetchPosts();
 			},
 		}),
-		queryClient,
+		client,
 	);
 
 	const createRef = useMutation(
@@ -78,7 +68,7 @@ export function usePosts(queryClient?: QueryClient) {
 				void client.current?.invalidateQueries({ queryKey: QUERY_KEY });
 			},
 		},
-		queryClient,
+		client,
 	);
 
 	return {

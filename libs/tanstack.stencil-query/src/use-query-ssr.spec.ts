@@ -74,7 +74,7 @@ describe("useQuery — SSR auto-prefetch", () => {
 			expect(getOpts).not.toHaveBeenCalled();
 
 			await host.willLoad();
-			expect(getOpts).toHaveBeenCalled();
+			expect(getOpts).toHaveBeenCalledWith();
 		});
 	});
 

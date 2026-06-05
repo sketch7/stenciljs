@@ -1,7 +1,8 @@
-import { use } from "@ssv/stencil-core";
 import type { Ref } from "@ssv/stencil-core";
 import type { DefaultError, FetchQueryOptions, QueryClient, QueryKey } from "@tanstack/query-core";
 
+import { usePrefetchLifecycle } from "./prefetch-lifecycle";
+import type { PrefetchBlockMode } from "./prefetch-lifecycle";
 import { useQueryClient } from "./query-client-context";
 
 // ── usePrefetchQuery types ────────────────────────────────────────────────────
@@ -21,11 +22,14 @@ export type UsePrefetchQueryOptions<
 /**
  * Seeds the QueryClient cache on `hostWillLoad`.
  *
- * Returns the `Promise` from `prefetchQuery` out of `hostWillLoad` so Stencil awaits it
- * during SSR before rendering. Always calls `qc.prefetchQuery` — TanStack deduplicates
- * concurrent requests (returns the in-flight promise for the same key) and resolves
- * immediately for fresh cache entries, so calling it unconditionally is safe.
- * Returns `void` — no state, no subscriptions, no re-renders.
+ * Always calls `qc.prefetchQuery` — TanStack deduplicates concurrent requests (returns the
+ * in-flight promise for the same key) and resolves immediately for fresh cache entries, so
+ * calling it unconditionally is safe. Returns `void` — no state, no subscriptions, no re-renders.
+ *
+ * The `block` option controls when the host's render is blocked:
+ * - `"always"` (default) — blocks on both server and client.
+ * - `"server"` — blocks SSR; fire-and-forget on the client.
+ * - `false` — never blocks (fire-and-forget on both sides).
  *
  * Pass a **getter function** for options computed from props or other state.
  * Pass an explicit `client` to bypass context — useful in unit tests.
@@ -34,6 +38,16 @@ export type UsePrefetchQueryOptions<
  * ```ts
  * // Field initializer — seeds cache before children connect
  * readonly #_ = usePrefetchQuery({ queryKey: ['posts'], queryFn: fetchPosts }, this.#qc);
+ * ```
+ *
+ * @example
+ * ```ts
+ * // Server-only block — do not await on the client
+ * readonly #_ = usePrefetchQuery(
+ *   { queryKey: ['posts'], queryFn: fetchPosts },
+ *   this.#qc,
+ *   { block: 'server' },
+ * );
  * ```
  *
  * @example
@@ -54,23 +68,16 @@ export function usePrefetchQuery<
 		| UsePrefetchQueryOptions<TQueryFnData, TError, TData, TQueryKey>
 		| (() => UsePrefetchQueryOptions<TQueryFnData, TError, TData, TQueryKey>),
 	client?: QueryClient | Ref<QueryClient>,
+	options?: { block?: PrefetchBlockMode },
 ): void {
 	const clientRef = useQueryClient(client);
 	const getOpts = typeof getOptions === "function" ? getOptions : () => getOptions;
 
-	use(() => ({
-		hostWillLoad(): Promise<void> | void {
-			const qc = clientRef.current;
-			if (!qc) {
-				return;
-			}
-			const opts = getOpts();
-			// Always call prefetchQuery — TanStack deduplicates concurrent requests (if another
-			// component already started the same fetch, this returns the same in-flight promise)
-			// and resolves immediately for fresh cache entries. Guarding with getQueryState()
-			// would skip awaiting when a sibling's prefetch is pending, causing render() to run
-			// before data arrives.
-			return qc.prefetchQuery(opts);
-		},
-	}));
+	usePrefetchLifecycle(
+		clientRef,
+		getOpts as unknown as () => FetchQueryOptions | undefined | null | false,
+		options?.block ?? "always",
+	);
 }
+
+export type { PrefetchBlockMode };

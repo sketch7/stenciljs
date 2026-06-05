@@ -1,4 +1,5 @@
 import { TestHost, mount } from "@ssv/stencil-core/testing";
+import { Build } from "@stencil/core";
 import { QueryClient } from "@tanstack/query-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -105,5 +106,77 @@ describe("usePrefetchQuery", () => {
 		await vi.waitFor(() => expect(qc.getQueryState(["test"])?.status).toBe("success"));
 
 		expect(m.renderCount).toBe(rendersBefore);
+	});
+
+	// ── block option ──────────────────────────────────────────────────────────
+
+	describe("block option", () => {
+		describe("server", () => {
+			beforeEach(() => {
+				Object.assign(Build, { isServer: true });
+			});
+
+			afterEach(() => {
+				Object.assign(Build, { isServer: false });
+			});
+
+			it("block='server' — calls prefetchQuery in hostWillLoad on server", async () => {
+				const spy = vi.spyOn(qc, "prefetchQuery");
+
+				using _m = await mount(() => {
+					usePrefetchQuery({ queryKey: ["blk-srv"], queryFn: vi.fn<() => unknown>() }, qc, { block: "server" });
+				});
+
+				expect(spy).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ queryKey: ["blk-srv"] }));
+			});
+
+			it("block=false — does NOT call prefetchQuery on server", async () => {
+				const spy = vi.spyOn(qc, "prefetchQuery");
+
+				using _m = await mount(() => {
+					usePrefetchQuery({ queryKey: ["blk-false-srv"], queryFn: vi.fn<() => unknown>() }, qc, { block: false });
+				});
+
+				expect(spy).not.toHaveBeenCalled();
+			});
+		});
+
+		describe("client", () => {
+			it("block='server' — fires fire-and-forget on client (does not block hostWillLoad)", async () => {
+				const spy = vi.spyOn(qc, "prefetchQuery");
+
+				using host = new TestHost();
+				usePrefetchQuery({ queryKey: ["blk-srv-cli"], queryFn: vi.fn<() => unknown>() }, qc, { block: "server" });
+
+				host.connect();
+				await host.willLoad();
+
+				expect(spy).toHaveBeenCalledOnce();
+			});
+
+			it("block=false — fires fire-and-forget on client", async () => {
+				const spy = vi.spyOn(qc, "prefetchQuery");
+
+				using host = new TestHost();
+				usePrefetchQuery({ queryKey: ["blk-false-cli"], queryFn: vi.fn<() => unknown>() }, qc, { block: false });
+
+				host.connect();
+				await host.willLoad();
+
+				expect(spy).toHaveBeenCalledOnce();
+			});
+
+			it("default (block='always') — existing behavior preserved", async () => {
+				const spy = vi.spyOn(qc, "prefetchQuery");
+
+				using host = new TestHost();
+				usePrefetchQuery({ queryKey: ["blk-default-cli"], queryFn: vi.fn<() => unknown>() }, qc);
+
+				host.connect();
+				await host.willLoad();
+
+				expect(spy).toHaveBeenCalledOnce();
+			});
+		});
 	});
 });

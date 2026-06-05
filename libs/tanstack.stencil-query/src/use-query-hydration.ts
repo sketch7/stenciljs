@@ -1,6 +1,7 @@
 import { createLogger, detectServer, use } from "@ssv/stencil-core";
 import type { Ref } from "@ssv/stencil-core";
 import { makeTransferKey, useTransferState } from "@ssv/stencil-core/transfer-state";
+import { Build } from "@stencil/core";
 import { dehydrate, hydrate } from "@tanstack/query-core";
 import type { DehydratedState, QueryClient } from "@tanstack/query-core";
 
@@ -100,6 +101,14 @@ export function useQueryHydration(options?: UseQueryHydrationOptions): void {
 				if (dehydrated !== undefined) {
 					log.log(() => `[${transferKey}] hostConnected  client: hydrating from transferred state`);
 					hydrate(client, dehydrated);
+					if (Build.isDev) {
+						const st = client.getDefaultOptions().queries?.staleTime;
+						if (!st) {
+							console.warn(
+								"[ssv:query] useQueryHydration: client staleTime is 0/undefined — hydrated queries refetch immediately on the client, discarding SSR data. Set a non-zero staleTime (provideQueryClient({ hydrate: true }) defaults it).",
+							);
+						}
+					}
 				}
 				// Mark as handled even when no data — avoids redundant ts.get() in the fallback.
 				hydratedInConnect = true;

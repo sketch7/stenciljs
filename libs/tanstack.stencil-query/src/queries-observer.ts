@@ -1,9 +1,10 @@
 // oxlint-disable @typescript-eslint/no-explicit-any -- ported TanStack `useQueries` variadic type machinery relies on `any` in conditional-inference positions; replacing with `unknown` breaks per-element type inference
-import { use, useLoadEffect } from "@ssv/stencil-core";
+import { detectServer, use, useLoadEffect } from "@ssv/stencil-core";
 import type { Ref } from "@ssv/stencil-core";
 import { QueriesObserver, notifyManager } from "@tanstack/query-core";
 import type {
 	DefaultError,
+	FetchQueryOptions,
 	OmitKeyof,
 	QueriesPlaceholderDataFunction,
 	QueryClient,
@@ -233,6 +234,10 @@ export function pendingQueriesResult<TCombinedResult>(opts: AnyQueriesOptions): 
  * `hostWillRender → setQueries` step — mirroring {@link useBaseQueryObserver} for the single-query
  * hooks. The classic hook only needs `onResult`; the signals hook additionally uses
  * `onConnect`/`onRender`/`onDispose` to keep its source signal eagerly populated.
+ *
+ * **SSR auto-prefetch** — on the server, automatically calls `qc.prefetchQuery(opts)` in
+ * `hostWillLoad` for every enabled query so Stencil's `componentWillLoad` awaits all data before
+ * `render()`. Set `enabled: false` on an individual query to opt it out of SSR prefetching.
  */
 export function useBaseQueriesObserver<TCombinedResult>(
 	getOptions: AnyQueriesOptions | (() => AnyQueriesOptions),
@@ -303,6 +308,29 @@ export function useBaseQueriesObserver<TCombinedResult>(
 			const isRestoring = isRestoringRef.current;
 			observer.setQueries(defaultedQueries(qc, opts, isRestoring), { combine: opts.combine as never });
 			handlers.onRender?.(combinedFrom(observer, qc, isRestoring));
+		},
+	}));
+
+	// Server only: seed every enabled query before render(). enabled:false opts a query out.
+	// After all prefetches resolve, re-syncs the observer result into handlers so signals see
+	// the populated cache before render() (mirrors the single-query fix in query-observer.ts).
+	use(() => ({
+		async hostWillLoad(): Promise<void> {
+			if (!detectServer()) {
+				return;
+			}
+			const qc = clientRef.current;
+			if (!qc) {
+				return;
+			}
+			const list = getOpts().queries.filter(o => o.enabled !== false);
+			if (list.length === 0) {
+				return;
+			}
+			await Promise.all(list.map(o => qc.prefetchQuery(o as FetchQueryOptions)));
+			if (observer) {
+				handlers.onConnect?.(combinedFrom(observer, qc, isRestoringRef.current));
+			}
 		},
 	}));
 

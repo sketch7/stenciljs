@@ -1,11 +1,12 @@
 export * from "@tanstack/query-core";
 export type { Ref } from "@ssv/stencil-core";
 
-export { provideQueryClient, queryClientKey, useQueryClient } from "./query-client-context";
+export { DEFAULT_SSR_STALE_TIME, provideQueryClient, queryClientKey, useQueryClient } from "./query-client-context";
 export { provideIsRestoring, isRestoringKey, useIsRestoring } from "./is-restoring";
 export { queryOptions } from "./query-options";
 export type { DefinedQueryOptions } from "./query-options";
 export type { ProvideQueryClientOptions } from "./query-client-context";
+export type { PrefetchBlockMode } from "./prefetch-lifecycle";
 export type {
 	DefinedInitialDataOptions,
 	DefinedUseQueryRef,

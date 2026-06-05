@@ -218,6 +218,9 @@ export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey exte
 	// Server only: seed the cache before render() runs. Stencil awaits all hostWillLoad
 	// promises in parallel, so this does not block the observer subscription above.
 	// `enabled: false` opts the query out of SSR prefetching (mirrors client behavior).
+	// After prefetch resolves, re-syncs the observer result into handlers so signals see
+	// the populated cache before render() (hostWillRender may not fire in test environments
+	// that wrap render() — e.g. when useSignalWatcher() replaces host.render).
 	use(() => ({
 		hostWillLoad(): Promise<void> | void {
 			if (!detectServer()) {
@@ -231,7 +234,11 @@ export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey exte
 			if (opts.enabled === false) {
 				return;
 			}
-			return qc.prefetchQuery(opts as FetchQueryOptions<TQueryFnData, TError, TData, TQueryKey>);
+			return qc.prefetchQuery(opts as FetchQueryOptions<TQueryFnData, TError, TData, TQueryKey>).then(() => {
+				if (observer) {
+					handlers.onConnect?.(observer.getCurrentResult());
+				}
+			});
 		},
 	}));
 

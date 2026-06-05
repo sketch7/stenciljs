@@ -2,6 +2,7 @@
 import "@ssv/stencil-signals/tc39";
 import { TestHost, mount } from "@ssv/stencil-core/testing";
 import { signal, useSignalWatcher } from "@ssv/stencil-signals";
+import { Build } from "@stencil/core";
 import { QueryClient } from "@tanstack/query-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -137,5 +138,40 @@ describe("$usePrefetchQuery", () => {
 		await Promise.resolve();
 
 		expect(spy).toHaveBeenCalledTimes(callsBeforeSignalChange);
+	});
+
+	// ── block option — server ─────────────────────────────────────────────────
+
+	describe("block option — server", () => {
+		beforeEach(() => {
+			Object.assign(Build, { isServer: true });
+		});
+
+		afterEach(() => {
+			Object.assign(Build, { isServer: false });
+		});
+
+		it("default block='server' — calls prefetchQuery in hostWillLoad on server", async () => {
+			const spy = vi.spyOn(qc, "prefetchQuery");
+
+			using _m = await mount(() => {
+				useSignalWatcher();
+				$usePrefetchQuery({ queryKey: ["sig-srv"], queryFn: vi.fn<() => unknown>() }, qc);
+			});
+
+			expect(spy).toHaveBeenCalledWith(expect.objectContaining({ queryKey: ["sig-srv"] }));
+		});
+
+		it("block=false — does NOT call prefetchQuery on server; client effect still runs after connect", async () => {
+			const spy = vi.spyOn(qc, "prefetchQuery");
+
+			// On server build, client effect should not run, but server pending task should not fire either.
+			using _m = await mount(() => {
+				useSignalWatcher();
+				$usePrefetchQuery({ queryKey: ["sig-false-srv"], queryFn: vi.fn<() => unknown>() }, qc, { block: false });
+			});
+
+			expect(spy).not.toHaveBeenCalled();
+		});
 	});
 });

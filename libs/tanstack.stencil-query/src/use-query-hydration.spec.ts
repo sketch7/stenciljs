@@ -357,6 +357,78 @@ describe("useQueryHydration", () => {
 		});
 	});
 
+	describe("dev warning for staleTime = 0", () => {
+		it("warns when Build.isDev and client staleTime is 0", async () => {
+			Object.assign(Build, { isDev: true });
+			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+			const serverQc = new QueryClient();
+			serverQc.setQueryData(["warn-posts"], [{ id: 1 }]);
+			const script = makeMockScript("hyd-warn", { __tsq: dehydrate(serverQc) });
+			serverQc.clear();
+
+			// Client with staleTime 0 — should warn
+			const qc = new QueryClient({ defaultOptions: { queries: { staleTime: 0 } } });
+
+			using _m = await mount(h => {
+				attachShadowRoot(h, script);
+				provideTransferState("hyd-warn");
+				useQueryHydration({ client: qc });
+			});
+
+			expect(warnSpy).toHaveBeenCalledOnce();
+			expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("staleTime"));
+
+			warnSpy.mockRestore();
+			Object.assign(Build, { isDev: false });
+		});
+
+		it("does NOT warn when staleTime is non-zero", async () => {
+			Object.assign(Build, { isDev: true });
+			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+			const serverQc = new QueryClient();
+			serverQc.setQueryData(["nowarn-posts"], [{ id: 1 }]);
+			const script = makeMockScript("hyd-nowarn", { __tsq: dehydrate(serverQc) });
+			serverQc.clear();
+
+			const qc = new QueryClient({ defaultOptions: { queries: { staleTime: 60_000 } } });
+
+			using _m = await mount(h => {
+				attachShadowRoot(h, script);
+				provideTransferState("hyd-nowarn");
+				useQueryHydration({ client: qc });
+			});
+
+			expect(warnSpy).not.toHaveBeenCalled();
+
+			warnSpy.mockRestore();
+			Object.assign(Build, { isDev: false });
+		});
+
+		it("does NOT warn when Build.isDev is false", async () => {
+			Object.assign(Build, { isDev: false });
+			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+			const serverQc = new QueryClient();
+			serverQc.setQueryData(["prod-posts"], [{ id: 1 }]);
+			const script = makeMockScript("hyd-prod", { __tsq: dehydrate(serverQc) });
+			serverQc.clear();
+
+			const qc = new QueryClient({ defaultOptions: { queries: { staleTime: 0 } } });
+
+			using _m = await mount(h => {
+				attachShadowRoot(h, script);
+				provideTransferState("hyd-prod");
+				useQueryHydration({ client: qc });
+			});
+
+			expect(warnSpy).not.toHaveBeenCalled();
+
+			warnSpy.mockRestore();
+		});
+	});
+
 	describe("cross-component context via mountDom", () => {
 		const connectModes = [
 			{ label: "top-down", mode: "default" as DomTestMode },

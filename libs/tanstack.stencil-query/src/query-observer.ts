@@ -266,8 +266,7 @@ export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey exte
 	// param, another query's data, etc.) has an `undefined` segment in its queryKey at hostWillLoad
 	// time. Rather than fetching with that undefined key, the settle reactively waits for the key to
 	// resolve — driven by the same signals the key getter reads, so when that signal changes (for
-	// whatever reason) this query's key is re-evaluated — then prefetches once. On timeout it logs a
-	// console.error and renders without the query. Bounded by SSR_HELD_QUERY_TIMEOUT_MS.
+	// whatever reason) this query's key is re-evaluated — then prefetches once.
 	use(() => {
 		// Aborts an in-flight held settle (set while waiting; cleared once settled). Lets
 		// hostDisconnected tear the settle down immediately instead of leaking the watcher/timer

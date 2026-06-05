@@ -112,6 +112,7 @@ export function $useQuery<
 		},
 	);
 
+	// todo: refactor to be more signal based
 	use(() => {
 		let abortHeldSettle: (() => void) | undefined;
 

@@ -46,7 +46,7 @@ type MountReturn<T, THost extends TestHost> = T extends object ? T & THost : THo
  *
  * @example
  * ```ts
- * // Void setup returns THost directly (unchanged behaviour):
+ * // Void setup returns THost directly (unchanged behavior):
  * using host = await mount(() => {
  *   useQuery({ queryKey: ["x"], queryFn: vi.fn() }, qc);
  * });

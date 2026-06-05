@@ -138,7 +138,7 @@ export type QueryObserverHandle<TQueryFnData, TError, TData, TQueryKey extends Q
  * treated as valid values: use `null` (not `undefined`) for a key part that is legitimately
  * optional/absent so it still fetches.
  *
- * See the "Signal-dependent queries & SSR" section of the README for the full behaviour and convention.
+ * See the "Signal-dependent queries & SSR" section of the README for the full behavior and convention.
  */
 export function isQueryKeyHeld(queryKey: unknown): boolean {
 	if (queryKey === undefined) {
@@ -236,6 +236,7 @@ export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey exte
 		{ qc: clientRef, isRestoring: isRestoringRef },
 	);
 
+	// todo: consider to remove for signal query (and handle by the effect - or move to the useQuery lifecycle) - this is currently needed to trigger the fetch when the key is held and then resolved on the client, but for signals it might be possible to just trigger a refetch when the key resolves instead of relying on this hostWillRender step
 	use(() => ({
 		hostWillRender() {
 			const qc = clientRef.current;

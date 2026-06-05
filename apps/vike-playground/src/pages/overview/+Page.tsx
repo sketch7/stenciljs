@@ -290,7 +290,7 @@ export default function Page(): JSX.Element {
 				</p>
 				<BeforeAfter before={h.mouseControllerBefore} after={h.mouseControllerAfter} />
 				<Callout type="tip">
-					<strong>Controller pattern:</strong> extract any behaviour into a <code>use*()</code> factory, test it in
+					<strong>Controller pattern:</strong> extract any behavior into a <code>use*()</code> factory, test it in
 					isolation with <code>TestHost</code>, and reuse across components — no copy-pasting lifecycle boilerplate.
 				</Callout>
 

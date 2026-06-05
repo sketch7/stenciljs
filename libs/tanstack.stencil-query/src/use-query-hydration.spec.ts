@@ -1,4 +1,6 @@
 // oxlint-disable import/max-dependencies
+// oxlint-disable-next-line import/no-unassigned-import -- registers the TC39 signal adapter for $useQuery/$useQueries tests
+import "@ssv/stencil-signals/tc39";
 import type { Ref } from "@ssv/stencil-core";
 import { mount } from "@ssv/stencil-core/testing";
 import { mountDom } from "@ssv/stencil-core/testing/dom";
@@ -9,7 +11,10 @@ import { QueryClient, dehydrate } from "@tanstack/query-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { provideQueryClient, useQueryClient } from "./query-client-context";
+import { $useQueries } from "./signals/use-queries";
+import { $useQuery } from "./signals/use-query";
 import { usePrefetchQuery } from "./use-prefetch-query";
+import { useQueries } from "./use-queries";
 import { useQuery } from "./use-query";
 import { useQueryHydration } from "./use-query-hydration";
 
@@ -170,6 +175,84 @@ describe("useQueryHydration", () => {
 		});
 
 		expect(m.query().data).toStrictEqual(serverData);
+		expect(queryFn).not.toHaveBeenCalled();
+	});
+
+	it("hydrates before observer subscription — $useQuery signals see hydrated cache when registered first", async () => {
+		// RED-GREEN: This test fails with the old useLoadEffect-only approach because $useQuery's
+		// onConnect fires in hostWillLoad before hydration runs, initialising signals to
+		// pendingQueryState. It passes with the hostConnected approach which hydrates before any
+		// hostWillLoad observer subscription so onConnect sees the populated cache.
+		const serverData = [{ id: 99, title: "SSR post" }];
+		const serverQc = new QueryClient();
+		serverQc.setQueryData(["ssr-posts-signal"], serverData);
+		const script = makeMockScript("hyd-order-signal", { __tsq: dehydrate(serverQc) });
+		serverQc.clear();
+
+		const qc = new QueryClient();
+		const queryFn = vi.fn<() => Promise<typeof serverData>>().mockResolvedValue([]);
+
+		using m = await mount(h => {
+			attachShadowRoot(h, script);
+			provideTransferState("hyd-order-signal");
+			const query = $useQuery({ queryKey: ["ssr-posts-signal"], queryFn, staleTime: Infinity }, qc);
+			useQueryHydration({ client: qc });
+			return { query };
+		});
+
+		expect(m.query.data()).toStrictEqual(serverData);
+		expect(queryFn).not.toHaveBeenCalled();
+	});
+
+	it("hydrates before observer subscription — queryFn not called when useQueries is registered first", async () => {
+		// RED-GREEN: Same ordering issue as useQuery — the QueriesObserver subscribes in
+		// hostWillLoad with an empty cache and triggers a client fetch before hydration runs.
+		// Passes with the hostConnected approach.
+		const serverData = [{ id: 1, title: "Post 1" }];
+		const serverQc = new QueryClient();
+		serverQc.setQueryData(["ssr-queries"], serverData);
+		const script = makeMockScript("hyd-order-queries", { __tsq: dehydrate(serverQc) });
+		serverQc.clear();
+
+		const qc = new QueryClient();
+		const queryFn = vi.fn<() => Promise<typeof serverData>>().mockResolvedValue([]);
+
+		using m = await mount(h => {
+			attachShadowRoot(h, script);
+			provideTransferState("hyd-order-queries");
+			const queries = useQueries({ queries: [{ queryKey: ["ssr-queries"], queryFn, staleTime: Infinity }] }, qc);
+			useQueryHydration({ client: qc });
+			return { queries };
+		});
+
+		expect(m.queries()[0].data).toStrictEqual(serverData);
+		expect(queryFn).not.toHaveBeenCalled();
+	});
+
+	it("hydrates before observer subscription — $useQueries signals see hydrated cache when registered first", async () => {
+		// RED-GREEN: Same as $useQuery — onConnect fires in hostWillLoad before hydration,
+		// leaving per-element signals at pendingQueryState. Passes with the hostConnected approach.
+		const serverData = [{ id: 2, title: "Post 2" }];
+		const serverQc = new QueryClient();
+		serverQc.setQueryData(["ssr-queries-signal"], serverData);
+		const script = makeMockScript("hyd-order-queries-signal", { __tsq: dehydrate(serverQc) });
+		serverQc.clear();
+
+		const qc = new QueryClient();
+		const queryFn = vi.fn<() => Promise<typeof serverData>>().mockResolvedValue([]);
+
+		using m = await mount(h => {
+			attachShadowRoot(h, script);
+			provideTransferState("hyd-order-queries-signal");
+			const queries = $useQueries(
+				{ queries: [{ queryKey: ["ssr-queries-signal"], queryFn, staleTime: Infinity }] },
+				qc,
+			);
+			useQueryHydration({ client: qc });
+			return { queries };
+		});
+
+		expect(m.queries()[0].data()).toStrictEqual(serverData);
 		expect(queryFn).not.toHaveBeenCalled();
 	});
 

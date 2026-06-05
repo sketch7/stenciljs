@@ -1,6 +1,6 @@
 import { detectServer, use } from "@ssv/stencil-core";
 import type { Ref } from "@ssv/stencil-core";
-import { signal } from "@ssv/stencil-signals";
+import { effect, signal, untracked } from "@ssv/stencil-signals";
 import type { DefaultError, QueryClient, QueryKey, QueryObserverResult } from "@tanstack/query-core";
 
 import { isQueryKeyHeld, pendingQueryState, useBaseQueryObserver } from "../query-observer";
@@ -84,15 +84,31 @@ export function $useQuery<
 ): QuerySignalResult<TData, TError> {
 	const state = signal(pendingQueryState as unknown as QueryStateData<TData, TError>);
 	const getOpts = typeof getOptions === "function" ? getOptions : () => getOptions;
+	const isGetterFn = typeof getOptions === "function";
+
+	let disposeSignalWatcher: (() => void) | undefined;
 
 	const { refetch, getObserver, reArm, clientRef } = useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey>(
 		getOptions,
 		client,
 		{
 			onResult: result => state.set(result),
-			onConnect: result => state.set(result),
+			onConnect: result => {
+				state.set(result);
+				if (isGetterFn && !detectServer()) {
+					const ref = effect(() => {
+						getOpts();
+						untracked(reArm);
+					});
+					disposeSignalWatcher = () => ref.dispose();
+				}
+			},
 			onRender: result => state.set(result),
-			onDispose: () => state.set(pendingQueryState as unknown as QueryStateData<TData, TError>),
+			onDispose: () => {
+				state.set(pendingQueryState as unknown as QueryStateData<TData, TError>);
+				disposeSignalWatcher?.();
+				disposeSignalWatcher = undefined;
+			},
 		},
 	);
 

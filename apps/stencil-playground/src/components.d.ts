@@ -5,11 +5,10 @@
  * It contains typing information for all components that exist in this project.
  */
 import { HTMLStencilElement, JSXBase } from "@stencil/core/internal";
-
+import { Champion, ChampionRole, Team } from "./examples/lol-draft-lobby-simulator/lol.types";
 import { ChampionCardStatus } from "./examples/lol-draft-lobby-simulator/champion/champion-card";
 import { DraftSlotStatus } from "./examples/lol-draft-lobby-simulator/draft/draft-slot";
 import { LobbyJoinEvent } from "./examples/lol-draft-lobby-simulator/lobby/lol-lobby-list";
-import { Champion, ChampionRole, Team } from "./examples/lol-draft-lobby-simulator/lol.types";
 import { StartupContext } from "./startup-context/startup-context.types";
 export { Champion, ChampionRole, Team } from "./examples/lol-draft-lobby-simulator/lol.types";
 export { ChampionCardStatus } from "./examples/lol-draft-lobby-simulator/champion/champion-card";
@@ -17,1352 +16,1218 @@ export { DraftSlotStatus } from "./examples/lol-draft-lobby-simulator/draft/draf
 export { LobbyJoinEvent } from "./examples/lol-draft-lobby-simulator/lobby/lol-lobby-list";
 export { StartupContext } from "./startup-context/startup-context.types";
 export namespace Components {
-	interface AppComposeDemo {}
-	interface AppCounter {}
-	interface AppCtxCounter {}
-	interface AppCtxCounterGroup {}
-	interface AppEffectDemo {}
-	interface AppIntersectionObserver {}
-	interface AppLifecycleDemo {}
-	interface AppLolChampionCard {
-		champion: Champion;
-		/**
-		 * Card is not interactive (already picked/banned by either team).
-		 * @default false
-		 */
-		disabled: boolean;
-		/**
-		 * @default "available"
-		 */
-		status: ChampionCardStatus;
-	}
-	interface AppLolChampionFilter {
-		/**
-		 * @default []
-		 */
-		activeRoles: ChampionRole[];
-		/**
-		 * @default [1, 10]
-		 */
-		difficulty: [number, number];
-		/**
-		 * @default ""
-		 */
-		search: string;
-	}
-	interface AppLolChampionPool {
-		/**
-		 * @default null
-		 */
-		draftId: string | null;
-		/**
-		 * Which team's actions this pool is acting for (blue or red).
-		 * @default "blue"
-		 */
-		team: Team;
-	}
-	interface AppLolDraftArea {
-		/**
-		 * @default null
-		 */
-		draftId: string | null;
-		/**
-		 * Blue team is "my" team by default.
-		 * @default "blue"
-		 */
-		myTeam: "blue" | "red";
-	}
-	interface AppLolDraftHeroCard {
-		champion: Champion;
-		/**
-		 * @default "pick"
-		 */
-		slotType: "pick" | "ban";
-	}
-	interface AppLolDraftInfo {
-		/**
-		 * @default null
-		 */
-		draftId: string | null;
-		/**
-		 * @default "blue"
-		 */
-		myTeam: "blue" | "red";
-	}
-	interface AppLolDraftLayout {
-		/**
-		 * @default null
-		 */
-		sessionId: string | null;
-	}
-	interface AppLolDraftLobbyHost {}
-	interface AppLolDraftSlot {
-		/**
-		 * @default null
-		 */
-		champion: Champion | null;
-		/**
-		 * @default "pick"
-		 */
-		slotType: "pick" | "ban";
-		/**
-		 * @default "empty"
-		 */
-		status: DraftSlotStatus;
-	}
-	interface AppLolLobbyList {}
-	interface AppLolNotification {}
-	interface AppLolTeamSection {
-		/**
-		 * @default [null, null, null, null, null]
-		 */
-		bans: (string | null)[];
-		/**
-		 * @default new Map<string, Champion>()
-		 */
-		champions: Map<string, Champion>;
-		/**
-		 * @default false
-		 */
-		isActive: boolean;
-		/**
-		 * @default [null, null, null, null, null]
-		 */
-		picks: (string | null)[];
-		team: Team;
-	}
-	interface AppMouseHost {}
-	interface AppMutationObserver {}
-	interface AppResizeObserver {}
-	interface AppSignalsComputedPrevious {}
-	interface AppSignalsCounter {
-		/**
-		 * @default 1
-		 */
-		step: number;
-	}
-	interface AppSignalsDerivedAsync {}
-	interface AppSignalsMouseEvent {}
-	interface AppSignalsObserverSignals {}
-	interface AppSignalsTodo {}
-	interface AppStartupContextInspector {}
-	/**
-	 * Infrastructure bridge that transfers Vike's server-collected startup context into
-	 * granular Stencil signal stores, making them available to all descendant components
-	 * via `useConfig()`, `useTheme()`, `useFeatureFlags()`, `useAuth()`, `useLocale()`, `useTenant()`.
-	 * Place this component at the root of the Stencil component tree (e.g. in `+Layout.tsx`).
-	 * It has no visual output — renders only a `<slot />`.
-	 * @example ```tsx
-	 * // +Layout.tsx
-	 * <AppStartupContextProvider startupContext={startupContext}>
-	 *   {children}
-	 * </AppStartupContextProvider>
-	 * ```
-	 */
-	interface AppStartupContextProvider {
-		/**
-		 * Full startup context object transferred from the Vike server.
-		 */
-		startupContext: StartupContext;
-	}
-	interface AppTanCounter {}
-	interface AppTanTodo {}
-	interface AppTimer {
-		/**
-		 * @default 60
-		 */
-		duration: number;
-		/**
-		 * @default false
-		 */
-		isRunning: boolean;
-	}
-	interface AppTimerCounter {
-		/**
-		 * @default 0
-		 */
-		timeRemaining: number;
-	}
-	interface AppTimerHost {}
-	interface AppTodo {}
-	interface AppTransferState {}
-	interface AppTranslationProfile {}
-	interface AppTranslationShell {}
-	interface AppTranslationsHost {}
-	interface AppTsQueryHoverPrefetch {}
-	interface AppTsQueryPosts {}
-	interface AppTsQueryPostsSignals {}
-	/**
-	 * Demonstrates `usePrefetchQuery` as a field initializer — seeds the cache before
-	 * the component's own `useQuery` runs, eliminating the initial loading state.
-	 * @example ```html
-	 * <app-ts-query-prefetch />
-	 * ```
-	 */
-	interface AppTsQueryPrefetch {}
-	interface AppTsQueryPrefetchDemo {}
-	/**
-	 * Demonstrates `prefetchPosts` — a reusable prefetch function defined outside the
-	 * component and called as a field initializer. The function is fully composable and
-	 * can be shared across multiple components.
-	 * @example ```html
-	 * <app-ts-query-prefetch-reuse />
-	 * ```
-	 */
-	interface AppTsQueryPrefetchReuse {}
-	/**
-	 * Demo wrapper — provides a shared `QueryClient` and SSR hydration, then embeds the three
-	 * `useQueries` / `$useQueries` examples.
-	 */
-	interface AppTsQueryUseQueriesDemo {}
-	/**
-	 * Component 1 — **classic**. Uses the same-file `useTopPosts()` helper and renders the parallel
-	 * results array returned by `useQueries`.
-	 */
-	interface AppTsQueryUseQueriesInline {}
-	/**
-	 * Component 2 — **classic, reusable across files**. Uses `usePostsByIds` and `usePostsLoadedCount`,
-	 * which are defined OUTSIDE this component in `use-queries.api.ts` and composed in as field
-	 * initializers. `usePostsLoadedCount` uses `combine` to derive a single summary value.
-	 */
-	interface AppTsQueryUseQueriesReuse {}
-	/**
-	 * Component 3 — **signals**. Uses `$usePostsByIds` (defined outside the component, in
-	 * `use-queries.api.ts`) which wraps `$useQueries` and returns a single `Signal` of the results
-	 * array. Requires `useSignalWatcher()` to be active.
-	 */
-	interface AppTsQueryUseQueriesSignals {}
-	/**
-	 * Component 4 — **signals with combine**. Uses `$usePostsWithCombine` which wraps `$useQueries`
-	 * with a `combine` function to produce a single derived summary signal. The returned signal is a
-	 * plain value (not a per-element proxy array).
-	 */
-	interface AppTsQueryUseQueriesSignalsCombine {}
+    interface AppComposeDemo {
+    }
+    interface AppCounter {
+    }
+    interface AppCtxCounter {
+    }
+    interface AppCtxCounterGroup {
+    }
+    interface AppEffectDemo {
+    }
+    interface AppIntersectionObserver {
+    }
+    interface AppLifecycleDemo {
+    }
+    interface AppLolChampionCard {
+        "champion": Champion;
+        /**
+          * Card is not interactive (already picked/banned by either team).
+          * @default false
+         */
+        "disabled": boolean;
+        /**
+          * @default "available"
+         */
+        "status": ChampionCardStatus;
+    }
+    interface AppLolChampionFilter {
+        /**
+          * @default []
+         */
+        "activeRoles": ChampionRole[];
+        /**
+          * @default [1, 10]
+         */
+        "difficulty": [number, number];
+        /**
+          * @default ""
+         */
+        "search": string;
+    }
+    interface AppLolChampionPool {
+        /**
+          * @default null
+         */
+        "draftId": string | null;
+        /**
+          * Which team's actions this pool is acting for (blue or red).
+          * @default "blue"
+         */
+        "team": Team;
+    }
+    interface AppLolDraftArea {
+        /**
+          * @default null
+         */
+        "draftId": string | null;
+        /**
+          * Blue team is "my" team by default.
+          * @default "blue"
+         */
+        "myTeam": "blue" | "red";
+    }
+    interface AppLolDraftHeroCard {
+        "champion": Champion;
+        /**
+          * @default "pick"
+         */
+        "slotType": "pick" | "ban";
+    }
+    interface AppLolDraftInfo {
+        /**
+          * @default null
+         */
+        "draftId": string | null;
+        /**
+          * @default "blue"
+         */
+        "myTeam": "blue" | "red";
+    }
+    interface AppLolDraftLayout {
+        /**
+          * @default null
+         */
+        "sessionId": string | null;
+    }
+    interface AppLolDraftLobbyHost {
+    }
+    interface AppLolDraftSlot {
+        /**
+          * @default null
+         */
+        "champion": Champion | null;
+        /**
+          * @default "pick"
+         */
+        "slotType": "pick" | "ban";
+        /**
+          * @default "empty"
+         */
+        "status": DraftSlotStatus;
+    }
+    interface AppLolLobbyList {
+    }
+    interface AppLolNotification {
+    }
+    interface AppLolTeamSection {
+        /**
+          * @default [null, null, null, null, null]
+         */
+        "bans": (string | null)[];
+        /**
+          * @default new Map<string, Champion>()
+         */
+        "champions": Map<string, Champion>;
+        /**
+          * @default false
+         */
+        "isActive": boolean;
+        /**
+          * @default [null, null, null, null, null]
+         */
+        "picks": (string | null)[];
+        "team": Team;
+    }
+    interface AppMouseHost {
+    }
+    interface AppMutationObserver {
+    }
+    interface AppResizeObserver {
+    }
+    interface AppSignalsComputedPrevious {
+    }
+    interface AppSignalsCounter {
+        /**
+          * @default 1
+         */
+        "step": number;
+    }
+    interface AppSignalsDerivedAsync {
+    }
+    interface AppSignalsMouseEvent {
+    }
+    interface AppSignalsObserverSignals {
+    }
+    interface AppSignalsTodo {
+    }
+    interface AppStartupContextInspector {
+    }
+    /**
+     * Infrastructure bridge that transfers Vike's server-collected startup context into
+     * granular Stencil signal stores, making them available to all descendant components
+     * via `useConfig()`, `useTheme()`, `useFeatureFlags()`, `useAuth()`, `useLocale()`, `useTenant()`.
+     * Place this component at the root of the Stencil component tree (e.g. in `+Layout.tsx`).
+     * It has no visual output — renders only a `<slot />`.
+     * @example ```tsx
+     * // +Layout.tsx
+     * <AppStartupContextProvider startupContext={startupContext}>
+     *   {children}
+     * </AppStartupContextProvider>
+     * ```
+     */
+    interface AppStartupContextProvider {
+        /**
+          * Full startup context object transferred from the Vike server.
+         */
+        "startupContext": StartupContext;
+    }
+    interface AppTanCounter {
+    }
+    interface AppTanTodo {
+    }
+    interface AppTimer {
+        /**
+          * @default 60
+         */
+        "duration": number;
+        /**
+          * @default false
+         */
+        "isRunning": boolean;
+    }
+    interface AppTimerCounter {
+        /**
+          * @default 0
+         */
+        "timeRemaining": number;
+    }
+    interface AppTimerHost {
+    }
+    interface AppTodo {
+    }
+    interface AppTransferState {
+    }
+    interface AppTranslationProfile {
+    }
+    interface AppTranslationShell {
+    }
+    interface AppTranslationsHost {
+    }
+    interface AppTsQueryHoverPrefetch {
+    }
+    interface AppTsQueryPosts {
+    }
+    interface AppTsQueryPostsSignals {
+    }
+    /**
+     * Demonstrates `usePrefetchQuery` as a field initializer — seeds the cache before
+     * the component's own `useQuery` runs, eliminating the initial loading state.
+     * @example ```html
+     * <app-ts-query-prefetch />
+     * ```
+     */
+    interface AppTsQueryPrefetch {
+    }
+    interface AppTsQueryPrefetchDemo {
+    }
+    /**
+     * Demonstrates `prefetchPosts` — a reusable prefetch function defined outside the
+     * component and called as a field initializer. The function is fully composable and
+     * can be shared across multiple components.
+     * @example ```html
+     * <app-ts-query-prefetch-reuse />
+     * ```
+     */
+    interface AppTsQueryPrefetchReuse {
+    }
+    /**
+     * Demo wrapper — provides a shared `QueryClient` and SSR hydration, then embeds the three
+     * `useQueries` / `$useQueries` examples.
+     */
+    interface AppTsQueryUseQueriesDemo {
+    }
+    /**
+     * Component 1 — **classic**. Uses the same-file `useTopPosts()` helper and renders the parallel
+     * results array returned by `useQueries`.
+     */
+    interface AppTsQueryUseQueriesInline {
+    }
+    /**
+     * Component 2 — **classic, reusable across files**. Uses `usePostsByIds` and `usePostsLoadedCount`,
+     * which are defined OUTSIDE this component in `use-queries.api.ts` and composed in as field
+     * initializers. `usePostsLoadedCount` uses `combine` to derive a single summary value.
+     */
+    interface AppTsQueryUseQueriesReuse {
+    }
+    /**
+     * Component 3 — **signals**. Uses `$usePostsByIds` (defined outside the component, in
+     * `use-queries.api.ts`) which wraps `$useQueries` and returns a single `Signal` of the results
+     * array. Requires `useSignalWatcher()` to be active.
+     */
+    interface AppTsQueryUseQueriesSignals {
+    }
+    /**
+     * Component 4 — **signals with combine**. Uses `$usePostsWithCombine` which wraps `$useQueries`
+     * with a `combine` function to produce a single derived summary signal. The returned signal is a
+     * plain value (not a per-element proxy array).
+     */
+    interface AppTsQueryUseQueriesSignalsCombine {
+    }
 }
 export interface AppLolChampionCardCustomEvent<T> extends CustomEvent<T> {
-	detail: T;
-	target: HTMLAppLolChampionCardElement;
+    detail: T;
+    target: HTMLAppLolChampionCardElement;
 }
 export interface AppLolChampionFilterCustomEvent<T> extends CustomEvent<T> {
-	detail: T;
-	target: HTMLAppLolChampionFilterElement;
+    detail: T;
+    target: HTMLAppLolChampionFilterElement;
 }
 export interface AppLolLobbyListCustomEvent<T> extends CustomEvent<T> {
-	detail: T;
-	target: HTMLAppLolLobbyListElement;
+    detail: T;
+    target: HTMLAppLolLobbyListElement;
 }
 export interface AppTimerCustomEvent<T> extends CustomEvent<T> {
-	detail: T;
-	target: HTMLAppTimerElement;
+    detail: T;
+    target: HTMLAppTimerElement;
 }
 declare global {
-	interface HTMLAppComposeDemoElement extends Components.AppComposeDemo, HTMLStencilElement {}
-	var HTMLAppComposeDemoElement: {
-		prototype: HTMLAppComposeDemoElement;
-		new (): HTMLAppComposeDemoElement;
-	};
-	interface HTMLAppCounterElement extends Components.AppCounter, HTMLStencilElement {}
-	var HTMLAppCounterElement: {
-		prototype: HTMLAppCounterElement;
-		new (): HTMLAppCounterElement;
-	};
-	interface HTMLAppCtxCounterElement extends Components.AppCtxCounter, HTMLStencilElement {}
-	var HTMLAppCtxCounterElement: {
-		prototype: HTMLAppCtxCounterElement;
-		new (): HTMLAppCtxCounterElement;
-	};
-	interface HTMLAppCtxCounterGroupElement extends Components.AppCtxCounterGroup, HTMLStencilElement {}
-	var HTMLAppCtxCounterGroupElement: {
-		prototype: HTMLAppCtxCounterGroupElement;
-		new (): HTMLAppCtxCounterGroupElement;
-	};
-	interface HTMLAppEffectDemoElement extends Components.AppEffectDemo, HTMLStencilElement {}
-	var HTMLAppEffectDemoElement: {
-		prototype: HTMLAppEffectDemoElement;
-		new (): HTMLAppEffectDemoElement;
-	};
-	interface HTMLAppIntersectionObserverElement extends Components.AppIntersectionObserver, HTMLStencilElement {}
-	var HTMLAppIntersectionObserverElement: {
-		prototype: HTMLAppIntersectionObserverElement;
-		new (): HTMLAppIntersectionObserverElement;
-	};
-	interface HTMLAppLifecycleDemoElement extends Components.AppLifecycleDemo, HTMLStencilElement {}
-	var HTMLAppLifecycleDemoElement: {
-		prototype: HTMLAppLifecycleDemoElement;
-		new (): HTMLAppLifecycleDemoElement;
-	};
-	interface HTMLAppLolChampionCardElementEventMap {
-		championSelect: string;
-	}
-	interface HTMLAppLolChampionCardElement extends Components.AppLolChampionCard, HTMLStencilElement {
-		addEventListener<K extends keyof HTMLAppLolChampionCardElementEventMap>(
-			type: K,
-			listener: (
-				this: HTMLAppLolChampionCardElement,
-				ev: AppLolChampionCardCustomEvent<HTMLAppLolChampionCardElementEventMap[K]>,
-			) => any,
-			options?: boolean | AddEventListenerOptions,
-		): void;
-		addEventListener<K extends keyof DocumentEventMap>(
-			type: K,
-			listener: (this: Document, ev: DocumentEventMap[K]) => any,
-			options?: boolean | AddEventListenerOptions,
-		): void;
-		addEventListener<K extends keyof HTMLElementEventMap>(
-			type: K,
-			listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any,
-			options?: boolean | AddEventListenerOptions,
-		): void;
-		addEventListener(
-			type: string,
-			listener: EventListenerOrEventListenerObject,
-			options?: boolean | AddEventListenerOptions,
-		): void;
-		removeEventListener<K extends keyof HTMLAppLolChampionCardElementEventMap>(
-			type: K,
-			listener: (
-				this: HTMLAppLolChampionCardElement,
-				ev: AppLolChampionCardCustomEvent<HTMLAppLolChampionCardElementEventMap[K]>,
-			) => any,
-			options?: boolean | EventListenerOptions,
-		): void;
-		removeEventListener<K extends keyof DocumentEventMap>(
-			type: K,
-			listener: (this: Document, ev: DocumentEventMap[K]) => any,
-			options?: boolean | EventListenerOptions,
-		): void;
-		removeEventListener<K extends keyof HTMLElementEventMap>(
-			type: K,
-			listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any,
-			options?: boolean | EventListenerOptions,
-		): void;
-		removeEventListener(
-			type: string,
-			listener: EventListenerOrEventListenerObject,
-			options?: boolean | EventListenerOptions,
-		): void;
-	}
-	var HTMLAppLolChampionCardElement: {
-		prototype: HTMLAppLolChampionCardElement;
-		new (): HTMLAppLolChampionCardElement;
-	};
-	interface HTMLAppLolChampionFilterElementEventMap {
-		searchChange: string;
-		roleToggle: ChampionRole;
-		clearFilters: void;
-	}
-	interface HTMLAppLolChampionFilterElement extends Components.AppLolChampionFilter, HTMLStencilElement {
-		addEventListener<K extends keyof HTMLAppLolChampionFilterElementEventMap>(
-			type: K,
-			listener: (
-				this: HTMLAppLolChampionFilterElement,
-				ev: AppLolChampionFilterCustomEvent<HTMLAppLolChampionFilterElementEventMap[K]>,
-			) => any,
-			options?: boolean | AddEventListenerOptions,
-		): void;
-		addEventListener<K extends keyof DocumentEventMap>(
-			type: K,
-			listener: (this: Document, ev: DocumentEventMap[K]) => any,
-			options?: boolean | AddEventListenerOptions,
-		): void;
-		addEventListener<K extends keyof HTMLElementEventMap>(
-			type: K,
-			listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any,
-			options?: boolean | AddEventListenerOptions,
-		): void;
-		addEventListener(
-			type: string,
-			listener: EventListenerOrEventListenerObject,
-			options?: boolean | AddEventListenerOptions,
-		): void;
-		removeEventListener<K extends keyof HTMLAppLolChampionFilterElementEventMap>(
-			type: K,
-			listener: (
-				this: HTMLAppLolChampionFilterElement,
-				ev: AppLolChampionFilterCustomEvent<HTMLAppLolChampionFilterElementEventMap[K]>,
-			) => any,
-			options?: boolean | EventListenerOptions,
-		): void;
-		removeEventListener<K extends keyof DocumentEventMap>(
-			type: K,
-			listener: (this: Document, ev: DocumentEventMap[K]) => any,
-			options?: boolean | EventListenerOptions,
-		): void;
-		removeEventListener<K extends keyof HTMLElementEventMap>(
-			type: K,
-			listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any,
-			options?: boolean | EventListenerOptions,
-		): void;
-		removeEventListener(
-			type: string,
-			listener: EventListenerOrEventListenerObject,
-			options?: boolean | EventListenerOptions,
-		): void;
-	}
-	var HTMLAppLolChampionFilterElement: {
-		prototype: HTMLAppLolChampionFilterElement;
-		new (): HTMLAppLolChampionFilterElement;
-	};
-	interface HTMLAppLolChampionPoolElement extends Components.AppLolChampionPool, HTMLStencilElement {}
-	var HTMLAppLolChampionPoolElement: {
-		prototype: HTMLAppLolChampionPoolElement;
-		new (): HTMLAppLolChampionPoolElement;
-	};
-	interface HTMLAppLolDraftAreaElement extends Components.AppLolDraftArea, HTMLStencilElement {}
-	var HTMLAppLolDraftAreaElement: {
-		prototype: HTMLAppLolDraftAreaElement;
-		new (): HTMLAppLolDraftAreaElement;
-	};
-	interface HTMLAppLolDraftHeroCardElement extends Components.AppLolDraftHeroCard, HTMLStencilElement {}
-	var HTMLAppLolDraftHeroCardElement: {
-		prototype: HTMLAppLolDraftHeroCardElement;
-		new (): HTMLAppLolDraftHeroCardElement;
-	};
-	interface HTMLAppLolDraftInfoElement extends Components.AppLolDraftInfo, HTMLStencilElement {}
-	var HTMLAppLolDraftInfoElement: {
-		prototype: HTMLAppLolDraftInfoElement;
-		new (): HTMLAppLolDraftInfoElement;
-	};
-	interface HTMLAppLolDraftLayoutElement extends Components.AppLolDraftLayout, HTMLStencilElement {}
-	var HTMLAppLolDraftLayoutElement: {
-		prototype: HTMLAppLolDraftLayoutElement;
-		new (): HTMLAppLolDraftLayoutElement;
-	};
-	interface HTMLAppLolDraftLobbyHostElement extends Components.AppLolDraftLobbyHost, HTMLStencilElement {}
-	var HTMLAppLolDraftLobbyHostElement: {
-		prototype: HTMLAppLolDraftLobbyHostElement;
-		new (): HTMLAppLolDraftLobbyHostElement;
-	};
-	interface HTMLAppLolDraftSlotElement extends Components.AppLolDraftSlot, HTMLStencilElement {}
-	var HTMLAppLolDraftSlotElement: {
-		prototype: HTMLAppLolDraftSlotElement;
-		new (): HTMLAppLolDraftSlotElement;
-	};
-	interface HTMLAppLolLobbyListElementEventMap {
-		appCreate: LobbyJoinEvent;
-		appJoin: LobbyJoinEvent;
-	}
-	interface HTMLAppLolLobbyListElement extends Components.AppLolLobbyList, HTMLStencilElement {
-		addEventListener<K extends keyof HTMLAppLolLobbyListElementEventMap>(
-			type: K,
-			listener: (
-				this: HTMLAppLolLobbyListElement,
-				ev: AppLolLobbyListCustomEvent<HTMLAppLolLobbyListElementEventMap[K]>,
-			) => any,
-			options?: boolean | AddEventListenerOptions,
-		): void;
-		addEventListener<K extends keyof DocumentEventMap>(
-			type: K,
-			listener: (this: Document, ev: DocumentEventMap[K]) => any,
-			options?: boolean | AddEventListenerOptions,
-		): void;
-		addEventListener<K extends keyof HTMLElementEventMap>(
-			type: K,
-			listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any,
-			options?: boolean | AddEventListenerOptions,
-		): void;
-		addEventListener(
-			type: string,
-			listener: EventListenerOrEventListenerObject,
-			options?: boolean | AddEventListenerOptions,
-		): void;
-		removeEventListener<K extends keyof HTMLAppLolLobbyListElementEventMap>(
-			type: K,
-			listener: (
-				this: HTMLAppLolLobbyListElement,
-				ev: AppLolLobbyListCustomEvent<HTMLAppLolLobbyListElementEventMap[K]>,
-			) => any,
-			options?: boolean | EventListenerOptions,
-		): void;
-		removeEventListener<K extends keyof DocumentEventMap>(
-			type: K,
-			listener: (this: Document, ev: DocumentEventMap[K]) => any,
-			options?: boolean | EventListenerOptions,
-		): void;
-		removeEventListener<K extends keyof HTMLElementEventMap>(
-			type: K,
-			listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any,
-			options?: boolean | EventListenerOptions,
-		): void;
-		removeEventListener(
-			type: string,
-			listener: EventListenerOrEventListenerObject,
-			options?: boolean | EventListenerOptions,
-		): void;
-	}
-	var HTMLAppLolLobbyListElement: {
-		prototype: HTMLAppLolLobbyListElement;
-		new (): HTMLAppLolLobbyListElement;
-	};
-	interface HTMLAppLolNotificationElement extends Components.AppLolNotification, HTMLStencilElement {}
-	var HTMLAppLolNotificationElement: {
-		prototype: HTMLAppLolNotificationElement;
-		new (): HTMLAppLolNotificationElement;
-	};
-	interface HTMLAppLolTeamSectionElement extends Components.AppLolTeamSection, HTMLStencilElement {}
-	var HTMLAppLolTeamSectionElement: {
-		prototype: HTMLAppLolTeamSectionElement;
-		new (): HTMLAppLolTeamSectionElement;
-	};
-	interface HTMLAppMouseHostElement extends Components.AppMouseHost, HTMLStencilElement {}
-	var HTMLAppMouseHostElement: {
-		prototype: HTMLAppMouseHostElement;
-		new (): HTMLAppMouseHostElement;
-	};
-	interface HTMLAppMutationObserverElement extends Components.AppMutationObserver, HTMLStencilElement {}
-	var HTMLAppMutationObserverElement: {
-		prototype: HTMLAppMutationObserverElement;
-		new (): HTMLAppMutationObserverElement;
-	};
-	interface HTMLAppResizeObserverElement extends Components.AppResizeObserver, HTMLStencilElement {}
-	var HTMLAppResizeObserverElement: {
-		prototype: HTMLAppResizeObserverElement;
-		new (): HTMLAppResizeObserverElement;
-	};
-	interface HTMLAppSignalsComputedPreviousElement extends Components.AppSignalsComputedPrevious, HTMLStencilElement {}
-	var HTMLAppSignalsComputedPreviousElement: {
-		prototype: HTMLAppSignalsComputedPreviousElement;
-		new (): HTMLAppSignalsComputedPreviousElement;
-	};
-	interface HTMLAppSignalsCounterElement extends Components.AppSignalsCounter, HTMLStencilElement {}
-	var HTMLAppSignalsCounterElement: {
-		prototype: HTMLAppSignalsCounterElement;
-		new (): HTMLAppSignalsCounterElement;
-	};
-	interface HTMLAppSignalsDerivedAsyncElement extends Components.AppSignalsDerivedAsync, HTMLStencilElement {}
-	var HTMLAppSignalsDerivedAsyncElement: {
-		prototype: HTMLAppSignalsDerivedAsyncElement;
-		new (): HTMLAppSignalsDerivedAsyncElement;
-	};
-	interface HTMLAppSignalsMouseEventElement extends Components.AppSignalsMouseEvent, HTMLStencilElement {}
-	var HTMLAppSignalsMouseEventElement: {
-		prototype: HTMLAppSignalsMouseEventElement;
-		new (): HTMLAppSignalsMouseEventElement;
-	};
-	interface HTMLAppSignalsObserverSignalsElement extends Components.AppSignalsObserverSignals, HTMLStencilElement {}
-	var HTMLAppSignalsObserverSignalsElement: {
-		prototype: HTMLAppSignalsObserverSignalsElement;
-		new (): HTMLAppSignalsObserverSignalsElement;
-	};
-	interface HTMLAppSignalsTodoElement extends Components.AppSignalsTodo, HTMLStencilElement {}
-	var HTMLAppSignalsTodoElement: {
-		prototype: HTMLAppSignalsTodoElement;
-		new (): HTMLAppSignalsTodoElement;
-	};
-	interface HTMLAppStartupContextInspectorElement extends Components.AppStartupContextInspector, HTMLStencilElement {}
-	var HTMLAppStartupContextInspectorElement: {
-		prototype: HTMLAppStartupContextInspectorElement;
-		new (): HTMLAppStartupContextInspectorElement;
-	};
-	/**
-	 * Infrastructure bridge that transfers Vike's server-collected startup context into
-	 * granular Stencil signal stores, making them available to all descendant components
-	 * via `useConfig()`, `useTheme()`, `useFeatureFlags()`, `useAuth()`, `useLocale()`, `useTenant()`.
-	 * Place this component at the root of the Stencil component tree (e.g. in `+Layout.tsx`).
-	 * It has no visual output — renders only a `<slot />`.
-	 * @example ```tsx
-	 * // +Layout.tsx
-	 * <AppStartupContextProvider startupContext={startupContext}>
-	 *   {children}
-	 * </AppStartupContextProvider>
-	 * ```
-	 */
-	interface HTMLAppStartupContextProviderElement extends Components.AppStartupContextProvider, HTMLStencilElement {}
-	var HTMLAppStartupContextProviderElement: {
-		prototype: HTMLAppStartupContextProviderElement;
-		new (): HTMLAppStartupContextProviderElement;
-	};
-	interface HTMLAppTanCounterElement extends Components.AppTanCounter, HTMLStencilElement {}
-	var HTMLAppTanCounterElement: {
-		prototype: HTMLAppTanCounterElement;
-		new (): HTMLAppTanCounterElement;
-	};
-	interface HTMLAppTanTodoElement extends Components.AppTanTodo, HTMLStencilElement {}
-	var HTMLAppTanTodoElement: {
-		prototype: HTMLAppTanTodoElement;
-		new (): HTMLAppTanTodoElement;
-	};
-	interface HTMLAppTimerElementEventMap {
-		isRunningChange: boolean;
-	}
-	interface HTMLAppTimerElement extends Components.AppTimer, HTMLStencilElement {
-		addEventListener<K extends keyof HTMLAppTimerElementEventMap>(
-			type: K,
-			listener: (this: HTMLAppTimerElement, ev: AppTimerCustomEvent<HTMLAppTimerElementEventMap[K]>) => any,
-			options?: boolean | AddEventListenerOptions,
-		): void;
-		addEventListener<K extends keyof DocumentEventMap>(
-			type: K,
-			listener: (this: Document, ev: DocumentEventMap[K]) => any,
-			options?: boolean | AddEventListenerOptions,
-		): void;
-		addEventListener<K extends keyof HTMLElementEventMap>(
-			type: K,
-			listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any,
-			options?: boolean | AddEventListenerOptions,
-		): void;
-		addEventListener(
-			type: string,
-			listener: EventListenerOrEventListenerObject,
-			options?: boolean | AddEventListenerOptions,
-		): void;
-		removeEventListener<K extends keyof HTMLAppTimerElementEventMap>(
-			type: K,
-			listener: (this: HTMLAppTimerElement, ev: AppTimerCustomEvent<HTMLAppTimerElementEventMap[K]>) => any,
-			options?: boolean | EventListenerOptions,
-		): void;
-		removeEventListener<K extends keyof DocumentEventMap>(
-			type: K,
-			listener: (this: Document, ev: DocumentEventMap[K]) => any,
-			options?: boolean | EventListenerOptions,
-		): void;
-		removeEventListener<K extends keyof HTMLElementEventMap>(
-			type: K,
-			listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any,
-			options?: boolean | EventListenerOptions,
-		): void;
-		removeEventListener(
-			type: string,
-			listener: EventListenerOrEventListenerObject,
-			options?: boolean | EventListenerOptions,
-		): void;
-	}
-	var HTMLAppTimerElement: {
-		prototype: HTMLAppTimerElement;
-		new (): HTMLAppTimerElement;
-	};
-	interface HTMLAppTimerCounterElement extends Components.AppTimerCounter, HTMLStencilElement {}
-	var HTMLAppTimerCounterElement: {
-		prototype: HTMLAppTimerCounterElement;
-		new (): HTMLAppTimerCounterElement;
-	};
-	interface HTMLAppTimerHostElement extends Components.AppTimerHost, HTMLStencilElement {}
-	var HTMLAppTimerHostElement: {
-		prototype: HTMLAppTimerHostElement;
-		new (): HTMLAppTimerHostElement;
-	};
-	interface HTMLAppTodoElement extends Components.AppTodo, HTMLStencilElement {}
-	var HTMLAppTodoElement: {
-		prototype: HTMLAppTodoElement;
-		new (): HTMLAppTodoElement;
-	};
-	interface HTMLAppTransferStateElement extends Components.AppTransferState, HTMLStencilElement {}
-	var HTMLAppTransferStateElement: {
-		prototype: HTMLAppTransferStateElement;
-		new (): HTMLAppTransferStateElement;
-	};
-	interface HTMLAppTranslationProfileElement extends Components.AppTranslationProfile, HTMLStencilElement {}
-	var HTMLAppTranslationProfileElement: {
-		prototype: HTMLAppTranslationProfileElement;
-		new (): HTMLAppTranslationProfileElement;
-	};
-	interface HTMLAppTranslationShellElement extends Components.AppTranslationShell, HTMLStencilElement {}
-	var HTMLAppTranslationShellElement: {
-		prototype: HTMLAppTranslationShellElement;
-		new (): HTMLAppTranslationShellElement;
-	};
-	interface HTMLAppTranslationsHostElement extends Components.AppTranslationsHost, HTMLStencilElement {}
-	var HTMLAppTranslationsHostElement: {
-		prototype: HTMLAppTranslationsHostElement;
-		new (): HTMLAppTranslationsHostElement;
-	};
-	interface HTMLAppTsQueryHoverPrefetchElement extends Components.AppTsQueryHoverPrefetch, HTMLStencilElement {}
-	var HTMLAppTsQueryHoverPrefetchElement: {
-		prototype: HTMLAppTsQueryHoverPrefetchElement;
-		new (): HTMLAppTsQueryHoverPrefetchElement;
-	};
-	interface HTMLAppTsQueryPostsElement extends Components.AppTsQueryPosts, HTMLStencilElement {}
-	var HTMLAppTsQueryPostsElement: {
-		prototype: HTMLAppTsQueryPostsElement;
-		new (): HTMLAppTsQueryPostsElement;
-	};
-	interface HTMLAppTsQueryPostsSignalsElement extends Components.AppTsQueryPostsSignals, HTMLStencilElement {}
-	var HTMLAppTsQueryPostsSignalsElement: {
-		prototype: HTMLAppTsQueryPostsSignalsElement;
-		new (): HTMLAppTsQueryPostsSignalsElement;
-	};
-	/**
-	 * Demonstrates `usePrefetchQuery` as a field initializer — seeds the cache before
-	 * the component's own `useQuery` runs, eliminating the initial loading state.
-	 * @example ```html
-	 * <app-ts-query-prefetch />
-	 * ```
-	 */
-	interface HTMLAppTsQueryPrefetchElement extends Components.AppTsQueryPrefetch, HTMLStencilElement {}
-	var HTMLAppTsQueryPrefetchElement: {
-		prototype: HTMLAppTsQueryPrefetchElement;
-		new (): HTMLAppTsQueryPrefetchElement;
-	};
-	interface HTMLAppTsQueryPrefetchDemoElement extends Components.AppTsQueryPrefetchDemo, HTMLStencilElement {}
-	var HTMLAppTsQueryPrefetchDemoElement: {
-		prototype: HTMLAppTsQueryPrefetchDemoElement;
-		new (): HTMLAppTsQueryPrefetchDemoElement;
-	};
-	/**
-	 * Demonstrates `prefetchPosts` — a reusable prefetch function defined outside the
-	 * component and called as a field initializer. The function is fully composable and
-	 * can be shared across multiple components.
-	 * @example ```html
-	 * <app-ts-query-prefetch-reuse />
-	 * ```
-	 */
-	interface HTMLAppTsQueryPrefetchReuseElement extends Components.AppTsQueryPrefetchReuse, HTMLStencilElement {}
-	var HTMLAppTsQueryPrefetchReuseElement: {
-		prototype: HTMLAppTsQueryPrefetchReuseElement;
-		new (): HTMLAppTsQueryPrefetchReuseElement;
-	};
-	/**
-	 * Demo wrapper — provides a shared `QueryClient` and SSR hydration, then embeds the three
-	 * `useQueries` / `$useQueries` examples.
-	 */
-	interface HTMLAppTsQueryUseQueriesDemoElement extends Components.AppTsQueryUseQueriesDemo, HTMLStencilElement {}
-	var HTMLAppTsQueryUseQueriesDemoElement: {
-		prototype: HTMLAppTsQueryUseQueriesDemoElement;
-		new (): HTMLAppTsQueryUseQueriesDemoElement;
-	};
-	/**
-	 * Component 1 — **classic**. Uses the same-file `useTopPosts()` helper and renders the parallel
-	 * results array returned by `useQueries`.
-	 */
-	interface HTMLAppTsQueryUseQueriesInlineElement extends Components.AppTsQueryUseQueriesInline, HTMLStencilElement {}
-	var HTMLAppTsQueryUseQueriesInlineElement: {
-		prototype: HTMLAppTsQueryUseQueriesInlineElement;
-		new (): HTMLAppTsQueryUseQueriesInlineElement;
-	};
-	/**
-	 * Component 2 — **classic, reusable across files**. Uses `usePostsByIds` and `usePostsLoadedCount`,
-	 * which are defined OUTSIDE this component in `use-queries.api.ts` and composed in as field
-	 * initializers. `usePostsLoadedCount` uses `combine` to derive a single summary value.
-	 */
-	interface HTMLAppTsQueryUseQueriesReuseElement extends Components.AppTsQueryUseQueriesReuse, HTMLStencilElement {}
-	var HTMLAppTsQueryUseQueriesReuseElement: {
-		prototype: HTMLAppTsQueryUseQueriesReuseElement;
-		new (): HTMLAppTsQueryUseQueriesReuseElement;
-	};
-	/**
-	 * Component 3 — **signals**. Uses `$usePostsByIds` (defined outside the component, in
-	 * `use-queries.api.ts`) which wraps `$useQueries` and returns a single `Signal` of the results
-	 * array. Requires `useSignalWatcher()` to be active.
-	 */
-	interface HTMLAppTsQueryUseQueriesSignalsElement extends Components.AppTsQueryUseQueriesSignals, HTMLStencilElement {}
-	var HTMLAppTsQueryUseQueriesSignalsElement: {
-		prototype: HTMLAppTsQueryUseQueriesSignalsElement;
-		new (): HTMLAppTsQueryUseQueriesSignalsElement;
-	};
-	/**
-	 * Component 4 — **signals with combine**. Uses `$usePostsWithCombine` which wraps `$useQueries`
-	 * with a `combine` function to produce a single derived summary signal. The returned signal is a
-	 * plain value (not a per-element proxy array).
-	 */
-	interface HTMLAppTsQueryUseQueriesSignalsCombineElement
-		extends Components.AppTsQueryUseQueriesSignalsCombine, HTMLStencilElement {}
-	var HTMLAppTsQueryUseQueriesSignalsCombineElement: {
-		prototype: HTMLAppTsQueryUseQueriesSignalsCombineElement;
-		new (): HTMLAppTsQueryUseQueriesSignalsCombineElement;
-	};
-	interface HTMLElementTagNameMap {
-		"app-compose-demo": HTMLAppComposeDemoElement;
-		"app-counter": HTMLAppCounterElement;
-		"app-ctx-counter": HTMLAppCtxCounterElement;
-		"app-ctx-counter-group": HTMLAppCtxCounterGroupElement;
-		"app-effect-demo": HTMLAppEffectDemoElement;
-		"app-intersection-observer": HTMLAppIntersectionObserverElement;
-		"app-lifecycle-demo": HTMLAppLifecycleDemoElement;
-		"app-lol-champion-card": HTMLAppLolChampionCardElement;
-		"app-lol-champion-filter": HTMLAppLolChampionFilterElement;
-		"app-lol-champion-pool": HTMLAppLolChampionPoolElement;
-		"app-lol-draft-area": HTMLAppLolDraftAreaElement;
-		"app-lol-draft-hero-card": HTMLAppLolDraftHeroCardElement;
-		"app-lol-draft-info": HTMLAppLolDraftInfoElement;
-		"app-lol-draft-layout": HTMLAppLolDraftLayoutElement;
-		"app-lol-draft-lobby-host": HTMLAppLolDraftLobbyHostElement;
-		"app-lol-draft-slot": HTMLAppLolDraftSlotElement;
-		"app-lol-lobby-list": HTMLAppLolLobbyListElement;
-		"app-lol-notification": HTMLAppLolNotificationElement;
-		"app-lol-team-section": HTMLAppLolTeamSectionElement;
-		"app-mouse-host": HTMLAppMouseHostElement;
-		"app-mutation-observer": HTMLAppMutationObserverElement;
-		"app-resize-observer": HTMLAppResizeObserverElement;
-		"app-signals-computed-previous": HTMLAppSignalsComputedPreviousElement;
-		"app-signals-counter": HTMLAppSignalsCounterElement;
-		"app-signals-derived-async": HTMLAppSignalsDerivedAsyncElement;
-		"app-signals-mouse-event": HTMLAppSignalsMouseEventElement;
-		"app-signals-observer-signals": HTMLAppSignalsObserverSignalsElement;
-		"app-signals-todo": HTMLAppSignalsTodoElement;
-		"app-startup-context-inspector": HTMLAppStartupContextInspectorElement;
-		"app-startup-context-provider": HTMLAppStartupContextProviderElement;
-		"app-tan-counter": HTMLAppTanCounterElement;
-		"app-tan-todo": HTMLAppTanTodoElement;
-		"app-timer": HTMLAppTimerElement;
-		"app-timer-counter": HTMLAppTimerCounterElement;
-		"app-timer-host": HTMLAppTimerHostElement;
-		"app-todo": HTMLAppTodoElement;
-		"app-transfer-state": HTMLAppTransferStateElement;
-		"app-translation-profile": HTMLAppTranslationProfileElement;
-		"app-translation-shell": HTMLAppTranslationShellElement;
-		"app-translations-host": HTMLAppTranslationsHostElement;
-		"app-ts-query-hover-prefetch": HTMLAppTsQueryHoverPrefetchElement;
-		"app-ts-query-posts": HTMLAppTsQueryPostsElement;
-		"app-ts-query-posts-signals": HTMLAppTsQueryPostsSignalsElement;
-		"app-ts-query-prefetch": HTMLAppTsQueryPrefetchElement;
-		"app-ts-query-prefetch-demo": HTMLAppTsQueryPrefetchDemoElement;
-		"app-ts-query-prefetch-reuse": HTMLAppTsQueryPrefetchReuseElement;
-		"app-ts-query-use-queries-demo": HTMLAppTsQueryUseQueriesDemoElement;
-		"app-ts-query-use-queries-inline": HTMLAppTsQueryUseQueriesInlineElement;
-		"app-ts-query-use-queries-reuse": HTMLAppTsQueryUseQueriesReuseElement;
-		"app-ts-query-use-queries-signals": HTMLAppTsQueryUseQueriesSignalsElement;
-		"app-ts-query-use-queries-signals-combine": HTMLAppTsQueryUseQueriesSignalsCombineElement;
-	}
+    interface HTMLAppComposeDemoElement extends Components.AppComposeDemo, HTMLStencilElement {
+    }
+    var HTMLAppComposeDemoElement: {
+        prototype: HTMLAppComposeDemoElement;
+        new (): HTMLAppComposeDemoElement;
+    };
+    interface HTMLAppCounterElement extends Components.AppCounter, HTMLStencilElement {
+    }
+    var HTMLAppCounterElement: {
+        prototype: HTMLAppCounterElement;
+        new (): HTMLAppCounterElement;
+    };
+    interface HTMLAppCtxCounterElement extends Components.AppCtxCounter, HTMLStencilElement {
+    }
+    var HTMLAppCtxCounterElement: {
+        prototype: HTMLAppCtxCounterElement;
+        new (): HTMLAppCtxCounterElement;
+    };
+    interface HTMLAppCtxCounterGroupElement extends Components.AppCtxCounterGroup, HTMLStencilElement {
+    }
+    var HTMLAppCtxCounterGroupElement: {
+        prototype: HTMLAppCtxCounterGroupElement;
+        new (): HTMLAppCtxCounterGroupElement;
+    };
+    interface HTMLAppEffectDemoElement extends Components.AppEffectDemo, HTMLStencilElement {
+    }
+    var HTMLAppEffectDemoElement: {
+        prototype: HTMLAppEffectDemoElement;
+        new (): HTMLAppEffectDemoElement;
+    };
+    interface HTMLAppIntersectionObserverElement extends Components.AppIntersectionObserver, HTMLStencilElement {
+    }
+    var HTMLAppIntersectionObserverElement: {
+        prototype: HTMLAppIntersectionObserverElement;
+        new (): HTMLAppIntersectionObserverElement;
+    };
+    interface HTMLAppLifecycleDemoElement extends Components.AppLifecycleDemo, HTMLStencilElement {
+    }
+    var HTMLAppLifecycleDemoElement: {
+        prototype: HTMLAppLifecycleDemoElement;
+        new (): HTMLAppLifecycleDemoElement;
+    };
+    interface HTMLAppLolChampionCardElementEventMap {
+        "championSelect": string;
+    }
+    interface HTMLAppLolChampionCardElement extends Components.AppLolChampionCard, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLAppLolChampionCardElementEventMap>(type: K, listener: (this: HTMLAppLolChampionCardElement, ev: AppLolChampionCardCustomEvent<HTMLAppLolChampionCardElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLAppLolChampionCardElementEventMap>(type: K, listener: (this: HTMLAppLolChampionCardElement, ev: AppLolChampionCardCustomEvent<HTMLAppLolChampionCardElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLAppLolChampionCardElement: {
+        prototype: HTMLAppLolChampionCardElement;
+        new (): HTMLAppLolChampionCardElement;
+    };
+    interface HTMLAppLolChampionFilterElementEventMap {
+        "searchChange": string;
+        "roleToggle": ChampionRole;
+        "clearFilters": void;
+    }
+    interface HTMLAppLolChampionFilterElement extends Components.AppLolChampionFilter, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLAppLolChampionFilterElementEventMap>(type: K, listener: (this: HTMLAppLolChampionFilterElement, ev: AppLolChampionFilterCustomEvent<HTMLAppLolChampionFilterElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLAppLolChampionFilterElementEventMap>(type: K, listener: (this: HTMLAppLolChampionFilterElement, ev: AppLolChampionFilterCustomEvent<HTMLAppLolChampionFilterElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLAppLolChampionFilterElement: {
+        prototype: HTMLAppLolChampionFilterElement;
+        new (): HTMLAppLolChampionFilterElement;
+    };
+    interface HTMLAppLolChampionPoolElement extends Components.AppLolChampionPool, HTMLStencilElement {
+    }
+    var HTMLAppLolChampionPoolElement: {
+        prototype: HTMLAppLolChampionPoolElement;
+        new (): HTMLAppLolChampionPoolElement;
+    };
+    interface HTMLAppLolDraftAreaElement extends Components.AppLolDraftArea, HTMLStencilElement {
+    }
+    var HTMLAppLolDraftAreaElement: {
+        prototype: HTMLAppLolDraftAreaElement;
+        new (): HTMLAppLolDraftAreaElement;
+    };
+    interface HTMLAppLolDraftHeroCardElement extends Components.AppLolDraftHeroCard, HTMLStencilElement {
+    }
+    var HTMLAppLolDraftHeroCardElement: {
+        prototype: HTMLAppLolDraftHeroCardElement;
+        new (): HTMLAppLolDraftHeroCardElement;
+    };
+    interface HTMLAppLolDraftInfoElement extends Components.AppLolDraftInfo, HTMLStencilElement {
+    }
+    var HTMLAppLolDraftInfoElement: {
+        prototype: HTMLAppLolDraftInfoElement;
+        new (): HTMLAppLolDraftInfoElement;
+    };
+    interface HTMLAppLolDraftLayoutElement extends Components.AppLolDraftLayout, HTMLStencilElement {
+    }
+    var HTMLAppLolDraftLayoutElement: {
+        prototype: HTMLAppLolDraftLayoutElement;
+        new (): HTMLAppLolDraftLayoutElement;
+    };
+    interface HTMLAppLolDraftLobbyHostElement extends Components.AppLolDraftLobbyHost, HTMLStencilElement {
+    }
+    var HTMLAppLolDraftLobbyHostElement: {
+        prototype: HTMLAppLolDraftLobbyHostElement;
+        new (): HTMLAppLolDraftLobbyHostElement;
+    };
+    interface HTMLAppLolDraftSlotElement extends Components.AppLolDraftSlot, HTMLStencilElement {
+    }
+    var HTMLAppLolDraftSlotElement: {
+        prototype: HTMLAppLolDraftSlotElement;
+        new (): HTMLAppLolDraftSlotElement;
+    };
+    interface HTMLAppLolLobbyListElementEventMap {
+        "appCreate": LobbyJoinEvent;
+        "appJoin": LobbyJoinEvent;
+    }
+    interface HTMLAppLolLobbyListElement extends Components.AppLolLobbyList, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLAppLolLobbyListElementEventMap>(type: K, listener: (this: HTMLAppLolLobbyListElement, ev: AppLolLobbyListCustomEvent<HTMLAppLolLobbyListElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLAppLolLobbyListElementEventMap>(type: K, listener: (this: HTMLAppLolLobbyListElement, ev: AppLolLobbyListCustomEvent<HTMLAppLolLobbyListElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLAppLolLobbyListElement: {
+        prototype: HTMLAppLolLobbyListElement;
+        new (): HTMLAppLolLobbyListElement;
+    };
+    interface HTMLAppLolNotificationElement extends Components.AppLolNotification, HTMLStencilElement {
+    }
+    var HTMLAppLolNotificationElement: {
+        prototype: HTMLAppLolNotificationElement;
+        new (): HTMLAppLolNotificationElement;
+    };
+    interface HTMLAppLolTeamSectionElement extends Components.AppLolTeamSection, HTMLStencilElement {
+    }
+    var HTMLAppLolTeamSectionElement: {
+        prototype: HTMLAppLolTeamSectionElement;
+        new (): HTMLAppLolTeamSectionElement;
+    };
+    interface HTMLAppMouseHostElement extends Components.AppMouseHost, HTMLStencilElement {
+    }
+    var HTMLAppMouseHostElement: {
+        prototype: HTMLAppMouseHostElement;
+        new (): HTMLAppMouseHostElement;
+    };
+    interface HTMLAppMutationObserverElement extends Components.AppMutationObserver, HTMLStencilElement {
+    }
+    var HTMLAppMutationObserverElement: {
+        prototype: HTMLAppMutationObserverElement;
+        new (): HTMLAppMutationObserverElement;
+    };
+    interface HTMLAppResizeObserverElement extends Components.AppResizeObserver, HTMLStencilElement {
+    }
+    var HTMLAppResizeObserverElement: {
+        prototype: HTMLAppResizeObserverElement;
+        new (): HTMLAppResizeObserverElement;
+    };
+    interface HTMLAppSignalsComputedPreviousElement extends Components.AppSignalsComputedPrevious, HTMLStencilElement {
+    }
+    var HTMLAppSignalsComputedPreviousElement: {
+        prototype: HTMLAppSignalsComputedPreviousElement;
+        new (): HTMLAppSignalsComputedPreviousElement;
+    };
+    interface HTMLAppSignalsCounterElement extends Components.AppSignalsCounter, HTMLStencilElement {
+    }
+    var HTMLAppSignalsCounterElement: {
+        prototype: HTMLAppSignalsCounterElement;
+        new (): HTMLAppSignalsCounterElement;
+    };
+    interface HTMLAppSignalsDerivedAsyncElement extends Components.AppSignalsDerivedAsync, HTMLStencilElement {
+    }
+    var HTMLAppSignalsDerivedAsyncElement: {
+        prototype: HTMLAppSignalsDerivedAsyncElement;
+        new (): HTMLAppSignalsDerivedAsyncElement;
+    };
+    interface HTMLAppSignalsMouseEventElement extends Components.AppSignalsMouseEvent, HTMLStencilElement {
+    }
+    var HTMLAppSignalsMouseEventElement: {
+        prototype: HTMLAppSignalsMouseEventElement;
+        new (): HTMLAppSignalsMouseEventElement;
+    };
+    interface HTMLAppSignalsObserverSignalsElement extends Components.AppSignalsObserverSignals, HTMLStencilElement {
+    }
+    var HTMLAppSignalsObserverSignalsElement: {
+        prototype: HTMLAppSignalsObserverSignalsElement;
+        new (): HTMLAppSignalsObserverSignalsElement;
+    };
+    interface HTMLAppSignalsTodoElement extends Components.AppSignalsTodo, HTMLStencilElement {
+    }
+    var HTMLAppSignalsTodoElement: {
+        prototype: HTMLAppSignalsTodoElement;
+        new (): HTMLAppSignalsTodoElement;
+    };
+    interface HTMLAppStartupContextInspectorElement extends Components.AppStartupContextInspector, HTMLStencilElement {
+    }
+    var HTMLAppStartupContextInspectorElement: {
+        prototype: HTMLAppStartupContextInspectorElement;
+        new (): HTMLAppStartupContextInspectorElement;
+    };
+    /**
+     * Infrastructure bridge that transfers Vike's server-collected startup context into
+     * granular Stencil signal stores, making them available to all descendant components
+     * via `useConfig()`, `useTheme()`, `useFeatureFlags()`, `useAuth()`, `useLocale()`, `useTenant()`.
+     * Place this component at the root of the Stencil component tree (e.g. in `+Layout.tsx`).
+     * It has no visual output — renders only a `<slot />`.
+     * @example ```tsx
+     * // +Layout.tsx
+     * <AppStartupContextProvider startupContext={startupContext}>
+     *   {children}
+     * </AppStartupContextProvider>
+     * ```
+     */
+    interface HTMLAppStartupContextProviderElement extends Components.AppStartupContextProvider, HTMLStencilElement {
+    }
+    var HTMLAppStartupContextProviderElement: {
+        prototype: HTMLAppStartupContextProviderElement;
+        new (): HTMLAppStartupContextProviderElement;
+    };
+    interface HTMLAppTanCounterElement extends Components.AppTanCounter, HTMLStencilElement {
+    }
+    var HTMLAppTanCounterElement: {
+        prototype: HTMLAppTanCounterElement;
+        new (): HTMLAppTanCounterElement;
+    };
+    interface HTMLAppTanTodoElement extends Components.AppTanTodo, HTMLStencilElement {
+    }
+    var HTMLAppTanTodoElement: {
+        prototype: HTMLAppTanTodoElement;
+        new (): HTMLAppTanTodoElement;
+    };
+    interface HTMLAppTimerElementEventMap {
+        "isRunningChange": boolean;
+    }
+    interface HTMLAppTimerElement extends Components.AppTimer, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLAppTimerElementEventMap>(type: K, listener: (this: HTMLAppTimerElement, ev: AppTimerCustomEvent<HTMLAppTimerElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLAppTimerElementEventMap>(type: K, listener: (this: HTMLAppTimerElement, ev: AppTimerCustomEvent<HTMLAppTimerElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLAppTimerElement: {
+        prototype: HTMLAppTimerElement;
+        new (): HTMLAppTimerElement;
+    };
+    interface HTMLAppTimerCounterElement extends Components.AppTimerCounter, HTMLStencilElement {
+    }
+    var HTMLAppTimerCounterElement: {
+        prototype: HTMLAppTimerCounterElement;
+        new (): HTMLAppTimerCounterElement;
+    };
+    interface HTMLAppTimerHostElement extends Components.AppTimerHost, HTMLStencilElement {
+    }
+    var HTMLAppTimerHostElement: {
+        prototype: HTMLAppTimerHostElement;
+        new (): HTMLAppTimerHostElement;
+    };
+    interface HTMLAppTodoElement extends Components.AppTodo, HTMLStencilElement {
+    }
+    var HTMLAppTodoElement: {
+        prototype: HTMLAppTodoElement;
+        new (): HTMLAppTodoElement;
+    };
+    interface HTMLAppTransferStateElement extends Components.AppTransferState, HTMLStencilElement {
+    }
+    var HTMLAppTransferStateElement: {
+        prototype: HTMLAppTransferStateElement;
+        new (): HTMLAppTransferStateElement;
+    };
+    interface HTMLAppTranslationProfileElement extends Components.AppTranslationProfile, HTMLStencilElement {
+    }
+    var HTMLAppTranslationProfileElement: {
+        prototype: HTMLAppTranslationProfileElement;
+        new (): HTMLAppTranslationProfileElement;
+    };
+    interface HTMLAppTranslationShellElement extends Components.AppTranslationShell, HTMLStencilElement {
+    }
+    var HTMLAppTranslationShellElement: {
+        prototype: HTMLAppTranslationShellElement;
+        new (): HTMLAppTranslationShellElement;
+    };
+    interface HTMLAppTranslationsHostElement extends Components.AppTranslationsHost, HTMLStencilElement {
+    }
+    var HTMLAppTranslationsHostElement: {
+        prototype: HTMLAppTranslationsHostElement;
+        new (): HTMLAppTranslationsHostElement;
+    };
+    interface HTMLAppTsQueryHoverPrefetchElement extends Components.AppTsQueryHoverPrefetch, HTMLStencilElement {
+    }
+    var HTMLAppTsQueryHoverPrefetchElement: {
+        prototype: HTMLAppTsQueryHoverPrefetchElement;
+        new (): HTMLAppTsQueryHoverPrefetchElement;
+    };
+    interface HTMLAppTsQueryPostsElement extends Components.AppTsQueryPosts, HTMLStencilElement {
+    }
+    var HTMLAppTsQueryPostsElement: {
+        prototype: HTMLAppTsQueryPostsElement;
+        new (): HTMLAppTsQueryPostsElement;
+    };
+    interface HTMLAppTsQueryPostsSignalsElement extends Components.AppTsQueryPostsSignals, HTMLStencilElement {
+    }
+    var HTMLAppTsQueryPostsSignalsElement: {
+        prototype: HTMLAppTsQueryPostsSignalsElement;
+        new (): HTMLAppTsQueryPostsSignalsElement;
+    };
+    /**
+     * Demonstrates `usePrefetchQuery` as a field initializer — seeds the cache before
+     * the component's own `useQuery` runs, eliminating the initial loading state.
+     * @example ```html
+     * <app-ts-query-prefetch />
+     * ```
+     */
+    interface HTMLAppTsQueryPrefetchElement extends Components.AppTsQueryPrefetch, HTMLStencilElement {
+    }
+    var HTMLAppTsQueryPrefetchElement: {
+        prototype: HTMLAppTsQueryPrefetchElement;
+        new (): HTMLAppTsQueryPrefetchElement;
+    };
+    interface HTMLAppTsQueryPrefetchDemoElement extends Components.AppTsQueryPrefetchDemo, HTMLStencilElement {
+    }
+    var HTMLAppTsQueryPrefetchDemoElement: {
+        prototype: HTMLAppTsQueryPrefetchDemoElement;
+        new (): HTMLAppTsQueryPrefetchDemoElement;
+    };
+    /**
+     * Demonstrates `prefetchPosts` — a reusable prefetch function defined outside the
+     * component and called as a field initializer. The function is fully composable and
+     * can be shared across multiple components.
+     * @example ```html
+     * <app-ts-query-prefetch-reuse />
+     * ```
+     */
+    interface HTMLAppTsQueryPrefetchReuseElement extends Components.AppTsQueryPrefetchReuse, HTMLStencilElement {
+    }
+    var HTMLAppTsQueryPrefetchReuseElement: {
+        prototype: HTMLAppTsQueryPrefetchReuseElement;
+        new (): HTMLAppTsQueryPrefetchReuseElement;
+    };
+    /**
+     * Demo wrapper — provides a shared `QueryClient` and SSR hydration, then embeds the three
+     * `useQueries` / `$useQueries` examples.
+     */
+    interface HTMLAppTsQueryUseQueriesDemoElement extends Components.AppTsQueryUseQueriesDemo, HTMLStencilElement {
+    }
+    var HTMLAppTsQueryUseQueriesDemoElement: {
+        prototype: HTMLAppTsQueryUseQueriesDemoElement;
+        new (): HTMLAppTsQueryUseQueriesDemoElement;
+    };
+    /**
+     * Component 1 — **classic**. Uses the same-file `useTopPosts()` helper and renders the parallel
+     * results array returned by `useQueries`.
+     */
+    interface HTMLAppTsQueryUseQueriesInlineElement extends Components.AppTsQueryUseQueriesInline, HTMLStencilElement {
+    }
+    var HTMLAppTsQueryUseQueriesInlineElement: {
+        prototype: HTMLAppTsQueryUseQueriesInlineElement;
+        new (): HTMLAppTsQueryUseQueriesInlineElement;
+    };
+    /**
+     * Component 2 — **classic, reusable across files**. Uses `usePostsByIds` and `usePostsLoadedCount`,
+     * which are defined OUTSIDE this component in `use-queries.api.ts` and composed in as field
+     * initializers. `usePostsLoadedCount` uses `combine` to derive a single summary value.
+     */
+    interface HTMLAppTsQueryUseQueriesReuseElement extends Components.AppTsQueryUseQueriesReuse, HTMLStencilElement {
+    }
+    var HTMLAppTsQueryUseQueriesReuseElement: {
+        prototype: HTMLAppTsQueryUseQueriesReuseElement;
+        new (): HTMLAppTsQueryUseQueriesReuseElement;
+    };
+    /**
+     * Component 3 — **signals**. Uses `$usePostsByIds` (defined outside the component, in
+     * `use-queries.api.ts`) which wraps `$useQueries` and returns a single `Signal` of the results
+     * array. Requires `useSignalWatcher()` to be active.
+     */
+    interface HTMLAppTsQueryUseQueriesSignalsElement extends Components.AppTsQueryUseQueriesSignals, HTMLStencilElement {
+    }
+    var HTMLAppTsQueryUseQueriesSignalsElement: {
+        prototype: HTMLAppTsQueryUseQueriesSignalsElement;
+        new (): HTMLAppTsQueryUseQueriesSignalsElement;
+    };
+    /**
+     * Component 4 — **signals with combine**. Uses `$usePostsWithCombine` which wraps `$useQueries`
+     * with a `combine` function to produce a single derived summary signal. The returned signal is a
+     * plain value (not a per-element proxy array).
+     */
+    interface HTMLAppTsQueryUseQueriesSignalsCombineElement extends Components.AppTsQueryUseQueriesSignalsCombine, HTMLStencilElement {
+    }
+    var HTMLAppTsQueryUseQueriesSignalsCombineElement: {
+        prototype: HTMLAppTsQueryUseQueriesSignalsCombineElement;
+        new (): HTMLAppTsQueryUseQueriesSignalsCombineElement;
+    };
+    interface HTMLElementTagNameMap {
+        "app-compose-demo": HTMLAppComposeDemoElement;
+        "app-counter": HTMLAppCounterElement;
+        "app-ctx-counter": HTMLAppCtxCounterElement;
+        "app-ctx-counter-group": HTMLAppCtxCounterGroupElement;
+        "app-effect-demo": HTMLAppEffectDemoElement;
+        "app-intersection-observer": HTMLAppIntersectionObserverElement;
+        "app-lifecycle-demo": HTMLAppLifecycleDemoElement;
+        "app-lol-champion-card": HTMLAppLolChampionCardElement;
+        "app-lol-champion-filter": HTMLAppLolChampionFilterElement;
+        "app-lol-champion-pool": HTMLAppLolChampionPoolElement;
+        "app-lol-draft-area": HTMLAppLolDraftAreaElement;
+        "app-lol-draft-hero-card": HTMLAppLolDraftHeroCardElement;
+        "app-lol-draft-info": HTMLAppLolDraftInfoElement;
+        "app-lol-draft-layout": HTMLAppLolDraftLayoutElement;
+        "app-lol-draft-lobby-host": HTMLAppLolDraftLobbyHostElement;
+        "app-lol-draft-slot": HTMLAppLolDraftSlotElement;
+        "app-lol-lobby-list": HTMLAppLolLobbyListElement;
+        "app-lol-notification": HTMLAppLolNotificationElement;
+        "app-lol-team-section": HTMLAppLolTeamSectionElement;
+        "app-mouse-host": HTMLAppMouseHostElement;
+        "app-mutation-observer": HTMLAppMutationObserverElement;
+        "app-resize-observer": HTMLAppResizeObserverElement;
+        "app-signals-computed-previous": HTMLAppSignalsComputedPreviousElement;
+        "app-signals-counter": HTMLAppSignalsCounterElement;
+        "app-signals-derived-async": HTMLAppSignalsDerivedAsyncElement;
+        "app-signals-mouse-event": HTMLAppSignalsMouseEventElement;
+        "app-signals-observer-signals": HTMLAppSignalsObserverSignalsElement;
+        "app-signals-todo": HTMLAppSignalsTodoElement;
+        "app-startup-context-inspector": HTMLAppStartupContextInspectorElement;
+        "app-startup-context-provider": HTMLAppStartupContextProviderElement;
+        "app-tan-counter": HTMLAppTanCounterElement;
+        "app-tan-todo": HTMLAppTanTodoElement;
+        "app-timer": HTMLAppTimerElement;
+        "app-timer-counter": HTMLAppTimerCounterElement;
+        "app-timer-host": HTMLAppTimerHostElement;
+        "app-todo": HTMLAppTodoElement;
+        "app-transfer-state": HTMLAppTransferStateElement;
+        "app-translation-profile": HTMLAppTranslationProfileElement;
+        "app-translation-shell": HTMLAppTranslationShellElement;
+        "app-translations-host": HTMLAppTranslationsHostElement;
+        "app-ts-query-hover-prefetch": HTMLAppTsQueryHoverPrefetchElement;
+        "app-ts-query-posts": HTMLAppTsQueryPostsElement;
+        "app-ts-query-posts-signals": HTMLAppTsQueryPostsSignalsElement;
+        "app-ts-query-prefetch": HTMLAppTsQueryPrefetchElement;
+        "app-ts-query-prefetch-demo": HTMLAppTsQueryPrefetchDemoElement;
+        "app-ts-query-prefetch-reuse": HTMLAppTsQueryPrefetchReuseElement;
+        "app-ts-query-use-queries-demo": HTMLAppTsQueryUseQueriesDemoElement;
+        "app-ts-query-use-queries-inline": HTMLAppTsQueryUseQueriesInlineElement;
+        "app-ts-query-use-queries-reuse": HTMLAppTsQueryUseQueriesReuseElement;
+        "app-ts-query-use-queries-signals": HTMLAppTsQueryUseQueriesSignalsElement;
+        "app-ts-query-use-queries-signals-combine": HTMLAppTsQueryUseQueriesSignalsCombineElement;
+    }
 }
 declare namespace LocalJSX {
-	type OneOf<K extends string, PropT, AttrT = PropT> =
-		| ({ [P in K]: PropT } & { [P in `attr:${K}` | `prop:${K}`]?: never })
-		| ({ [P in `attr:${K}`]: AttrT } & { [P in K | `prop:${K}`]?: never })
-		| ({ [P in `prop:${K}`]: PropT } & { [P in K | `attr:${K}`]?: never });
+    type OneOf<K extends string, PropT, AttrT = PropT> = { [P in K]: PropT } & { [P in `attr:${K}` | `prop:${K}`]?: never } | { [P in `attr:${K}`]: AttrT } & { [P in K | `prop:${K}`]?: never } | { [P in `prop:${K}`]: PropT } & { [P in K | `attr:${K}`]?: never };
 
-	interface AppComposeDemo {}
-	interface AppCounter {}
-	interface AppCtxCounter {}
-	interface AppCtxCounterGroup {}
-	interface AppEffectDemo {}
-	interface AppIntersectionObserver {}
-	interface AppLifecycleDemo {}
-	interface AppLolChampionCard {
-		champion: Champion;
-		/**
-		 * Card is not interactive (already picked/banned by either team).
-		 * @default false
-		 */
-		disabled?: boolean;
-		/**
-		 * Fires with the champion ID when the card is clicked.
-		 */
-		onChampionSelect?: (event: AppLolChampionCardCustomEvent<string>) => void;
-		/**
-		 * @default "available"
-		 */
-		status?: ChampionCardStatus;
-	}
-	interface AppLolChampionFilter {
-		/**
-		 * @default []
-		 */
-		activeRoles?: ChampionRole[];
-		/**
-		 * @default [1, 10]
-		 */
-		difficulty?: [number, number];
-		onClearFilters?: (event: AppLolChampionFilterCustomEvent<void>) => void;
-		onRoleToggle?: (event: AppLolChampionFilterCustomEvent<ChampionRole>) => void;
-		onSearchChange?: (event: AppLolChampionFilterCustomEvent<string>) => void;
-		/**
-		 * @default ""
-		 */
-		search?: string;
-	}
-	interface AppLolChampionPool {
-		/**
-		 * @default null
-		 */
-		draftId?: string | null;
-		/**
-		 * Which team's actions this pool is acting for (blue or red).
-		 * @default "blue"
-		 */
-		team?: Team;
-	}
-	interface AppLolDraftArea {
-		/**
-		 * @default null
-		 */
-		draftId?: string | null;
-		/**
-		 * Blue team is "my" team by default.
-		 * @default "blue"
-		 */
-		myTeam?: "blue" | "red";
-	}
-	interface AppLolDraftHeroCard {
-		champion: Champion;
-		/**
-		 * @default "pick"
-		 */
-		slotType?: "pick" | "ban";
-	}
-	interface AppLolDraftInfo {
-		/**
-		 * @default null
-		 */
-		draftId?: string | null;
-		/**
-		 * @default "blue"
-		 */
-		myTeam?: "blue" | "red";
-	}
-	interface AppLolDraftLayout {
-		/**
-		 * @default null
-		 */
-		sessionId?: string | null;
-	}
-	interface AppLolDraftLobbyHost {}
-	interface AppLolDraftSlot {
-		/**
-		 * @default null
-		 */
-		champion?: Champion | null;
-		/**
-		 * @default "pick"
-		 */
-		slotType?: "pick" | "ban";
-		/**
-		 * @default "empty"
-		 */
-		status?: DraftSlotStatus;
-	}
-	interface AppLolLobbyList {
-		onAppCreate?: (event: AppLolLobbyListCustomEvent<LobbyJoinEvent>) => void;
-		onAppJoin?: (event: AppLolLobbyListCustomEvent<LobbyJoinEvent>) => void;
-	}
-	interface AppLolNotification {}
-	interface AppLolTeamSection {
-		/**
-		 * @default [null, null, null, null, null]
-		 */
-		bans?: (string | null)[];
-		/**
-		 * @default new Map<string, Champion>()
-		 */
-		champions?: Map<string, Champion>;
-		/**
-		 * @default false
-		 */
-		isActive?: boolean;
-		/**
-		 * @default [null, null, null, null, null]
-		 */
-		picks?: (string | null)[];
-		team: Team;
-	}
-	interface AppMouseHost {}
-	interface AppMutationObserver {}
-	interface AppResizeObserver {}
-	interface AppSignalsComputedPrevious {}
-	interface AppSignalsCounter {
-		/**
-		 * @default 1
-		 */
-		step?: number;
-	}
-	interface AppSignalsDerivedAsync {}
-	interface AppSignalsMouseEvent {}
-	interface AppSignalsObserverSignals {}
-	interface AppSignalsTodo {}
-	interface AppStartupContextInspector {}
-	/**
-	 * Infrastructure bridge that transfers Vike's server-collected startup context into
-	 * granular Stencil signal stores, making them available to all descendant components
-	 * via `useConfig()`, `useTheme()`, `useFeatureFlags()`, `useAuth()`, `useLocale()`, `useTenant()`.
-	 * Place this component at the root of the Stencil component tree (e.g. in `+Layout.tsx`).
-	 * It has no visual output — renders only a `<slot />`.
-	 * @example ```tsx
-	 * // +Layout.tsx
-	 * <AppStartupContextProvider startupContext={startupContext}>
-	 *   {children}
-	 * </AppStartupContextProvider>
-	 * ```
-	 */
-	interface AppStartupContextProvider {
-		/**
-		 * Full startup context object transferred from the Vike server.
-		 */
-		startupContext: StartupContext;
-	}
-	interface AppTanCounter {}
-	interface AppTanTodo {}
-	interface AppTimer {
-		/**
-		 * @default 60
-		 */
-		duration?: number;
-		/**
-		 * @default false
-		 */
-		isRunning?: boolean;
-		onIsRunningChange?: (event: AppTimerCustomEvent<boolean>) => void;
-	}
-	interface AppTimerCounter {
-		/**
-		 * @default 0
-		 */
-		timeRemaining?: number;
-	}
-	interface AppTimerHost {}
-	interface AppTodo {}
-	interface AppTransferState {}
-	interface AppTranslationProfile {}
-	interface AppTranslationShell {}
-	interface AppTranslationsHost {}
-	interface AppTsQueryHoverPrefetch {}
-	interface AppTsQueryPosts {}
-	interface AppTsQueryPostsSignals {}
-	/**
-	 * Demonstrates `usePrefetchQuery` as a field initializer — seeds the cache before
-	 * the component's own `useQuery` runs, eliminating the initial loading state.
-	 * @example ```html
-	 * <app-ts-query-prefetch />
-	 * ```
-	 */
-	interface AppTsQueryPrefetch {}
-	interface AppTsQueryPrefetchDemo {}
-	/**
-	 * Demonstrates `prefetchPosts` — a reusable prefetch function defined outside the
-	 * component and called as a field initializer. The function is fully composable and
-	 * can be shared across multiple components.
-	 * @example ```html
-	 * <app-ts-query-prefetch-reuse />
-	 * ```
-	 */
-	interface AppTsQueryPrefetchReuse {}
-	/**
-	 * Demo wrapper — provides a shared `QueryClient` and SSR hydration, then embeds the three
-	 * `useQueries` / `$useQueries` examples.
-	 */
-	interface AppTsQueryUseQueriesDemo {}
-	/**
-	 * Component 1 — **classic**. Uses the same-file `useTopPosts()` helper and renders the parallel
-	 * results array returned by `useQueries`.
-	 */
-	interface AppTsQueryUseQueriesInline {}
-	/**
-	 * Component 2 — **classic, reusable across files**. Uses `usePostsByIds` and `usePostsLoadedCount`,
-	 * which are defined OUTSIDE this component in `use-queries.api.ts` and composed in as field
-	 * initializers. `usePostsLoadedCount` uses `combine` to derive a single summary value.
-	 */
-	interface AppTsQueryUseQueriesReuse {}
-	/**
-	 * Component 3 — **signals**. Uses `$usePostsByIds` (defined outside the component, in
-	 * `use-queries.api.ts`) which wraps `$useQueries` and returns a single `Signal` of the results
-	 * array. Requires `useSignalWatcher()` to be active.
-	 */
-	interface AppTsQueryUseQueriesSignals {}
-	/**
-	 * Component 4 — **signals with combine**. Uses `$usePostsWithCombine` which wraps `$useQueries`
-	 * with a `combine` function to produce a single derived summary signal. The returned signal is a
-	 * plain value (not a per-element proxy array).
-	 */
-	interface AppTsQueryUseQueriesSignalsCombine {}
+    interface AppComposeDemo {
+    }
+    interface AppCounter {
+    }
+    interface AppCtxCounter {
+    }
+    interface AppCtxCounterGroup {
+    }
+    interface AppEffectDemo {
+    }
+    interface AppIntersectionObserver {
+    }
+    interface AppLifecycleDemo {
+    }
+    interface AppLolChampionCard {
+        "champion": Champion;
+        /**
+          * Card is not interactive (already picked/banned by either team).
+          * @default false
+         */
+        "disabled"?: boolean;
+        /**
+          * Fires with the champion ID when the card is clicked.
+         */
+        "onChampionSelect"?: (event: AppLolChampionCardCustomEvent<string>) => void;
+        /**
+          * @default "available"
+         */
+        "status"?: ChampionCardStatus;
+    }
+    interface AppLolChampionFilter {
+        /**
+          * @default []
+         */
+        "activeRoles"?: ChampionRole[];
+        /**
+          * @default [1, 10]
+         */
+        "difficulty"?: [number, number];
+        "onClearFilters"?: (event: AppLolChampionFilterCustomEvent<void>) => void;
+        "onRoleToggle"?: (event: AppLolChampionFilterCustomEvent<ChampionRole>) => void;
+        "onSearchChange"?: (event: AppLolChampionFilterCustomEvent<string>) => void;
+        /**
+          * @default ""
+         */
+        "search"?: string;
+    }
+    interface AppLolChampionPool {
+        /**
+          * @default null
+         */
+        "draftId"?: string | null;
+        /**
+          * Which team's actions this pool is acting for (blue or red).
+          * @default "blue"
+         */
+        "team"?: Team;
+    }
+    interface AppLolDraftArea {
+        /**
+          * @default null
+         */
+        "draftId"?: string | null;
+        /**
+          * Blue team is "my" team by default.
+          * @default "blue"
+         */
+        "myTeam"?: "blue" | "red";
+    }
+    interface AppLolDraftHeroCard {
+        "champion": Champion;
+        /**
+          * @default "pick"
+         */
+        "slotType"?: "pick" | "ban";
+    }
+    interface AppLolDraftInfo {
+        /**
+          * @default null
+         */
+        "draftId"?: string | null;
+        /**
+          * @default "blue"
+         */
+        "myTeam"?: "blue" | "red";
+    }
+    interface AppLolDraftLayout {
+        /**
+          * @default null
+         */
+        "sessionId"?: string | null;
+    }
+    interface AppLolDraftLobbyHost {
+    }
+    interface AppLolDraftSlot {
+        /**
+          * @default null
+         */
+        "champion"?: Champion | null;
+        /**
+          * @default "pick"
+         */
+        "slotType"?: "pick" | "ban";
+        /**
+          * @default "empty"
+         */
+        "status"?: DraftSlotStatus;
+    }
+    interface AppLolLobbyList {
+        "onAppCreate"?: (event: AppLolLobbyListCustomEvent<LobbyJoinEvent>) => void;
+        "onAppJoin"?: (event: AppLolLobbyListCustomEvent<LobbyJoinEvent>) => void;
+    }
+    interface AppLolNotification {
+    }
+    interface AppLolTeamSection {
+        /**
+          * @default [null, null, null, null, null]
+         */
+        "bans"?: (string | null)[];
+        /**
+          * @default new Map<string, Champion>()
+         */
+        "champions"?: Map<string, Champion>;
+        /**
+          * @default false
+         */
+        "isActive"?: boolean;
+        /**
+          * @default [null, null, null, null, null]
+         */
+        "picks"?: (string | null)[];
+        "team": Team;
+    }
+    interface AppMouseHost {
+    }
+    interface AppMutationObserver {
+    }
+    interface AppResizeObserver {
+    }
+    interface AppSignalsComputedPrevious {
+    }
+    interface AppSignalsCounter {
+        /**
+          * @default 1
+         */
+        "step"?: number;
+    }
+    interface AppSignalsDerivedAsync {
+    }
+    interface AppSignalsMouseEvent {
+    }
+    interface AppSignalsObserverSignals {
+    }
+    interface AppSignalsTodo {
+    }
+    interface AppStartupContextInspector {
+    }
+    /**
+     * Infrastructure bridge that transfers Vike's server-collected startup context into
+     * granular Stencil signal stores, making them available to all descendant components
+     * via `useConfig()`, `useTheme()`, `useFeatureFlags()`, `useAuth()`, `useLocale()`, `useTenant()`.
+     * Place this component at the root of the Stencil component tree (e.g. in `+Layout.tsx`).
+     * It has no visual output — renders only a `<slot />`.
+     * @example ```tsx
+     * // +Layout.tsx
+     * <AppStartupContextProvider startupContext={startupContext}>
+     *   {children}
+     * </AppStartupContextProvider>
+     * ```
+     */
+    interface AppStartupContextProvider {
+        /**
+          * Full startup context object transferred from the Vike server.
+         */
+        "startupContext": StartupContext;
+    }
+    interface AppTanCounter {
+    }
+    interface AppTanTodo {
+    }
+    interface AppTimer {
+        /**
+          * @default 60
+         */
+        "duration"?: number;
+        /**
+          * @default false
+         */
+        "isRunning"?: boolean;
+        "onIsRunningChange"?: (event: AppTimerCustomEvent<boolean>) => void;
+    }
+    interface AppTimerCounter {
+        /**
+          * @default 0
+         */
+        "timeRemaining"?: number;
+    }
+    interface AppTimerHost {
+    }
+    interface AppTodo {
+    }
+    interface AppTransferState {
+    }
+    interface AppTranslationProfile {
+    }
+    interface AppTranslationShell {
+    }
+    interface AppTranslationsHost {
+    }
+    interface AppTsQueryHoverPrefetch {
+    }
+    interface AppTsQueryPosts {
+    }
+    interface AppTsQueryPostsSignals {
+    }
+    /**
+     * Demonstrates `usePrefetchQuery` as a field initializer — seeds the cache before
+     * the component's own `useQuery` runs, eliminating the initial loading state.
+     * @example ```html
+     * <app-ts-query-prefetch />
+     * ```
+     */
+    interface AppTsQueryPrefetch {
+    }
+    interface AppTsQueryPrefetchDemo {
+    }
+    /**
+     * Demonstrates `prefetchPosts` — a reusable prefetch function defined outside the
+     * component and called as a field initializer. The function is fully composable and
+     * can be shared across multiple components.
+     * @example ```html
+     * <app-ts-query-prefetch-reuse />
+     * ```
+     */
+    interface AppTsQueryPrefetchReuse {
+    }
+    /**
+     * Demo wrapper — provides a shared `QueryClient` and SSR hydration, then embeds the three
+     * `useQueries` / `$useQueries` examples.
+     */
+    interface AppTsQueryUseQueriesDemo {
+    }
+    /**
+     * Component 1 — **classic**. Uses the same-file `useTopPosts()` helper and renders the parallel
+     * results array returned by `useQueries`.
+     */
+    interface AppTsQueryUseQueriesInline {
+    }
+    /**
+     * Component 2 — **classic, reusable across files**. Uses `usePostsByIds` and `usePostsLoadedCount`,
+     * which are defined OUTSIDE this component in `use-queries.api.ts` and composed in as field
+     * initializers. `usePostsLoadedCount` uses `combine` to derive a single summary value.
+     */
+    interface AppTsQueryUseQueriesReuse {
+    }
+    /**
+     * Component 3 — **signals**. Uses `$usePostsByIds` (defined outside the component, in
+     * `use-queries.api.ts`) which wraps `$useQueries` and returns a single `Signal` of the results
+     * array. Requires `useSignalWatcher()` to be active.
+     */
+    interface AppTsQueryUseQueriesSignals {
+    }
+    /**
+     * Component 4 — **signals with combine**. Uses `$usePostsWithCombine` which wraps `$useQueries`
+     * with a `combine` function to produce a single derived summary signal. The returned signal is a
+     * plain value (not a per-element proxy array).
+     */
+    interface AppTsQueryUseQueriesSignalsCombine {
+    }
 
-	interface AppLolChampionCardAttributes {
-		disabled: boolean;
-		status: ChampionCardStatus;
-	}
-	interface AppLolChampionFilterAttributes {
-		search: string;
-	}
-	interface AppLolChampionPoolAttributes {
-		draftId: string | null;
-		team: Team;
-	}
-	interface AppLolDraftAreaAttributes {
-		draftId: string | null;
-		myTeam: "blue" | "red";
-	}
-	interface AppLolDraftHeroCardAttributes {
-		slotType: "pick" | "ban";
-	}
-	interface AppLolDraftInfoAttributes {
-		draftId: string | null;
-		myTeam: "blue" | "red";
-	}
-	interface AppLolDraftLayoutAttributes {
-		sessionId: string | null;
-	}
-	interface AppLolDraftSlotAttributes {
-		slotType: "pick" | "ban";
-		status: DraftSlotStatus;
-	}
-	interface AppLolTeamSectionAttributes {
-		team: Team;
-		isActive: boolean;
-	}
-	interface AppSignalsCounterAttributes {
-		step: number;
-	}
-	interface AppTimerAttributes {
-		duration: number;
-		isRunning: boolean;
-	}
-	interface AppTimerCounterAttributes {
-		timeRemaining: number;
-	}
+    interface AppLolChampionCardAttributes {
+        "disabled": boolean;
+        "status": ChampionCardStatus;
+    }
+    interface AppLolChampionFilterAttributes {
+        "search": string;
+    }
+    interface AppLolChampionPoolAttributes {
+        "draftId": string | null;
+        "team": Team;
+    }
+    interface AppLolDraftAreaAttributes {
+        "draftId": string | null;
+        "myTeam": "blue" | "red";
+    }
+    interface AppLolDraftHeroCardAttributes {
+        "slotType": "pick" | "ban";
+    }
+    interface AppLolDraftInfoAttributes {
+        "draftId": string | null;
+        "myTeam": "blue" | "red";
+    }
+    interface AppLolDraftLayoutAttributes {
+        "sessionId": string | null;
+    }
+    interface AppLolDraftSlotAttributes {
+        "slotType": "pick" | "ban";
+        "status": DraftSlotStatus;
+    }
+    interface AppLolTeamSectionAttributes {
+        "team": Team;
+        "isActive": boolean;
+    }
+    interface AppSignalsCounterAttributes {
+        "step": number;
+    }
+    interface AppTimerAttributes {
+        "duration": number;
+        "isRunning": boolean;
+    }
+    interface AppTimerCounterAttributes {
+        "timeRemaining": number;
+    }
 
-	interface IntrinsicElements {
-		"app-compose-demo": AppComposeDemo;
-		"app-counter": AppCounter;
-		"app-ctx-counter": AppCtxCounter;
-		"app-ctx-counter-group": AppCtxCounterGroup;
-		"app-effect-demo": AppEffectDemo;
-		"app-intersection-observer": AppIntersectionObserver;
-		"app-lifecycle-demo": AppLifecycleDemo;
-		"app-lol-champion-card": Omit<AppLolChampionCard, keyof AppLolChampionCardAttributes> & {
-			[K in keyof AppLolChampionCard & keyof AppLolChampionCardAttributes]?: AppLolChampionCard[K];
-		} & {
-			[K in keyof AppLolChampionCard &
-				keyof AppLolChampionCardAttributes as `attr:${K}`]?: AppLolChampionCardAttributes[K];
-		} & { [K in keyof AppLolChampionCard & keyof AppLolChampionCardAttributes as `prop:${K}`]?: AppLolChampionCard[K] };
-		"app-lol-champion-filter": Omit<AppLolChampionFilter, keyof AppLolChampionFilterAttributes> & {
-			[K in keyof AppLolChampionFilter & keyof AppLolChampionFilterAttributes]?: AppLolChampionFilter[K];
-		} & {
-			[K in keyof AppLolChampionFilter &
-				keyof AppLolChampionFilterAttributes as `attr:${K}`]?: AppLolChampionFilterAttributes[K];
-		} & {
-			[K in keyof AppLolChampionFilter & keyof AppLolChampionFilterAttributes as `prop:${K}`]?: AppLolChampionFilter[K];
-		};
-		"app-lol-champion-pool": Omit<AppLolChampionPool, keyof AppLolChampionPoolAttributes> & {
-			[K in keyof AppLolChampionPool & keyof AppLolChampionPoolAttributes]?: AppLolChampionPool[K];
-		} & {
-			[K in keyof AppLolChampionPool &
-				keyof AppLolChampionPoolAttributes as `attr:${K}`]?: AppLolChampionPoolAttributes[K];
-		} & { [K in keyof AppLolChampionPool & keyof AppLolChampionPoolAttributes as `prop:${K}`]?: AppLolChampionPool[K] };
-		"app-lol-draft-area": Omit<AppLolDraftArea, keyof AppLolDraftAreaAttributes> & {
-			[K in keyof AppLolDraftArea & keyof AppLolDraftAreaAttributes]?: AppLolDraftArea[K];
-		} & {
-			[K in keyof AppLolDraftArea & keyof AppLolDraftAreaAttributes as `attr:${K}`]?: AppLolDraftAreaAttributes[K];
-		} & { [K in keyof AppLolDraftArea & keyof AppLolDraftAreaAttributes as `prop:${K}`]?: AppLolDraftArea[K] };
-		"app-lol-draft-hero-card": Omit<AppLolDraftHeroCard, keyof AppLolDraftHeroCardAttributes> & {
-			[K in keyof AppLolDraftHeroCard & keyof AppLolDraftHeroCardAttributes]?: AppLolDraftHeroCard[K];
-		} & {
-			[K in keyof AppLolDraftHeroCard &
-				keyof AppLolDraftHeroCardAttributes as `attr:${K}`]?: AppLolDraftHeroCardAttributes[K];
-		} & {
-			[K in keyof AppLolDraftHeroCard & keyof AppLolDraftHeroCardAttributes as `prop:${K}`]?: AppLolDraftHeroCard[K];
-		};
-		"app-lol-draft-info": Omit<AppLolDraftInfo, keyof AppLolDraftInfoAttributes> & {
-			[K in keyof AppLolDraftInfo & keyof AppLolDraftInfoAttributes]?: AppLolDraftInfo[K];
-		} & {
-			[K in keyof AppLolDraftInfo & keyof AppLolDraftInfoAttributes as `attr:${K}`]?: AppLolDraftInfoAttributes[K];
-		} & { [K in keyof AppLolDraftInfo & keyof AppLolDraftInfoAttributes as `prop:${K}`]?: AppLolDraftInfo[K] };
-		"app-lol-draft-layout": Omit<AppLolDraftLayout, keyof AppLolDraftLayoutAttributes> & {
-			[K in keyof AppLolDraftLayout & keyof AppLolDraftLayoutAttributes]?: AppLolDraftLayout[K];
-		} & {
-			[K in keyof AppLolDraftLayout &
-				keyof AppLolDraftLayoutAttributes as `attr:${K}`]?: AppLolDraftLayoutAttributes[K];
-		} & { [K in keyof AppLolDraftLayout & keyof AppLolDraftLayoutAttributes as `prop:${K}`]?: AppLolDraftLayout[K] };
-		"app-lol-draft-lobby-host": AppLolDraftLobbyHost;
-		"app-lol-draft-slot": Omit<AppLolDraftSlot, keyof AppLolDraftSlotAttributes> & {
-			[K in keyof AppLolDraftSlot & keyof AppLolDraftSlotAttributes]?: AppLolDraftSlot[K];
-		} & {
-			[K in keyof AppLolDraftSlot & keyof AppLolDraftSlotAttributes as `attr:${K}`]?: AppLolDraftSlotAttributes[K];
-		} & { [K in keyof AppLolDraftSlot & keyof AppLolDraftSlotAttributes as `prop:${K}`]?: AppLolDraftSlot[K] };
-		"app-lol-lobby-list": AppLolLobbyList;
-		"app-lol-notification": AppLolNotification;
-		"app-lol-team-section": Omit<AppLolTeamSection, keyof AppLolTeamSectionAttributes> & {
-			[K in keyof AppLolTeamSection & keyof AppLolTeamSectionAttributes]?: AppLolTeamSection[K];
-		} & {
-			[K in keyof AppLolTeamSection &
-				keyof AppLolTeamSectionAttributes as `attr:${K}`]?: AppLolTeamSectionAttributes[K];
-		} & {
-			[K in keyof AppLolTeamSection & keyof AppLolTeamSectionAttributes as `prop:${K}`]?: AppLolTeamSection[K];
-		} & OneOf<"team", AppLolTeamSection["team"], AppLolTeamSectionAttributes["team"]>;
-		"app-mouse-host": AppMouseHost;
-		"app-mutation-observer": AppMutationObserver;
-		"app-resize-observer": AppResizeObserver;
-		"app-signals-computed-previous": AppSignalsComputedPrevious;
-		"app-signals-counter": Omit<AppSignalsCounter, keyof AppSignalsCounterAttributes> & {
-			[K in keyof AppSignalsCounter & keyof AppSignalsCounterAttributes]?: AppSignalsCounter[K];
-		} & {
-			[K in keyof AppSignalsCounter &
-				keyof AppSignalsCounterAttributes as `attr:${K}`]?: AppSignalsCounterAttributes[K];
-		} & { [K in keyof AppSignalsCounter & keyof AppSignalsCounterAttributes as `prop:${K}`]?: AppSignalsCounter[K] };
-		"app-signals-derived-async": AppSignalsDerivedAsync;
-		"app-signals-mouse-event": AppSignalsMouseEvent;
-		"app-signals-observer-signals": AppSignalsObserverSignals;
-		"app-signals-todo": AppSignalsTodo;
-		"app-startup-context-inspector": AppStartupContextInspector;
-		"app-startup-context-provider": AppStartupContextProvider;
-		"app-tan-counter": AppTanCounter;
-		"app-tan-todo": AppTanTodo;
-		"app-timer": Omit<AppTimer, keyof AppTimerAttributes> & {
-			[K in keyof AppTimer & keyof AppTimerAttributes]?: AppTimer[K];
-		} & { [K in keyof AppTimer & keyof AppTimerAttributes as `attr:${K}`]?: AppTimerAttributes[K] } & {
-			[K in keyof AppTimer & keyof AppTimerAttributes as `prop:${K}`]?: AppTimer[K];
-		};
-		"app-timer-counter": Omit<AppTimerCounter, keyof AppTimerCounterAttributes> & {
-			[K in keyof AppTimerCounter & keyof AppTimerCounterAttributes]?: AppTimerCounter[K];
-		} & {
-			[K in keyof AppTimerCounter & keyof AppTimerCounterAttributes as `attr:${K}`]?: AppTimerCounterAttributes[K];
-		} & { [K in keyof AppTimerCounter & keyof AppTimerCounterAttributes as `prop:${K}`]?: AppTimerCounter[K] };
-		"app-timer-host": AppTimerHost;
-		"app-todo": AppTodo;
-		"app-transfer-state": AppTransferState;
-		"app-translation-profile": AppTranslationProfile;
-		"app-translation-shell": AppTranslationShell;
-		"app-translations-host": AppTranslationsHost;
-		"app-ts-query-hover-prefetch": AppTsQueryHoverPrefetch;
-		"app-ts-query-posts": AppTsQueryPosts;
-		"app-ts-query-posts-signals": AppTsQueryPostsSignals;
-		"app-ts-query-prefetch": AppTsQueryPrefetch;
-		"app-ts-query-prefetch-demo": AppTsQueryPrefetchDemo;
-		"app-ts-query-prefetch-reuse": AppTsQueryPrefetchReuse;
-		"app-ts-query-use-queries-demo": AppTsQueryUseQueriesDemo;
-		"app-ts-query-use-queries-inline": AppTsQueryUseQueriesInline;
-		"app-ts-query-use-queries-reuse": AppTsQueryUseQueriesReuse;
-		"app-ts-query-use-queries-signals": AppTsQueryUseQueriesSignals;
-		"app-ts-query-use-queries-signals-combine": AppTsQueryUseQueriesSignalsCombine;
-	}
+    interface IntrinsicElements {
+        "app-compose-demo": AppComposeDemo;
+        "app-counter": AppCounter;
+        "app-ctx-counter": AppCtxCounter;
+        "app-ctx-counter-group": AppCtxCounterGroup;
+        "app-effect-demo": AppEffectDemo;
+        "app-intersection-observer": AppIntersectionObserver;
+        "app-lifecycle-demo": AppLifecycleDemo;
+        "app-lol-champion-card": Omit<AppLolChampionCard, keyof AppLolChampionCardAttributes> & { [K in keyof AppLolChampionCard & keyof AppLolChampionCardAttributes]?: AppLolChampionCard[K] } & { [K in keyof AppLolChampionCard & keyof AppLolChampionCardAttributes as `attr:${K}`]?: AppLolChampionCardAttributes[K] } & { [K in keyof AppLolChampionCard & keyof AppLolChampionCardAttributes as `prop:${K}`]?: AppLolChampionCard[K] };
+        "app-lol-champion-filter": Omit<AppLolChampionFilter, keyof AppLolChampionFilterAttributes> & { [K in keyof AppLolChampionFilter & keyof AppLolChampionFilterAttributes]?: AppLolChampionFilter[K] } & { [K in keyof AppLolChampionFilter & keyof AppLolChampionFilterAttributes as `attr:${K}`]?: AppLolChampionFilterAttributes[K] } & { [K in keyof AppLolChampionFilter & keyof AppLolChampionFilterAttributes as `prop:${K}`]?: AppLolChampionFilter[K] };
+        "app-lol-champion-pool": Omit<AppLolChampionPool, keyof AppLolChampionPoolAttributes> & { [K in keyof AppLolChampionPool & keyof AppLolChampionPoolAttributes]?: AppLolChampionPool[K] } & { [K in keyof AppLolChampionPool & keyof AppLolChampionPoolAttributes as `attr:${K}`]?: AppLolChampionPoolAttributes[K] } & { [K in keyof AppLolChampionPool & keyof AppLolChampionPoolAttributes as `prop:${K}`]?: AppLolChampionPool[K] };
+        "app-lol-draft-area": Omit<AppLolDraftArea, keyof AppLolDraftAreaAttributes> & { [K in keyof AppLolDraftArea & keyof AppLolDraftAreaAttributes]?: AppLolDraftArea[K] } & { [K in keyof AppLolDraftArea & keyof AppLolDraftAreaAttributes as `attr:${K}`]?: AppLolDraftAreaAttributes[K] } & { [K in keyof AppLolDraftArea & keyof AppLolDraftAreaAttributes as `prop:${K}`]?: AppLolDraftArea[K] };
+        "app-lol-draft-hero-card": Omit<AppLolDraftHeroCard, keyof AppLolDraftHeroCardAttributes> & { [K in keyof AppLolDraftHeroCard & keyof AppLolDraftHeroCardAttributes]?: AppLolDraftHeroCard[K] } & { [K in keyof AppLolDraftHeroCard & keyof AppLolDraftHeroCardAttributes as `attr:${K}`]?: AppLolDraftHeroCardAttributes[K] } & { [K in keyof AppLolDraftHeroCard & keyof AppLolDraftHeroCardAttributes as `prop:${K}`]?: AppLolDraftHeroCard[K] };
+        "app-lol-draft-info": Omit<AppLolDraftInfo, keyof AppLolDraftInfoAttributes> & { [K in keyof AppLolDraftInfo & keyof AppLolDraftInfoAttributes]?: AppLolDraftInfo[K] } & { [K in keyof AppLolDraftInfo & keyof AppLolDraftInfoAttributes as `attr:${K}`]?: AppLolDraftInfoAttributes[K] } & { [K in keyof AppLolDraftInfo & keyof AppLolDraftInfoAttributes as `prop:${K}`]?: AppLolDraftInfo[K] };
+        "app-lol-draft-layout": Omit<AppLolDraftLayout, keyof AppLolDraftLayoutAttributes> & { [K in keyof AppLolDraftLayout & keyof AppLolDraftLayoutAttributes]?: AppLolDraftLayout[K] } & { [K in keyof AppLolDraftLayout & keyof AppLolDraftLayoutAttributes as `attr:${K}`]?: AppLolDraftLayoutAttributes[K] } & { [K in keyof AppLolDraftLayout & keyof AppLolDraftLayoutAttributes as `prop:${K}`]?: AppLolDraftLayout[K] };
+        "app-lol-draft-lobby-host": AppLolDraftLobbyHost;
+        "app-lol-draft-slot": Omit<AppLolDraftSlot, keyof AppLolDraftSlotAttributes> & { [K in keyof AppLolDraftSlot & keyof AppLolDraftSlotAttributes]?: AppLolDraftSlot[K] } & { [K in keyof AppLolDraftSlot & keyof AppLolDraftSlotAttributes as `attr:${K}`]?: AppLolDraftSlotAttributes[K] } & { [K in keyof AppLolDraftSlot & keyof AppLolDraftSlotAttributes as `prop:${K}`]?: AppLolDraftSlot[K] };
+        "app-lol-lobby-list": AppLolLobbyList;
+        "app-lol-notification": AppLolNotification;
+        "app-lol-team-section": Omit<AppLolTeamSection, keyof AppLolTeamSectionAttributes> & { [K in keyof AppLolTeamSection & keyof AppLolTeamSectionAttributes]?: AppLolTeamSection[K] } & { [K in keyof AppLolTeamSection & keyof AppLolTeamSectionAttributes as `attr:${K}`]?: AppLolTeamSectionAttributes[K] } & { [K in keyof AppLolTeamSection & keyof AppLolTeamSectionAttributes as `prop:${K}`]?: AppLolTeamSection[K] } & OneOf<"team", AppLolTeamSection["team"], AppLolTeamSectionAttributes["team"]>;
+        "app-mouse-host": AppMouseHost;
+        "app-mutation-observer": AppMutationObserver;
+        "app-resize-observer": AppResizeObserver;
+        "app-signals-computed-previous": AppSignalsComputedPrevious;
+        "app-signals-counter": Omit<AppSignalsCounter, keyof AppSignalsCounterAttributes> & { [K in keyof AppSignalsCounter & keyof AppSignalsCounterAttributes]?: AppSignalsCounter[K] } & { [K in keyof AppSignalsCounter & keyof AppSignalsCounterAttributes as `attr:${K}`]?: AppSignalsCounterAttributes[K] } & { [K in keyof AppSignalsCounter & keyof AppSignalsCounterAttributes as `prop:${K}`]?: AppSignalsCounter[K] };
+        "app-signals-derived-async": AppSignalsDerivedAsync;
+        "app-signals-mouse-event": AppSignalsMouseEvent;
+        "app-signals-observer-signals": AppSignalsObserverSignals;
+        "app-signals-todo": AppSignalsTodo;
+        "app-startup-context-inspector": AppStartupContextInspector;
+        "app-startup-context-provider": AppStartupContextProvider;
+        "app-tan-counter": AppTanCounter;
+        "app-tan-todo": AppTanTodo;
+        "app-timer": Omit<AppTimer, keyof AppTimerAttributes> & { [K in keyof AppTimer & keyof AppTimerAttributes]?: AppTimer[K] } & { [K in keyof AppTimer & keyof AppTimerAttributes as `attr:${K}`]?: AppTimerAttributes[K] } & { [K in keyof AppTimer & keyof AppTimerAttributes as `prop:${K}`]?: AppTimer[K] };
+        "app-timer-counter": Omit<AppTimerCounter, keyof AppTimerCounterAttributes> & { [K in keyof AppTimerCounter & keyof AppTimerCounterAttributes]?: AppTimerCounter[K] } & { [K in keyof AppTimerCounter & keyof AppTimerCounterAttributes as `attr:${K}`]?: AppTimerCounterAttributes[K] } & { [K in keyof AppTimerCounter & keyof AppTimerCounterAttributes as `prop:${K}`]?: AppTimerCounter[K] };
+        "app-timer-host": AppTimerHost;
+        "app-todo": AppTodo;
+        "app-transfer-state": AppTransferState;
+        "app-translation-profile": AppTranslationProfile;
+        "app-translation-shell": AppTranslationShell;
+        "app-translations-host": AppTranslationsHost;
+        "app-ts-query-hover-prefetch": AppTsQueryHoverPrefetch;
+        "app-ts-query-posts": AppTsQueryPosts;
+        "app-ts-query-posts-signals": AppTsQueryPostsSignals;
+        "app-ts-query-prefetch": AppTsQueryPrefetch;
+        "app-ts-query-prefetch-demo": AppTsQueryPrefetchDemo;
+        "app-ts-query-prefetch-reuse": AppTsQueryPrefetchReuse;
+        "app-ts-query-use-queries-demo": AppTsQueryUseQueriesDemo;
+        "app-ts-query-use-queries-inline": AppTsQueryUseQueriesInline;
+        "app-ts-query-use-queries-reuse": AppTsQueryUseQueriesReuse;
+        "app-ts-query-use-queries-signals": AppTsQueryUseQueriesSignals;
+        "app-ts-query-use-queries-signals-combine": AppTsQueryUseQueriesSignalsCombine;
+    }
 }
 export { LocalJSX as JSX };
 declare module "@stencil/core" {
-	export namespace JSX {
-		interface IntrinsicElements {
-			"app-compose-demo": LocalJSX.IntrinsicElements["app-compose-demo"] &
-				JSXBase.HTMLAttributes<HTMLAppComposeDemoElement>;
-			"app-counter": LocalJSX.IntrinsicElements["app-counter"] & JSXBase.HTMLAttributes<HTMLAppCounterElement>;
-			"app-ctx-counter": LocalJSX.IntrinsicElements["app-ctx-counter"] &
-				JSXBase.HTMLAttributes<HTMLAppCtxCounterElement>;
-			"app-ctx-counter-group": LocalJSX.IntrinsicElements["app-ctx-counter-group"] &
-				JSXBase.HTMLAttributes<HTMLAppCtxCounterGroupElement>;
-			"app-effect-demo": LocalJSX.IntrinsicElements["app-effect-demo"] &
-				JSXBase.HTMLAttributes<HTMLAppEffectDemoElement>;
-			"app-intersection-observer": LocalJSX.IntrinsicElements["app-intersection-observer"] &
-				JSXBase.HTMLAttributes<HTMLAppIntersectionObserverElement>;
-			"app-lifecycle-demo": LocalJSX.IntrinsicElements["app-lifecycle-demo"] &
-				JSXBase.HTMLAttributes<HTMLAppLifecycleDemoElement>;
-			"app-lol-champion-card": LocalJSX.IntrinsicElements["app-lol-champion-card"] &
-				JSXBase.HTMLAttributes<HTMLAppLolChampionCardElement>;
-			"app-lol-champion-filter": LocalJSX.IntrinsicElements["app-lol-champion-filter"] &
-				JSXBase.HTMLAttributes<HTMLAppLolChampionFilterElement>;
-			"app-lol-champion-pool": LocalJSX.IntrinsicElements["app-lol-champion-pool"] &
-				JSXBase.HTMLAttributes<HTMLAppLolChampionPoolElement>;
-			"app-lol-draft-area": LocalJSX.IntrinsicElements["app-lol-draft-area"] &
-				JSXBase.HTMLAttributes<HTMLAppLolDraftAreaElement>;
-			"app-lol-draft-hero-card": LocalJSX.IntrinsicElements["app-lol-draft-hero-card"] &
-				JSXBase.HTMLAttributes<HTMLAppLolDraftHeroCardElement>;
-			"app-lol-draft-info": LocalJSX.IntrinsicElements["app-lol-draft-info"] &
-				JSXBase.HTMLAttributes<HTMLAppLolDraftInfoElement>;
-			"app-lol-draft-layout": LocalJSX.IntrinsicElements["app-lol-draft-layout"] &
-				JSXBase.HTMLAttributes<HTMLAppLolDraftLayoutElement>;
-			"app-lol-draft-lobby-host": LocalJSX.IntrinsicElements["app-lol-draft-lobby-host"] &
-				JSXBase.HTMLAttributes<HTMLAppLolDraftLobbyHostElement>;
-			"app-lol-draft-slot": LocalJSX.IntrinsicElements["app-lol-draft-slot"] &
-				JSXBase.HTMLAttributes<HTMLAppLolDraftSlotElement>;
-			"app-lol-lobby-list": LocalJSX.IntrinsicElements["app-lol-lobby-list"] &
-				JSXBase.HTMLAttributes<HTMLAppLolLobbyListElement>;
-			"app-lol-notification": LocalJSX.IntrinsicElements["app-lol-notification"] &
-				JSXBase.HTMLAttributes<HTMLAppLolNotificationElement>;
-			"app-lol-team-section": LocalJSX.IntrinsicElements["app-lol-team-section"] &
-				JSXBase.HTMLAttributes<HTMLAppLolTeamSectionElement>;
-			"app-mouse-host": LocalJSX.IntrinsicElements["app-mouse-host"] & JSXBase.HTMLAttributes<HTMLAppMouseHostElement>;
-			"app-mutation-observer": LocalJSX.IntrinsicElements["app-mutation-observer"] &
-				JSXBase.HTMLAttributes<HTMLAppMutationObserverElement>;
-			"app-resize-observer": LocalJSX.IntrinsicElements["app-resize-observer"] &
-				JSXBase.HTMLAttributes<HTMLAppResizeObserverElement>;
-			"app-signals-computed-previous": LocalJSX.IntrinsicElements["app-signals-computed-previous"] &
-				JSXBase.HTMLAttributes<HTMLAppSignalsComputedPreviousElement>;
-			"app-signals-counter": LocalJSX.IntrinsicElements["app-signals-counter"] &
-				JSXBase.HTMLAttributes<HTMLAppSignalsCounterElement>;
-			"app-signals-derived-async": LocalJSX.IntrinsicElements["app-signals-derived-async"] &
-				JSXBase.HTMLAttributes<HTMLAppSignalsDerivedAsyncElement>;
-			"app-signals-mouse-event": LocalJSX.IntrinsicElements["app-signals-mouse-event"] &
-				JSXBase.HTMLAttributes<HTMLAppSignalsMouseEventElement>;
-			"app-signals-observer-signals": LocalJSX.IntrinsicElements["app-signals-observer-signals"] &
-				JSXBase.HTMLAttributes<HTMLAppSignalsObserverSignalsElement>;
-			"app-signals-todo": LocalJSX.IntrinsicElements["app-signals-todo"] &
-				JSXBase.HTMLAttributes<HTMLAppSignalsTodoElement>;
-			"app-startup-context-inspector": LocalJSX.IntrinsicElements["app-startup-context-inspector"] &
-				JSXBase.HTMLAttributes<HTMLAppStartupContextInspectorElement>;
-			/**
-			 * Infrastructure bridge that transfers Vike's server-collected startup context into
-			 * granular Stencil signal stores, making them available to all descendant components
-			 * via `useConfig()`, `useTheme()`, `useFeatureFlags()`, `useAuth()`, `useLocale()`, `useTenant()`.
-			 * Place this component at the root of the Stencil component tree (e.g. in `+Layout.tsx`).
-			 * It has no visual output — renders only a `<slot />`.
-			 * @example ```tsx
-			 * // +Layout.tsx
-			 * <AppStartupContextProvider startupContext={startupContext}>
-			 *   {children}
-			 * </AppStartupContextProvider>
-			 * ```
-			 */
-			"app-startup-context-provider": LocalJSX.IntrinsicElements["app-startup-context-provider"] &
-				JSXBase.HTMLAttributes<HTMLAppStartupContextProviderElement>;
-			"app-tan-counter": LocalJSX.IntrinsicElements["app-tan-counter"] &
-				JSXBase.HTMLAttributes<HTMLAppTanCounterElement>;
-			"app-tan-todo": LocalJSX.IntrinsicElements["app-tan-todo"] & JSXBase.HTMLAttributes<HTMLAppTanTodoElement>;
-			"app-timer": LocalJSX.IntrinsicElements["app-timer"] & JSXBase.HTMLAttributes<HTMLAppTimerElement>;
-			"app-timer-counter": LocalJSX.IntrinsicElements["app-timer-counter"] &
-				JSXBase.HTMLAttributes<HTMLAppTimerCounterElement>;
-			"app-timer-host": LocalJSX.IntrinsicElements["app-timer-host"] & JSXBase.HTMLAttributes<HTMLAppTimerHostElement>;
-			"app-todo": LocalJSX.IntrinsicElements["app-todo"] & JSXBase.HTMLAttributes<HTMLAppTodoElement>;
-			"app-transfer-state": LocalJSX.IntrinsicElements["app-transfer-state"] &
-				JSXBase.HTMLAttributes<HTMLAppTransferStateElement>;
-			"app-translation-profile": LocalJSX.IntrinsicElements["app-translation-profile"] &
-				JSXBase.HTMLAttributes<HTMLAppTranslationProfileElement>;
-			"app-translation-shell": LocalJSX.IntrinsicElements["app-translation-shell"] &
-				JSXBase.HTMLAttributes<HTMLAppTranslationShellElement>;
-			"app-translations-host": LocalJSX.IntrinsicElements["app-translations-host"] &
-				JSXBase.HTMLAttributes<HTMLAppTranslationsHostElement>;
-			"app-ts-query-hover-prefetch": LocalJSX.IntrinsicElements["app-ts-query-hover-prefetch"] &
-				JSXBase.HTMLAttributes<HTMLAppTsQueryHoverPrefetchElement>;
-			"app-ts-query-posts": LocalJSX.IntrinsicElements["app-ts-query-posts"] &
-				JSXBase.HTMLAttributes<HTMLAppTsQueryPostsElement>;
-			"app-ts-query-posts-signals": LocalJSX.IntrinsicElements["app-ts-query-posts-signals"] &
-				JSXBase.HTMLAttributes<HTMLAppTsQueryPostsSignalsElement>;
-			/**
-			 * Demonstrates `usePrefetchQuery` as a field initializer — seeds the cache before
-			 * the component's own `useQuery` runs, eliminating the initial loading state.
-			 * @example ```html
-			 * <app-ts-query-prefetch />
-			 * ```
-			 */
-			"app-ts-query-prefetch": LocalJSX.IntrinsicElements["app-ts-query-prefetch"] &
-				JSXBase.HTMLAttributes<HTMLAppTsQueryPrefetchElement>;
-			"app-ts-query-prefetch-demo": LocalJSX.IntrinsicElements["app-ts-query-prefetch-demo"] &
-				JSXBase.HTMLAttributes<HTMLAppTsQueryPrefetchDemoElement>;
-			/**
-			 * Demonstrates `prefetchPosts` — a reusable prefetch function defined outside the
-			 * component and called as a field initializer. The function is fully composable and
-			 * can be shared across multiple components.
-			 * @example ```html
-			 * <app-ts-query-prefetch-reuse />
-			 * ```
-			 */
-			"app-ts-query-prefetch-reuse": LocalJSX.IntrinsicElements["app-ts-query-prefetch-reuse"] &
-				JSXBase.HTMLAttributes<HTMLAppTsQueryPrefetchReuseElement>;
-			/**
-			 * Demo wrapper — provides a shared `QueryClient` and SSR hydration, then embeds the three
-			 * `useQueries` / `$useQueries` examples.
-			 */
-			"app-ts-query-use-queries-demo": LocalJSX.IntrinsicElements["app-ts-query-use-queries-demo"] &
-				JSXBase.HTMLAttributes<HTMLAppTsQueryUseQueriesDemoElement>;
-			/**
-			 * Component 1 — **classic**. Uses the same-file `useTopPosts()` helper and renders the parallel
-			 * results array returned by `useQueries`.
-			 */
-			"app-ts-query-use-queries-inline": LocalJSX.IntrinsicElements["app-ts-query-use-queries-inline"] &
-				JSXBase.HTMLAttributes<HTMLAppTsQueryUseQueriesInlineElement>;
-			/**
-			 * Component 2 — **classic, reusable across files**. Uses `usePostsByIds` and `usePostsLoadedCount`,
-			 * which are defined OUTSIDE this component in `use-queries.api.ts` and composed in as field
-			 * initializers. `usePostsLoadedCount` uses `combine` to derive a single summary value.
-			 */
-			"app-ts-query-use-queries-reuse": LocalJSX.IntrinsicElements["app-ts-query-use-queries-reuse"] &
-				JSXBase.HTMLAttributes<HTMLAppTsQueryUseQueriesReuseElement>;
-			/**
-			 * Component 3 — **signals**. Uses `$usePostsByIds` (defined outside the component, in
-			 * `use-queries.api.ts`) which wraps `$useQueries` and returns a single `Signal` of the results
-			 * array. Requires `useSignalWatcher()` to be active.
-			 */
-			"app-ts-query-use-queries-signals": LocalJSX.IntrinsicElements["app-ts-query-use-queries-signals"] &
-				JSXBase.HTMLAttributes<HTMLAppTsQueryUseQueriesSignalsElement>;
-			/**
-			 * Component 4 — **signals with combine**. Uses `$usePostsWithCombine` which wraps `$useQueries`
-			 * with a `combine` function to produce a single derived summary signal. The returned signal is a
-			 * plain value (not a per-element proxy array).
-			 */
-			"app-ts-query-use-queries-signals-combine": LocalJSX.IntrinsicElements["app-ts-query-use-queries-signals-combine"] &
-				JSXBase.HTMLAttributes<HTMLAppTsQueryUseQueriesSignalsCombineElement>;
-		}
-	}
+    export namespace JSX {
+        interface IntrinsicElements {
+            "app-compose-demo": LocalJSX.IntrinsicElements["app-compose-demo"] & JSXBase.HTMLAttributes<HTMLAppComposeDemoElement>;
+            "app-counter": LocalJSX.IntrinsicElements["app-counter"] & JSXBase.HTMLAttributes<HTMLAppCounterElement>;
+            "app-ctx-counter": LocalJSX.IntrinsicElements["app-ctx-counter"] & JSXBase.HTMLAttributes<HTMLAppCtxCounterElement>;
+            "app-ctx-counter-group": LocalJSX.IntrinsicElements["app-ctx-counter-group"] & JSXBase.HTMLAttributes<HTMLAppCtxCounterGroupElement>;
+            "app-effect-demo": LocalJSX.IntrinsicElements["app-effect-demo"] & JSXBase.HTMLAttributes<HTMLAppEffectDemoElement>;
+            "app-intersection-observer": LocalJSX.IntrinsicElements["app-intersection-observer"] & JSXBase.HTMLAttributes<HTMLAppIntersectionObserverElement>;
+            "app-lifecycle-demo": LocalJSX.IntrinsicElements["app-lifecycle-demo"] & JSXBase.HTMLAttributes<HTMLAppLifecycleDemoElement>;
+            "app-lol-champion-card": LocalJSX.IntrinsicElements["app-lol-champion-card"] & JSXBase.HTMLAttributes<HTMLAppLolChampionCardElement>;
+            "app-lol-champion-filter": LocalJSX.IntrinsicElements["app-lol-champion-filter"] & JSXBase.HTMLAttributes<HTMLAppLolChampionFilterElement>;
+            "app-lol-champion-pool": LocalJSX.IntrinsicElements["app-lol-champion-pool"] & JSXBase.HTMLAttributes<HTMLAppLolChampionPoolElement>;
+            "app-lol-draft-area": LocalJSX.IntrinsicElements["app-lol-draft-area"] & JSXBase.HTMLAttributes<HTMLAppLolDraftAreaElement>;
+            "app-lol-draft-hero-card": LocalJSX.IntrinsicElements["app-lol-draft-hero-card"] & JSXBase.HTMLAttributes<HTMLAppLolDraftHeroCardElement>;
+            "app-lol-draft-info": LocalJSX.IntrinsicElements["app-lol-draft-info"] & JSXBase.HTMLAttributes<HTMLAppLolDraftInfoElement>;
+            "app-lol-draft-layout": LocalJSX.IntrinsicElements["app-lol-draft-layout"] & JSXBase.HTMLAttributes<HTMLAppLolDraftLayoutElement>;
+            "app-lol-draft-lobby-host": LocalJSX.IntrinsicElements["app-lol-draft-lobby-host"] & JSXBase.HTMLAttributes<HTMLAppLolDraftLobbyHostElement>;
+            "app-lol-draft-slot": LocalJSX.IntrinsicElements["app-lol-draft-slot"] & JSXBase.HTMLAttributes<HTMLAppLolDraftSlotElement>;
+            "app-lol-lobby-list": LocalJSX.IntrinsicElements["app-lol-lobby-list"] & JSXBase.HTMLAttributes<HTMLAppLolLobbyListElement>;
+            "app-lol-notification": LocalJSX.IntrinsicElements["app-lol-notification"] & JSXBase.HTMLAttributes<HTMLAppLolNotificationElement>;
+            "app-lol-team-section": LocalJSX.IntrinsicElements["app-lol-team-section"] & JSXBase.HTMLAttributes<HTMLAppLolTeamSectionElement>;
+            "app-mouse-host": LocalJSX.IntrinsicElements["app-mouse-host"] & JSXBase.HTMLAttributes<HTMLAppMouseHostElement>;
+            "app-mutation-observer": LocalJSX.IntrinsicElements["app-mutation-observer"] & JSXBase.HTMLAttributes<HTMLAppMutationObserverElement>;
+            "app-resize-observer": LocalJSX.IntrinsicElements["app-resize-observer"] & JSXBase.HTMLAttributes<HTMLAppResizeObserverElement>;
+            "app-signals-computed-previous": LocalJSX.IntrinsicElements["app-signals-computed-previous"] & JSXBase.HTMLAttributes<HTMLAppSignalsComputedPreviousElement>;
+            "app-signals-counter": LocalJSX.IntrinsicElements["app-signals-counter"] & JSXBase.HTMLAttributes<HTMLAppSignalsCounterElement>;
+            "app-signals-derived-async": LocalJSX.IntrinsicElements["app-signals-derived-async"] & JSXBase.HTMLAttributes<HTMLAppSignalsDerivedAsyncElement>;
+            "app-signals-mouse-event": LocalJSX.IntrinsicElements["app-signals-mouse-event"] & JSXBase.HTMLAttributes<HTMLAppSignalsMouseEventElement>;
+            "app-signals-observer-signals": LocalJSX.IntrinsicElements["app-signals-observer-signals"] & JSXBase.HTMLAttributes<HTMLAppSignalsObserverSignalsElement>;
+            "app-signals-todo": LocalJSX.IntrinsicElements["app-signals-todo"] & JSXBase.HTMLAttributes<HTMLAppSignalsTodoElement>;
+            "app-startup-context-inspector": LocalJSX.IntrinsicElements["app-startup-context-inspector"] & JSXBase.HTMLAttributes<HTMLAppStartupContextInspectorElement>;
+            /**
+             * Infrastructure bridge that transfers Vike's server-collected startup context into
+             * granular Stencil signal stores, making them available to all descendant components
+             * via `useConfig()`, `useTheme()`, `useFeatureFlags()`, `useAuth()`, `useLocale()`, `useTenant()`.
+             * Place this component at the root of the Stencil component tree (e.g. in `+Layout.tsx`).
+             * It has no visual output — renders only a `<slot />`.
+             * @example ```tsx
+             * // +Layout.tsx
+             * <AppStartupContextProvider startupContext={startupContext}>
+             *   {children}
+             * </AppStartupContextProvider>
+             * ```
+             */
+            "app-startup-context-provider": LocalJSX.IntrinsicElements["app-startup-context-provider"] & JSXBase.HTMLAttributes<HTMLAppStartupContextProviderElement>;
+            "app-tan-counter": LocalJSX.IntrinsicElements["app-tan-counter"] & JSXBase.HTMLAttributes<HTMLAppTanCounterElement>;
+            "app-tan-todo": LocalJSX.IntrinsicElements["app-tan-todo"] & JSXBase.HTMLAttributes<HTMLAppTanTodoElement>;
+            "app-timer": LocalJSX.IntrinsicElements["app-timer"] & JSXBase.HTMLAttributes<HTMLAppTimerElement>;
+            "app-timer-counter": LocalJSX.IntrinsicElements["app-timer-counter"] & JSXBase.HTMLAttributes<HTMLAppTimerCounterElement>;
+            "app-timer-host": LocalJSX.IntrinsicElements["app-timer-host"] & JSXBase.HTMLAttributes<HTMLAppTimerHostElement>;
+            "app-todo": LocalJSX.IntrinsicElements["app-todo"] & JSXBase.HTMLAttributes<HTMLAppTodoElement>;
+            "app-transfer-state": LocalJSX.IntrinsicElements["app-transfer-state"] & JSXBase.HTMLAttributes<HTMLAppTransferStateElement>;
+            "app-translation-profile": LocalJSX.IntrinsicElements["app-translation-profile"] & JSXBase.HTMLAttributes<HTMLAppTranslationProfileElement>;
+            "app-translation-shell": LocalJSX.IntrinsicElements["app-translation-shell"] & JSXBase.HTMLAttributes<HTMLAppTranslationShellElement>;
+            "app-translations-host": LocalJSX.IntrinsicElements["app-translations-host"] & JSXBase.HTMLAttributes<HTMLAppTranslationsHostElement>;
+            "app-ts-query-hover-prefetch": LocalJSX.IntrinsicElements["app-ts-query-hover-prefetch"] & JSXBase.HTMLAttributes<HTMLAppTsQueryHoverPrefetchElement>;
+            "app-ts-query-posts": LocalJSX.IntrinsicElements["app-ts-query-posts"] & JSXBase.HTMLAttributes<HTMLAppTsQueryPostsElement>;
+            "app-ts-query-posts-signals": LocalJSX.IntrinsicElements["app-ts-query-posts-signals"] & JSXBase.HTMLAttributes<HTMLAppTsQueryPostsSignalsElement>;
+            /**
+             * Demonstrates `usePrefetchQuery` as a field initializer — seeds the cache before
+             * the component's own `useQuery` runs, eliminating the initial loading state.
+             * @example ```html
+             * <app-ts-query-prefetch />
+             * ```
+             */
+            "app-ts-query-prefetch": LocalJSX.IntrinsicElements["app-ts-query-prefetch"] & JSXBase.HTMLAttributes<HTMLAppTsQueryPrefetchElement>;
+            "app-ts-query-prefetch-demo": LocalJSX.IntrinsicElements["app-ts-query-prefetch-demo"] & JSXBase.HTMLAttributes<HTMLAppTsQueryPrefetchDemoElement>;
+            /**
+             * Demonstrates `prefetchPosts` — a reusable prefetch function defined outside the
+             * component and called as a field initializer. The function is fully composable and
+             * can be shared across multiple components.
+             * @example ```html
+             * <app-ts-query-prefetch-reuse />
+             * ```
+             */
+            "app-ts-query-prefetch-reuse": LocalJSX.IntrinsicElements["app-ts-query-prefetch-reuse"] & JSXBase.HTMLAttributes<HTMLAppTsQueryPrefetchReuseElement>;
+            /**
+             * Demo wrapper — provides a shared `QueryClient` and SSR hydration, then embeds the three
+             * `useQueries` / `$useQueries` examples.
+             */
+            "app-ts-query-use-queries-demo": LocalJSX.IntrinsicElements["app-ts-query-use-queries-demo"] & JSXBase.HTMLAttributes<HTMLAppTsQueryUseQueriesDemoElement>;
+            /**
+             * Component 1 — **classic**. Uses the same-file `useTopPosts()` helper and renders the parallel
+             * results array returned by `useQueries`.
+             */
+            "app-ts-query-use-queries-inline": LocalJSX.IntrinsicElements["app-ts-query-use-queries-inline"] & JSXBase.HTMLAttributes<HTMLAppTsQueryUseQueriesInlineElement>;
+            /**
+             * Component 2 — **classic, reusable across files**. Uses `usePostsByIds` and `usePostsLoadedCount`,
+             * which are defined OUTSIDE this component in `use-queries.api.ts` and composed in as field
+             * initializers. `usePostsLoadedCount` uses `combine` to derive a single summary value.
+             */
+            "app-ts-query-use-queries-reuse": LocalJSX.IntrinsicElements["app-ts-query-use-queries-reuse"] & JSXBase.HTMLAttributes<HTMLAppTsQueryUseQueriesReuseElement>;
+            /**
+             * Component 3 — **signals**. Uses `$usePostsByIds` (defined outside the component, in
+             * `use-queries.api.ts`) which wraps `$useQueries` and returns a single `Signal` of the results
+             * array. Requires `useSignalWatcher()` to be active.
+             */
+            "app-ts-query-use-queries-signals": LocalJSX.IntrinsicElements["app-ts-query-use-queries-signals"] & JSXBase.HTMLAttributes<HTMLAppTsQueryUseQueriesSignalsElement>;
+            /**
+             * Component 4 — **signals with combine**. Uses `$usePostsWithCombine` which wraps `$useQueries`
+             * with a `combine` function to produce a single derived summary signal. The returned signal is a
+             * plain value (not a per-element proxy array).
+             */
+            "app-ts-query-use-queries-signals-combine": LocalJSX.IntrinsicElements["app-ts-query-use-queries-signals-combine"] & JSXBase.HTMLAttributes<HTMLAppTsQueryUseQueriesSignalsCombineElement>;
+        }
+    }
 }

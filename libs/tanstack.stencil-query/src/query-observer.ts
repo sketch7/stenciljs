@@ -1,7 +1,7 @@
 import { detectServer, use, useLoadEffect } from "@ssv/stencil-core";
 import type { Ref } from "@ssv/stencil-core";
 import { computed, createWatcher } from "@ssv/stencil-signals";
-import { QueryObserver, notifyManager } from "@tanstack/query-core";
+import { QueryObserver, hashKey, notifyManager } from "@tanstack/query-core";
 import type {
 	DefaultError,
 	DefinedQueryObserverResult,
@@ -268,90 +268,130 @@ export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey exte
 	// resolve — driven by the same signals the key getter reads, so when that signal changes (for
 	// whatever reason) this query's key is re-evaluated — then prefetches once. On timeout it logs a
 	// console.error and renders without the query. Bounded by SSR_HELD_QUERY_TIMEOUT_MS.
-	use(() => ({
-		hostWillLoad(): Promise<void> | void {
-			if (!detectServer()) {
-				return;
-			}
-			const qc = clientRef.current;
-			if (!qc) {
-				return;
-			}
+	use(() => {
+		// Aborts an in-flight held settle (set while waiting; cleared once settled). Lets
+		// hostDisconnected tear the settle down immediately instead of leaking the watcher/timer
+		// and waiting out the timeout when the component is removed mid-wait.
+		let abortHeldSettle: (() => void) | undefined;
 
-			const syncResult = (): void => {
-				if (observer) {
-					handlers.onConnect?.(observer.getCurrentResult());
+		return {
+			hostWillLoad(): Promise<void> | void {
+				if (!detectServer()) {
+					return;
 				}
-			};
+				const qc = clientRef.current;
+				if (!qc) {
+					return;
+				}
 
-			const initial = getOpts();
-			if (initial.enabled === false) {
-				return;
-			}
-			if (!isQueryKeyHeld(initial.queryKey)) {
-				return qc.prefetchQuery(initial).then(syncResult);
-			}
-
-			// Held: the queryKey is not yet resolved. Wait reactively until it settles.
-			return new Promise<void>(resolve => {
-				let done = false;
-
-				const readiness = computed(() => {
-					const opts = getOpts();
-					return { opts, disabled: opts.enabled === false, held: isQueryKeyHeld(opts.queryKey) };
-				});
-
-				const finish = (): void => {
-					if (done) {
-						return;
+				const syncResult = (): void => {
+					if (observer) {
+						handlers.onConnect?.(observer.getCurrentResult());
 					}
-					done = true;
-					watcher.dispose();
-					clearTimeout(timer);
-					resolve();
 				};
 
-				const check = (): void => {
-					if (done) {
-						return;
-					}
-					const { opts, disabled, held } = readiness();
-					if (disabled) {
-						finish();
-						return;
-					}
-					if (!held) {
+				const initial = getOpts();
+				if (initial.enabled === false) {
+					return;
+				}
+				if (!isQueryKeyHeld(initial.queryKey)) {
+					return qc.prefetchQuery(initial).then(syncResult);
+				}
+
+				// Held: the queryKey is not yet resolved. Wait reactively until it settles.
+				return new Promise<void>(resolve => {
+					let done = false;
+					// The prefetch currently in flight: `hash` to compare keys, `key` to cancel it. A
+					// re-fired check for the same key is ignored; a newer key supersedes (cancels) it.
+					let inflight: { hash: string; key: TQueryKey } | undefined;
+
+					const readiness = computed(() => {
+						const opts = getOpts();
+						return { opts, disabled: opts.enabled === false, held: isQueryKeyHeld(opts.queryKey) };
+					});
+
+					const finish = (): void => {
+						if (done) {
+							return;
+						}
+						done = true;
+						abortHeldSettle = undefined;
 						watcher.dispose();
-						// Re-arm the observer to the now-resolved key (mirrors hostWillRender's
-						// setOptions) so its result reflects the prefetched data when synced.
+						clearTimeout(timer);
+						resolve();
+					};
+
+					const check = (): void => {
+						if (done) {
+							return;
+						}
+						const { opts, disabled, held } = readiness();
+						if (disabled) {
+							finish();
+							return;
+						}
+						if (held) {
+							return;
+						}
+
+						const keyHash = hashKey(opts.queryKey);
+						if (inflight?.hash === keyHash) {
+							// Already prefetching this exact key — ignore the re-entrant check.
+							return;
+						}
+						// Key resolved (or changed): cancel the superseded in-flight prefetch, then fetch
+						// the latest. The watcher stays armed so a further key change is still picked up.
+						if (inflight) {
+							void qc.cancelQueries({ queryKey: inflight.key, exact: true });
+						}
+						inflight = { hash: keyHash, key: opts.queryKey };
+						// Re-arm the observer to the resolved key (mirrors hostWillRender's setOptions)
+						// so its result reflects the prefetched data when synced.
 						observer?.setOptions(defaultedOptions(qc, isRestoringRef.current));
-						qc.prefetchQuery(opts).then(syncResult).then(finish, finish);
-					}
-				};
+						// Settle only if this prefetch is still the current one — a prefetch superseded
+						// by a newer key (inflight moved on) must not resolve the SSR wait.
+						const settleIfLatest = (): void => {
+							if (!done && inflight?.hash === keyHash) {
+								finish();
+							}
+						};
+						qc.prefetchQuery(opts).then(syncResult).then(settleIfLatest, settleIfLatest);
+					};
 
-				// Reading a (computed) signal is forbidden inside the watcher's synchronous notify
-				// phase, so defer re-evaluation to a microtask.
-				const watcher = createWatcher(() => queueMicrotask(check));
-				const timer = setTimeout(() => {
-					if (done) {
-						return;
-					}
-					// The key never resolved within the budget — surface it loudly rather than
-					// silently dropping the query from the SSR output.
-					console.error(
-						`[ssv:query] held query timed out after ${SSR_HELD_QUERY_TIMEOUT_MS}ms during SSR — its ` +
-							`key never resolved, so it is excluded from the server-rendered output. ` +
-							`queryKey: ${JSON.stringify(getOpts().queryKey)}`,
-					);
-					finish();
-				}, SSR_HELD_QUERY_TIMEOUT_MS);
+					// Reading a (computed) signal is forbidden inside the watcher's synchronous notify
+					// phase, so defer re-evaluation to a microtask.
+					const watcher = createWatcher(() => queueMicrotask(check));
+					const timer = setTimeout(() => {
+						if (done) {
+							return;
+						}
+						console.error(
+							`[ssv:query] held query timed out after ${SSR_HELD_QUERY_TIMEOUT_MS}ms during SSR — its ` +
+								`key never resolved, so it is excluded from the server-rendered output. ` +
+								`queryKey: ${JSON.stringify(initial.queryKey)}`,
+						);
+						finish();
+					}, SSR_HELD_QUERY_TIMEOUT_MS);
 
-				readiness();
-				watcher.watch(readiness);
-				check();
-			});
-		},
-	}));
+					// Disconnect mid-wait: cancel any in-flight prefetch and tear the settle down now.
+					abortHeldSettle = (): void => {
+						if (inflight) {
+							void qc.cancelQueries({ queryKey: inflight.key, exact: true });
+						}
+						finish();
+					};
+
+					readiness();
+					watcher.watch(readiness);
+					check();
+				});
+			},
+
+			hostDisconnected(): void {
+				abortHeldSettle?.();
+			},
+		};
+	});
 
 	return { refetch, getObserver: () => observer };
 }

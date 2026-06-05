@@ -207,4 +207,84 @@ describe("$useQuery — SSR chained / held-until-key-resolves", () => {
 		await vi.advanceTimersByTimeAsync(5000);
 		await load;
 	});
+
+	it("aborts the held settle on disconnect — resolves promptly without fetching or waiting out the timeout", async () => {
+		const errorSpy = vi.spyOn(console, "error").mockReturnValue(undefined);
+		const loader = vi.fn<() => Promise<string>>(async () => "data");
+		const key = signal<string | undefined>(undefined); // never resolves
+
+		using host = new TestHost();
+		$useQuery(() => ({ queryKey: ["dep", key()] as const, queryFn: async () => loader() }), qc);
+
+		host.connect();
+		let settled = false;
+		const load = host.willLoad();
+		void load.then(() => {
+			settled = true;
+		});
+
+		await Promise.resolve();
+		expect(settled).toBeFalsy(); // held — still pending
+
+		host.disconnect();
+		await load; // resolves on disconnect, not after the ~15s timeout
+		expect(settled).toBeTruthy();
+		expect(loader).not.toHaveBeenCalled();
+
+		// The timer was cleared on abort — advancing past the budget logs nothing and fetches nothing.
+		await vi.advanceTimersByTimeAsync(20_000);
+		expect(loader).not.toHaveBeenCalled();
+		expect(errorSpy).not.toHaveBeenCalled();
+
+		errorSpy.mockRestore();
+	});
+
+	it("supersedes an in-flight prefetch when the key changes — awaits the latest, not the previous", async () => {
+		const resolvers: Record<string, (value: string) => void> = {};
+		const loader = vi.fn(
+			async (k: string) =>
+				new Promise<string>(res => {
+					resolvers[k] = res;
+				}),
+		);
+		const key = signal<string | undefined>(undefined);
+
+		using host = new TestHost();
+		$useQuery(
+			() => ({ queryKey: ["dep", key()] as const, queryFn: async ({ queryKey }) => loader(queryKey[1] as string) }),
+			qc,
+		);
+
+		host.connect();
+		let settled = false;
+		const load = host.willLoad();
+		void load.then(() => {
+			settled = true;
+		});
+
+		const flush = async (): Promise<void> => {
+			await vi.advanceTimersByTimeAsync(0);
+			await Promise.resolve();
+		};
+
+		// Key resolves to "a" → prefetch "a" starts and stays in flight.
+		key.set("a");
+		await flush();
+		expect(loader).toHaveBeenCalledWith("a");
+
+		// Key changes to "b" before "a" resolves → the previous prefetch is superseded by "b".
+		key.set("b");
+		await flush();
+		expect(loader).toHaveBeenCalledWith("b");
+
+		// Resolving the superseded "a" must NOT settle the SSR wait.
+		resolvers.a?.("data-a");
+		await flush();
+		expect(settled).toBeFalsy();
+
+		// Resolving the latest "b" settles it.
+		resolvers.b?.("data-b");
+		await load;
+		expect(settled).toBeTruthy();
+	});
 });

@@ -65,8 +65,9 @@ export function usePendingTasks(): PendingTasksHandle {
 						return;
 					}
 					const r = factory();
-					log.log(() => `hostWillLoad  factory triggered  hasPromise=${r !== null && r !== undefined}`);
-					return r === null || r === undefined ? undefined : (r as Promise<void>);
+					const isNil = r === null || r === undefined;
+					log.log(() => `hostWillLoad  factory triggered  hasPromise=${!isNil}`);
+					return isNil ? undefined : r.then();
 				},
 			}));
 		},

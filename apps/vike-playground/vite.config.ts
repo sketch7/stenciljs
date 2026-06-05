@@ -114,9 +114,21 @@ export default defineConfig(({ command, mode }) => {
 	const isDev = command === "serve";
 	const isAnalyze = env["ANALYZE"] === "true";
 
+	// In dev, activate SSV debug logging by default across all three execution contexts:
+	//  1. Vite client bundle (@ssv/source imports): handled via `define.DEBUG` below.
+	//  2. Hydrate module (Node.js SSR, same process): reads process.env.SSV_DEBUG at runtime.
+	//  3. Browser custom elements (pre-built): inherits via preBuildCommand child process so
+	//     tsdown bakes DEBUG="true" into stencil-core dist on the next lib rebuild.
+	// Override selectively: SSV_DEBUG=transfer-state,query-hydration pnpm dev
+	if (isDev) {
+		process.env["SSV_DEBUG"] ??= "true";
+	}
+
 	return {
 		define: {
-			DEBUG: JSON.stringify(process.env["SSV_DEBUG"] ?? "false"),
+			// In dev all SSV log categories are on by default.
+			// Override selectively: SSV_DEBUG=transfer-state,query-hydration pnpm dev
+			DEBUG: JSON.stringify(process.env["SSV_DEBUG"] ?? (isDev ? "true" : "false")),
 		},
 		plugins: [
 			vike(),
@@ -126,6 +138,9 @@ export default defineConfig(({ command, mode }) => {
 			stencilWatch({
 				apply: "serve",
 				packageDir: stencilPkgDir,
+				// NODE_ENV=development: disables minification (faster builds) and lets
+				// rollupPlugins.before in stencil.config.ts bake DEBUG="true" into artifacts.
+				buildCommand: "NODE_ENV=development pnpm stencil build",
 				watchDirs: [
 					path.resolve(__dirname, "../../libs/stencil-core/src"),
 					path.resolve(__dirname, "../../libs/stencil-signals/src"),

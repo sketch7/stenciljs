@@ -91,6 +91,7 @@
     "signal-polyfill": "catalog:"
   },
   "devDependencies": {
+    "@rollup/plugin-replace": "^6.0.3",
     "@types/node": "catalog:",
     "jsdom": "catalog:",
     "oxlint": "catalog:",

@@ -9,6 +9,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { $useQuery } from "./signals/use-query";
 import { useQuery } from "./use-query";
 
+const flush = async (): Promise<void> => {
+	await vi.advanceTimersByTimeAsync(0);
+	await Promise.resolve();
+};
+
 describe("useQuery — SSR auto-prefetch", () => {
 	let qc: QueryClient;
 
@@ -251,7 +256,7 @@ describe("$useQuery — SSR chained / held-until-key-resolves", () => {
 
 		using host = new TestHost();
 		$useQuery(
-			() => ({ queryKey: ["dep", key()] as const, queryFn: async ({ queryKey }) => loader(queryKey[1] as string) }),
+			() => ({ queryKey: ["dep", key()] as const, queryFn: async ({ queryKey }) => loader(queryKey[1]!) }),
 			qc,
 		);
 
@@ -261,11 +266,6 @@ describe("$useQuery — SSR chained / held-until-key-resolves", () => {
 		void load.then(() => {
 			settled = true;
 		});
-
-		const flush = async (): Promise<void> => {
-			await vi.advanceTimersByTimeAsync(0);
-			await Promise.resolve();
-		};
 
 		// Key resolves to "a" → prefetch "a" starts and stays in flight.
 		key.set("a");

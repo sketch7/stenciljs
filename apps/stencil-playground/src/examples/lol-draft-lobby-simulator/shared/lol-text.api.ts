@@ -21,17 +21,6 @@ export function useLoLText() {
 	const client = useLolDraftQueryClient();
 	const config = useConfig();
 
-	use({
-		async hostWillLoad() {
-			const baseUrl = config.current?.baseUrl() ?? "";
-			await client.current?.prefetchQuery({
-				queryKey: QUERY_KEY,
-				queryFn: async () => fetchLolText(baseUrl),
-				staleTime: Infinity,
-			});
-		},
-	});
-
 	const textRef = useQuery(() => {
 		const baseUrl = config.current?.baseUrl() ?? "";
 		return { queryKey: QUERY_KEY, staleTime: Infinity, queryFn: async () => fetchLolText(baseUrl) };

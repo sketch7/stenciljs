@@ -1,4 +1,3 @@
-import { use } from "@ssv/stencil-core";
 import { useQuery } from "@ssv/tanstack.stencil-query";
 
 import { useConfig } from "../../../startup-context";

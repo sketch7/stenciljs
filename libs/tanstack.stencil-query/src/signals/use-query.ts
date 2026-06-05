@@ -1,9 +1,11 @@
+import { detectServer, use } from "@ssv/stencil-core";
 import type { Ref } from "@ssv/stencil-core";
 import { signal } from "@ssv/stencil-signals";
 import type { DefaultError, QueryClient, QueryKey, QueryObserverResult } from "@tanstack/query-core";
 
-import { pendingQueryState, useBaseQueryObserver } from "../query-observer";
+import { isQueryKeyHeld, pendingQueryState, useBaseQueryObserver } from "../query-observer";
 import type { UseQueryOptions } from "../query-observer";
+import { heldQuerySettle } from "./held-query-settle";
 import { createSignalResult } from "./signal-result";
 import type { SignalFields } from "./signal-result";
 
@@ -81,12 +83,57 @@ export function $useQuery<
 	client?: QueryClient | Ref<QueryClient>,
 ): QuerySignalResult<TData, TError> {
 	const state = signal(pendingQueryState as unknown as QueryStateData<TData, TError>);
+	const getOpts = typeof getOptions === "function" ? getOptions : () => getOptions;
 
-	const { refetch } = useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey>(getOptions, client, {
-		onResult: result => state.set(result),
-		onConnect: result => state.set(result),
-		onRender: result => state.set(result),
-		onDispose: () => state.set(pendingQueryState as unknown as QueryStateData<TData, TError>),
+	const { refetch, getObserver, reArm, clientRef } = useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey>(
+		getOptions,
+		client,
+		{
+			onResult: result => state.set(result),
+			onConnect: result => state.set(result),
+			onRender: result => state.set(result),
+			onDispose: () => state.set(pendingQueryState as unknown as QueryStateData<TData, TError>),
+		},
+	);
+
+	use(() => {
+		let abortHeldSettle: (() => void) | undefined;
+
+		return {
+			hostWillLoad(): Promise<void> | void {
+				if (!detectServer()) {
+					return;
+				}
+				const qc = clientRef.current;
+				if (!qc) {
+					return;
+				}
+				const initial = getOpts();
+				if (initial.enabled === false || !isQueryKeyHeld(initial.queryKey)) {
+					return;
+				}
+				const syncResult = (): void => {
+					const obs = getObserver();
+					if (obs) {
+						state.set(obs.getCurrentResult());
+					}
+				};
+				const { promise, abort } = heldQuerySettle<TQueryFnData, TError, TData, TQueryKey>({
+					qc,
+					getOpts,
+					isHeld: opts => isQueryKeyHeld(opts.queryKey),
+					reArm,
+					syncResult,
+				});
+				abortHeldSettle = abort;
+				return promise.finally(() => {
+					abortHeldSettle = undefined;
+				});
+			},
+			hostDisconnected(): void {
+				abortHeldSettle?.();
+			},
+		};
 	});
 
 	return createSignalResult(state, { refetch });

@@ -1,7 +1,6 @@
 import { detectServer, use, useLoadEffect } from "@ssv/stencil-core";
 import type { Ref } from "@ssv/stencil-core";
-import { computed, createWatcher } from "@ssv/stencil-signals";
-import { QueryObserver, hashKey, notifyManager } from "@tanstack/query-core";
+import { QueryObserver, notifyManager } from "@tanstack/query-core";
 import type {
 	DefaultError,
 	DefinedQueryObserverResult,
@@ -125,15 +124,11 @@ export type QueryObserverHandlers<TData, TError> = {
 export type QueryObserverHandle<TQueryFnData, TError, TData, TQueryKey extends QueryKey> = {
 	refetch: QueryObserverResult<TData, TError>["refetch"];
 	getObserver: () => QueryObserver<TQueryFnData, TError, TData, TQueryFnData, TQueryKey> | undefined;
+	/** Re-applies current defaulted options to the observer — used by the signals hook after a held key resolves. */
+	reArm: () => void;
+	/** The resolved query client ref — exposed so `$useQuery` can access it in its own lifecycle block. */
+	clientRef: Ref<QueryClient>;
 };
-
-/**
- * Upper bound on how long the SSR settle waits for a held query's key to resolve before giving up
- * and rendering without it. A held query whose key never resolves (e.g. a permanently-undefined
- * upstream) must not block `componentWillLoad` indefinitely — the outer SSR worker timeout is the
- * final backstop, but this keeps a single stuck query from monopolising the render budget.
- */
-const SSR_HELD_QUERY_TIMEOUT_MS = 15_000;
 
 /**
  * A query is **held** when its key is not yet resolvable — `undefined`, or an array with an
@@ -145,7 +140,7 @@ const SSR_HELD_QUERY_TIMEOUT_MS = 15_000;
  *
  * See the "Signal-dependent queries & SSR" section of the README for the full behaviour and convention.
  */
-function isQueryKeyHeld(queryKey: unknown): boolean {
+export function isQueryKeyHeld(queryKey: unknown): boolean {
 	if (queryKey === undefined) {
 		return true;
 	}
@@ -169,9 +164,10 @@ function isQueryKeyHeld(queryKey: unknown): boolean {
  *
  * **Held queries** — when the `queryKey` has an `undefined` segment (a signal-derived key that is
  * not ready yet — from a prop, route param, another query's data, etc.; see {@link isQueryKeyHeld}),
- * the observer stays idle instead of fetching with an undefined key, and the SSR settle reactively
- * waits for the key to resolve — then prefetches once. See the "Signal-dependent queries & SSR"
- * section of the README.
+ * the observer stays idle instead of fetching with an undefined key. During SSR the base skips
+ * prefetch for held keys — the signals hook (`$useQuery`) owns the reactive settle in its own
+ * lifecycle block, keeping `@ssv/stencil-signals` out of the classic `useQuery` bundle.
+ * See the "Signal-dependent queries & SSR" section of the README.
  */
 export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey extends QueryKey>(
 	getOptions:
@@ -262,135 +258,39 @@ export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey exte
 	// the populated cache before render() (hostWillRender may not fire in test environments
 	// that wrap render() — e.g. when useSignalWatcher() replaces host.render).
 	//
-	// Held queries: a query whose key is derived from a signal that is not ready yet (a prop, route
-	// param, another query's data, etc.) has an `undefined` segment in its queryKey at hostWillLoad
-	// time. Rather than fetching with that undefined key, the settle reactively waits for the key to
-	// resolve — driven by the same signals the key getter reads, so when that signal changes (for
-	// whatever reason) this query's key is re-evaluated — then prefetches once.
-	use(() => {
-		// Aborts an in-flight held settle (set while waiting; cleared once settled). Lets
-		// hostDisconnected tear the settle down immediately instead of leaking the watcher/timer
-		// and waiting out the timeout when the component is removed mid-wait.
-		let abortHeldSettle: (() => void) | undefined;
+	// Held queries (key has an `undefined` segment) are skipped here — the signals hook
+	// (`$useQuery`) owns the reactive held-settle in its own lifecycle block, keeping the
+	// @ssv/stencil-signals dependency out of the classic useQuery bundle.
+	use(() => ({
+		hostWillLoad(): Promise<void> | void {
+			if (!detectServer()) {
+				return;
+			}
+			const qc = clientRef.current;
+			if (!qc) {
+				return;
+			}
 
-		return {
-			hostWillLoad(): Promise<void> | void {
-				if (!detectServer()) {
-					return;
+			const syncResult = (): void => {
+				if (observer) {
+					handlers.onConnect?.(observer.getCurrentResult());
 				}
-				const qc = clientRef.current;
-				if (!qc) {
-					return;
-				}
+			};
 
-				const syncResult = (): void => {
-					if (observer) {
-						handlers.onConnect?.(observer.getCurrentResult());
-					}
-				};
+			const initial = getOpts();
+			if (initial.enabled === false || isQueryKeyHeld(initial.queryKey)) {
+				return;
+			}
+			return qc.prefetchQuery(initial).then(syncResult);
+		},
+	}));
 
-				const initial = getOpts();
-				if (initial.enabled === false) {
-					return;
-				}
-				if (!isQueryKeyHeld(initial.queryKey)) {
-					return qc.prefetchQuery(initial).then(syncResult);
-				}
+	const reArm = (): void => {
+		const qc = clientRef.current;
+		if (observer && qc) {
+			observer.setOptions(defaultedOptions(qc, isRestoringRef.current));
+		}
+	};
 
-				// Held: the queryKey is not yet resolved. Wait reactively until it settles.
-				return new Promise<void>(resolve => {
-					let done = false;
-					// The prefetch currently in flight: `hash` to compare keys, `key` to cancel it. A
-					// re-fired check for the same key is ignored; a newer key supersedes (cancels) it.
-					let inflight: { hash: string; key: TQueryKey } | undefined;
-
-					const readiness = computed(() => {
-						const opts = getOpts();
-						return { opts, disabled: opts.enabled === false, held: isQueryKeyHeld(opts.queryKey) };
-					});
-
-					const finish = (): void => {
-						if (done) {
-							return;
-						}
-						done = true;
-						abortHeldSettle = undefined;
-						watcher.dispose();
-						clearTimeout(timer);
-						resolve();
-					};
-
-					const check = (): void => {
-						if (done) {
-							return;
-						}
-						const { opts, disabled, held } = readiness();
-						if (disabled) {
-							finish();
-							return;
-						}
-						if (held) {
-							return;
-						}
-
-						const keyHash = hashKey(opts.queryKey);
-						if (inflight?.hash === keyHash) {
-							// Already prefetching this exact key — ignore the re-entrant check.
-							return;
-						}
-						// Key resolved (or changed): cancel the superseded in-flight prefetch, then fetch
-						// the latest. The watcher stays armed so a further key change is still picked up.
-						if (inflight) {
-							void qc.cancelQueries({ queryKey: inflight.key, exact: true });
-						}
-						inflight = { hash: keyHash, key: opts.queryKey };
-						// Re-arm the observer to the resolved key (mirrors hostWillRender's setOptions)
-						// so its result reflects the prefetched data when synced.
-						observer?.setOptions(defaultedOptions(qc, isRestoringRef.current));
-						// Settle only if this prefetch is still the current one — a prefetch superseded
-						// by a newer key (inflight moved on) must not resolve the SSR wait.
-						const settleIfLatest = (): void => {
-							if (!done && inflight?.hash === keyHash) {
-								finish();
-							}
-						};
-						qc.prefetchQuery(opts).then(syncResult).then(settleIfLatest, settleIfLatest);
-					};
-
-					// Reading a (computed) signal is forbidden inside the watcher's synchronous notify
-					// phase, so defer re-evaluation to a microtask.
-					const watcher = createWatcher(() => queueMicrotask(check));
-					const timer = setTimeout(() => {
-						if (done) {
-							return;
-						}
-						console.error(
-							`[ssv:query] held query timed out after ${SSR_HELD_QUERY_TIMEOUT_MS}ms during SSR — its ` +
-								`key never resolved, so it is excluded from the server-rendered output. ` +
-								`queryKey: ${JSON.stringify(initial.queryKey)}`,
-						);
-						finish();
-					}, SSR_HELD_QUERY_TIMEOUT_MS);
-
-					// Disconnect mid-wait: cancel any in-flight prefetch and tear the settle down now.
-					abortHeldSettle = (): void => {
-						if (inflight) {
-							void qc.cancelQueries({ queryKey: inflight.key, exact: true });
-						}
-						finish();
-					};
-
-					readiness();
-					watcher.watch(readiness);
-					check();
-				});
-			},
-
-			hostDisconnected(): void {
-				abortHeldSettle?.();
-			},
-		};
-	});
-
-	return { refetch, getObserver: () => observer };
+	return { refetch, getObserver: () => observer, reArm, clientRef };
 }

@@ -3,6 +3,9 @@ import type { VNode } from "@stencil/core";
 
 import { createContext, provideContext, useContext } from "../context";
 import { use } from "../hooks/use";
+import { createLogger } from "../internal";
+
+const log = createLogger("transfer-state");
 
 const SCRIPT_TYPE = "application/json";
 
@@ -16,7 +19,12 @@ const SCRIPT_TYPE = "application/json";
  * - `!("window" in globalThis)` — `true` in plain Node.js without a DOM environment, enabling
  *   use of this utility outside the Stencil hydrate bundle.
  *
- * @internal
+ * @example
+ * ```ts
+ * if (detectServer()) {
+ *   // server-only path
+ * }
+ * ```
  */
 export const detectServer: () => boolean = () => Build.isServer || !("window" in globalThis);
 
@@ -202,6 +210,7 @@ export function provideTransferState(id: string): TransferState {
 			}
 			const script = host.getElement().shadowRoot?.querySelector(`#${scriptId(id)}`) as HTMLScriptElement | null;
 			if (script?.type === SCRIPT_TYPE) {
+				log.log(() => `[${id}] hostConnected  client: loaded state from script tag`);
 				state.fromJSON(script.textContent ?? "{}");
 				script.remove();
 			}
@@ -220,10 +229,13 @@ export function provideTransferState(id: string): TransferState {
 			}
 			let script = shadowRoot.querySelector<HTMLScriptElement>(`#${scriptId(id)}`);
 			if (!script) {
+				log.log(() => `[${id}] hostDidLoad  server: creating and injecting state script`);
 				script = document.createElement("script");
 				script.type = SCRIPT_TYPE;
 				script.id = scriptId(id);
 				shadowRoot.append(script);
+			} else {
+				log.log(() => `[${id}] hostDidLoad  server: updating existing state script`);
 			}
 			script.textContent = state.toJSON();
 		},

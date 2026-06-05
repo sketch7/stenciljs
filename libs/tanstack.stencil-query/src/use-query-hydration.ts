@@ -1,10 +1,12 @@
-import { useLoadEffect } from "@ssv/stencil-core";
+import { createLogger, detectServer, use } from "@ssv/stencil-core";
 import type { Ref } from "@ssv/stencil-core";
 import { makeTransferKey, useTransferState } from "@ssv/stencil-core/transfer-state";
 import { dehydrate, hydrate } from "@tanstack/query-core";
 import type { DehydratedState, QueryClient } from "@tanstack/query-core";
 
 import { useQueryClient } from "./query-client-context";
+
+const log = createLogger("query-hydration");
 
 /**
  * Options for {@link useQueryHydration}.
@@ -79,16 +81,55 @@ export function useQueryHydration(options?: UseQueryHydrationOptions): void {
 	const ts = useTransferState();
 	const clientRef = useQueryClient(options?.client);
 
-	useLoadEffect(
-		({ client }) => {
-			const dehydrated = ts.get(DEHYDRATED_KEY);
-			if (dehydrated !== undefined) {
-				hydrate(client, dehydrated);
-			}
-			ts.setLazy(DEHYDRATED_KEY, () => dehydrate(client));
-		},
-		{
-			client: clientRef,
-		},
-	);
+	use(() => {
+		let hydratedInConnect = false;
+
+		return {
+			// Client primary path: runs before any hostWillLoad observer subscription.
+			// provideTransferState reads the <script> tag in its own hostConnected (registered
+			// earlier in setup()), so ts.get() is already populated when we arrive here.
+			hostConnected() {
+				if (detectServer()) {
+					return;
+				}
+				const client = clientRef.current;
+				if (!client) {
+					return;
+				}
+				const dehydrated = ts.get(DEHYDRATED_KEY);
+				if (dehydrated !== undefined) {
+					log.log(() => `[${transferKey}] hostConnected client: hydrating from transferred state`);
+					hydrate(client, dehydrated);
+				}
+				// Mark as handled even when no data — avoids redundant ts.get() in the fallback.
+				hydratedInConnect = true;
+			},
+			hostWillLoad() {
+				if (detectServer()) {
+					// Server: register a lazy factory evaluated at toJSON() time (hostDidLoad) —
+					// after all hostWillLoad prefetch promises have resolved. This guarantees the
+					// serialized snapshot captures fully prefetched cache state.
+					const client = clientRef.current;
+					if (client) {
+						log.log(() => `[${transferKey}] hostWillLoad  server: registering lazy dehydration factory`);
+						ts.setLazy(DEHYDRATED_KEY, () => dehydrate(client));
+					}
+					return;
+				}
+				// Client fallback: for ancestor-provided clients whose context ref is not yet
+				// resolved in hostConnected (bottom-up / hydration init order).
+				if (!hydratedInConnect) {
+					const client = clientRef.current;
+					if (!client) {
+						return;
+					}
+					const dehydrated = ts.get(DEHYDRATED_KEY);
+					if (dehydrated !== undefined) {
+						log.log(() => `[${transferKey}] hostWillLoad  client fallback: hydrating from transferred state`);
+						hydrate(client, dehydrated);
+					}
+				}
+			},
+		};
+	});
 }

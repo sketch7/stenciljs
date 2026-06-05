@@ -1,4 +1,4 @@
-import { use, useLoadEffect } from "@ssv/stencil-core";
+import { detectServer, use, useLoadEffect } from "@ssv/stencil-core";
 import type { Ref } from "@ssv/stencil-core";
 import { QueryObserver, notifyManager } from "@tanstack/query-core";
 import type {
@@ -133,6 +133,10 @@ export type QueryObserverHandle<TQueryFnData, TError, TData, TQueryKey extends Q
  * `hostWillRender → setOptions` step. The classic hook only needs `onResult` (lazy `Ref` read +
  * `requestUpdate`); the signals hook additionally uses `onConnect`/`onRender`/`onDispose` to keep
  * its source signal eagerly populated and reset on disconnect.
+ *
+ * **SSR auto-prefetch** — on the server, automatically calls `qc.prefetchQuery(opts)` in
+ * `hostWillLoad` so Stencil's `componentWillLoad` awaits data before `render()`.
+ * Set `enabled: false` to opt a query out of SSR prefetching.
  */
 export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey extends QueryKey>(
 	getOptions:
@@ -207,6 +211,33 @@ export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey exte
 			// Ensures SSR/hydration sees the cached data even if the subscription
 			// callback was batched as a microtask and not yet flushed.
 			handlers.onRender?.(observer.getCurrentResult());
+		},
+	}));
+
+	// Server only: seed the cache before render() runs. Stencil awaits all hostWillLoad
+	// promises in parallel, so this does not block the observer subscription above.
+	// `enabled: false` opts the query out of SSR prefetching (mirrors client behavior).
+	// After prefetch resolves, re-syncs the observer result into handlers so signals see
+	// the populated cache before render() (hostWillRender may not fire in test environments
+	// that wrap render() — e.g. when useSignalWatcher() replaces host.render).
+	use(() => ({
+		hostWillLoad(): Promise<void> | void {
+			if (!detectServer()) {
+				return;
+			}
+			const qc = clientRef.current;
+			if (!qc) {
+				return;
+			}
+			const opts = getOpts();
+			if (opts.enabled === false) {
+				return;
+			}
+			return qc.prefetchQuery(opts).then(() => {
+				if (observer) {
+					handlers.onConnect?.(observer.getCurrentResult());
+				}
+			});
 		},
 	}));
 

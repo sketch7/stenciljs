@@ -13,6 +13,7 @@ out-tsc
 *.tmp.*
 log.txt
 *.tsbuildinfo
+nul
 
 # dependencies
 node_modules

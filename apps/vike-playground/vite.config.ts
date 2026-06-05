@@ -114,7 +114,22 @@ export default defineConfig(({ command, mode }) => {
 	const isDev = command === "serve";
 	const isAnalyze = env["ANALYZE"] === "true";
 
+	// In dev, activate SSV debug logging by default across all three execution contexts:
+	//  1. Vite client bundle (@ssv/source imports): handled via `define.DEBUG` below.
+	//  2. Hydrate module (Node.js SSR, same process): reads process.env.SSV_DEBUG at runtime.
+	//  3. Browser custom elements (pre-built): inherits via preBuildCommand child process so
+	//     tsdown bakes DEBUG="true" into stencil-core dist on the next lib rebuild.
+	// Override selectively: SSV_DEBUG=transfer-state,query-hydration pnpm dev
+	if (isDev) {
+		process.env["SSV_DEBUG"] ??= "true";
+	}
+
 	return {
+		define: {
+			// In dev all SSV log categories are on by default.
+			// Override selectively: SSV_DEBUG=transfer-state,query-hydration pnpm dev
+			DEBUG: JSON.stringify(process.env["SSV_DEBUG"] ?? (isDev ? "true" : "false")),
+		},
 		plugins: [
 			vike(),
 			react(),
@@ -123,8 +138,18 @@ export default defineConfig(({ command, mode }) => {
 			stencilWatch({
 				apply: "serve",
 				packageDir: stencilPkgDir,
-				watchDirs: [path.resolve(__dirname, "../../libs/stencil-core/src")],
-				preBuildCommand: "pnpm nx run stencil-core:build",
+				// NODE_ENV=development: disables minification (faster builds) and lets
+				// rollupPlugins.before in stencil.config.ts bake DEBUG="true" into artifacts.
+				buildCommand: "NODE_ENV=development pnpm stencil build",
+				watchDirs: [
+					path.resolve(__dirname, "../../libs/stencil-core/src"),
+					path.resolve(__dirname, "../../libs/stencil-signals/src"),
+					path.resolve(__dirname, "../../libs/stencil-ui/src"),
+					path.resolve(__dirname, "../../libs/tanstack.stencil-query/src"),
+					path.resolve(__dirname, "../../libs/tanstack.stencil-store/src"),
+				],
+				preBuildCommand:
+					"pnpm nx run-many -t build --projects=stencil-core,stencil-signals,stencil-ui,tanstack-stencil-query,tanstack-stencil-store",
 				preBuildCommandCwd: path.resolve(__dirname, "../.."),
 				onRebuildDone: async server => {
 					// Reload the hydrate module through Vite's SSR pipeline so the
@@ -161,7 +186,24 @@ export default defineConfig(({ command, mode }) => {
 		],
 
 		resolve: {
+			// In dev, use source files for @ssv/* packages so Vite's `define: { DEBUG: ... }`
+			// actually takes effect. Without this, Vite loads pre-built dist files where DEBUG
+			// is already replaced by tsdown, making the SSV_DEBUG env var ineffective.
+			conditions: isDev ? ["@ssv/source"] : [],
 			alias: [
+				// In dev, redirect @app/stencil-playground/hydrate to the dev wrapper so that
+				// renderToString is always called with runtimeLogging:true. This is needed because
+				// @app/stencil-playground is SSR-externalized (Node.js resolves it directly),
+				// so the @ssv/source export condition in package.json is ignored for SSR.
+				// A resolve.alias fires before the SSR externalization check, so this wins.
+				...(isDev
+					? [
+							{
+								find: "@app/stencil-playground/hydrate",
+								replacement: path.resolve(stencilPkgDir, "hydrate-dev.ts"),
+							},
+						]
+					: []),
 				{
 					find: "@/",
 					replacement: `${path.resolve(__dirname, "./src")}/`,

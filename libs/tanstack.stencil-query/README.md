@@ -119,6 +119,35 @@ export class AppPostsPage extends SsvElement {
 }
 ```
 
+## Signal-dependent queries & SSR (held queries)
+
+When a query's `queryKey` is derived from a signal — a `@Prop`, a route param, a user selection,
+another query's data, etc. — that value can be `undefined` for any number of reasons (not provided
+yet, upstream not resolved, cleared, …). To avoid fetching with a half-formed key, a query is **held**
+while its `queryKey` contains an `undefined` segment:
+
+- the observer stays **idle** (it never fetches with an `undefined` key) — on client and server;
+- during SSR, `hostWillLoad` **awaits** the held query: it watches the reactive options and, once the
+  key resolves (the signal it reads changes — for whatever reason), prefetches **once** with the
+  resolved key, so the data is in the server-rendered HTML instead of only filling in on the client.
+  Bounded by a ~15s safety timeout so a never-resolving key can't block render.
+
+```ts
+// Key derived from a @Prop signal — held until the prop is set (for any reason).
+readonly #post = $useQuery(() => ({ queryKey: ["post", this.postId], queryFn: () => fetchPost(this.postId!) }));
+
+// Key derived from another query's data — one common case of the same thing.
+readonly #posts = $useQuery(() => {
+  const userId = this.#user.data()?.id;            // undefined until #user resolves
+  return { queryKey: ["posts", userId], queryFn: () => fetchPosts(userId!) };
+});
+```
+
+> **Convention — `undefined` vs `null`.** An `undefined` key segment means *"not ready yet"* and holds
+> the query. A segment that is legitimately optional/absent should be `null` (or any concrete value),
+> which is treated as a real value and fetches normally. Only `undefined` segments hold — so don't put
+> `undefined` in a key to mean "no value"; use `null`.
+
 ## `useQueries`
 
 - Use to subscribe to a list of queries in parallel — returns a `Ref` whose value is the tuple of results

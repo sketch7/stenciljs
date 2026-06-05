@@ -1,6 +1,7 @@
 // oxlint-disable-next-line import/no-unassigned-import -- registers the TC39 signal adapter for $useQuery tests
 import "@ssv/stencil-signals/tc39";
 import { TestHost, mount } from "@ssv/stencil-core/testing";
+import { signal } from "@ssv/stencil-signals";
 import { Build } from "@stencil/core";
 import { QueryClient } from "@tanstack/query-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -77,7 +78,7 @@ describe("useQuery — SSR auto-prefetch", () => {
 			expect(getOpts).not.toHaveBeenCalled();
 
 			await host.willLoad();
-			expect(getOpts).toHaveBeenCalled();
+			expect(getOpts).toHaveBeenCalledWith();
 		});
 	});
 
@@ -136,5 +137,74 @@ describe("$useQuery — SSR prefetch signal sync", () => {
 
 		expect(query.data()).toBeUndefined();
 		expect(query.isPending()).toBeTruthy();
+	});
+});
+
+/**
+ * SSR support for chained (dependent) queries.
+ *
+ * A dependent query's key derives from data that resolves later (an upstream query, or any signal).
+ * Until that key is available the query must be **held** — never executed with an `undefined` key —
+ * and the SSR `hostWillLoad` settle must **wait** for the key to resolve, then run the query once.
+ *
+ * Today the per-observer prefetch runs in `hostWillLoad` against a snapshot taken while the key is
+ * still `undefined`, so the queryFn fires with `undefined` (and the settle completes before the key
+ * is ready). These tests pin the target contract and are RED until the held-and-awaited settle lands.
+ */
+describe("$useQuery — SSR chained / held-until-key-resolves", () => {
+	let qc: QueryClient;
+
+	beforeEach(() => {
+		qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+		vi.clearAllMocks();
+		vi.useFakeTimers();
+		Object.assign(Build, { isServer: true });
+	});
+
+	afterEach(() => {
+		qc.clear();
+		vi.useRealTimers();
+		Object.assign(Build, { isServer: false });
+	});
+
+	it("holds the query until its key resolves, then runs the loader once — never with undefined", async () => {
+		// The loader (queryFn) records every key it is invoked with.
+		const loader = vi.fn(async (key: string | undefined) => `data:${key}`);
+
+		// `key` is the query's params: undefined now, flips to a real value after the upstream settles.
+		const key = signal<string | undefined>(undefined);
+		setTimeout(() => key.set("real-key"), 5000);
+
+		using host = new TestHost();
+		$useQuery(() => ({ queryKey: ["dep", key()] as const, queryFn: async () => loader(key()) }), qc);
+
+		host.connect();
+		const load = host.willLoad();
+
+		// Upstream resolves: key flips undefined → "real-key". The SSR settle must have waited for it.
+		await vi.advanceTimersByTimeAsync(5000);
+		await load;
+
+		expect(loader).not.toHaveBeenCalledWith(undefined);
+		expect(loader).toHaveBeenCalledExactlyOnceWith("real-key");
+	});
+
+	it("does not invoke the loader while the key is still undefined", async () => {
+		const loader = vi.fn(async (key: string | undefined) => `data:${key}`);
+		const key = signal<string | undefined>(undefined);
+		setTimeout(() => key.set("real-key"), 5000);
+
+		using host = new TestHost();
+		$useQuery(() => ({ queryKey: ["dep", key()] as const, queryFn: async () => loader(key()) }), qc);
+
+		host.connect();
+		const load = host.willLoad();
+
+		// Before the key resolves, nothing should have fetched.
+		await Promise.resolve();
+		expect(loader).not.toHaveBeenCalled();
+
+		await vi.advanceTimersByTimeAsync(5000);
+		await load;
 	});
 });

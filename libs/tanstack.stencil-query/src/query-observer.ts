@@ -1,5 +1,6 @@
 import { detectServer, use, useLoadEffect } from "@ssv/stencil-core";
 import type { Ref } from "@ssv/stencil-core";
+import { computed, createWatcher } from "@ssv/stencil-signals";
 import { QueryObserver, notifyManager } from "@tanstack/query-core";
 import type {
 	DefaultError,
@@ -127,6 +128,34 @@ export type QueryObserverHandle<TQueryFnData, TError, TData, TQueryKey extends Q
 };
 
 /**
+ * Upper bound on how long the SSR settle waits for a held query's key to resolve before giving up
+ * and rendering without it. A held query whose key never resolves (e.g. a permanently-undefined
+ * upstream) must not block `componentWillLoad` indefinitely — the outer SSR worker timeout is the
+ * final backstop, but this keeps a single stuck query from monopolising the render budget.
+ */
+const SSR_HELD_QUERY_TIMEOUT_MS = 15_000;
+
+/**
+ * A query is **held** when its key is not yet resolvable — `undefined`, or an array with an
+ * `undefined` segment (a signal-derived key that is not ready yet — from a prop, route param,
+ * another query's data, etc.). Held queries are gated rather than fetched with an undefined key
+ * (mirrors Angular `resource`, whose `undefined` params keep the resource idle). `null` segments are
+ * treated as valid values: use `null` (not `undefined`) for a key part that is legitimately
+ * optional/absent so it still fetches.
+ *
+ * See the "Signal-dependent queries & SSR" section of the README for the full behaviour and convention.
+ */
+function isQueryKeyHeld(queryKey: unknown): boolean {
+	if (queryKey === undefined) {
+		return true;
+	}
+	if (Array.isArray(queryKey)) {
+		return queryKey.some(segment => segment === undefined);
+	}
+	return false;
+}
+
+/**
  * Shared observer lifecycle for the classic and signals query hooks.
  *
  * Owns option normalization, client resolution, the `QueryObserver` subscription, and the
@@ -137,6 +166,12 @@ export type QueryObserverHandle<TQueryFnData, TError, TData, TQueryKey extends Q
  * **SSR auto-prefetch** — on the server, automatically calls `qc.prefetchQuery(opts)` in
  * `hostWillLoad` so Stencil's `componentWillLoad` awaits data before `render()`.
  * Set `enabled: false` to opt a query out of SSR prefetching.
+ *
+ * **Held queries** — when the `queryKey` has an `undefined` segment (a signal-derived key that is
+ * not ready yet — from a prop, route param, another query's data, etc.; see {@link isQueryKeyHeld}),
+ * the observer stays idle instead of fetching with an undefined key, and the SSR settle reactively
+ * waits for the key to resolve — then prefetches once. See the "Signal-dependent queries & SSR"
+ * section of the README.
  */
 export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey extends QueryKey>(
 	getOptions:
@@ -164,6 +199,12 @@ export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey exte
 			TQueryFnData,
 			TQueryKey
 		>;
+		// Held query (key not yet resolved): keep the observer idle so it never fetches with an
+		// undefined key. When the key resolves, a later setOptions (hostWillRender on the client, or
+		// the SSR settle below) re-evaluates this and lets the observer fetch.
+		if (isQueryKeyHeld(d.queryKey)) {
+			d.enabled = false;
+		}
 		d._optimisticResults = isRestoring ? "isRestoring" : "optimistic";
 		return d;
 	};
@@ -220,6 +261,12 @@ export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey exte
 	// After prefetch resolves, re-syncs the observer result into handlers so signals see
 	// the populated cache before render() (hostWillRender may not fire in test environments
 	// that wrap render() — e.g. when useSignalWatcher() replaces host.render).
+	//
+	// Chained/dependent queries: a query whose key derives from not-yet-resolved upstream data is
+	// *held* (its queryKey has an `undefined` segment) at hostWillLoad time. Rather than fetching
+	// with that undefined key, the settle reactively waits for the key to resolve — driven by the
+	// same signals the key getter reads, so an upstream query resolving (and updating its signal)
+	// re-evaluates this query's key — then prefetches once. Bounded by SSR_HELD_QUERY_TIMEOUT_MS.
 	use(() => ({
 		hostWillLoad(): Promise<void> | void {
 			if (!detectServer()) {
@@ -229,14 +276,66 @@ export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey exte
 			if (!qc) {
 				return;
 			}
-			const opts = getOpts();
-			if (opts.enabled === false) {
-				return;
-			}
-			return qc.prefetchQuery(opts).then(() => {
+
+			const syncResult = (): void => {
 				if (observer) {
 					handlers.onConnect?.(observer.getCurrentResult());
 				}
+			};
+
+			const initial = getOpts();
+			if (initial.enabled === false) {
+				return;
+			}
+			if (!isQueryKeyHeld(initial.queryKey)) {
+				return qc.prefetchQuery(initial).then(syncResult);
+			}
+
+			// Held: the queryKey is not yet resolved. Wait reactively until it settles.
+			return new Promise<void>(resolve => {
+				let done = false;
+
+				const readiness = computed(() => {
+					const opts = getOpts();
+					return { opts, disabled: opts.enabled === false, held: isQueryKeyHeld(opts.queryKey) };
+				});
+
+				const finish = (): void => {
+					if (done) {
+						return;
+					}
+					done = true;
+					watcher.dispose();
+					clearTimeout(timer);
+					resolve();
+				};
+
+				const check = (): void => {
+					if (done) {
+						return;
+					}
+					const { opts, disabled, held } = readiness();
+					if (disabled) {
+						finish();
+						return;
+					}
+					if (!held) {
+						watcher.dispose();
+						// Re-arm the observer to the now-resolved key (mirrors hostWillRender's
+						// setOptions) so its result reflects the prefetched data when synced.
+						observer?.setOptions(defaultedOptions(qc, isRestoringRef.current));
+						qc.prefetchQuery(opts).then(syncResult).then(finish, finish);
+					}
+				};
+
+				// Reading a (computed) signal is forbidden inside the watcher's synchronous notify
+				// phase, so defer re-evaluation to a microtask.
+				const watcher = createWatcher(() => queueMicrotask(check));
+				const timer = setTimeout(finish, SSR_HELD_QUERY_TIMEOUT_MS);
+
+				readiness();
+				watcher.watch(readiness);
+				check();
 			});
 		},
 	}));

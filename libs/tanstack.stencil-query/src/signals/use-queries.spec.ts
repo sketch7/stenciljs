@@ -157,24 +157,9 @@ describe("$useQueries", () => {
 		expect(m.total()).toBe(5);
 	});
 
-	it("reactively adds a query when the queries array grows", async () => {
-		let keys = ["a"];
-		qc.setQueryData(["a"], "ra");
-		qc.setQueryData(["b"], "rb");
-
-		using m = await mount(() => ({
-			queries: $useQueries(
-				() => ({ queries: keys.map(k => ({ queryKey: [k], queryFn: vi.fn<() => unknown>() })) }),
-				qc,
-			),
-		}));
-		expect(m.queries()).toHaveLength(1);
-
-		keys = ["a", "b"];
-		m.render();
-		expect(m.queries()).toHaveLength(2);
-		expect(m.queries()[1].data()).toBe("rb");
-	});
+	// Note: array growth for the SIGNAL hook is driven by signals, not `m.render()` — see
+	// "grows the returned signal array when a signal-derived query list length increases" below.
+	// The classic pull-based (`m.render()`) growth path is covered by `use-queries.spec.ts`.
 
 	it("clears data and unsubscribes after disconnect", async () => {
 		qc.setQueryData(["a"], 1);

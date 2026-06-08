@@ -184,8 +184,12 @@ export type QueriesObserverHandlers<TCombinedResult> = {
 	onResult: (result: TCombinedResult, requestUpdate: () => void) => void;
 	/** Fires once right after the observer connects — eager read of already-cached data. */
 	onConnect?: (result: TCombinedResult) => void;
-	/** Fires in `hostWillRender` after `setQueries` — SSR/hydration sync before paint. */
-	onRender?: (result: TCombinedResult) => void;
+	/**
+	 * Fires on every host render (`hostWillRender`). Classic `useQueries` passes `() => reArm()` to
+	 * re-apply the (possibly changed) queries each render — its only reactivity. The signal hook
+	 * omits it: it reacts purely via its client `effect` on the options signal.
+	 */
+	onRender?: () => void;
 	/** Fires on host disconnect — the signals hook resets its source signal to pending. */
 	onDispose?: () => void;
 	/**
@@ -313,16 +317,12 @@ export function useBaseQueriesObserver<TCombinedResult>(
 		{ qc: clientRef, isRestoring: isRestoringRef },
 	);
 
+	// Per-render hook. The base no longer re-applies queries itself — it just fires `onRender`,
+	// letting each consumer opt in. Classic `useQueries` passes `onRender: () => reArm()` (pull
+	// reactivity); the signal hook omits it and reacts via its client effect instead.
 	use(() => ({
 		hostWillRender() {
-			const qc = clientRef.current;
-			if (!observer || !qc) {
-				return;
-			}
-			const opts = getOpts();
-			const isRestoring = isRestoringRef.current;
-			observer.setQueries(defaultedQueries(qc, opts, isRestoring), { combine: opts.combine as never });
-			handlers.onRender?.(combinedFrom(observer, qc, isRestoring));
+			handlers.onRender?.();
 		},
 	}));
 

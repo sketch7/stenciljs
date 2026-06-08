@@ -114,8 +114,12 @@ export type QueryObserverHandlers<TQueryFnData, TError, TData, TQueryKey extends
 	onResult: (result: QueryObserverResult<TData, TError>, requestUpdate: () => void) => void;
 	/** Fires once right after the observer connects — eager read of already-cached data. */
 	onConnect?: (result: QueryObserverResult<TData, TError>) => void;
-	/** Fires in `hostWillRender` after `setOptions` — SSR/hydration sync before paint. */
-	onRender?: (result: QueryObserverResult<TData, TError>) => void;
+	/**
+	 * Fires on every host render (`hostWillRender`). Classic hooks pass `() => reArm()` to
+	 * re-apply the (possibly changed) options each render — their only reactivity. Signal hooks
+	 * omit it: they react purely via their client `effect` on the options signal.
+	 */
+	onRender?: () => void;
 	/** Fires on host disconnect — the signals hook resets its source signal to pending. */
 	onDispose?: () => void;
 	/**
@@ -260,19 +264,12 @@ export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey exte
 		{ qc: clientRef, isRestoring: isRestoringRef },
 	);
 
-	// todo: consider to remove for signal query (and handle by the effect - or move to the useQuery lifecycle) - this is currently needed to trigger the fetch when the key is held and then resolved on the client, but for signals it might be possible to just trigger a refetch when the key resolves instead of relying on this hostWillRender step
+	// Per-render hook. The base no longer re-applies options itself — it just fires `onRender`,
+	// letting each consumer opt in. Classic hooks pass `onRender: () => reArm()` (pull reactivity);
+	// signal hooks omit it and react via their client effect instead.
 	use(() => ({
 		hostWillRender() {
-			const qc = clientRef.current;
-			if (!observer || !qc) {
-				return;
-			}
-			// TODO(perf): skip setOptions when options is static (not a function) — mirrors Lit BaseController.onHostUpdate()
-			observer.setOptions(defaultedQueryOptions(qc, getOpts, isRestoringRef.current));
-			// Sync latest result before each render — mirrors useQuery's lazy Ref read.
-			// Ensures SSR/hydration sees the cached data even if the subscription
-			// callback was batched as a microtask and not yet flushed.
-			handlers.onRender?.(observer.getCurrentResult());
+			handlers.onRender?.();
 		},
 	}));
 

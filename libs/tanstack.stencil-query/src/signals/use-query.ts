@@ -104,7 +104,6 @@ export function $useQuery<
 				}
 			},
 			onResult: result => state.set(result),
-			onRender: result => state.set(result),
 			onDispose: () => {
 				state.set(pendingQueryState as unknown as QueryStateData<TData, TError>);
 				disposeOptsEffect?.();

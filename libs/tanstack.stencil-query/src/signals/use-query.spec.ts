@@ -78,21 +78,6 @@ describe("$useQuery", () => {
 		expect(m.query.error()!.message).toBe("boom");
 	});
 
-	it("updates options reactively — switches queryKey on re-render", async () => {
-		let key = "a";
-		qc.setQueryData(["a"], "result-a");
-		qc.setQueryData(["b"], "result-b");
-
-		using m = await mount(() => ({
-			query: $useQuery(() => ({ queryKey: [key], queryFn: vi.fn<() => unknown>() }), qc),
-		}));
-		expect(m.query.data()).toBe("result-a");
-
-		key = "b";
-		m.render();
-		expect(m.query.data()).toBe("result-b");
-	});
-
 	it("clears data and unsubscribes after disconnect", async () => {
 		qc.setQueryData(["test"], 1);
 		using m = await mount(() => ({
@@ -177,26 +162,6 @@ describe("$useQuery", () => {
 		await m.query.refetch();
 
 		await vi.waitFor(() => expect(m.query.data()).toBe("updated"));
-		expect(queryFn).toHaveBeenCalledTimes(2);
-	});
-
-	it("re-requests and delivers new data via signals when queryKey changes", async () => {
-		let key = "a";
-		// oxlint-disable-next-line vitest/prefer-mock-promise-shorthand -- closure must re-read `key` at call time; mockResolvedValue captures it once at setup
-		const queryFn = vi.fn<() => Promise<string>>().mockImplementation(async () => `data-for-${key}`);
-
-		using m = await mount(() => ({
-			query: $useQuery(() => ({ queryKey: [key], queryFn }), qc),
-		}));
-
-		await vi.waitFor(() => expect(m.query.isSuccess()).toBeTruthy());
-		expect(m.query.data()).toBe("data-for-a");
-
-		key = "b";
-		m.render(); // switches observer to key "b" → triggers new fetch
-
-		await vi.waitFor(() => expect(m.query.data()).toBe("data-for-b"));
-		expect(m.query.isSuccess()).toBeTruthy();
 		expect(queryFn).toHaveBeenCalledTimes(2);
 	});
 

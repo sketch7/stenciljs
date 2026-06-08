@@ -23,7 +23,7 @@
     "release": "nx release publish"
   },
   "dependencies": {
-    "cross-env": "^10.1.0"
+    "cross-env": "catalog:"
   },
   "devDependencies": {
     "@nx/js": "22.7.0",

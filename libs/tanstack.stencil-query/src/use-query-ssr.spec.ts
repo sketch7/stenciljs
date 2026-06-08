@@ -255,10 +255,7 @@ describe("$useQuery — SSR chained / held-until-key-resolves", () => {
 		const key = signal<string | undefined>(undefined);
 
 		using host = new TestHost();
-		$useQuery(
-			() => ({ queryKey: ["dep", key()] as const, queryFn: async ({ queryKey }) => loader(queryKey[1]!) }),
-			qc,
-		);
+		$useQuery(() => ({ queryKey: ["dep", key()] as const, queryFn: async ({ queryKey }) => loader(queryKey[1]!) }), qc);
 
 		host.connect();
 		let settled = false;

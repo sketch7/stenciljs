@@ -1,5 +1,5 @@
 // oxlint-disable @typescript-eslint/no-explicit-any -- ported TanStack `useQueries` variadic type machinery relies on `any` in conditional-inference positions; replacing with `unknown` breaks per-element type inference
-import { use, useLoadEffect } from "@ssv/stencil-core";
+import { detectServer, use, useLoadEffect } from "@ssv/stencil-core";
 import type { Ref } from "@ssv/stencil-core";
 import { QueriesObserver, notifyManager } from "@tanstack/query-core";
 import type {
@@ -16,7 +16,7 @@ import type {
 
 import { useIsRestoring } from "./is-restoring";
 import { useQueryClient } from "./query-client-context";
-import { noObserverRefetch, pendingQueryState } from "./query-observer";
+import { isQueryKeyHeld, noObserverRefetch, pendingQueryState } from "./query-observer";
 import type { DefinedUseQueryResult, UseQueryOptions, UseQueryResult } from "./query-observer";
 
 // ── useQueries variadic types ──────────────────────────────────────────────────
@@ -188,6 +188,19 @@ export type QueriesObserverHandlers<TCombinedResult> = {
 	onRender?: (result: TCombinedResult) => void;
 	/** Fires on host disconnect — the signals hook resets its source signal to pending. */
 	onDispose?: () => void;
+	/**
+	 * Optional server-render handler injected by the signals layer.
+	 * When present, the base invokes this instead of its built-in non-held SSR prefetch.
+	 * Receives the shared context and must return `{ promise, abort }`.
+	 * The base wires `hostDisconnected → abort()`.
+	 */
+	onServerRender?: (ctx: {
+		qc: QueryClient;
+		getOpts: () => AnyQueriesOptions;
+		reArm: () => void;
+		getObserver: () => QueriesObserver<TCombinedResult> | undefined;
+		syncResult: () => void;
+	}) => { promise: Promise<void>; abort: () => void };
 };
 
 /** Accessor handle returned by {@link useBaseQueriesObserver}. */
@@ -195,6 +208,10 @@ export type QueriesObserverHandle<TCombinedResult> = {
 	getObserver: () => QueriesObserver<TCombinedResult> | undefined;
 	/** Computes the current combined result, falling back to a pending array before connect. */
 	getCurrentResult: () => TCombinedResult;
+	/** Re-applies current defaulted options to the observer — used by the signals hook after a held key resolves. */
+	reArm: () => void;
+	/** The resolved query client ref — exposed so `$useQueries` can access it in its own lifecycle block. */
+	clientRef: Ref<QueryClient>;
 };
 
 export type AnyQueriesOptions = {
@@ -209,6 +226,9 @@ export type AnyQueriesOptions = {
 function defaultedQueries(qc: QueryClient, opts: AnyQueriesOptions, isRestoring = false): QueryObserverOptions[] {
 	return opts.queries.map(o => {
 		const d = qc.defaultQueryOptions(o);
+		if (isQueryKeyHeld(d.queryKey)) {
+			d.enabled = false;
+		}
 		d._optimisticResults = isRestoring ? "isRestoring" : "optimistic";
 		return d;
 	});
@@ -305,7 +325,58 @@ export function useBaseQueriesObserver<TCombinedResult>(
 			handlers.onRender?.(combinedFrom(observer, qc, isRestoring));
 		},
 	}));
-	// todo: handle SSR prefetching (same as useQuery)
+
+	const reArm = (): void => {
+		const qc = clientRef.current;
+		if (observer && qc) {
+			const o = getOpts();
+			observer.setQueries(defaultedQueries(qc, o, isRestoringRef.current), { combine: o.combine as never });
+		}
+	};
+
+	// Server only: seed the cache before render() runs. Stencil awaits all hostWillLoad
+	// promises in parallel, so this does not block the observer subscription above.
+	// When `onServerRender` is injected (signals layer), delegates to that (covers both held
+	// and non-held, with reactive settle). Otherwise falls back to the built-in non-held prefetch
+	// (classic path). The base owns abort wiring: hostDisconnected → abort().
+	use(() => {
+		let abort: (() => void) | undefined;
+		return {
+			hostWillLoad(): Promise<void> | void {
+				if (!detectServer()) {
+					return;
+				}
+				const qc = clientRef.current;
+				if (!qc) {
+					return;
+				}
+
+				const syncResult = (): void => {
+					if (observer) {
+						handlers.onConnect?.(combinedFrom(observer, qc, isRestoringRef.current));
+					}
+				};
+
+				if (handlers.onServerRender) {
+					// Signal layer injected a settle — it handles both held and non-held.
+					const r = handlers.onServerRender({ qc, getOpts, reArm, getObserver: () => observer, syncResult });
+					abort = r.abort;
+					return r.promise;
+				}
+
+				// Built-in non-held prefetch (classic path).
+				return Promise.all(
+					getOpts()
+						.queries.filter(q => q.enabled !== false && !isQueryKeyHeld(q.queryKey))
+						// oxlint-disable-next-line typescript/promise-function-async -- .map callback returning prefetchQuery(q) Promise; async/await adds no value in this position
+						.map(q => qc.prefetchQuery(q)),
+				).then(syncResult);
+			},
+			hostDisconnected(): void {
+				abort?.();
+			},
+		};
+	});
 
 	return {
 		getObserver: () => observer,
@@ -315,5 +386,7 @@ export function useBaseQueriesObserver<TCombinedResult>(
 				? combinedFrom(observer, qc, isRestoringRef.current)
 				: pendingQueriesResult<TCombinedResult>(getOpts());
 		},
+		reArm,
+		clientRef,
 	};
 }

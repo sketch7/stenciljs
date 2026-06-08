@@ -1,6 +1,7 @@
 // oxlint-disable @typescript-eslint/no-explicit-any -- mirrors TanStack `useQueries` variadic generic signature; `any` is required for per-element type inference
+import { detectServer } from "@ssv/stencil-core";
 import type { Ref } from "@ssv/stencil-core";
-import { computed, signal } from "@ssv/stencil-signals";
+import { computed, effect, signal } from "@ssv/stencil-signals";
 import type { Signal, WritableSignal } from "@ssv/stencil-signals";
 import type { QueryClient, QueriesObserver, QueryObserverResult } from "@tanstack/query-core";
 
@@ -13,6 +14,7 @@ import type {
 	UseQueryOptionsForUseQueries,
 } from "../queries-observer";
 import { noObserverRefetch, pendingQueryState } from "../query-observer";
+import { createServerQueriesSettle } from "./server-query-settle";
 import { createSignalResult } from "./signal-result";
 import type { QuerySignalResult } from "./use-query";
 
@@ -157,16 +159,42 @@ export function $useQueries<T extends any[], TCombinedResult = QueriesResults<T>
 		TCombinedResult
 	>;
 
-	// todo: handle reactive getOpts (signal)
+	const optsComputed = computed(() => getOpts());
+
 	// ── Combine path ────────────────────────────────────────────────────────────
 	if (getOpts().combine !== undefined) {
 		const state = signal<TCombinedResult>(pendingQueriesResult<TCombinedResult>(getOpts() as AnyQueriesOptions));
-		useBaseQueriesObserver<TCombinedResult>(getOptions as never, client, {
+		let disposeOptsEffect: (() => void) | undefined;
+
+		const { reArm, getCurrentResult } = useBaseQueriesObserver<TCombinedResult>(getOptions as never, client, {
 			onResult: result => state.set(result),
-			onConnect: result => state.set(result),
+			onConnect: result => {
+				state.set(result);
+				if (!detectServer()) {
+					const ref = effect([optsComputed], () => applyOptions(), { defer: true });
+					disposeOptsEffect = () => ref.dispose();
+				}
+			},
 			onRender: result => state.set(result),
-			onDispose: () => state.set(pendingQueriesResult<TCombinedResult>(getOpts() as AnyQueriesOptions)),
+			onDispose: () => {
+				state.set(pendingQueriesResult<TCombinedResult>(getOpts() as AnyQueriesOptions));
+				disposeOptsEffect?.();
+				disposeOptsEffect = undefined;
+			},
+			onServerRender: ctx =>
+				createServerQueriesSettle({
+					qc: ctx.qc,
+					getOpts: ctx.getOpts as never,
+					reArm: ctx.reArm,
+					syncResult: ctx.syncResult,
+				}),
 		});
+
+		const applyOptions = (): void => {
+			reArm();
+			state.set(getCurrentResult());
+		};
+
 		return state.asReadonly();
 	}
 
@@ -215,14 +243,41 @@ export function $useQueries<T extends any[], TCombinedResult = QueriesResults<T>
 
 	const syncResults = (results: QueriesResults<T>): void => syncElements(results as QueryObserverResult[]);
 
-	const handle = useBaseQueriesObserver<QueriesResults<T>>(getOptions as never, client, {
-		onResult: syncResults,
-		onConnect: syncResults,
-		onRender: syncResults,
-		onDispose: () =>
-			syncElements(pendingQueriesResult<QueriesResults<T>>(getOpts() as AnyQueriesOptions) as QueryObserverResult[]),
-	});
-	obsRef.fn = handle.getObserver;
+	let disposeOptsEffect: (() => void) | undefined;
+
+	const { getObserver, reArm, getCurrentResult } = useBaseQueriesObserver<QueriesResults<T>>(
+		getOptions as never,
+		client,
+		{
+			onResult: syncResults,
+			onConnect: results => {
+				syncResults(results);
+				if (!detectServer()) {
+					const ref = effect([optsComputed], () => applyOptions(), { defer: true });
+					disposeOptsEffect = () => ref.dispose();
+				}
+			},
+			onRender: syncResults,
+			onDispose: () => {
+				syncElements(pendingQueriesResult<QueriesResults<T>>(getOpts() as AnyQueriesOptions) as QueryObserverResult[]);
+				disposeOptsEffect?.();
+				disposeOptsEffect = undefined;
+			},
+			onServerRender: ctx =>
+				createServerQueriesSettle({
+					qc: ctx.qc,
+					getOpts: ctx.getOpts as never,
+					reArm: ctx.reArm,
+					syncResult: ctx.syncResult,
+				}),
+		},
+	);
+	obsRef.fn = getObserver;
+
+	const applyOptions = (): void => {
+		reArm();
+		syncResults(getCurrentResult());
+	};
 
 	return computed(() => elementProxies.slice(0, lengthSig())) as unknown as Signal<TCombinedResult>;
 }

@@ -109,7 +109,7 @@ export const noObserverRefetch = async (): Promise<never> => {
 };
 
 /** Result-surfacing hooks invoked by {@link useBaseQueryObserver} at the appropriate lifecycle points. */
-export type QueryObserverHandlers<TData, TError> = {
+export type QueryObserverHandlers<TQueryFnData, TError, TData, TQueryKey extends QueryKey> = {
 	/** Fires on every observer notification (subscription callback). */
 	onResult: (result: QueryObserverResult<TData, TError>, requestUpdate: () => void) => void;
 	/** Fires once right after the observer connects — eager read of already-cached data. */
@@ -118,6 +118,19 @@ export type QueryObserverHandlers<TData, TError> = {
 	onRender?: (result: QueryObserverResult<TData, TError>) => void;
 	/** Fires on host disconnect — the signals hook resets its source signal to pending. */
 	onDispose?: () => void;
+	/**
+	 * Optional server-render handler injected by the signals layer.
+	 * When present, the base invokes this instead of its built-in non-held SSR prefetch.
+	 * Receives the shared context and must return `{ promise, abort }`.
+	 * The base wires `hostDisconnected → abort()`.
+	 */
+	onServerRender?: (ctx: {
+		qc: QueryClient;
+		getOpts: () => UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>;
+		reArm: () => void;
+		getObserver: () => QueryObserver<TQueryFnData, TError, TData, TQueryFnData, TQueryKey> | undefined;
+		syncResult: () => void;
+	}) => { promise: Promise<void>; abort: () => void };
 };
 
 /** Observer accessor + `refetch` action shared by `useQuery` and `$useQuery`. */
@@ -151,6 +164,36 @@ export function isQueryKeyHeld(queryKey: unknown): boolean {
 }
 
 /**
+ * Pure helper: normalize raw options against the query client defaults and stamp
+ * `_optimisticResults`.  Extracted from the inner closure so the signals layer and
+ * future multi-query hooks can reuse it without importing `@ssv/stencil-signals`.
+ *
+ * - Held query (key not yet resolved): forces `enabled = false` so the observer never
+ *   fetches with an `undefined` key; a later `setOptions` call re-evaluates once the
+ *   key resolves.
+ * - `_optimisticResults` is stamped here (observer-ctor time) so `getCurrentResult()`
+ *   returns cached data immediately at `onConnect` ("reads cached data immediately").
+ */
+export function defaultedQueryOptions<TQueryFnData, TError, TData, TQueryKey extends QueryKey>(
+	qc: QueryClient,
+	getOpts: () => UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
+	isRestoring: boolean,
+): QueryObserverOptions<TQueryFnData, TError, TData, TQueryFnData, TQueryKey> {
+	const d = qc.defaultQueryOptions(getOpts()) as QueryObserverOptions<
+		TQueryFnData,
+		TError,
+		TData,
+		TQueryFnData,
+		TQueryKey
+	>;
+	if (isQueryKeyHeld(d.queryKey)) {
+		d.enabled = false;
+	}
+	d._optimisticResults = isRestoring ? "isRestoring" : "optimistic";
+	return d;
+}
+
+/**
  * Shared observer lifecycle for the classic and signals query hooks.
  *
  * Owns option normalization, client resolution, the `QueryObserver` subscription, and the
@@ -174,7 +217,7 @@ export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey exte
 		| UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>
 		| (() => UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>),
 	client: QueryClient | Ref<QueryClient> | undefined,
-	handlers: QueryObserverHandlers<TData, TError>,
+	handlers: QueryObserverHandlers<TQueryFnData, TError, TData, TQueryKey>,
 ): QueryObserverHandle<TQueryFnData, TError, TData, TQueryKey> {
 	const getOpts = typeof getOptions === "function" ? getOptions : () => getOptions;
 
@@ -186,32 +229,13 @@ export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey exte
 	const refetch: QueryObserverResult<TData, TError>["refetch"] = async (options?: RefetchOptions) =>
 		observer?.refetch(options) ?? noObserverRefetch();
 
-	/** Returns defaulted options with `_optimisticResults` stamped. */
-	const defaultedOptions = (qc: QueryClient, isRestoring: boolean) => {
-		const d = qc.defaultQueryOptions(getOpts()) as QueryObserverOptions<
-			TQueryFnData,
-			TError,
-			TData,
-			TQueryFnData,
-			TQueryKey
-		>;
-		// Held query (key not yet resolved): keep the observer idle so it never fetches with an
-		// undefined key. When the key resolves, a later setOptions (hostWillRender on the client, or
-		// the SSR settle below) re-evaluates this and lets the observer fetch.
-		if (isQueryKeyHeld(d.queryKey)) {
-			d.enabled = false;
-		}
-		d._optimisticResults = isRestoring ? "isRestoring" : "optimistic";
-		return d;
-	};
-
 	// hostWillLoad: context guaranteed resolved — qc is non-null and auto-unwrapped from clientRef.
 	useLoadEffect(
 		// oxlint-disable-next-line typescript/unbound-method -- requestUpdate is a pre-bound function provided by the framework context
 		({ qc, isRestoring, requestUpdate }) => {
 			observer = new QueryObserver<TQueryFnData, TError, TData, TQueryFnData, TQueryKey>(
 				qc,
-				defaultedOptions(qc, isRestoring),
+				defaultedQueryOptions(qc, getOpts, isRestoring),
 			);
 
 			// Sync immediately in case data is already cached.
@@ -244,7 +268,7 @@ export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey exte
 				return;
 			}
 			// TODO(perf): skip setOptions when options is static (not a function) — mirrors Lit BaseController.onHostUpdate()
-			observer.setOptions(defaultedOptions(qc, isRestoringRef.current));
+			observer.setOptions(defaultedQueryOptions(qc, getOpts, isRestoringRef.current));
 			// Sync latest result before each render — mirrors useQuery's lazy Ref read.
 			// Ensures SSR/hydration sees the cached data even if the subscription
 			// callback was batched as a microtask and not yet flushed.
@@ -252,46 +276,55 @@ export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey exte
 		},
 	}));
 
-	// Server only: seed the cache before render() runs. Stencil awaits all hostWillLoad
-	// promises in parallel, so this does not block the observer subscription above.
-	// `enabled: false` opts the query out of SSR prefetching (mirrors client behavior).
-	// After prefetch resolves, re-syncs the observer result into handlers so signals see
-	// the populated cache before render() (hostWillRender may not fire in test environments
-	// that wrap render() — e.g. when useSignalWatcher() replaces host.render).
-	//
-	// Held queries (key has an `undefined` segment) are skipped here — the signals hook
-	// (`$useQuery`) owns the reactive held-settle in its own lifecycle block, keeping the
-	// @ssv/stencil-signals dependency out of the classic useQuery bundle.
-	use(() => ({
-		hostWillLoad(): Promise<void> | void {
-			if (!detectServer()) {
-				return;
-			}
-			const qc = clientRef.current;
-			if (!qc) {
-				return;
-			}
-
-			const syncResult = (): void => {
-				if (observer) {
-					handlers.onConnect?.(observer.getCurrentResult());
-				}
-			};
-
-			const initial = getOpts();
-			if (initial.enabled === false || isQueryKeyHeld(initial.queryKey)) {
-				return;
-			}
-			return qc.prefetchQuery(initial).then(syncResult);
-		},
-	}));
-
 	const reArm = (): void => {
 		const qc = clientRef.current;
 		if (observer && qc) {
-			observer.setOptions(defaultedOptions(qc, isRestoringRef.current));
+			observer.setOptions(defaultedQueryOptions(qc, getOpts, isRestoringRef.current));
 		}
 	};
+
+	// Server only: seed the cache before render() runs. Stencil awaits all hostWillLoad
+	// promises in parallel, so this does not block the observer subscription above.
+	// When `onServerRender` is injected (signals layer), delegates to that (covers both held
+	// and non-held, with reactive settle). Otherwise falls back to the built-in non-held prefetch
+	// (classic path, unchanged behavior). The base owns abort wiring: hostDisconnected → abort().
+	use(() => {
+		let abort: (() => void) | undefined;
+		return {
+			hostWillLoad(): Promise<void> | void {
+				if (!detectServer()) {
+					return;
+				}
+				const qc = clientRef.current;
+				if (!qc) {
+					return;
+				}
+
+				const syncResult = (): void => {
+					if (observer) {
+						handlers.onConnect?.(observer.getCurrentResult());
+					}
+				};
+
+				if (handlers.onServerRender) {
+					// Signal layer injected a settle — it handles both held and non-held.
+					const r = handlers.onServerRender({ qc, getOpts, reArm, getObserver: () => observer, syncResult });
+					abort = r.abort;
+					return r.promise;
+				}
+
+				// Built-in non-held prefetch (classic path, unchanged).
+				const initial = getOpts();
+				if (initial.enabled === false || isQueryKeyHeld(initial.queryKey)) {
+					return;
+				}
+				return qc.prefetchQuery(initial).then(syncResult);
+			},
+			hostDisconnected(): void {
+				abort?.();
+			},
+		};
+	});
 
 	return { refetch, getObserver: () => observer, reArm, clientRef };
 }

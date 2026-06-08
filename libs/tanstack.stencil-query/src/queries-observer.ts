@@ -185,9 +185,7 @@ export type QueriesObserverHandlers<TCombinedResult> = {
 	/** Fires once right after the observer connects — eager read of already-cached data. */
 	onConnect?: (result: TCombinedResult) => void;
 	/**
-	 * Fires on every host render (`hostWillRender`). Classic `useQueries` passes `() => reArm()` to
-	 * re-apply the (possibly changed) queries each render — its only reactivity. The signal hook
-	 * omits it: it reacts purely via its client `effect` on the options signal.
+	 * Fires on every host render (`hostWillRender`).
 	 */
 	onRender?: () => void;
 	/** Fires on host disconnect — the signals hook resets its source signal to pending. */

@@ -3,6 +3,8 @@ import { detectServer, use, useLoadEffect } from "@ssv/stencil-core";
 import type { Ref } from "@ssv/stencil-core";
 import { QueriesObserver, notifyManager } from "@tanstack/query-core";
 import type {
+	dataTagErrorSymbol,
+	dataTagSymbol,
 	DefaultError,
 	OmitKeyof,
 	QueriesPlaceholderDataFunction,
@@ -95,33 +97,43 @@ type GetDefinedOrUndefinedQueryResult<T, TData, TError = unknown> = T extends {
 	: UseQueryResult<TData, TError>;
 
 export type GetUseQueryResult<T> =
-	// Part 1: object syntax
-	T extends { queryFnData: any; error?: infer TError; data: infer TData }
-		? GetDefinedOrUndefinedQueryResult<T, TData, TError>
-		: T extends { queryFnData: infer TQueryFnData; error?: infer TError }
-			? GetDefinedOrUndefinedQueryResult<T, TQueryFnData, TError>
-			: T extends { data: infer TData; error?: infer TError }
-				? GetDefinedOrUndefinedQueryResult<T, TData, TError>
-				: // Part 2: tuple syntax
-					T extends [any, infer TError, infer TData]
+	// Part 0: queryOptions result — directly extract TData/TError from the DataTag brand symbols on queryKey.
+	// Uses the unique symbol keys ([dataTagSymbol]/[dataTagErrorSymbol]) instead of DataTag<any,...> which
+	// collapses to `any` (since `any extends AnyDataTag` is true), making the match too broad.
+	// If a `select` transform is present, its return type overrides TQueryFnData as TData.
+	// When select is absent, TData infers as `unknown` → falls back to TQueryFnData from the brand.
+	T extends {
+		queryKey?: { [dataTagSymbol]: infer TQueryFnData; [dataTagErrorSymbol]: infer TError };
+		select?: (data: any) => infer TData;
+	}
+		? GetDefinedOrUndefinedQueryResult<T, unknown extends TData ? TQueryFnData : TData, TError>
+		: // Part 1: object syntax
+			T extends { queryFnData: any; error?: infer TError; data: infer TData }
+			? GetDefinedOrUndefinedQueryResult<T, TData, TError>
+			: T extends { queryFnData: infer TQueryFnData; error?: infer TError }
+				? GetDefinedOrUndefinedQueryResult<T, TQueryFnData, TError>
+				: T extends { data: infer TData; error?: infer TError }
 					? GetDefinedOrUndefinedQueryResult<T, TData, TError>
-					: T extends [infer TQueryFnData, infer TError]
-						? GetDefinedOrUndefinedQueryResult<T, TQueryFnData, TError>
-						: T extends [infer TQueryFnData]
-							? GetDefinedOrUndefinedQueryResult<T, TQueryFnData>
-							: // Part 3: infer from the actual options object
-								T extends {
-										queryFn?: QueryFunction<infer TQueryFnData, any> | SkipTokenForUseQueries;
-										select?: (data: any) => infer TData;
-										throwOnError?: ThrowOnError<any, infer TError, any, any>;
-								  }
-								? GetDefinedOrUndefinedQueryResult<
-										T,
-										unknown extends TData ? TQueryFnData : TData,
-										unknown extends TError ? DefaultError : TError
-									>
-								: // Fallback
-									UseQueryResult;
+					: // Part 2: tuple syntax
+						T extends [any, infer TError, infer TData]
+						? GetDefinedOrUndefinedQueryResult<T, TData, TError>
+						: T extends [infer TQueryFnData, infer TError]
+							? GetDefinedOrUndefinedQueryResult<T, TQueryFnData, TError>
+							: T extends [infer TQueryFnData]
+								? GetDefinedOrUndefinedQueryResult<T, TQueryFnData>
+								: // Part 3: infer from the actual options object
+									T extends {
+											queryFn?: QueryFunction<infer TQueryFnData, any> | SkipTokenForUseQueries;
+											select?: (data: any) => infer TData;
+											throwOnError?: ThrowOnError<any, infer TError, any, any>;
+									  }
+									? GetDefinedOrUndefinedQueryResult<
+											T,
+											unknown extends TData ? TQueryFnData : TData,
+											unknown extends TError ? DefaultError : TError
+										>
+									: // Fallback
+										UseQueryResult;
 
 /**
  * `QueriesOptions` recursively unwraps the `queries` tuple to infer/enforce each element's

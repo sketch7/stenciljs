@@ -184,9 +184,7 @@ export type QueriesObserverHandlers<TCombinedResult> = {
 	onResult: (result: TCombinedResult, requestUpdate: () => void) => void;
 	/** Fires once right after the observer connects — eager read of already-cached data. */
 	onConnect?: (result: TCombinedResult) => void;
-	/**
-	 * Fires on every host render (`hostWillRender`).
-	 */
+	/** Fires on every host render (`hostWillRender`). */
 	onRender?: () => void;
 	/** Fires on host disconnect — the signals hook resets its source signal to pending. */
 	onDispose?: () => void;
@@ -315,9 +313,6 @@ export function useBaseQueriesObserver<TCombinedResult>(
 		{ qc: clientRef, isRestoring: isRestoringRef },
 	);
 
-	// Per-render hook. The base no longer re-applies queries itself — it just fires `onRender`,
-	// letting each consumer opt in. Classic `useQueries` passes `onRender: () => reArm()` (pull
-	// reactivity); the signal hook omits it and reacts via its client effect instead.
 	use(() => ({
 		hostWillRender() {
 			handlers.onRender?.();

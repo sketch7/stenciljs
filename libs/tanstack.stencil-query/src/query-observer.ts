@@ -114,11 +114,7 @@ export type QueryObserverHandlers<TQueryFnData, TError, TData, TQueryKey extends
 	onResult: (result: QueryObserverResult<TData, TError>, requestUpdate: () => void) => void;
 	/** Fires once right after the observer connects — eager read of already-cached data. */
 	onConnect?: (result: QueryObserverResult<TData, TError>) => void;
-	/**
-	 * Fires on every host render (`hostWillRender`). Classic hooks pass `() => reArm()` to
-	 * re-apply the (possibly changed) options each render — their only reactivity. Signal hooks
-	 * omit it: they react purely via their client `effect` on the options signal.
-	 */
+	/** Fires on every host render (`hostWillRender`). */
 	onRender?: () => void;
 	/** Fires on host disconnect — the signals hook resets its source signal to pending. */
 	onDispose?: () => void;
@@ -264,9 +260,6 @@ export function useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey exte
 		{ qc: clientRef, isRestoring: isRestoringRef },
 	);
 
-	// Per-render hook. The base no longer re-applies options itself — it just fires `onRender`,
-	// letting each consumer opt in. Classic hooks pass `onRender: () => reArm()` (pull reactivity);
-	// signal hooks omit it and react via their client effect instead.
 	use(() => ({
 		hostWillRender() {
 			handlers.onRender?.();

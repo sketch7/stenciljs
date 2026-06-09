@@ -79,9 +79,6 @@ export function useQuery<
 		| (() => UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>),
 	client?: QueryClient | Ref<QueryClient>,
 ): Ref<QueryObserverResult<TData, TError>> {
-	// `onRender: () => handle.reArm()` gives the classic hook its pull-based reactivity: each render
-	// re-applies the (possibly changed) options. `handle` is referenced lazily — it is assigned by
-	// the time `hostWillRender` first fires. Signal hooks omit `onRender` (they react via an effect).
 	const handle = useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey>(getOptions, client, {
 		onResult: (_result, requestUpdate) => requestUpdate(),
 		onRender: () => handle.reArm(),

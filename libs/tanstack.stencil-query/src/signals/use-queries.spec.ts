@@ -157,10 +157,6 @@ describe("$useQueries", () => {
 		expect(m.total()).toBe(5);
 	});
 
-	// Note: array growth for the SIGNAL hook is driven by signals, not `m.render()` — see
-	// "grows the returned signal array when a signal-derived query list length increases" below.
-	// The classic pull-based (`m.render()`) growth path is covered by `use-queries.spec.ts`.
-
 	it("clears data and unsubscribes after disconnect", async () => {
 		qc.setQueryData(["a"], 1);
 		using m = await mount(() => ({

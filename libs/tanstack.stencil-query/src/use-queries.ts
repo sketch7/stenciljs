@@ -43,9 +43,6 @@ export function useQueries<T extends any[], TCombinedResult = QueriesResults<T>>
 	getOptions: UseQueriesOptions<T, TCombinedResult> | (() => UseQueriesOptions<T, TCombinedResult>),
 	client?: QueryClient | Ref<QueryClient>,
 ): Ref<TCombinedResult> {
-	// `onRender: () => handle.reArm()` gives the classic hook its pull-based reactivity: each render
-	// re-applies the (possibly changed) queries. `handle` is referenced lazily — assigned by the
-	// time `hostWillRender` first fires. The signal hook omits `onRender` (it reacts via an effect).
 	const handle = useBaseQueriesObserver<TCombinedResult>(getOptions as never, client, {
 		onResult: (_result, requestUpdate) => requestUpdate(),
 		onRender: () => handle.reArm(),

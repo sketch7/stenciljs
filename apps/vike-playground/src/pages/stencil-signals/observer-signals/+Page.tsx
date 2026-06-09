@@ -7,8 +7,8 @@ export default function Page(): JSX.Element {
 			<div className="flex flex-col gap-1">
 				<h1 className="text-2xl font-bold text-(--color-fg)">elementSize / intersect</h1>
 				<p className="text-sm text-(--color-muted-fg)">
-					<code className="text-(--color-primary)">elementSize</code> tracks the component's border-box dimensions via{" "}
-					<code className="text-(--color-primary)">ResizeObserver</code>.{" "}
+					<code className="text-(--color-primary)">elementSize</code> tracks the component&apos;s border-box dimensions
+					via <code className="text-(--color-primary)">ResizeObserver</code>.{" "}
 					<code className="text-(--color-primary)">intersect</code> tracks viewport visibility via{" "}
 					<code className="text-(--color-primary)">IntersectionObserver</code>. Resize the browser window or scroll this
 					page to see both signals update live.

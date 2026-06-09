@@ -13,6 +13,7 @@ out-tsc
 *.tmp.*
 log.txt
 *.tsbuildinfo
+nul
 
 # dependencies
 node_modules
@@ -59,6 +60,5 @@ Thumbs.db
 
 # stencil
 .stencil/
-**/components.d.ts
 **/*/loader/
 **/*/hydrate/

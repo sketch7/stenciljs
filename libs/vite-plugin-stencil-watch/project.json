@@ -19,7 +19,8 @@
       "options": {
         "command": "pnpm oxlint src/",
         "cwd": "libs/vite-plugin-stencil-watch"
-      }
+      },
+      "dependsOn": []
     },
     "fmt": {
       "executor": "nx:run-commands",

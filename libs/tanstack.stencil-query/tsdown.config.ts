@@ -5,5 +5,10 @@ export default defineConfig({
 	format: ["esm"],
 	platform: "neutral",
 	hash: false,
+	dts: true,
 	tsconfig: "tsconfig.lib.json",
+	define: { DEBUG: JSON.stringify(process.env["SSV_DEBUG"] ?? "false") },
+	outputOptions: {
+		chunkFileNames: "_internal/[name].js",
+	},
 });

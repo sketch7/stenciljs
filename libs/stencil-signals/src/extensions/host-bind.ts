@@ -23,8 +23,8 @@ function assertRegisteredWithActiveOwner(utilityName: string, cleanupsBefore: nu
 // ─── Shared lifecycle controller ──────────────────────────────────────────────
 
 type HostLifecycleHandlers = {
-	onConnect(): void;
-	onDisconnect(): void;
+	onConnect: () => void;
+	onDisconnect: () => void;
 };
 
 function registerHostLifecycle(handlers: HostLifecycleHandlers): void {
@@ -42,8 +42,8 @@ function registerHostLifecycle(handlers: HostLifecycleHandlers): void {
 
 export type HostBoundDisposable<TSnapshot> = {
 	(): TSnapshot;
-	peek(): TSnapshot;
-	dispose(): void;
+	peek: () => TSnapshot;
+	dispose: () => void;
 };
 
 export function bindToHostDisposable<TSnapshot, TInner>(config: {
@@ -85,9 +85,7 @@ export function bindToHostDisposable<TSnapshot, TInner>(config: {
 			}
 			const cleanupsBefore = getActiveOwner()?.length ?? 0;
 			const wasEager = inner !== null;
-			if (inner === null) {
-				inner = config.create(snapshot);
-			}
+			inner ??= config.create(snapshot);
 			if (wasEager && !disposeRegisteredOnOwner) {
 				disposeRegisteredOnOwner = true;
 				const current = inner;

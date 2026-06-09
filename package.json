@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "nx run vike-playground:dev",
+    "dev:debug": "cross-env SSV_DEBUG=transfer-state,query-hydration pnpm dev",
     "build": "nx run vike-playground:build",
     "build:analyze": "ANALYZE=true nx run vike-playground:build",
     "cost:libs": "node --import @swc-node/register/esm scripts/bundle-cost.ts",
@@ -21,7 +22,9 @@
     "pre-release-build": "nx release version $VERSION",
     "release": "nx release publish"
   },
-  "dependencies": {},
+  "dependencies": {
+    "cross-env": "catalog:"
+  },
   "devDependencies": {
     "@nx/js": "22.7.0",
     "@swc-node/register": "1.11.1",
@@ -32,6 +35,7 @@
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tailwindcss": "catalog:",
+    "oxlint-tsgolint": "^0.23.0",
     "tslib": "^2.8.1",
     "typescript": "catalog:",
     "vite": "catalog:",

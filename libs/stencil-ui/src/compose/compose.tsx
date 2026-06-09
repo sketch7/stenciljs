@@ -8,7 +8,7 @@ import { useCompositionRegistry } from "./registry";
 import type { ComposeEventDetail } from "./types";
 
 function toListenerProp(eventName: string): string {
-	return `on${eventName.replaceAll(/(^|-)([a-z0-9])/giu, (_separator, _prefix, char: string) => char.toUpperCase())}`;
+	return `on${eventName.replaceAll(/(?<sep>^|-)(?<char>[a-z0-9])/giu, (_separator, _prefix, char: string) => char.toUpperCase())}`;
 }
 
 @Component({
@@ -74,8 +74,7 @@ export class SsvCompose extends SsvElement {
 		}
 		const ElementClass =
 			customElements === null || customElements === undefined ? undefined : customElements.get(definition.tag);
-		const isWrapper =
-			ElementClass !== undefined && (ElementClass as unknown as typeof ComposeWidget).isComposeWrapper === true;
+		const isWrapper = (ElementClass as unknown as typeof ComposeWidget)?.isComposeWrapper;
 		let resolvedProps: Record<string, unknown>;
 		if (definition.mapProps) {
 			resolvedProps = definition.mapProps(this.props);

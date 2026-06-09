@@ -11,7 +11,7 @@ function detectLang(code: string): "tsx" | "typescript" {
 let highlighterPromise: ReturnType<typeof createHighlighter> | undefined;
 
 // oxlint-disable-next-line typescript/explicit-function-return-type
-function getHighlighter() {
+async function getHighlighter() {
 	highlighterPromise ??= createHighlighter({
 		themes: ["github-dark-default"],
 		langs: ["typescript", "tsx"],

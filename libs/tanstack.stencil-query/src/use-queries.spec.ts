@@ -82,15 +82,21 @@ describe("useQueries", () => {
 			queries: useQueries(
 				{
 					queries: [
-						{ queryKey: ["ok"], queryFn: () => Promise.resolve("good") },
-						{ queryKey: ["bad"], queryFn: () => Promise.reject(new Error("boom")), retry: false },
+						{ queryKey: ["ok"], queryFn: async () => "good" },
+						{
+							queryKey: ["bad"],
+							queryFn: async () => {
+								throw new Error("boom");
+							},
+							retry: false,
+						},
 					],
 				},
 				qc,
 			),
 		}));
 		await vi.waitFor(() => expect(m.queries()[1].isError).toBeTruthy());
-		expect((m.queries()[1].error as Error).message).toBe("boom");
+		expect(m.queries()[1].error!.message).toBe("boom");
 		await vi.waitFor(() => expect(m.queries()[0].isSuccess).toBeTruthy());
 	});
 
@@ -159,12 +165,7 @@ describe("useQueries", () => {
 			readonly queries = useQueries({ queries: [{ queryKey: ["sub"], queryFn: vi.fn<() => unknown>() }] }, qc);
 		}
 		qc.setQueryData(["sub"], "hello");
-		using comp = await mount(
-			() => {
-				/* noop */
-			},
-			{ hostFactory: () => new ComponentLike() },
-		);
+		using comp = await mount(() => {}, { hostFactory: () => new ComponentLike() });
 		expect(comp.queries()[0].data).toBe("hello");
 		comp.disconnect();
 		expect(comp.queries()[0].isPending).toBeTruthy();

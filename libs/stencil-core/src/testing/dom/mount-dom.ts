@@ -34,7 +34,7 @@ export type DomTreeNode = {
 	 * Hooks inside `setup` bind to the child's host.
 	 * Returns whatever `setup` returns.
 	 */
-	child<T>(setup: (node: DomTreeNode) => T): T;
+	child: <T>(setup: (node: DomTreeNode) => T) => T;
 };
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
@@ -169,7 +169,7 @@ export async function mountDom<T = void>(
 	}
 
 	// willLoad all nodes in parallel
-	await Promise.all(collectNodes(rootInternal).map(n => n.host.willLoad()));
+	await Promise.all(collectNodes(rootInternal).map(async n => n.host.willLoad()));
 
 	return {
 		host: rootHost,

@@ -60,7 +60,7 @@ export function $usePrefetchQuery<
 			return;
 		}
 		if (!qc.getQueryState(opts.queryKey)) {
-			qc.prefetchQuery(opts);
+			void qc.prefetchQuery(opts);
 		}
 	});
 }

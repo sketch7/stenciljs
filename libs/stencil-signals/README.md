@@ -1,104 +1,43 @@
 # @ssv/stencil-signals
 
-> Signals-based reactive state for [StencilJS](https://stenciljs.com/) — auto-tracking `render()`, lifecycle-bound effects, and Stencil-native prop/event bridges. Ships with a **TC39** backend (`signal-polyfill`) and a **Preact Signals** backend (`@preact/signals-core`).
-
-Part of the [stenciljs](https://github.com/sketch7/stenciljs) monorepo. Designed for design-system and product teams that want fine-grained reactivity without `@State()` mirroring or manual store sync.
+Signals-based reactive state for [StencilJS](https://stenciljs.com/) — auto-tracking `render()`, lifecycle-bound effects, and Stencil-native prop/event bridges. Ships with a **TC39** backend (`signal-polyfill`) and a **Preact Signals** backend (`@preact/signals-core`).
 
 ## When to adopt
 
-**Good fit**
+- Shared UI state across many Stencil components (design tokens, shell chrome, feature flags)
+- Derived values that should not be recomputed on every `render()` pass
+- Replacing `@Watch` + lifecycle boilerplate for prop-driven side effects
+- Async data with abort-on-change semantics (`derivedAsync`)
+- Teams standardising on TC39 Signals or already using Preact Signals elsewhere
 
-- Shared UI state across many Stencil components (design tokens, shell chrome, feature flags).
-- Derived values that should not be recomputed on every `render()` pass.
-- Replacing `@Watch` + lifecycle boilerplate for prop-driven side effects.
-- Async data in components with abort-on-change semantics (`derivedAsync`).
-- Teams standardising on TC39 Signals or already using Preact Signals elsewhere.
-
-**Adoption checklist**
-
-1. Add peers: `@ssv/stencil-signals`, `@ssv/stencil-core`, one signal backend, `@stencil/core` (4.43+ recommended for passive listener parity in `signalFromEvent`).
-2. Register **one** adapter in `globalScript` before any component code runs ([Installation](#installation)).
-3. Standardise on `SsvElement` + `useSignalWatcher()` (or `SignalWatcherMixin` when composing mixins).
-4. Document field order: `useSignalWatcher()` before `effect`, `derivedAsync`, `useSignalProps`, `signalFromEvent`.
-5. Place module-level `signal()` / `signalStore()` in `*.store.ts` files; keep components thin.
-6. Align SSR: use `derivedAsync` + `initialValue` / transfer-state for hydrate apps ([SSR](#ssr-and-hydration)).
-
-## Architecture
-
-Signals live **outside** the component class. `SignalWatcherController` wraps `render()` in a persistent computed graph so any `signal()` read during JSX is tracked. When a dependency changes, a microtask-scheduled `requestUpdate()` runs.
-
-Host-bound utilities (`effect`, `derivedAsync`, `useSignalProps`, `signalFromEvent`) register with an **active owner** opened in `hostConnected` and disposed in `hostDisconnected`, so reconnects and DOM moves do not leak listeners.
-
-```mermaid
-flowchart LR
-  subgraph app["Application bootstrap"]
-    GS["globalScript: import tc39 or preact"]
-  end
-  subgraph module["Shared modules"]
-    S["signal / computed / signalStore"]
-  end
-  subgraph component["Stencil component"]
-    W["useSignalWatcher()"]
-    R["render() reads signals"]
-    E["effect / derivedAsync / useSignalProps"]
-  end
-  GS --> S
-  W --> R
-  S --> R
-  R -->|"dependency change"| U["requestUpdate()"]
-  W --> E
-```
-
-**Dependency:** [`@ssv/stencil-core`](../stencil-core/README.md) provides `SsvElement`, `use()`, and `ReactiveControllerHost` — the same foundation used by TanStack bindings and context APIs.
-
-## Installation
+## Install
 
 ```bash
 pnpm add @ssv/stencil-signals @ssv/stencil-core
+# pick one backend:
+pnpm add signal-polyfill        # TC39 (recommended)
+pnpm add @preact/signals-core   # Preact Signals
 ```
 
-Choose **one** signal backend (peer dependency):
+**Peers:** `@stencil/core >=4` (4.43+ recommended), `@ssv/stencil-core`, exactly one backend.
 
-```bash
-# TC39 (recommended for standards alignment)
-pnpm add signal-polyfill
+## Activation (one-time)
 
-# Preact Signals (if the org already standardises on @preact/signals-core)
-pnpm add @preact/signals-core
-```
-
-**Peers:** `@stencil/core >=4` (4.43+ recommended), `@ssv/stencil-core`, and exactly one of `signal-polyfill` or `@preact/signals-core`.
-
-Activate the adapter once in a [global script](https://stenciljs.com/docs/config#globalscript) **before** components load:
+Register exactly one adapter in a [global script](https://stenciljs.com/docs/config#globalscript) before any component code runs:
 
 ```ts
 // src/global.ts
 import "@ssv/stencil-signals/tc39"; // or "@ssv/stencil-signals/preact"
-
 export default function globalScript() {}
 ```
 
 ```ts
 // stencil.config.ts
-export const config: Config = {
-  globalScript: "src/global.ts",
-};
+export const config: Config = { globalScript: "src/global.ts" };
 ```
 
 > [!IMPORTANT]
-> Pick one adapter per application. Mixing `/tc39` and `/preact` in the same bundle is unsupported.
-
-## Package layout and imports
-
-| Import path                       | Activates adapter? | Typical use                                                                       |
-| --------------------------------- | ------------------ | --------------------------------------------------------------------------------- |
-| `@ssv/stencil-signals/tc39`       | Yes (TC39)         | `globalScript` only                                                               |
-| `@ssv/stencil-signals/preact`     | Yes (Preact)       | `globalScript` only                                                               |
-| `@ssv/stencil-signals`            | No                 | Primitives, `useSignalWatcher`, `effect`, `derivedAsync`, mixins                  |
-| `@ssv/stencil-signals/extensions` | No                 | `useSignalProps`, `signalFromEvent`, `elementSize`, `intersect`                   |
-| `@ssv/stencil-signals/store`      | No                 | `signalStore`, `withState`/`withComputed`/`withMethods`, `patchState`, `getState` |
-
-The main entry does **not** configure an adapter. Using `signal()` without a prior `globalScript` import throws at runtime.
+> Mixing `/tc39` and `/preact` in the same bundle is unsupported.
 
 ## Quick start
 
@@ -112,218 +51,113 @@ export const count = signal(0);
 export const doubled = computed(() => count() * 2);
 ```
 
-**Component**:
+**Component** — `useSignalWatcher()` enables auto-tracking in `render()`, always declare first:
 
 ```tsx
-import { Component } from "@stencil/core";
-import { useSignalWatcher } from "@ssv/stencil-signals";
 import { SsvElement } from "@ssv/stencil-core";
+import { useSignalWatcher } from "@ssv/stencil-signals";
 import { count, doubled } from "./counter.store";
 
-@Component({ tag: "my-counter", shadow: true })
-export class MyCounter extends SsvElement {
-  readonly signalWatcher = useSignalWatcher();
+@Component({ tag: "ssv-counter", shadow: true })
+export class SsvCounter extends SsvElement {
+  readonly _watcher = useSignalWatcher();
 
   render() {
     return (
       <div>
-        <p>
-          {count()} — doubled: {doubled()}
-        </p>
-        <button type="button" onClick={() => count.update(n => n + 1)}>
-          +1
-        </button>
+        {count()} — doubled: {doubled()}
+        <button onClick={() => count.update(n => n + 1)}>+1</button>
       </div>
     );
   }
 }
 ```
 
-## Integration patterns
+When composing mixins, use `SignalWatcherMixin` with `Mixin()` and place it first — see [signal-watcher.md](docs/signal-watcher.md).
 
-| Pattern                                         | When to use                          | Notes                                                                        |
-| ----------------------------------------------- | ------------------------------------ | ---------------------------------------------------------------------------- |
-| `SsvElement` + `useSignalWatcher()`             | Default for new components           | No mixin ordering issues; works with `use()` hooks from `@ssv/stencil-core`  |
-| `Mixin(SignalWatcherMixin, SsvElementMixin, …)` | Legacy bases or multiple mixins      | Put `SignalWatcherMixin` **first** in `Mixin()`                              |
-| Module-level `signal()` / `signalStore()`       | Cross-component shared state         | Import store modules; avoid storing signals on `this` unless instance-scoped |
-| `useSignalProps`                                | Prop-driven logic without `@Watch`   | Import from `/extensions`; requires watcher first                            |
-| `effect` / `derivedAsync` as class fields       | Side effects and async derived state | Declare **after** `useSignalWatcher()`                                       |
+## Lifecycle-bound effects — `effect`
 
-See [docs/signal-watcher.md](docs/signal-watcher.md) for mixin vs composition detail.
+- Use for side effects tied to signal changes (DOM mutations, analytics, subscriptions)
+- Avoid for plain connect/disconnect logic — prefer `useEffect(fn, [])` from `@ssv/stencil-core`
 
-## Day-to-day patterns
-
-### Field declaration order
-
-On any component using host-bound utilities:
-
-```tsx
-readonly signalWatcher = useSignalWatcher(); // 1 — always first
-
-readonly $props = useSignalProps(MyComp)({ ... }); // 2
-readonly _sync = effect([...], ...); // 2
-readonly user = derivedAsync(...); // 2
-readonly $ev = signalFromEvent("scroll", { target: "window" }); // 2
-```
-
-`computedPrevious` and module-level `computed()` do not require the watcher.
-
-### Writable props and framework output targets
-
-Two-way prop signals emit `${propName}Change`. Declare the matching `@Event()` for React/Vue/Angular codegen:
-
-```tsx
-@Prop({ reflect: true }) isRunning = false;
-@Event() isRunningChange!: EventEmitter<boolean>;
-
-readonly $props = useSignalProps(AppTimer)({
-  isRunning: { twoWay: true },
+```ts
+// auto-tracking form — re-runs when any read signal changes
+readonly _sync = effect(() => {
+  document.title = `Count: ${count()}`;
 });
+
+// explicit deps form — defer: true skips the initial run
+readonly _log = effect([count], () => {
+  console.log("count changed:", count());
+}, { defer: true });
 ```
 
-### Untracked reads
+→ [effect.md](docs/effect.md) — `effectOnceIf`, cleanup, ordering
+
+## Async derived state — `derivedAsync`
+
+- Use for async data (fetches, timers) that should abort when signal deps change
+- Provides `initialValue`, `whenSettled`, and an abort signal for fetch cancellation
 
 ```ts
-import { computed, signal, untracked } from "@ssv/stencil-signals";
-
-const a = signal(0);
-const b = signal(100);
-const sum = computed(() => a() + untracked(() => b()));
+readonly user = derivedAsync(async ({ signal }) => {
+  const id = this.#userId();
+  return fetch(`/api/users/${id}`, { signal }).then(r => r.json());
+}, { initialValue: null });
 ```
 
-Prefer `sig.peek()` for a single read; use `untracked(() => …)` for multiple reads in one expression.
+→ [derived-async.md](docs/derived-async.md)
 
-### Referencing the previous value
+## Prop bridge — `useSignalProps`
 
-The `computed()` callback receives its own previously computed value — useful for
-accumulators, "max seen so far", or change-direction logic:
+- Use to replace `@Watch` + manual state sync for `@Prop`-driven reactivity
+- Import from `@ssv/stencil-signals/extensions`; requires `useSignalWatcher()` declared first
 
 ```ts
-import { computed, signal } from "@ssv/stencil-signals";
-
-const value = signal(0);
-
-// Seeded — `initialValue` types `prev` as `T` (never undefined) and infers `T` from the seed.
-const runningTotal = computed(prev => value() + prev, { initialValue: 0 });
-const maxSeen = computed(prev => Math.max(prev, value()), { initialValue: 0 });
-
-// Unseeded — `prev` is `T | undefined`; guard with `?? 0`. `T` can't be inferred from a
-// self-referential body, so annotate it explicitly.
-const delta = computed<number>(prev => value() - (prev ?? value()));
+readonly $props = useSignalProps(SsvTimer)({
+  isRunning: { twoWay: true },
+  duration: {},
+});
+// this.$props.isRunning() reads the current prop as a signal
 ```
 
-Unlike `computedPrevious(source)` — which tracks the prior value of _another_ signal —
-this feeds back the computed's **own** last output.
+→ [signal-props.md](docs/signal-props.md) — `transform`, `required`, two-way `@Event()` codegen
 
-### Signal store
+## Signal store — `signalStore`
 
-Store docs moved to [docs/signal-store.md](docs/signal-store.md): examples, API, `patchState`, `withConfig`, and reusable `signalStoreFeature` patterns.
+Feature-sliced stores with `withState`, `withComputed`, `withMethods`. Import from `@ssv/stencil-signals/store`.
 
-## Migration from `@stencil/store`
-
-Examples in this monorepo compare the legacy store pattern with signals ([counter](../../apps/stencil-playground/src/examples/stencil-signals/counter/), [todo](../../apps/stencil-playground/src/examples/stencil-signals/todo/)).
-
-| Pain point                  | `@stencil/store`                | `@ssv/stencil-signals`                                     |
-| --------------------------- | ------------------------------- | ---------------------------------------------------------- |
-| Re-render after store write | Mirror into `@State()` manually | Read store/signals in `render()` with `useSignalWatcher()` |
-| Derived values              | Recompute every render          | `computed()` — lazy, cached                                |
-| Prop side effects           | `@Watch` + lifecycle hooks      | `effect([...], …)` or `useSignalProps`                     |
-| Cross-tree reads            | Subscriptions or prop drilling  | Import shared module-level signals                         |
-
-Incremental migration is supported: new features can use signals while existing screens keep `@stencil/store` until refactored.
-
-## Features
-
-| Utility                                   | Guide                                                                        |
-| ----------------------------------------- | ---------------------------------------------------------------------------- |
-| `useSignalWatcher` / `SignalWatcherMixin` | [signal-watcher.md](docs/signal-watcher.md)                                  |
-| `useSignalProps`                          | [signal-props.md](docs/signal-props.md)                                      |
-| `effect`                                  | [effect.md](docs/effect.md)                                                  |
-| `effectOnceIf`                            | [effect-once-if.md](docs/effect-once-if.md)                                  |
-| `derivedAsync`                            | [derived-async.md](docs/derived-async.md)                                    |
-| `signalFromEvent`                         | [signal-from-event.md](docs/signal-from-event.md)                            |
-| `computedPrevious`                        | Below ([API](#api-reference))                                                |
-| `signalStore`                             | [signal-store.md](docs/signal-store.md)                                      |
-| `scheduler`                               | Microtask batching for `requestUpdate` (internal; exported for advanced use) |
-
-**Dual backend:** same API surface; swap adapter by changing the `globalScript` import only.
-
-## Examples in this repo
-
-| Example                             | Stencil source                                                                                        | Vike SSR page                                                                                   |
-| ----------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| Counter                             | [`counter/`](../../apps/stencil-playground/src/examples/stencil-signals/counter/)                     | [`+Page.tsx`](../../apps/vike-playground/src/pages/stencil-signals/counter/+Page.tsx)           |
-| Todo + `signalStore`                | [`todo/`](../../apps/stencil-playground/src/examples/stencil-signals/todo/)                           | [`+Page.tsx`](../../apps/vike-playground/src/pages/stencil-signals/todo/+Page.tsx)              |
-| Timer + `useSignalProps` + `effect` | [`timer/`](../../apps/stencil-playground/src/examples/stencil-signals/timer/)                         | —                                                                                               |
-| `derivedAsync`                      | [`derived-async/`](../../apps/stencil-playground/src/examples/stencil-signals/derived-async/)         | [`+Page.tsx`](../../apps/vike-playground/src/pages/stencil-signals/derived-async/+Page.tsx)     |
-| `computedPrevious`                  | [`computed-previous/`](../../apps/stencil-playground/src/examples/stencil-signals/computed-previous/) | [`+Page.tsx`](../../apps/vike-playground/src/pages/stencil-signals/computed-previous/+Page.tsx) |
-| `signalFromEvent`                   | [`mouse-event/`](../../apps/stencil-playground/src/examples/stencil-signals/mouse-event/)             | [`+Page.tsx`](../../apps/vike-playground/src/pages/stencil-signals/mouse-event/+Page.tsx)       |
-
-Run the dev stack from the repo root: `pnpm dev` (Stencil watch + Vike on port 3100).
-
-## API reference
-
-### Primitives
-
-| Export                    | Description                                                                                                                                                       |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `signal(value, options?)` | Writable signal; optional `equals`                                                                                                                                |
-| `computed(fn, options?)`  | Read-only derived signal; `fn(previousValue)` receives its prior result. With `options.initialValue`, `previousValue` is `T` (seeded); otherwise `T \| undefined` |
-| `batch(fn)`               | Coalesce writes (Preact delegates; TC39 relies on scheduler)                                                                                                      |
-| `untracked(fn)`           | Run without subscribing to inner reads                                                                                                                            |
-| `scheduler`               | Backend-agnostic microtask queue used by the render watcher                                                                                                       |
-
-`Signal<T>`: `()`, `.get()`, `.peek()`.
-`WritableSignal<T>`: `.set()`, `.update()`, `.asReadonly()`.
-
-### Component integration
-
-| Export                     | Description                                                                                 |
-| -------------------------- | ------------------------------------------------------------------------------------------- |
-| `useSignalWatcher()`       | Class-field initializer; installs `SignalWatcherController` via `@ssv/stencil-core` `use()` |
-| `SignalWatcherMixin(Base)` | Mixin factory; calls `useSignalWatcher()` in constructor                                    |
-| `SignalWatcherController`  | Low-level controller (usually via `useSignalWatcher`)                                       |
-
-### Extensions (`@ssv/stencil-signals/extensions`)
-
-| Export                            | Description                                                                         |
-| --------------------------------- | ----------------------------------------------------------------------------------- |
-| `useSignalProps(Host)(config)`    | `@Prop` → signal bridge; `transform`, `twoWay`, `default`, `required`               |
-| `signalFromEvent(name, options?)` | DOM/window events as signals; Stencil `ListenOptions` + optional `map`              |
-| `elementSize(target, options?)`   | `ResizeObserver`-backed signal of element dimensions — [docs](docs/element-size.md) |
-| `intersect(target, options?)`     | `IntersectionObserver`-backed signal of entry — [docs](docs/intersect.md)           |
-
-Also exported from main entry: `effect`, `derivedAsync`, `computedPrevious`. The signal store ships as a separate entry — `@ssv/stencil-signals/store`.
-
-### Effects and async
-
-| Export                            | Description                                                                     |
-| --------------------------------- | ------------------------------------------------------------------------------- |
-| `effect(fn)`                      | Auto-tracking; standalone runs immediately, class field runs on `hostConnected` |
-| `effect(deps, fn, { defer? })`    | Explicit dependencies; `defer: true` skips initial run                          |
-| `derivedAsync(fn, options?)`      | `DisposableSignal` + `whenSettled`; abort prior fetch on dep change             |
-| `computedPrevious(source, init?)` | Previous value of a signal                                                      |
-
-### Signal store (`@ssv/stencil-signals/store`)
-
-See [docs/signal-store.md](docs/signal-store.md) for the full store API and examples.
-
-### Low-level
-
-| Export                  | Description                                               |
-| ----------------------- | --------------------------------------------------------- |
-| `createWatcher(notify)` | Manual watch/unwatch/dispose                              |
-| `collectSignals(fn)`    | Debug helper (dependency introspection varies by backend) |
-
-## Development
-
-From the monorepo root:
-
-```bash
-pnpm nx run stencil-signals:build
-pnpm nx run stencil-signals:test
-pnpm nx run stencil-signals:lint
-pnpm nx run stencil-signals:fmt
+```ts
+// todo.store.ts
+export const TodoStore = signalStore(
+  withState({ items: [] as Todo[], filter: "all" as Filter }),
+  withComputed(({ items, filter }) => ({
+    filtered: computed(() => items().filter(matchesFilter(filter()))),
+  })),
+  withMethods(({ items }) => ({
+    add: (text: string) => patchState(items, [...items(), { text, done: false }]),
+  })),
+);
 ```
 
-Or from `libs/stencil-signals/`: `pnpm build`, `pnpm test`, `pnpm lint`, `pnpm fmt`.
+→ [signal-store.md](docs/signal-store.md) — `patchState`, `withConfig`, reusable features
+
+## Other features
+
+- [signal-from-event.md](docs/signal-from-event.md) — DOM/window events as signals (`signalFromEvent`)
+- [proxy-signal.md](docs/proxy-signal.md) — two-way projections and write interception
+- [throttled-debounced.md](docs/throttled-debounced.md) — rate-limited signals
+- [element-size.md](docs/element-size.md) — `ResizeObserver`-backed dimensions signal
+- [intersect.md](docs/intersect.md) — `IntersectionObserver`-backed signal
+- [effect-once-if.md](docs/effect-once-if.md) — run an effect exactly once when a condition becomes true
+
+## Entry points
+
+- `@ssv/stencil-signals` — `signal`, `computed`, `batch`, `untracked`, `useSignalWatcher`, `effect`, `derivedAsync`, `computedPrevious`
+- `@ssv/stencil-signals/extensions` — `useSignalProps`, `signalFromEvent`, `elementSize`, `intersect`, `throttled`, `debounced`
+- `@ssv/stencil-signals/store` — `signalStore`, `withState`, `withComputed`, `withMethods`, `patchState`
+- `@ssv/stencil-signals/tc39` / `/preact` — adapter activation (global script only)
+
+## Examples
+
+Full working examples: [counter](../../apps/stencil-playground/src/examples/stencil-signals/counter/), [todo + signalStore](../../apps/stencil-playground/src/examples/stencil-signals/todo/), [timer + useSignalProps](../../apps/stencil-playground/src/examples/stencil-signals/timer/), [derivedAsync](../../apps/stencil-playground/src/examples/stencil-signals/derived-async/), [mouse event](../../apps/stencil-playground/src/examples/stencil-signals/mouse-event/).

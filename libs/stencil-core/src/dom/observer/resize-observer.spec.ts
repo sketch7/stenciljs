@@ -8,14 +8,14 @@ import { resizeObserver } from "./resize-observer";
 class MockResizeObserver {
 	static instances: MockResizeObserver[] = [];
 
-	readonly observed: { target: Element; options?: ResizeObserverObserveOptions }[] = [];
+	readonly observed: { target: Element; options?: ResizeObserverOptions }[] = [];
 	isDisconnected = false;
 
 	constructor(private readonly cb: ResizeObserverCallback) {
 		MockResizeObserver.instances.push(this);
 	}
 
-	observe(target: Element, options?: ResizeObserverObserveOptions): void {
+	observe(target: Element, options?: ResizeObserverOptions): void {
 		this.observed.push({ target, options });
 	}
 
@@ -81,7 +81,7 @@ describe("resizeObserver", () => {
 
 		host.connect();
 		const entries = [makeEntry(300, 150)];
-		MockResizeObserver.instances[0]!.fire(entries);
+		MockResizeObserver.instances[0].fire(entries);
 
 		expect(callback).toHaveBeenCalledWith(entries[0]);
 	});
@@ -102,7 +102,7 @@ describe("resizeObserver", () => {
 
 		host.connect();
 
-		expect(MockResizeObserver.instances[0]!.observed).toStrictEqual([{ target, options: { box: "border-box" } }]);
+		expect(MockResizeObserver.instances[0].observed).toStrictEqual([{ target, options: { box: "border-box" } }]);
 	});
 
 	it("multiple targets: all elements observed", () => {
@@ -113,7 +113,7 @@ describe("resizeObserver", () => {
 
 		host.connect();
 
-		const observedTargets = MockResizeObserver.instances[0]!.observed.map(o => o.target);
+		const observedTargets = MockResizeObserver.instances[0].observed.map(o => o.target);
 		expect(observedTargets).toStrictEqual([t1, t2]);
 	});
 
@@ -125,7 +125,7 @@ describe("resizeObserver", () => {
 
 		host.connect();
 
-		const observedTargets = MockResizeObserver.instances[0]!.observed.map(o => o.target);
+		const observedTargets = MockResizeObserver.instances[0].observed.map(o => o.target);
 		expect(observedTargets).toStrictEqual([t1, t2]);
 	});
 
@@ -136,7 +136,7 @@ describe("resizeObserver", () => {
 		host.connect();
 		host.disconnect();
 
-		expect(MockResizeObserver.instances[0]!.isDisconnected).toBeTruthy();
+		expect(MockResizeObserver.instances[0].isDisconnected).toBeTruthy();
 	});
 
 	it("reconnect re-creates observer and callback fires again", () => {
@@ -145,11 +145,11 @@ describe("resizeObserver", () => {
 		resizeObserver(() => ({}) as Element, callback);
 
 		host.connect();
-		MockResizeObserver.instances[0]!.fire([makeEntry(100, 50)]);
+		MockResizeObserver.instances[0].fire([makeEntry(100, 50)]);
 		host.disconnect();
 
 		host.connect();
-		MockResizeObserver.instances[1]!.fire([makeEntry(250, 120)]);
+		MockResizeObserver.instances[1].fire([makeEntry(250, 120)]);
 
 		expect(callback).toHaveBeenCalledTimes(2);
 	});
@@ -161,7 +161,7 @@ describe("resizeObserver", () => {
 		host.connect();
 		ref.destroy();
 
-		expect(MockResizeObserver.instances[0]!.isDisconnected).toBeTruthy();
+		expect(MockResizeObserver.instances[0].isDisconnected).toBeTruthy();
 	});
 
 	it("destroy() prevents new observer on reconnect", () => {

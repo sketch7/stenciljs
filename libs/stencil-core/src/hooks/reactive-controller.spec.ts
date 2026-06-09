@@ -1,3 +1,4 @@
+// oxlint-disable typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/no-unsafe-assignment -- host is any-typed due to mixin pattern with BaseClass as any
 import { forceUpdate } from "@stencil/core";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 

@@ -1,6 +1,8 @@
 import type { EmptyShape, MergeShape, SignalStoreFeature, StoreShape } from "./types";
 
-const _noop: SignalStoreFeature = () => {};
+const _noop: SignalStoreFeature = () => {
+	/* intentional no-op */
+};
 
 /**
  * Declare the input a custom feature requires (state/computed/methods it reads

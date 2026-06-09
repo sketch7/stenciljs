@@ -29,7 +29,7 @@ export type SignalPropOptions<T = unknown> = {
  *     then excludes `undefined` when a non-undefined `default` is provided
  *  3. `unknown`   — fallback when neither is available
  */
-type PropValue<H, K extends string, Opts extends SignalPropOptions<unknown>> = Opts extends {
+type PropValue<H, K extends string, Opts extends SignalPropOptions> = Opts extends {
 	transform: (v: unknown) => infer R;
 }
 	? R
@@ -39,11 +39,12 @@ type PropValue<H, K extends string, Opts extends SignalPropOptions<unknown>> = O
 			: Exclude<(H & Record<K, unknown>)[K], undefined>
 		: (H & Record<K, unknown>)[K];
 
-type PropSignal<H, K extends string, Opts extends SignalPropOptions<unknown>> = Opts extends { twoWay: boolean }
+type PropSignal<H, K extends string, Opts extends SignalPropOptions> = Opts extends { twoWay: boolean }
 	? WritableSignal<PropValue<H, K, Opts>>
 	: Signal<PropValue<H, K, Opts>>;
 
-export type SignalPropsResult<H, C extends Record<string, SignalPropOptions<unknown>>> = {
+// oxlint-disable-next-line typescript/no-explicit-any
+export type SignalPropsResult<H, C extends Record<string, SignalPropOptions<any> | undefined>> = {
 	[K in keyof C & string]: PropSignal<H, K, NonNullable<C[K]>>;
 };
 
@@ -55,7 +56,7 @@ type PropEntry = {
 	propName: string;
 	inner: WritableSignal<unknown>;
 	isSyncing: { value: boolean };
-	options: SignalPropOptions<unknown>;
+	options: SignalPropOptions;
 	/** Last value received from the external @Prop — used by twoWay to detect genuine external changes. */
 	lastExternalPropValue: unknown;
 };
@@ -175,7 +176,7 @@ function makeStableTwoWayFacade<T>(
 	return wrapper;
 }
 
-function buildEntry(host: AnyHost, propName: string, options: SignalPropOptions<unknown>): PropEntry {
+function buildEntry(host: AnyHost, propName: string, options: SignalPropOptions): PropEntry {
 	const initial = applyTransform(host[propName], options);
 	const inner = createSignal(initial);
 	const isSyncing = { value: false };
@@ -265,7 +266,8 @@ export function useSignalProps(_hostClass: abstract new (...args: unknown[]) => 
 	const bundleRef = createWritableRef<PropsBundle | null>(null);
 	const getBundle = (): PropsBundle | null => bundleRef.current;
 
-	return <C extends Record<string, SignalPropOptions<unknown>>>(config: C) => {
+	// oxlint-disable-next-line typescript/no-explicit-any
+	return <C extends Record<string, SignalPropOptions<any>>>(config: C) => {
 		const snapshotBag: HostPropsSnapshotBag = { values: {} };
 		const stableProps = {} as Record<string, Signal<unknown> | WritableSignal<unknown>>;
 

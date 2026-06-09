@@ -3,7 +3,7 @@ import { signal, useSignalWatcher } from "@ssv/stencil-signals";
 import { $usePrefetchQuery } from "@ssv/tanstack.stencil-query/signals";
 import { Component, h } from "@stencil/core";
 
-import { postQueries, useHoveredPost } from "./prefetch.api";
+import { postQueries, useHoveredPost } from "../posts.hooks";
 
 const HOVER_POST_IDS = [1, 2, 3, 4, 5] as const;
 
@@ -20,7 +20,7 @@ export class AppTsQueryHoverPrefetch extends SsvElement {
 		$usePrefetchQuery(() => {
 			const id = this.#hoveredId();
 			if (!id) {
-				return;
+				return undefined;
 			}
 			return postQueries.detail(id);
 		});

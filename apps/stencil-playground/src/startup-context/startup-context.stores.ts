@@ -16,10 +16,7 @@ export function createConfigStore(initial?: Partial<ConfigContext>) {
 
 /** @internal Creates a fresh ThemeStore instance with optional initial state. */
 export function createThemeStore(initial?: Partial<ThemeContext>) {
-	return signalStore(
-		withConfig({ isStateWritable: true }),
-		withState({ mode: (initial?.mode ?? "light") as "light" | "dark" }),
-	);
+	return signalStore(withConfig({ isStateWritable: true }), withState({ mode: initial?.mode ?? "light" }));
 }
 
 /** @internal Creates a fresh FeatureFlagsStore instance with optional initial state. */

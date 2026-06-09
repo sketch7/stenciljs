@@ -44,8 +44,8 @@ function resolveThemeFromCookie(cookieHeader: string | undefined): "light" | "da
  * | `APP_TENANT_NAME` | _(empty)_                    | Tenant display name      |
  */
 export function collectStartupContext(cookieHeader?: string): StartupContext {
-	const port = process.env["PORT"] ?? "3100";
-	const baseUrl = process.env["API_BASE_URL"] ?? `http://localhost:${port}`;
+	const port = process.env.PORT ?? "3100";
+	const baseUrl = process.env.API_BASE_URL ?? `http://localhost:${port}`;
 
 	return {
 		config: { baseUrl },
@@ -53,12 +53,12 @@ export function collectStartupContext(cookieHeader?: string): StartupContext {
 		featureFlags: { flags: {} },
 		auth: { isAuthenticated: false },
 		locale: {
-			locale: process.env["APP_LOCALE"] ?? "en-US",
-			timezone: process.env["APP_TIMEZONE"] ?? undefined,
+			locale: process.env.APP_LOCALE ?? "en-US",
+			timezone: process.env.APP_TIMEZONE ?? undefined,
 		},
 		tenant: {
-			tenantId: process.env["APP_TENANT_ID"] ?? "default",
-			tenantName: process.env["APP_TENANT_NAME"] ?? undefined,
+			tenantId: process.env.APP_TENANT_ID ?? "default",
+			tenantName: process.env.APP_TENANT_NAME ?? undefined,
 		},
 	};
 }

@@ -8,7 +8,7 @@ import { bindToHostEffect } from "./host-bind";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type WatcherRef = {
-	dispose(): void;
+	dispose: () => void;
 };
 
 export type CleanupFn = () => void;
@@ -142,7 +142,7 @@ function createEffectImmediate(
 	if (!fn) {
 		return noopWatcherRef;
 	}
-	return explicitDepsEffect(fnOrDeps as readonly AnySignal[], fn, options ?? {}, flushMode);
+	return explicitDepsEffect(fnOrDeps, fn, options ?? {}, flushMode);
 }
 
 // ─── Auto-tracking implementation ─────────────────────────────────────────────

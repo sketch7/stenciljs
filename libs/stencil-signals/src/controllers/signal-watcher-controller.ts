@@ -6,7 +6,7 @@ import type { AdapterWatcher, Signal, WritableSignal } from "../adapters/types";
 import { scheduler, setActiveOwner } from "../signals/core";
 
 type RenderReactiveControllerHost = ReactiveControllerHost & {
-	render?(): unknown;
+	render?: () => unknown;
 };
 
 // ─── Controller ───────────────────────────────────────────────────────────────
@@ -134,5 +134,5 @@ export class SignalWatcherController implements ReactiveController {
 
 /** Install a `SignalWatcherController` on the current host; use as a class-property initializer. */
 export function useSignalWatcher() {
-	return use(host => new SignalWatcherController(host));
+	use(host => new SignalWatcherController(host));
 }

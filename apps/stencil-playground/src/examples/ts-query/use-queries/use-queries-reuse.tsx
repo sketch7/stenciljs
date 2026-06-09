@@ -1,7 +1,7 @@
 import { SsvElement } from "@ssv/stencil-core";
 import { Component, h } from "@stencil/core";
 
-import { usePostsByIds, usePostsLoadedCount } from "./use-queries.api";
+import { usePostsByIds, usePostsLoadedCount } from "../posts.hooks";
 import { IDS, renderItem } from "./use-queries.shared";
 
 /**

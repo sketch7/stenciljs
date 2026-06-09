@@ -6,13 +6,7 @@ import type { Signal, WritableSignal } from "@ssv/stencil-signals";
 import type { QueryClient, QueriesObserver, QueryObserverResult } from "@tanstack/query-core";
 
 import { pendingQueriesResult, useBaseQueriesObserver } from "../queries-observer";
-import type {
-	AnyQueriesOptions,
-	GetUseQueryResult,
-	QueriesResults,
-	UseQueriesOptions,
-	UseQueryOptionsForUseQueries,
-} from "../queries-observer";
+import type { AnyQueriesOptions, GetUseQueryResult, QueriesResults, UseQueriesOptions } from "../queries-observer";
 import { noObserverRefetch, pendingQueryState } from "../query-observer";
 import { createServerQueriesSettle } from "./server-query-settle";
 import { createSignalResult } from "./signal-result";
@@ -48,63 +42,16 @@ export type QueriesSignalResults<T extends any[]> = {
 // ── API ────────────────────────────────────────────────────────────────────────
 
 /**
- * Overload for a **homogeneous array** of queries (e.g. produced by `.map()`).
- * TypeScript infers the concrete data/error types from the element option type and returns
- * `Signal<QuerySignalResult<TData, TError>[]>` without requiring an explicit annotation
- * at the call site.
- *
- * @example
- * ```ts
- * function $usePostsByIds(getIds: () => number[]) {
- *   return $useQueries(() => ({ queries: getIds().map(id => postQuery(id)) }));
- *   // ↑ inferred as Signal<QuerySignalResult<Post>[]> — no annotation needed
- * }
- * ```
- */
-export function $useQueries<TOption extends UseQueryOptionsForUseQueries<any, any, any, any>>(
-	getOptions:
-		| { queries: readonly TOption[]; combine?: never }
-		| (() => { queries: readonly TOption[]; combine?: never }),
-	client?: QueryClient | Ref<QueryClient>,
-): Signal<ElementToSignalResult<GetUseQueryResult<TOption>>[]>;
-
-/**
- * Overload for a **homogeneous array** of queries with a `combine` function.
- * `results` in the combiner is inferred as `UseQueryResult<TData, TError>[]` — no
- * annotation needed at the call site.
- *
- * @example
- * ```ts
- * readonly #summary = $useQueries(() => ({
- *   queries: ids.map(id => postQuery(id)),
- *   combine: results => ({
- *     total: results.length,
- *     loaded: results.filter(r => r.isSuccess).length,
- *   }),
- * }));
- * ```
- */
-export function $useQueries<TOption extends UseQueryOptionsForUseQueries<any, any, any, any>, TCombinedResult>(
-	getOptions:
-		| {
-				queries: readonly TOption[];
-				combine: (result: GetUseQueryResult<TOption>[]) => TCombinedResult;
-		  }
-		| (() => {
-				queries: readonly TOption[];
-				combine: (result: GetUseQueryResult<TOption>[]) => TCombinedResult;
-		  }),
-	client?: QueryClient | Ref<QueryClient>,
-): Signal<TCombinedResult>;
-
-/**
- * Subscribes to a list of queries in parallel and exposes each result as a per-field signal proxy.
+ * Subscribes to a list of queries in parallel.
  *
  * Without `combine`, each element in the returned signal array is a {@link QuerySignalResult} —
  * every field is a callable signal (`result.isPending()`, `result.data()`, …) so only the
- * component that reads a changed field re-renders. Requires `useSignalWatcher()` to be active.
+ * component that reads a changed field re-renders.
  *
- * Pass a **getter function** for reactive options (e.g. when the query list depends on a signal).
+ * With `combine`, the returned signal holds `TCombinedResult` — the plain value produced by the
+ * combiner. Reads in `render()` or `computed()` are tracked.
+ *
+ * Requires `useSignalWatcher()` to be active. Pass a **getter function** for reactive options.
  *
  * @example
  * ```ts
@@ -118,34 +65,20 @@ export function $useQueries<TOption extends UseQueryOptionsForUseQueries<any, an
  *   );
  * }
  * ```
- */
-export function $useQueries<T extends any[]>(
-	getOptions: UseQueriesOptions<T> | (() => UseQueriesOptions<T>),
-	client?: QueryClient | Ref<QueryClient>,
-): Signal<QueriesSignalResults<T>>;
-
-/**
- * Subscribes to a list of queries in parallel and derives a single value via `combine`.
- *
- * With `combine`, the returned signal holds `TCombinedResult` — the plain value produced by the
- * combiner. Reads in `render()` or `computed()` are tracked. Requires `useSignalWatcher()` to be active.
  *
  * @example
  * ```ts
- * readonly #summary = $useQueries({
- *   queries: [a, b, c],
+ * // combine — derive a single value from all results
+ * readonly #summary = $useQueries(() => ({
+ *   queries: ids.map(id => postQuery(id)),
  *   combine: results => ({
  *     total: results.length,
  *     loaded: results.filter(r => r.isSuccess).length,
  *   }),
- * });
- *
- * render() {
- *   const { loaded, total } = this.#summary();
- * }
+ * }));
  * ```
  */
-export function $useQueries<T extends any[], TCombinedResult>(
+export function $useQueries<T extends any[], TCombinedResult = QueriesSignalResults<T>>(
 	getOptions: UseQueriesOptions<T, TCombinedResult> | (() => UseQueriesOptions<T, TCombinedResult>),
 	client?: QueryClient | Ref<QueryClient>,
 ): Signal<TCombinedResult>;

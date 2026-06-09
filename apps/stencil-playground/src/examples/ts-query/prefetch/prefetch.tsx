@@ -3,7 +3,6 @@ import { usePrefetchQuery } from "@ssv/tanstack.stencil-query";
 import { Component, h } from "@stencil/core";
 
 import { postQueries, usePrefetchedPosts } from "../posts.hooks";
-import type { Post } from "../posts.client";
 
 /**
  * Demonstrates `usePrefetchQuery` as a field initializer — seeds the cache before

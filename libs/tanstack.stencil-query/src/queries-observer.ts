@@ -184,8 +184,8 @@ export type QueriesObserverHandlers<TCombinedResult> = {
 	onResult: (result: TCombinedResult, requestUpdate: () => void) => void;
 	/** Fires once right after the observer connects — eager read of already-cached data. */
 	onConnect?: (result: TCombinedResult) => void;
-	/** Fires in `hostWillRender` after `setQueries` — SSR/hydration sync before paint. */
-	onRender?: (result: TCombinedResult) => void;
+	/** Fires on every host render (`hostWillRender`). */
+	onRender?: () => void;
 	/** Fires on host disconnect — the signals hook resets its source signal to pending. */
 	onDispose?: () => void;
 	/**
@@ -315,14 +315,7 @@ export function useBaseQueriesObserver<TCombinedResult>(
 
 	use(() => ({
 		hostWillRender() {
-			const qc = clientRef.current;
-			if (!observer || !qc) {
-				return;
-			}
-			const opts = getOpts();
-			const isRestoring = isRestoringRef.current;
-			observer.setQueries(defaultedQueries(qc, opts, isRestoring), { combine: opts.combine as never });
-			handlers.onRender?.(combinedFrom(observer, qc, isRestoring));
+			handlers.onRender?.();
 		},
 	}));
 

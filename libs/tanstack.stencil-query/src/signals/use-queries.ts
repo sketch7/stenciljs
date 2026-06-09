@@ -175,7 +175,6 @@ export function $useQueries<T extends any[], TCombinedResult = QueriesResults<T>
 					disposeOptsEffect = () => ref.dispose();
 				}
 			},
-			onRender: result => state.set(result),
 			onDispose: () => {
 				state.set(pendingQueriesResult<TCombinedResult>(getOpts() as AnyQueriesOptions));
 				disposeOptsEffect?.();
@@ -257,7 +256,6 @@ export function $useQueries<T extends any[], TCombinedResult = QueriesResults<T>
 					disposeOptsEffect = () => ref.dispose();
 				}
 			},
-			onRender: syncResults,
 			onDispose: () => {
 				syncElements(pendingQueriesResult<QueriesResults<T>>(getOpts() as AnyQueriesOptions) as QueryObserverResult[]);
 				disposeOptsEffect?.();

@@ -79,9 +79,11 @@ export function useQuery<
 		| (() => UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>),
 	client?: QueryClient | Ref<QueryClient>,
 ): Ref<QueryObserverResult<TData, TError>> {
-	const { getObserver } = useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey>(getOptions, client, {
+	const handle = useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey>(getOptions, client, {
 		onResult: (_result, requestUpdate) => requestUpdate(),
+		onRender: () => handle.reArm(),
 	});
+	const { getObserver } = handle;
 
 	return createRef(
 		() =>

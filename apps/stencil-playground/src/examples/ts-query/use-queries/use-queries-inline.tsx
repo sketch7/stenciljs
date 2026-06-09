@@ -2,7 +2,7 @@ import { SsvElement } from "@ssv/stencil-core";
 import { useQueries } from "@ssv/tanstack.stencil-query";
 import { Component, h } from "@stencil/core";
 
-import { fetchPost } from "./use-queries.api";
+import { postQueries } from "../posts.hooks";
 import { IDS, renderItem } from "./use-queries.shared";
 
 /**
@@ -14,10 +14,7 @@ import { IDS, renderItem } from "./use-queries.shared";
  */
 function useTopPosts() {
 	return useQueries(() => ({
-		queries: IDS.map(id => ({
-			queryKey: ["use-queries", "post", id] as const,
-			queryFn: async () => fetchPost(id),
-		})),
+		queries: IDS.map(id => postQueries.detail(id)),
 	}));
 }
 

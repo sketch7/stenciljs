@@ -3,8 +3,6 @@ name: CI
 on:
   push:
     branches:
-      - main
-      - "v*"
       - "workflow"
     paths-ignore:
       - "**.md"
@@ -22,6 +20,6 @@ permissions:
 jobs:
   ci:
     name: node CI
-    uses: sketch7/.github/.github/workflows/node-ci.yml@node-libs-v2
+    uses: sketch7/.github/.github/workflows/node-ci.yml@feature/promotable-app-release-cycle
     with:
       package-manager: "pnpm"

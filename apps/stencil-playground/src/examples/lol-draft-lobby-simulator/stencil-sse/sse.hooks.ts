@@ -155,7 +155,7 @@ export function useSSE<TEvents extends object = SSEEventMap>(
 				let set = runtimeListeners.get(event);
 				if (!set) {
 					set = new Set();
-					runtimeListeners.set(event, set as Set<SSEEventHandler<unknown>>);
+					runtimeListeners.set(event, set);
 					// Wire event on live connection if not already covered by static handlers
 					if (es && !staticHandlers?.[event]) {
 						es.addEventListener(event, makeEventListener(event));

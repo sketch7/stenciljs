@@ -42,13 +42,14 @@ export function useSelector(...) {}
 ## Markdown (README / docs)
 
 - Lead section: install + minimal working example — no prose before code.
-- API tables: name | kind | one-line purpose. No sentences.
-- Examples: show the call site only; omit surrounding boilerplate unless critical.
+- **Avoid API tables** for general exports and hook lists. Use a brief description with use-when / avoid-when bullet points instead.
+- **Exception:** use a table when it genuinely adds clarity — e.g. a configuration options reference where readers need to scan name, type, default, and description at a glance. If the table is the clearest form, prefer it over forcing bullets.
+- Usage snippets: focused and simplified — show only the relevant call site, strip all boilerplate.
 - Avoid headers like "Overview", "Introduction", "Background".
 
 ### README structure
 
-- Keep the README focused on the package entry point: install, API surface, and a link to examples.
-- When a feature or sub-system grows beyond a short section, extract it into `docs/<feature>.md` and replace the section with a one-line link.
+- Keep the README focused on the package entry point: install, core feature snippets, and links to docs.
+- Describe each feature with use-when / avoid-when bullets, then a focused snippet. No prose paragraphs.
+- When a feature grows beyond a snippet, extract it into `docs/<feature>.md` and replace the section with a one-line link.
 - Each `docs/<feature>.md` covers exactly one concern (e.g. `hooks.md`, `host-context.md`). No mixed topics in one file.
-- API tables in feature docs list only the exports relevant to that feature. Shared or host-level exports stay in the README.

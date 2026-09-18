@@ -1,12 +1,14 @@
 // oxlint-disable @typescript-eslint/no-explicit-any -- mirrors TanStack `useQueries` variadic generic signature; `any` is required for per-element type inference
+import { detectServer } from "@ssv/stencil-core";
 import type { Ref } from "@ssv/stencil-core";
-import { computed, signal } from "@ssv/stencil-signals";
+import { computed, effect, signal } from "@ssv/stencil-signals";
 import type { Signal, WritableSignal } from "@ssv/stencil-signals";
-import type { DefaultError, QueryClient, QueryKey, QueriesObserver, QueryObserverResult } from "@tanstack/query-core";
+import type { QueryClient, QueriesObserver, QueryObserverResult } from "@tanstack/query-core";
 
 import { pendingQueriesResult, useBaseQueriesObserver } from "../queries-observer";
-import type { QueriesResults, UseQueriesOptions, UseQueryOptionsForUseQueries } from "../queries-observer";
+import type { AnyQueriesOptions, GetUseQueryResult, QueriesResults, UseQueriesOptions } from "../queries-observer";
 import { noObserverRefetch, pendingQueryState } from "../query-observer";
+import { createServerQueriesSettle } from "./server-query-settle";
 import { createSignalResult } from "./signal-result";
 import type { QuerySignalResult } from "./use-query";
 
@@ -34,56 +36,27 @@ type ElementToSignalResult<R> =
  * ```
  */
 export type QueriesSignalResults<T extends any[]> = {
-	[K in keyof QueriesResults<T>]: ElementToSignalResult<QueriesResults<T>[K]>;
+	[K in keyof T]: ElementToSignalResult<GetUseQueryResult<T[K]>>;
 };
 
 // ── API ────────────────────────────────────────────────────────────────────────
 
 /**
- * Overload for a **homogeneous array** of queries (e.g. produced by `.map()`).
- * When all elements share the same `TData`/`TError`, TypeScript infers the concrete types
- * directly and returns `Signal<QuerySignalResult<TData, TError>[]>` without requiring an
- * explicit annotation at the call site.
- *
- * @example
- * ```ts
- * function $usePostsByIds(getIds: () => number[]) {
- *   return $useQueries(() => ({ queries: getIds().map(id => postQuery(id)) }));
- *   // ↑ inferred as Signal<QuerySignalResult<Post>[]> — no annotation needed
- * }
- * ```
- */
-export function $useQueries<
-	TQueryFnData,
-	TError = DefaultError,
-	TData = TQueryFnData,
-	TQueryKey extends QueryKey = QueryKey,
->(
-	getOptions:
-		| {
-				queries: readonly UseQueryOptionsForUseQueries<TQueryFnData, TError, TData, TQueryKey>[];
-				combine?: never;
-		  }
-		| (() => {
-				queries: readonly UseQueryOptionsForUseQueries<TQueryFnData, TError, TData, TQueryKey>[];
-				combine?: never;
-		  }),
-	client?: QueryClient | Ref<QueryClient>,
-): Signal<QuerySignalResult<NoInfer<TData>, NoInfer<TError>>[]>;
-
-/**
- * Subscribes to a list of queries in parallel and exposes each result as a per-field signal proxy.
+ * Subscribes to a list of queries in parallel.
  *
  * Without `combine`, each element in the returned signal array is a {@link QuerySignalResult} —
  * every field is a callable signal (`result.isPending()`, `result.data()`, …) so only the
- * component that reads a changed field re-renders. Requires `useSignalWatcher()` to be active.
+ * component that reads a changed field re-renders.
  *
- * Pass a **getter function** for reactive options (e.g. when the query list depends on a signal).
+ * With `combine`, the returned signal holds `TCombinedResult` — the plain value produced by the
+ * combiner. Reads in `render()` or `computed()` are tracked.
+ *
+ * Requires `useSignalWatcher()` to be active. Pass a **getter function** for reactive options.
  *
  * @example
  * ```ts
  * readonly #posts = $useQueries(() => ({
- *   queries: this.ids().map(id => ({ queryKey: ['post', id], queryFn: () => fetchPost(id) })),
+ *   queries: this.ids().map(id => postQuery(id)),
  * }));
  *
  * render() {
@@ -92,34 +65,20 @@ export function $useQueries<
  *   );
  * }
  * ```
- */
-export function $useQueries<T extends any[]>(
-	getOptions: UseQueriesOptions<T> | (() => UseQueriesOptions<T>),
-	client?: QueryClient | Ref<QueryClient>,
-): Signal<QueriesSignalResults<T>>;
-
-/**
- * Subscribes to a list of queries in parallel and derives a single value via `combine`.
- *
- * With `combine`, the returned signal holds `TCombinedResult` — the plain value produced by the
- * combiner. Reads in `render()` or `computed()` are tracked. Requires `useSignalWatcher()` to be active.
  *
  * @example
  * ```ts
- * readonly #summary = $useQueries({
- *   queries: [a, b, c],
+ * // combine — derive a single value from all results
+ * readonly #summary = $useQueries(() => ({
+ *   queries: ids.map(id => postQuery(id)),
  *   combine: results => ({
  *     total: results.length,
  *     loaded: results.filter(r => r.isSuccess).length,
  *   }),
- * });
- *
- * render() {
- *   const { loaded, total } = this.#summary();
- * }
+ * }));
  * ```
  */
-export function $useQueries<T extends any[], TCombinedResult>(
+export function $useQueries<T extends any[], TCombinedResult = QueriesSignalResults<T>>(
 	getOptions: UseQueriesOptions<T, TCombinedResult> | (() => UseQueriesOptions<T, TCombinedResult>),
 	client?: QueryClient | Ref<QueryClient>,
 ): Signal<TCombinedResult>;
@@ -133,15 +92,41 @@ export function $useQueries<T extends any[], TCombinedResult = QueriesResults<T>
 		TCombinedResult
 	>;
 
+	const optsComputed = computed(() => getOpts());
+
 	// ── Combine path ────────────────────────────────────────────────────────────
 	if (getOpts().combine !== undefined) {
-		const state = signal<TCombinedResult>(pendingQueriesResult<TCombinedResult>(getOpts()));
-		useBaseQueriesObserver<TCombinedResult>(getOptions as never, client, {
+		const state = signal<TCombinedResult>(pendingQueriesResult<TCombinedResult>(getOpts() as AnyQueriesOptions));
+		let disposeOptsEffect: (() => void) | undefined;
+
+		const { reArm, getCurrentResult } = useBaseQueriesObserver<TCombinedResult>(getOptions as never, client, {
 			onResult: result => state.set(result),
-			onConnect: result => state.set(result),
-			onRender: result => state.set(result),
-			onDispose: () => state.set(pendingQueriesResult<TCombinedResult>(getOpts())),
+			onConnect: result => {
+				state.set(result);
+				if (!detectServer()) {
+					const ref = effect([optsComputed], () => applyOptions(), { defer: true });
+					disposeOptsEffect = () => ref.dispose();
+				}
+			},
+			onDispose: () => {
+				state.set(pendingQueriesResult<TCombinedResult>(getOpts() as AnyQueriesOptions));
+				disposeOptsEffect?.();
+				disposeOptsEffect = undefined;
+			},
+			onServerRender: ctx =>
+				createServerQueriesSettle({
+					qc: ctx.qc,
+					getOpts: ctx.getOpts as never,
+					reArm: ctx.reArm,
+					syncResult: ctx.syncResult,
+				}),
 		});
+
+		const applyOptions = (): void => {
+			reArm();
+			state.set(getCurrentResult());
+		};
+
 		return state.asReadonly();
 	}
 
@@ -165,7 +150,7 @@ export function $useQueries<T extends any[], TCombinedResult = QueriesResults<T>
 			refetch: noObserverRefetch,
 		} as unknown as QueryObserverResult);
 		const proxy = createSignalResult(src as never, {
-			refetch: () => obsRef.fn?.()?.getObservers()[i]?.refetch(),
+			refetch: async () => obsRef.fn?.()?.getObservers()[i]?.refetch(),
 		}) as unknown as QuerySignalResult;
 		elementSrcs.push(src);
 		elementProxies.push(proxy);
@@ -190,13 +175,40 @@ export function $useQueries<T extends any[], TCombinedResult = QueriesResults<T>
 
 	const syncResults = (results: QueriesResults<T>): void => syncElements(results as QueryObserverResult[]);
 
-	const handle = useBaseQueriesObserver<QueriesResults<T>>(getOptions as never, client, {
-		onResult: syncResults,
-		onConnect: syncResults,
-		onRender: syncResults,
-		onDispose: () => syncElements(pendingQueriesResult<QueriesResults<T>>(getOpts()) as QueryObserverResult[]),
-	});
-	obsRef.fn = handle.getObserver;
+	let disposeOptsEffect: (() => void) | undefined;
 
-	return computed(() => elementProxies.slice(0, lengthSig())) as unknown as Signal<QueriesSignalResults<T>>;
+	const { getObserver, reArm, getCurrentResult } = useBaseQueriesObserver<QueriesResults<T>>(
+		getOptions as never,
+		client,
+		{
+			onResult: syncResults,
+			onConnect: results => {
+				syncResults(results);
+				if (!detectServer()) {
+					const ref = effect([optsComputed], () => applyOptions(), { defer: true });
+					disposeOptsEffect = () => ref.dispose();
+				}
+			},
+			onDispose: () => {
+				syncElements(pendingQueriesResult<QueriesResults<T>>(getOpts() as AnyQueriesOptions) as QueryObserverResult[]);
+				disposeOptsEffect?.();
+				disposeOptsEffect = undefined;
+			},
+			onServerRender: ctx =>
+				createServerQueriesSettle({
+					qc: ctx.qc,
+					getOpts: ctx.getOpts as never,
+					reArm: ctx.reArm,
+					syncResult: ctx.syncResult,
+				}),
+		},
+	);
+	obsRef.fn = getObserver;
+
+	const applyOptions = (): void => {
+		reArm();
+		syncResults(getCurrentResult());
+	};
+
+	return computed(() => elementProxies.slice(0, lengthSig())) as unknown as Signal<TCombinedResult>;
 }

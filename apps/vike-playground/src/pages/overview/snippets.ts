@@ -304,13 +304,9 @@ export class AppPosts {
 	tanstackQueryAfter: `// @ssv/tanstack.stencil-query — full TanStack Query in a hook
 export function usePosts(queryClient?: QueryClient) {
   const client = useQueryClient(queryClient);
-  use({ async hostWillLoad() {
-    // prefetch on server; client reads from cache (no duplicate fetch)
-    await client.current?.prefetchQuery({ queryKey, queryFn: fetchPosts, staleTime });
-  }});
 
-  const postsRef = useQuery(() => ({ queryKey, staleTime, queryFn: fetchPosts }), queryClient);
-  const createPost = useMutation(() => ({ mutationFn: apiCreatePost }), queryClient);
+  const postsRef = useQuery(() => ({ queryKey, staleTime, queryFn: fetchPosts }), client);
+  const createPost = useMutation(() => ({ mutationFn: apiCreatePost }), client);
   return { posts: postsRef(), create: createPost() };
 }
 

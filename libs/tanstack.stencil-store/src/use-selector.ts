@@ -18,6 +18,7 @@ function defaultCompare<T>(a: T | undefined, b: T | undefined): boolean {
 	return a === b;
 }
 
+// oxlint-disable-next-line typescript/no-unnecessary-type-parameters -- both type params needed for call-site inference with const selector ?? defaultSelector
 function defaultSelector<TSource, TSelected>(snapshot: TSource): TSelected {
 	return snapshot as unknown as TSelected;
 }

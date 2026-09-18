@@ -25,7 +25,7 @@ export function createSignalResult<TResult extends object, TExtra extends object
 	return new Proxy(Object.create(null) as SignalFields<TResult> & TExtra, {
 		get(_target, prop) {
 			if (typeof prop !== "string") {
-				return;
+				return undefined;
 			}
 			if (extraKeys.has(prop)) {
 				return (extra as Record<string, unknown>)[prop];

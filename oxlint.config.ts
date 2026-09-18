@@ -1,8 +1,21 @@
 import { defineConfig } from "oxlint";
 
 export default defineConfig({
+	options: {
+		typeAware: true,
+		typeCheck: true,
+	},
 	plugins: ["typescript", "import", "react", "react-perf", "jsx-a11y", "vitest", "unicorn"],
 	jsPlugins: ["oxlint-tailwindcss", "./tools/oxlint-plugins/require-lifecycle-super.js"],
+	settings: {
+		tailwindcss: {
+			// oxlint-tailwindcss v1 requires an explicit entryPoint.
+			// The glob is matched against the path relative to process.cwd() (the project dir).
+			// vike-playground:lint runs from apps/vike-playground, so src/** covers all its files.
+			// The `use` path is also resolved from process.cwd(), so src/app.css is correct.
+			entryPoint: [{ files: "src/**", use: "src/app.css" }],
+		},
+	},
 	env: {
 		browser: true,
 		es2022: true,
@@ -106,8 +119,12 @@ export default defineConfig({
 		"typescript/no-invalid-void-type": "off",
 		"typescript/restrict-template-expressions": "warn",
 		"typescript/no-unnecessary-type-assertion": "error",
+		// Intentional internal casts in library code bridging weakly-typed external APIs (e.g., Stencil internals, any-typed hosts)
+		"typescript/no-unsafe-type-assertion": "off",
 		"typescript/no-wrapper-object-types": "error",
 		"typescript/parameter-properties": ["error", { prefer: "parameter-property" }],
+		// SsvElement pattern: `readonly _ = useEffect(...)`, `readonly signalWatcher = useSignalWatcher()` — void hooks in class property initializers
+		"typescript/no-confusing-void-expression": "off",
 
 		// ── React (disabled globally — enabled in app overrides as needed) ─────
 		"react/react-in-jsx-scope": "off",
@@ -141,6 +158,7 @@ export default defineConfig({
 		"eslint/max-lines-per-function": "off",
 		"eslint/no-inline-comments": "off",
 		"eslint/max-lines": "off",
+		"eslint/no-void": "off",
 
 		// ── Vitest ─────────────────────────────────────────────────────────────
 		"vitest/no-focused-tests": "error",
@@ -158,6 +176,7 @@ export default defineConfig({
 		"unicorn/no-array-for-each": "off",
 		"unicorn/prefer-module": "off",
 		"unicorn/no-null": "off",
+		"unicorn/no-useless-undefined": "off",
 		"unicorn/filename-case": "off",
 		"unicorn/no-abusive-eslint-disable": "error",
 		"unicorn/no-nested-ternary": "off",
@@ -165,7 +184,6 @@ export default defineConfig({
 		"unicorn/throw-new-error": "error",
 		// no-negated-condition was split into unicorn/ and eslint/ variants in v1.63.0 — disable the eslint duplicate
 		"no-negated-condition": "off",
-		"unicorn/no-useless-undefined": "warn",
 		"unicorn/prefer-ternary": "off",
 		"unicorn/numeric-separators-style": [
 			"warn",
@@ -178,6 +196,14 @@ export default defineConfig({
 		],
 	},
 	overrides: [
+		{
+			// TSX files — JSX event handlers commonly use concise arrow assignment bodies (e.g. onClick={() => (this.x = y)})
+			files: ["**/*.tsx"],
+			rules: {
+				// onClick={() => (this.prop = value)} is idiomatic JSX — the void return context is intentional
+				"typescript/strict-void-return": "off",
+			},
+		},
 		{
 			// StencilJS components — class-based, uses h() not React, HTML attrs not React attrs
 			files: ["libs/*/src/**/*.tsx", "libs/*/src/**/*.ts", "libs/*/tests/**/*.tsx", "libs/*/tests/**/*.ts"],
@@ -272,9 +298,13 @@ export default defineConfig({
 			// Test files — relax some rules
 			files: ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
 			rules: {
+				// cleanup functions like `return () => arr.push(x)` are common in test setups — void return context is intentional
+				"typescript/strict-void-return": "off",
 				"typescript/no-explicit-any": "off",
 				"typescript/no-non-null-assertion": "off",
-				"typescript/no-extraneous-class": "off",
+				"typescript/no-extraneous-class": "off", // expect(obj.method).toHaveBeenCalled() is idiomatic vitest — unbound access is intentional here
+				"typescript/unbound-method": "off",
+				"no-empty-function": "off",
 				"max-statements": "off",
 				// jest plugin rules that fire via pedantic category — too opinionated for vitest usage
 				"jest/prefer-lowercase-title": "off", // PascalCase describe names are idiomatic
@@ -348,7 +378,13 @@ export default defineConfig({
 			},
 		},
 		{
-			// Stencil globalScript — requires a default export and side-effect imports
+			// TypeScript declaration files — not modules, ambient-only; module ambiguity rules don't apply
+			files: ["**/*.d.ts"],
+			rules: {
+				"import/unambiguous": "off",
+			},
+		},
+		{
 			files: ["apps/stencil-playground/src/global.ts"],
 			rules: {
 				"import/no-default-export": "off",
@@ -405,6 +441,7 @@ export default defineConfig({
 		"libs/*/src/vue/**",
 		"libs/*/src/angular/**",
 		"apps/stencil-playground/src/react/**",
+		"src/react/**", // bare path for when oxlint runs from within the project dir
 		"apps/stencil-playground/src/components.d.ts",
 		"loader/**",
 		"hydrate/**",

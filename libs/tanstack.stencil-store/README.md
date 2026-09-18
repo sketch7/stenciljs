@@ -14,26 +14,11 @@ pnpm add @ssv/tanstack.stencil-store
 
 Extend `SsvElement` (or apply `SsvElementMixin`) from [`@ssv/stencil-core`](../stencil-core/README.md).
 
-```ts
-@Component({ tag: "my-counter", shadow: true })
-export class MyCounter extends SsvElement { ... }
-```
+## `useSelector` — subscribe to a store or atom
 
-## API
-
-| Export               | Kind      | Purpose                                                                |
-| -------------------- | --------- | ---------------------------------------------------------------------- |
-| `useSelector`        | function  | Subscribe to a store or atom, optionally projecting a slice            |
-| `useAtom`            | function  | Subscribe to a writable atom and get a paired setter                   |
-| `SelectionSource`    | type      | Minimal interface satisfied by any TanStack atom or store              |
-| `UseSelectorOptions` | type      | Options bag shared by both hooks (`compare`)                           |
-| `createStore`        | re-export | Re-exported from `@tanstack/store`                                     |
-| `createAtom`         | re-export | Re-exported from `@tanstack/store`                                     |
-| _all others_         | re-export | Everything else from `@tanstack/store` is re-exported at the same path |
-
-## Usage
-
-### `useSelector` — store slice
+- Use when a component needs to re-render on a specific slice of store state
+- The selector argument is optional — omit it to subscribe to the whole store value
+- Pass a `compare` function to suppress re-renders when the selection is structurally equal
 
 ```ts
 // counter.store.ts
@@ -41,10 +26,9 @@ export const counterStore = createStore({ count: 0, step: 1 });
 ```
 
 ```tsx
-// counter.tsx
 @Component({ tag: "app-counter", shadow: true })
 export class AppCounter extends SsvElement {
-  readonly #count = useSelector(() => counterStore, (s) => s.count);
+  readonly #count = useSelector(() => counterStore, s => s.count);
 
   render() {
     return <span>{this.#count()}</span>;
@@ -52,32 +36,24 @@ export class AppCounter extends SsvElement {
 }
 ```
 
-### `useSelector` — readonly atom
+Works with atoms too:
 
 ```ts
-// counter.store.ts
 export const countAtom = createAtom(0);
 export const doubledAtom = createAtom(() => countAtom.get() * 2);
 ```
 
 ```tsx
-// counter.tsx
-@Component({ tag: "app-counter", shadow: true })
-export class AppCounter extends SsvElement {
-  readonly #count = useSelector(() => countAtom);
-  readonly #doubled = useSelector(() => doubledAtom);
-}
+readonly #count = useSelector(() => countAtom);
+readonly #doubled = useSelector(() => doubledAtom);
 ```
 
-### `useAtom` — read + write
+## `useAtom` — read + write
 
-```ts
-// counter.store.ts
-export const countAtom = createAtom(0);
-```
+- Use when the component needs both the current value and a setter
+- Returns `{ value, set }` instead of a tuple (unlike React)
 
 ```tsx
-// counter.tsx
 @Component({ tag: "app-counter", shadow: true })
 export class AppCounter extends SsvElement {
   readonly #count = useAtom(() => countAtom);
@@ -86,26 +62,18 @@ export class AppCounter extends SsvElement {
     return (
       <div>
         <span>{this.#count.value}</span>
-        <button onClick={() => this.#count.set((p) => p + 1)}>+</button>
-        <button onClick={() => this.#count.set((p) => p - 1)}>−</button>
+        <button onClick={() => this.#count.set(p => p + 1)}>+</button>
+        <button onClick={() => this.#count.set(p => p - 1)}>−</button>
       </div>
     );
   }
 }
 ```
 
-### Custom equality
+## Custom equality
 
 ```ts
-readonly #items = useSelector(() => listStore, (s) => s.items, {
+readonly #items = useSelector(() => listStore, s => s.items, {
   compare: (a, b) => a?.length === b?.length,
 });
 ```
-
-## Differences from React
-
-| React (`@tanstack/react-store`)  | Stencil (`@ssv/tanstack.stencil-store`)    |
-| -------------------------------- | ------------------------------------------ |
-| `useSelector(source, selector?)` | `useSelector(getSource, selector?)`        |
-| `useAtom(atom)` → `[value, set]` | `useAtom(getAtom)` → `{ value, set }`      |
-| Source passed directly           | Source returned by a factory (`getSource`) |

@@ -2,7 +2,7 @@ import type { UseQueryResult } from "@ssv/tanstack.stencil-query";
 import type { QuerySignalResult } from "@ssv/tanstack.stencil-query/signals";
 import { h } from "@stencil/core";
 
-import type { Post } from "./use-queries.api";
+import type { Post } from "../posts.client";
 
 /** The post ids fetched in parallel across all `useQueries` examples. */
 export const IDS = [1, 2, 3];

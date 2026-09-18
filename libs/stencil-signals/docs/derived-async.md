@@ -10,7 +10,7 @@ Async derived signal whose value comes from a promise. Re-runs when tracked sign
 
 ## Standalone vs class field
 
-| Context         | Behaviour                                                                      |
+| Context         | Behavior                                                                      |
 | --------------- | ------------------------------------------------------------------------------ |
 | **Standalone**  | Runs immediately; call `.dispose()` when done                                  |
 | **Class field** | Eager create at field init; `hostWillLoad` awaits `whenSettled` on server only |

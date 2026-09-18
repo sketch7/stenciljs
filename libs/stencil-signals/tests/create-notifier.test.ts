@@ -8,7 +8,7 @@ import { createNotifier } from "../src/extensions/create-notifier";
 import { effect } from "../src/extensions/effect";
 import { signal } from "../src/signals/core";
 
-const tick = () =>
+const tick = async () =>
 	new Promise<void>(r => {
 		queueMicrotask(r);
 	});

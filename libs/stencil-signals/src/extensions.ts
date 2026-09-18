@@ -12,6 +12,12 @@ export { computedPrevious } from "./extensions/computed-previous";
 export { derivedAsync } from "./extensions/derived-async";
 export type { DisposableSignal, DerivedAsyncFn, DerivedAsyncOptions } from "./extensions/derived-async";
 
+// ─── Reactive transforms ────────────────────────────────────────────────────
+export { proxySignal } from "./extensions/proxy-signal";
+export type { ProxySignalHandler, ProxySignalOptions } from "./extensions/proxy-signal";
+export { throttled, debounced } from "./extensions/rate-limited";
+export type { RateLimitedOptions, RateLimitedSignal, RateLimitedWritableSignal } from "./extensions/rate-limited";
+
 // ─── Prop / model bindings ────────────────────────────────────────────────────
 export { useSignalProps } from "./extensions/signal-prop";
 export type { SignalPropOptions, SignalPropsResult } from "./extensions/signal-prop";

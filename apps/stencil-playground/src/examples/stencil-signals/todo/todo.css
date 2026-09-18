@@ -34,6 +34,26 @@
 	border-color: var(--color-primary, #6366f1);
 }
 
+/* ── Filter Row ── */
+.filter-row {
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+
+.filter-row .todo-input {
+	width: 100%;
+}
+
+.filter-hint {
+	position: absolute;
+	right: 0.875rem;
+	font-size: 0.7rem;
+	color: var(--color-muted-fg, #64748b);
+	font-style: italic;
+	pointer-events: none;
+}
+
 /* ── Button ── */
 .btn {
 	display: inline-flex;

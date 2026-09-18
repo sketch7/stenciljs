@@ -1,4 +1,3 @@
-import { use } from "@ssv/stencil-core";
 import { useQuery, useQueryClient } from "@ssv/tanstack.stencil-query";
 import type { QueryClient } from "@ssv/tanstack.stencil-query";
 
@@ -22,31 +21,20 @@ export function useTranslations(queryClient?: QueryClient) {
 	const client = useQueryClient(queryClient);
 	const config = useConfig();
 
-	use({
-		async hostWillLoad() {
-			const baseUrl = config.current?.baseUrl() ?? "";
-			await client.current?.prefetchQuery({
-				queryKey: QUERY_KEY,
-				queryFn: () => fetchTranslations(baseUrl),
-				staleTime: STALE_TIME,
-			});
-		},
-	});
-
 	const translationsRef = useQuery(
 		() => ({
 			queryKey: QUERY_KEY,
 			staleTime: STALE_TIME,
-			queryFn: () => fetchTranslations(config.current?.baseUrl() ?? ""),
+			queryFn: async () => fetchTranslations(config.current?.baseUrl() ?? ""),
 		}),
-		queryClient,
+		client,
 	);
 
 	function tr(key: string, params?: Record<string, string>): string {
 		const map = translationsRef().data ?? {};
 		let value = map[key] ?? key;
 		if (params) {
-			value = value.replaceAll(/\{\{(\w+)\}\}/gu, (_, p) => params[p] ?? `{{${p}}}`);
+			value = value.replaceAll(/\{\{(?<key>\w+)\}\}/gu, (_, p: string) => params[p] ?? `{{${p}}}`);
 		}
 		return value;
 	}

@@ -1,6 +1,10 @@
 # @ssv/vite-plugin-stencil-watch
 
-Vite plugin that watches a [StencilJS](https://stenciljs.com/) package's source directory, re-runs the Stencil build on any user-authored file change, then invalidates the Vite module graph and triggers a full page reload for HMR.
+Vite plugin that watches a [StencilJS](https://stenciljs.com/) package's source directory, re-runs the Stencil build on any user-authored file change, then invalidates the Vite module graph and triggers a full page reload.
+
+- Use in a Vite app that consumes a **local** Stencil library via workspace symlink, to get file-watch → rebuild → HMR in one step during development
+- Use `watchDirs` when the Stencil lib depends on other local workspace packages that should also trigger a rebuild
+- Avoid in production builds — the plugin only activates in `serve` mode
 
 ## Install
 
@@ -27,9 +31,21 @@ export default defineConfig({
 });
 ```
 
+## Options
+
+| Option            | Type       | Default                     | Description                                                                            |
+| ----------------- | ---------- | --------------------------- | -------------------------------------------------------------------------------------- |
+| `packageDir`      | `string`   | **required**                | Absolute path to the Stencil package root                                              |
+| `srcDir`          | `string`   | `<packageDir>/src`          | Source directory to watch                                                              |
+| `buildCommand`    | `string`   | `"pnpm stencil build"`      | Shell command to build the Stencil package                                             |
+| `watchDirs`       | `string[]` | `[]`                        | Extra directories to watch (e.g. workspace peer sources)                               |
+| `preBuildCommand` | `string`   | —                           | Command run before the main build; use to rebuild a workspace dependency first         |
+| `generatedDirs`   | `string[]` | `["react","vue","angular"]` | Output dirs written by Stencil — excluded from watch to prevent infinite rebuild loops |
+| `packageId`       | `string`   | `path.basename(packageDir)` | String used to match Vite module-graph entries for invalidation                        |
+
 ### Watching workspace peer dependencies
 
-When a Stencil lib depends on a local workspace package (e.g. `@ssv/stencil-core`), use `watchDirs` and `preBuildCommand` so changes in the peer also trigger a fresh Stencil build:
+When the Stencil lib depends on a local workspace package, use `watchDirs` + `preBuildCommand` so changes in the peer also trigger a fresh Stencil build:
 
 ```ts
 stencilWatch({
@@ -38,18 +54,6 @@ stencilWatch({
   preBuildCommand: "pnpm --filter @ssv/stencil-core build",
 }),
 ```
-
-## Options
-
-| Option            | Type       | Default                     | Description                                                                            |
-| ----------------- | ---------- | --------------------------- | -------------------------------------------------------------------------------------- |
-| `packageDir`      | `string`   | **required**                | Absolute path to the Stencil package                                                   |
-| `srcDir`          | `string`   | `<packageDir>/src`          | Source directory to watch                                                              |
-| `buildCommand`    | `string`   | `"pnpm stencil build"`      | Shell command to build the Stencil package                                             |
-| `generatedDirs`   | `string[]` | `["react","vue","angular"]` | Output dirs written by Stencil — excluded from watch to prevent infinite rebuild loops |
-| `packageId`       | `string`   | `path.basename(packageDir)` | String used to match Vite module-graph entries for invalidation                        |
-| `watchDirs`       | `string[]` | `[]`                        | Extra directories to watch (e.g. workspace peer sources)                               |
-| `preBuildCommand` | `string`   | —                           | Command run before the main build (e.g. rebuild a workspace dep)                       |
 
 ## Example
 

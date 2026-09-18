@@ -2,8 +2,7 @@ import { SsvElement } from "@ssv/stencil-core";
 import { usePrefetchQuery } from "@ssv/tanstack.stencil-query";
 import { Component, h } from "@stencil/core";
 
-import { postQueries, usePrefetchedPosts } from "./prefetch.api";
-import type { Post } from "./prefetch.api";
+import { postQueries, usePrefetchedPosts } from "../posts.hooks";
 
 /**
  * Demonstrates `usePrefetchQuery` as a field initializer — seeds the cache before
@@ -42,7 +41,7 @@ export class AppTsQueryPrefetch extends SsvElement {
 
 				{posts && (
 					<ul class="list">
-						{posts.map((post: Post) => (
+						{posts.map(post => (
 							<li key={post.id} class="item">
 								<span class="item-id">#{post.id}</span>
 								<span class="item-title">{post.title}</span>

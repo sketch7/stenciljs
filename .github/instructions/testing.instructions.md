@@ -38,6 +38,22 @@ applyTo: "**/*.spec.ts"
 - Type mock functions explicitly: `vi.fn<() => void>()` not `vi.fn()`.
 - Call `vi.clearAllMocks()` in `beforeEach`, not `afterEach`.
 
+## Red-Green cycle (TDD)
+
+Follow the Red → Green → Refactor loop for every new behavior:
+
+1. **Red** — Write a failing test that describes the desired behavior. Run it and confirm it fails for the right reason (wrong output, not a compile error or missing import).
+2. **Green** — Write the minimum production code needed to make the test pass. Resist adding anything beyond what the test requires.
+3. **Refactor** — Clean up both the implementation and the test while keeping all tests green.
+
+**Rules:**
+
+- Never write production code without a failing test first.
+- A test that passes immediately (without any new code) is a signal the test is wrong or the behavior already exists — investigate before continuing.
+- Keep each Red → Green cycle small: one behavior, one test, one change.
+- Commit after Green; refactor in a separate commit if the diff would obscure intent.
+- If an existing test breaks during Refactor, stop and fix before proceeding — do not suppress or skip the failure.
+
 ## What to avoid
 
 - Don't write a `TestHost` subclass inline in a spec — extract to a util file if more than 5 lines.

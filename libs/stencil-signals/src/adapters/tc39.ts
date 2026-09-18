@@ -70,7 +70,7 @@ export const tc39Adapter: SignalAdapter = {
 	createEffect(
 		fn: (onCleanup: (cb: CleanupFn) => void) => CleanupFn | void,
 		options?: AdapterEffectOptions,
-	): { dispose(): void } {
+	): { dispose: () => void } {
 		const flushBetweenRuns = options?.flushBetweenRuns !== false;
 		const cleanupState: {
 			pendingCleanup: CleanupFn | null;

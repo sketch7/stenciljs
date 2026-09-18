@@ -89,7 +89,7 @@ export function mutationObserver(
 ): ObserverRef {
 	const targets = Array.isArray(target) ? target : [target];
 	// Wrap to strip the second `observer` argument the native API passes.
-	const nativeCb = (mutations: MutationRecord[]): void => callback(mutations);
+	const nativeCb = (mutations: readonly MutationRecord[]): void => callback(mutations);
 
 	if (isInReactiveContext()) {
 		let observer: MutationObserver | null = null;
@@ -97,7 +97,7 @@ export function mutationObserver(
 
 		useEffect(() => {
 			if (destroyed) {
-				return;
+				return undefined;
 			}
 			observer = createNativeObserver(targets, nativeCb, options);
 			return () => {

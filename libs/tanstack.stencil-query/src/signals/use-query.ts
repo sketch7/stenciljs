@@ -1,9 +1,11 @@
+import { detectServer } from "@ssv/stencil-core";
 import type { Ref } from "@ssv/stencil-core";
-import { signal } from "@ssv/stencil-signals";
-import type { DefaultError, NoInfer, QueryClient, QueryKey, QueryObserverResult } from "@tanstack/query-core";
+import { computed, effect, signal } from "@ssv/stencil-signals";
+import type { DefaultError, QueryClient, QueryKey, QueryObserverResult } from "@tanstack/query-core";
 
 import { pendingQueryState, useBaseQueryObserver } from "../query-observer";
 import type { UseQueryOptions } from "../query-observer";
+import { createServerQuerySettle } from "./server-query-settle";
 import { createSignalResult } from "./signal-result";
 import type { SignalFields } from "./signal-result";
 
@@ -81,13 +83,54 @@ export function $useQuery<
 	client?: QueryClient | Ref<QueryClient>,
 ): QuerySignalResult<TData, TError> {
 	const state = signal(pendingQueryState as unknown as QueryStateData<TData, TError>);
+	const getOpts = typeof getOptions === "function" ? getOptions : () => getOptions;
+	const optsComputed = computed(() => getOpts());
+	let disposeOptsEffect: (() => void) | undefined;
 
-	const { refetch } = useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey>(getOptions, client, {
-		onResult: result => state.set(result),
-		onConnect: result => state.set(result),
-		onRender: result => state.set(result),
-		onDispose: () => state.set(pendingQueryState as unknown as QueryStateData<TData, TError>),
-	});
+	const { refetch, getObserver, reArm } = useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey>(
+		getOptions,
+		client,
+		{
+			onConnect: result => {
+				state.set(result);
+				// CLIENT: reactive options effect — created here (inside hostConnected, where
+				// peekCurrentHost() may be null) so it is NOT host-bound and requires no
+				// useSignalWatcher() prerequisite. Deferred so it does not run on first connect
+				// (connect already calls reArm via setOptions and sets state above). Re-runs
+				// whenever optsComputed changes (i.e. a signal-derived queryKey or option changes).
+				if (!detectServer()) {
+					const ref = effect([optsComputed], () => applyOptions(), { defer: true });
+					disposeOptsEffect = () => ref.dispose();
+				}
+			},
+			onResult: result => state.set(result),
+			onDispose: () => {
+				state.set(pendingQueryState as unknown as QueryStateData<TData, TError>);
+				disposeOptsEffect?.();
+				disposeOptsEffect = undefined;
+			},
+			// SERVER: inject the signal-based settle; base owns the lifecycle + abort wiring.
+			// `createServerQuerySettle` covers both held (waits) and non-held (immediate prefetch).
+			onServerRender: ctx =>
+				createServerQuerySettle<TQueryFnData, TError, TData, TQueryKey>({
+					...ctx,
+					syncResult: () => {
+						const obs = getObserver();
+						if (obs) {
+							state.set(obs.getCurrentResult());
+						}
+					},
+				}),
+		},
+	);
+
+	const applyOptions = (): void => {
+		reArm();
+		const obs = getObserver();
+		if (obs) {
+			state.set(obs.getCurrentResult());
+		}
+	};
 
 	return createSignalResult(state, { refetch });
 }

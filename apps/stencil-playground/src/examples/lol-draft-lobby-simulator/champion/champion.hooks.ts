@@ -1,4 +1,3 @@
-import { use } from "@ssv/stencil-core";
 import { useQuery } from "@ssv/tanstack.stencil-query";
 
 import { useConfig } from "../../../startup-context";
@@ -10,22 +9,11 @@ export function useChampions() {
 	const client = useLolDraftQueryClient();
 	const config = useConfig();
 
-	use({
-		async hostWillLoad() {
-			const baseUrl = config.current?.baseUrl() ?? "";
-			await client.current?.prefetchQuery({
-				queryKey: CHAMPIONS_QUERY_KEY,
-				queryFn: () => fetchChampions(baseUrl),
-				staleTime: Infinity,
-			});
-		},
-	});
-
 	const championsRef = useQuery(
 		() => ({
 			queryKey: CHAMPIONS_QUERY_KEY,
 			staleTime: Infinity,
-			queryFn: () => fetchChampions(config.current?.baseUrl() ?? ""),
+			queryFn: async () => fetchChampions(config.current?.baseUrl() ?? ""),
 		}),
 		client,
 	);

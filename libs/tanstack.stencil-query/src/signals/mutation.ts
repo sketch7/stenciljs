@@ -1,3 +1,4 @@
+import type { Ref } from "@ssv/stencil-core";
 import { signal } from "@ssv/stencil-signals";
 import type { DefaultError, MutationObserverResult, QueryClient } from "@tanstack/query-core";
 
@@ -49,7 +50,7 @@ export function $useMutation<TData = unknown, TError = DefaultError, TVariables 
 	getOptions:
 		| UseMutationOptions<TData, TError, TVariables, TContext>
 		| (() => UseMutationOptions<TData, TError, TVariables, TContext>),
-	client?: QueryClient,
+	client?: QueryClient | Ref<QueryClient>,
 ): MutationSignalResult<TData, TError, TVariables, TContext> {
 	const state = signal(idleMutationState as unknown as MutationStateData<TData, TError, TVariables, TContext>);
 

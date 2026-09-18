@@ -1,6 +1,6 @@
 import { createRef } from "@ssv/stencil-core";
 import type { Ref } from "@ssv/stencil-core";
-import type { DefaultError, NoInfer, QueryClient, QueryKey, QueryObserverResult } from "@tanstack/query-core";
+import type { DefaultError, QueryClient, QueryKey, QueryObserverResult } from "@tanstack/query-core";
 
 import { noObserverRefetch, pendingQueryState, useBaseQueryObserver } from "./query-observer";
 import type {
@@ -79,15 +79,17 @@ export function useQuery<
 		| (() => UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>),
 	client?: QueryClient | Ref<QueryClient>,
 ): Ref<QueryObserverResult<TData, TError>> {
-	const { getObserver } = useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey>(getOptions, client, {
+	const handle = useBaseQueryObserver<TQueryFnData, TError, TData, TQueryKey>(getOptions, client, {
 		onResult: (_result, requestUpdate) => requestUpdate(),
+		onRender: () => handle.reArm(),
 	});
+	const { getObserver } = handle;
 
 	return createRef(
 		() =>
 			(getObserver()?.getCurrentResult() ?? {
 				...pendingQueryState,
 				refetch: noObserverRefetch,
-			}) as unknown as QueryObserverResult<TData, TError>,
+			}) as QueryObserverResult<TData, TError>,
 	);
 }

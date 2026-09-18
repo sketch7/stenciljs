@@ -21,7 +21,7 @@ export type SignalFromEventOptions<TEvent extends Event = Event, TStored = TEven
 // ─── Internal types ───────────────────────────────────────────────────────────
 
 type ListenInner<T> = Signal<T> & {
-	dispose(): void;
+	dispose: () => void;
 };
 
 type AttachConfig<TEvent extends Event> = {
@@ -34,6 +34,7 @@ type AttachConfig<TEvent extends Event> = {
 
 function resolveEventTarget(target: ListenOptions["target"], host: ReactiveControllerHost): EventTarget {
 	const g = globalThis as Window & typeof globalThis;
+	// oxlint-disable-next-line typescript/switch-exhaustiveness-check -- default handles undefined case
 	switch (target) {
 		case "window": {
 			return g.window;
@@ -58,13 +59,13 @@ function attachSignalFromEvent<TEvent extends Event, TStored>(
 	const passive = resolvePassiveOption(eventName, options.passive);
 	const listenerOpts = toAddEventListenerOptions(capture, passive);
 
-	const host = getCurrentHost() as ReactiveControllerHost;
+	const host = getCurrentHost();
 	const target = resolveEventTarget(options.target, host);
 
 	const inner = createSignal<TStored | undefined>(config.initialValue as TStored | undefined);
 
 	const handler = (ev: Event): void => {
-		const next = options.map ? (options.map(ev as TEvent) as TStored) : (ev as unknown as TStored);
+		const next = options.map ? (options.map(ev as TEvent) as unknown as TStored) : (ev as unknown as TStored);
 		inner.set(next);
 	};
 
@@ -80,7 +81,7 @@ function attachSignalFromEvent<TEvent extends Event, TStored>(
 		},
 	});
 
-	const readonly = inner.asReadonly() as Signal<TStored | undefined>;
+	const readonly = inner.asReadonly();
 
 	const listen = Object.assign(readonly, {
 		dispose: detach,
@@ -104,11 +105,13 @@ export function signalFromEvent<TEvent extends Event = Event>(
 	options: ListenOptions & { initialValue: TEvent; map?: undefined },
 ): Signal<TEvent>;
 
+// oxlint-disable-next-line typescript/no-unnecessary-type-parameters -- TEvent lets callers constrain the map callback (e.g. signalFromEvent<MouseEvent, ...>)
 export function signalFromEvent<TEvent extends Event, T>(
 	eventName: string,
 	options: ListenOptions & { map: (ev: TEvent) => T },
 ): Signal<T | undefined>;
 
+// oxlint-disable-next-line typescript/no-unnecessary-type-parameters -- TEvent lets callers constrain the map callback (e.g. signalFromEvent<MouseEvent, ...>)
 export function signalFromEvent<TEvent extends Event, T>(
 	eventName: string,
 	options: ListenOptions & { map: (ev: TEvent) => T; initialValue: T },
@@ -131,8 +134,8 @@ export function signalFromEvent<TEvent extends Event = Event>(
 					options: opts,
 					initialValue: snapshot,
 				}),
-			read: inner => inner(),
-			peek: inner => inner.peek(),
+			read: inner => inner() as TEvent | undefined,
+			peek: inner => inner.peek() as TEvent | undefined,
 			disposeInner: inner => inner.dispose(),
 		}) as DisposableSignal<unknown>;
 	}

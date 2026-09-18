@@ -4,6 +4,7 @@ import path from "node:path";
 import { promisify } from "node:util";
 import type { Plugin, ViteDevServer } from "vite";
 
+// oxlint-disable-next-line typescript/strict-void-return -- Node.js promisify overload detection limitation
 const execAsync = promisify(exec);
 
 export type StencilWatchOptions = {
@@ -199,8 +200,40 @@ export function stencilWatch(options: StencilWatchOptions): Plugin {
 			debounceTimer = null;
 			const withPreBuild = pendingNeedsPreBuild;
 			pendingNeedsPreBuild = false;
-			build(server, withPreBuild);
+			void build(server, withPreBuild);
 		}, debounceMs);
+	}
+
+	function invalidateModules(server: ViteDevServer): void {
+		for (const [envName, env] of Object.entries(server.environments)) {
+			const seen = new Set<string>();
+			const queue = [...env.moduleGraph.idToModuleMap.values()].filter(m => m.id?.includes(resolvedPackageId));
+			let qi = 0;
+			while (qi < queue.length) {
+				const mod = queue[qi++];
+				const key = mod.id ?? mod.url;
+				if (!key || seen.has(key)) {
+					continue;
+				}
+				seen.add(key);
+				env.moduleGraph.invalidateModule(mod);
+				if (envName !== "ssr") {
+					continue;
+				}
+				for (const importer of mod.importers) {
+					queue.push(importer);
+				}
+			}
+		}
+		const ssrEnv = server.environments.ssr;
+		if (ssrEnv) {
+			for (const trackedId of stencilImporterIds) {
+				const trackedMod = ssrEnv.moduleGraph.idToModuleMap.get(trackedId);
+				if (trackedMod) {
+					ssrEnv.moduleGraph.invalidateModule(trackedMod);
+				}
+			}
+		}
 	}
 
 	async function build(server: ViteDevServer, needsPreBuild: boolean): Promise<void> {
@@ -228,43 +261,7 @@ export function stencilWatch(options: StencilWatchOptions): Plugin {
 			// without this the cached page module continues to serve stale SSR HTML.
 			// For the client environment a direct invalidation is sufficient because
 			// the subsequent full-reload causes the browser to re-fetch everything.
-			for (const [envName, env] of Object.entries(server.environments)) {
-				const seen = new Set<string>();
-				const queue = [...env.moduleGraph.idToModuleMap.values()].filter(m => m.id?.includes(resolvedPackageId));
-				let qi = 0;
-				while (qi < queue.length) {
-					const mod = queue[qi++];
-					const key = mod.id ?? mod.url;
-					if (!key || seen.has(key)) {
-						continue;
-					}
-					seen.add(key);
-					env.moduleGraph.invalidateModule(mod);
-					// SSR only: walk up the importer chain so page-level modules
-					// (e.g. +Page.tsx) are also invalidated and re-evaluated on the
-					// next request. Client full-reload makes this unnecessary there.
-					if (envName !== "ssr") {
-						continue;
-					}
-					for (const importer of mod.importers) {
-						queue.push(importer);
-					}
-				}
-			}
-			// Additionally invalidate SSR modules tracked by the transform hook.
-			// @stencil/ssr and similar plugins remove the stencil import from the
-			// transformed output, breaking the BFS importer chain above so that
-			// page modules (e.g. +Page.tsx) are never reached. The transform hook
-			// records these modules before the import is stripped.
-			const ssrEnv = server.environments["ssr"];
-			if (ssrEnv) {
-				for (const trackedId of stencilImporterIds) {
-					const trackedMod = ssrEnv.moduleGraph.idToModuleMap.get(trackedId);
-					if (trackedMod) {
-						ssrEnv.moduleGraph.invalidateModule(trackedMod);
-					}
-				}
-			}
+			invalidateModules(server);
 			// Run the rebuild-done callback before triggering the browser reload so
 			// any in-process module references (e.g. the @stencil/ssr hydrateModule)
 			// are refreshed before the first SSR request arrives.
@@ -273,7 +270,8 @@ export function stencilWatch(options: StencilWatchOptions): Plugin {
 			}
 			server.hot.send({ type: "full-reload" });
 		} catch (error) {
-			server.config.logger.error(`[stencil] rebuild failed:\n${(error as Error).message}`);
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			server.config.logger.error(`[stencil] rebuild failed:\n${errorMessage}`);
 		} finally {
 			building = false;
 			if (pending) {

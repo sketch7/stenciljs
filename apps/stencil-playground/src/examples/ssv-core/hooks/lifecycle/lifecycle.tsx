@@ -9,7 +9,7 @@ import { hookMeta, useLifecycleLogger } from "./lifecycle-logger";
 	shadow: true,
 })
 export class AppLifecycleDemo extends SsvElement {
-	#lifecycle = useLifecycleLogger();
+	readonly #lifecycle = useLifecycleLogger();
 
 	@State() private _tick = 0;
 

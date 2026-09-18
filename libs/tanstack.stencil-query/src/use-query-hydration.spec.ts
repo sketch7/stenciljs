@@ -1,4 +1,6 @@
 // oxlint-disable import/max-dependencies
+// oxlint-disable-next-line import/no-unassigned-import -- registers the TC39 signal adapter for $useQuery/$useQueries tests
+import "@ssv/stencil-signals/tc39";
 import type { Ref } from "@ssv/stencil-core";
 import { mount } from "@ssv/stencil-core/testing";
 import { mountDom } from "@ssv/stencil-core/testing/dom";
@@ -9,7 +11,10 @@ import { QueryClient, dehydrate } from "@tanstack/query-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { provideQueryClient, useQueryClient } from "./query-client-context";
+import { $useQueries } from "./signals/use-queries";
+import { $useQuery } from "./signals/use-query";
 import { usePrefetchQuery } from "./use-prefetch-query";
+import { useQueries } from "./use-queries";
 import { useQuery } from "./use-query";
 import { useQueryHydration } from "./use-query-hydration";
 
@@ -32,7 +37,7 @@ function makeMockScript(scope: string, data: unknown): MockScript {
 }
 
 function attachShadowRoot(host: object, script: MockScript | null): void {
-	(host as Record<string, unknown>)["shadowRoot"] = {
+	(host as Record<string, unknown>).shadowRoot = {
 		querySelector: (sel: string) => (script && sel === `#${script.id}` ? script : null),
 	};
 }
@@ -44,7 +49,9 @@ function attachShadowRoot(host: object, script: MockScript | null): void {
  * directly, mirroring what the browser sees after the template literal step.
  */
 function decodeSsrScript(content: string): string {
-	return content.replaceAll(/\\u([0-9a-fA-F]{4})/gu, (_, hex) => String.fromCodePoint(Number.parseInt(hex, 16)));
+	return content.replaceAll(/\\u(?<hex>[0-9a-fA-F]{4})/gu, (_, hex: string) =>
+		String.fromCodePoint(Number.parseInt(hex, 16)),
+	);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -135,12 +142,118 @@ describe("useQueryHydration", () => {
 			provideTransferState("hyd-usequery");
 			useQueryHydration({ client: qc });
 			return {
-				query: useQuery({ queryKey: ["posts"], queryFn: () => Promise.resolve([]), staleTime: Infinity }, qc),
+				query: useQuery({ queryKey: ["posts"], queryFn: async () => [], staleTime: Infinity }, qc),
 			};
 		});
 
 		expect(m.query().data).toStrictEqual(serverData);
 		expect(m.query().isSuccess).toBeTruthy();
+	});
+
+	it("hydrates before observer subscription — queryFn not called when useQuery is registered first", async () => {
+		// RED-GREEN: This test fails with the old useLoadEffect-only approach because the observer
+		// subscribes in hostWillLoad before hydration runs, sees an empty cache, and triggers a
+		// client fetch. It passes with the hostConnected approach which hydrates before any
+		// hostWillLoad observer subscription.
+		const serverData = [{ id: 99, title: "SSR post" }];
+		const serverQc = new QueryClient();
+		serverQc.setQueryData(["ssr-posts"], serverData);
+		const script = makeMockScript("hyd-order", { __tsq: dehydrate(serverQc) });
+		serverQc.clear();
+
+		const qc = new QueryClient();
+		const queryFn = vi.fn<() => Promise<typeof serverData>>().mockResolvedValue([]);
+
+		// useQuery is registered FIRST — mirrors real field-initializer order where
+		// usePrefetchQuery / useQuery are class fields and useQueryHydration is in setup().
+		using m = await mount(h => {
+			attachShadowRoot(h, script);
+			provideTransferState("hyd-order");
+			const query = useQuery({ queryKey: ["ssr-posts"], queryFn, staleTime: Infinity }, qc);
+			useQueryHydration({ client: qc });
+			return { query };
+		});
+
+		expect(m.query().data).toStrictEqual(serverData);
+		expect(queryFn).not.toHaveBeenCalled();
+	});
+
+	it("hydrates before observer subscription — $useQuery signals see hydrated cache when registered first", async () => {
+		// RED-GREEN: This test fails with the old useLoadEffect-only approach because $useQuery's
+		// onConnect fires in hostWillLoad before hydration runs, initialising signals to
+		// pendingQueryState. It passes with the hostConnected approach which hydrates before any
+		// hostWillLoad observer subscription so onConnect sees the populated cache.
+		const serverData = [{ id: 99, title: "SSR post" }];
+		const serverQc = new QueryClient();
+		serverQc.setQueryData(["ssr-posts-signal"], serverData);
+		const script = makeMockScript("hyd-order-signal", { __tsq: dehydrate(serverQc) });
+		serverQc.clear();
+
+		const qc = new QueryClient();
+		const queryFn = vi.fn<() => Promise<typeof serverData>>().mockResolvedValue([]);
+
+		using m = await mount(h => {
+			attachShadowRoot(h, script);
+			provideTransferState("hyd-order-signal");
+			const query = $useQuery({ queryKey: ["ssr-posts-signal"], queryFn, staleTime: Infinity }, qc);
+			useQueryHydration({ client: qc });
+			return { query };
+		});
+
+		expect(m.query.data()).toStrictEqual(serverData);
+		expect(queryFn).not.toHaveBeenCalled();
+	});
+
+	it("hydrates before observer subscription — queryFn not called when useQueries is registered first", async () => {
+		// RED-GREEN: Same ordering issue as useQuery — the QueriesObserver subscribes in
+		// hostWillLoad with an empty cache and triggers a client fetch before hydration runs.
+		// Passes with the hostConnected approach.
+		const serverData = [{ id: 1, title: "Post 1" }];
+		const serverQc = new QueryClient();
+		serverQc.setQueryData(["ssr-queries"], serverData);
+		const script = makeMockScript("hyd-order-queries", { __tsq: dehydrate(serverQc) });
+		serverQc.clear();
+
+		const qc = new QueryClient();
+		const queryFn = vi.fn<() => Promise<typeof serverData>>().mockResolvedValue([]);
+
+		using m = await mount(h => {
+			attachShadowRoot(h, script);
+			provideTransferState("hyd-order-queries");
+			const queries = useQueries({ queries: [{ queryKey: ["ssr-queries"], queryFn, staleTime: Infinity }] }, qc);
+			useQueryHydration({ client: qc });
+			return { queries };
+		});
+
+		expect(m.queries()[0].data).toStrictEqual(serverData);
+		expect(queryFn).not.toHaveBeenCalled();
+	});
+
+	it("hydrates before observer subscription — $useQueries signals see hydrated cache when registered first", async () => {
+		// RED-GREEN: Same as $useQuery — onConnect fires in hostWillLoad before hydration,
+		// leaving per-element signals at pendingQueryState. Passes with the hostConnected approach.
+		const serverData = [{ id: 2, title: "Post 2" }];
+		const serverQc = new QueryClient();
+		serverQc.setQueryData(["ssr-queries-signal"], serverData);
+		const script = makeMockScript("hyd-order-queries-signal", { __tsq: dehydrate(serverQc) });
+		serverQc.clear();
+
+		const qc = new QueryClient();
+		const queryFn = vi.fn<() => Promise<typeof serverData>>().mockResolvedValue([]);
+
+		using m = await mount(h => {
+			attachShadowRoot(h, script);
+			provideTransferState("hyd-order-queries-signal");
+			const queries = $useQueries(
+				{ queries: [{ queryKey: ["ssr-queries-signal"], queryFn, staleTime: Infinity }] },
+				qc,
+			);
+			useQueryHydration({ client: qc });
+			return { queries };
+		});
+
+		expect(m.queries()[0].data()).toStrictEqual(serverData);
+		expect(queryFn).not.toHaveBeenCalled();
 	});
 
 	it("uses a custom key when the key option is provided", async () => {
@@ -249,8 +362,8 @@ describe("useQueryHydration", () => {
 				string,
 				{ queries: { queryKey: unknown }[] }
 			>;
-			expect(stored["__tsq"].queries).toHaveLength(1);
-			expect(stored["__tsq"].queries[0].queryKey).toStrictEqual(["posts"]);
+			expect(stored.__tsq.queries).toHaveLength(1);
+			expect(stored.__tsq.queries[0].queryKey).toStrictEqual(["posts"]);
 		});
 
 		it("uses a custom transfer-state key when the key option is provided", async () => {
@@ -269,7 +382,7 @@ describe("useQueryHydration", () => {
 				{ queries: unknown[] } | undefined
 			>;
 			expect(stored["__tsq-users"]?.queries).toHaveLength(1);
-			expect(stored["__tsq"]).toBeUndefined();
+			expect(stored.__tsq).toBeUndefined();
 		});
 
 		it("serializes an empty cache", async () => {
@@ -283,7 +396,7 @@ describe("useQueryHydration", () => {
 			});
 
 			const stored = JSON.parse(decodeSsrScript(script.textContent)) as Record<string, { queries: unknown[] }>;
-			expect(stored["__tsq"].queries).toHaveLength(0);
+			expect(stored.__tsq.queries).toHaveLength(0);
 		});
 
 		it("serializes all queries in the cache", async () => {
@@ -302,7 +415,7 @@ describe("useQueryHydration", () => {
 				string,
 				{ queries: { queryKey: unknown }[] }
 			>;
-			const queryKeys = stored["__tsq"].queries.map(q => q.queryKey);
+			const queryKeys = stored.__tsq.queries.map(q => q.queryKey);
 			expect(queryKeys).toStrictEqual(expect.arrayContaining([["posts"], ["users"]]));
 		});
 
@@ -314,7 +427,7 @@ describe("useQueryHydration", () => {
 				attachShadowRoot(h, script);
 				provideTransferState("hyd-prefetch-server");
 				// prefetchQuery runs in hostWillLoad (awaited by mount before hostDidLoad)
-				usePrefetchQuery({ queryKey: ["items"], queryFn: () => Promise.resolve([{ id: 42 }]) }, qc);
+				usePrefetchQuery({ queryKey: ["items"], queryFn: async () => [{ id: 42 }] }, qc);
 				// setLazy fires in hostDidLoad — after prefetch has completed
 				useQueryHydration({ client: qc });
 			});
@@ -323,7 +436,7 @@ describe("useQueryHydration", () => {
 				string,
 				{ queries: { queryKey: unknown }[] }
 			>;
-			expect(stored["__tsq"].queries[0].queryKey).toStrictEqual(["items"]);
+			expect(stored.__tsq.queries[0].queryKey).toStrictEqual(["items"]);
 		});
 	});
 
@@ -332,6 +445,41 @@ describe("useQueryHydration", () => {
 			{ label: "top-down", mode: "default" as DomTestMode },
 			{ label: "bottom-up", mode: "hydrate" as DomTestMode },
 		];
+
+		it("bottom-up: child-scoped useQueryHydration hydrates via fallback when client from ancestor context", async () => {
+			// Tests the hostWillLoad fallback path: when useQueryHydration is on a child and the
+			// QueryClient comes from an ancestor context, hostConnected may not resolve
+			// clientRef.current yet in bottom-up (hydration) mode. The fallback fires in hostWillLoad.
+			const serverQc = new QueryClient();
+			serverQc.setQueryData(["child-items"], [{ id: 55 }]);
+			const script = makeMockScript("hyd-child", { __tsq: dehydrate(serverQc) });
+			serverQc.clear();
+
+			const qc = new QueryClient();
+
+			using _tree = await mountDom(
+				root => {
+					Object.defineProperty(root.host, "shadowRoot", {
+						configurable: true,
+						get: () => ({
+							querySelector: (sel: string) => (sel === `#${script.id}` ? script : null),
+						}),
+					});
+					provideQueryClient({ client: qc });
+					provideTransferState("hyd-child");
+
+					// useQueryHydration on the child — client resolves from ancestor context.
+					// In bottom-up mode the child hostConnected fires before the ancestor
+					// provides its context, so the hostWillLoad fallback path handles hydration.
+					root.child(() => {
+						useQueryHydration();
+					});
+				},
+				{ mode: "hydrate" },
+			);
+
+			expect(qc.getQueryData(["child-items"])).toStrictEqual([{ id: 55 }]);
+		});
 
 		it.each(connectModes)(
 			"$label: hydrates root QueryClient; child components resolve it from context",

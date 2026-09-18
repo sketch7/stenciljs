@@ -4,7 +4,7 @@ import { join } from "node:path";
 /**
  * Rollup `external` predicate that externalizes every package in the given
  * package's `peerDependencies` (and their subpath imports), so peer deps are
- * never bundled into the Stencil output. Mirrors tsdown's default behaviour of
+ * never bundled into the Stencil output. Mirrors tsdown's default behavior of
  * externalizing `peerDependencies` for the Stencil compiler.
  *
  * `@stencil/core` is excluded by default — use `externalRuntime: true` on the

@@ -7,19 +7,19 @@ function readEntry(dep: DepEntry): unknown {
 
 /** Snapshot-based tracker for a fixed-length array of {@link DepEntry} values. */
 export type ArrayTracker = {
-	read(): unknown[] | null;
-	hasChanged(current: unknown[]): boolean;
-	commit(values: unknown[]): void;
-	reset(): void;
+	read: () => unknown[] | null;
+	hasChanged: (current: unknown[]) => boolean;
+	commit: (values: unknown[]) => void;
+	reset: () => void;
 	readonly isActive: boolean;
 };
 
 /** Snapshot-based tracker for a named record of {@link DepEntry} values. */
 export type NamedTracker = {
-	read(): Record<string, unknown> | null;
-	hasChanged(current: Record<string, unknown>): boolean;
-	commit(values: Record<string, unknown>): void;
-	reset(): void;
+	read: () => Record<string, unknown> | null;
+	hasChanged: (current: Record<string, unknown>) => boolean;
+	commit: (values: Record<string, unknown>) => void;
+	reset: () => void;
 	readonly isActive: boolean;
 };
 

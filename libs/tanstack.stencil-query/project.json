@@ -13,6 +13,7 @@
       },
       "outputs": ["{projectRoot}/dist"],
       "cache": true,
+      "inputs": ["default", { "env": "SSV_DEBUG" }],
       "dependsOn": ["^build"]
     },
     "test": {
@@ -29,7 +30,8 @@
       "options": {
         "command": "pnpm oxlint src/",
         "cwd": "libs/tanstack.stencil-query"
-      }
+      },
+      "dependsOn": []
     },
     "fmt": {
       "executor": "nx:run-commands",

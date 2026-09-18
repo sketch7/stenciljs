@@ -97,10 +97,7 @@ export function useMutationObserver<TData, TError, TVariables, TContext>(
 	onResult: (result: MutationObserverResult<TData, TError, TVariables, TContext>, requestUpdate: () => void) => void,
 	onDispose?: () => void,
 ): MutationObserverHandle<TData, TError, TVariables, TContext> {
-	const getOpts =
-		typeof getOptions === "function"
-			? getOptions
-			: () => getOptions as UseMutationOptions<TData, TError, TVariables, TContext>;
+	const getOpts = typeof getOptions === "function" ? getOptions : () => getOptions;
 
 	const clientRef = useQueryClient(client);
 
@@ -111,7 +108,7 @@ export function useMutationObserver<TData, TError, TVariables, TContext>(
 		observer?.mutate(variables, options).catch(noop);
 	};
 
-	const mutateAsync: UseMutateAsyncFunction<TData, TError, TVariables, TContext> = (variables, options) =>
+	const mutateAsync: UseMutateAsyncFunction<TData, TError, TVariables, TContext> = async (variables, options) =>
 		observer?.mutate(variables, options) ??
 		Promise.reject(new Error("[ssv:query] Cannot mutate — observer not yet connected."));
 
@@ -121,6 +118,7 @@ export function useMutationObserver<TData, TError, TVariables, TContext>(
 
 	// hostWillLoad: context guaranteed resolved — qc is non-null and auto-unwrapped from clientRef.
 	useLoadEffect(
+		// oxlint-disable-next-line typescript/unbound-method -- requestUpdate is a pre-bound function provided by the framework context
 		({ qc, requestUpdate }) => {
 			observer = new MutationObserver<TData, TError, TVariables, TContext>(qc, getOpts());
 			unsubscribe = observer.subscribe(

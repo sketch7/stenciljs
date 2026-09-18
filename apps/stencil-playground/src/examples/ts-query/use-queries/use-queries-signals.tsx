@@ -2,7 +2,7 @@ import { SsvElement } from "@ssv/stencil-core";
 import { computed, signal, useSignalWatcher } from "@ssv/stencil-signals";
 import { Component, h } from "@stencil/core";
 
-import { $usePostsByIds } from "./use-queries.api";
+import { $usePostsByIds } from "../posts.hooks";
 import { IDS, renderSignalItem } from "./use-queries.shared";
 
 /**

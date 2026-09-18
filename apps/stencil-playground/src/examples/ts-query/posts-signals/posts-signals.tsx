@@ -5,8 +5,7 @@ import { provideQueryClient, useQueryHydration } from "@ssv/tanstack.stencil-que
 import { useQueryDevtools } from "@ssv/tanstack.stencil-query/dev-tools";
 import { Component, h } from "@stencil/core";
 
-import { $usePosts } from "./posts-signals.api";
-import type { Post } from "./posts-signals.api";
+import { $usePosts } from "../posts.hooks";
 
 @Component({
 	tag: "app-ts-query-posts-signals",
@@ -74,7 +73,7 @@ export class AppTsQueryPostsSignals extends SsvElement {
 		console.warn(">>>> [renderPostsList] render");
 		return (
 			<ul class="list">
-				{posts.map((post: Post) => (
+				{posts.map(post => (
 					<li key={post.id} class="item">
 						<span class="item-id">#{post.id}</span>
 						<span class="item-title">{post.title}</span>

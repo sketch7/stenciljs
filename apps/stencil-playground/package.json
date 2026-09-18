@@ -49,6 +49,7 @@
       "import": "./loader/index.js"
     },
     "./hydrate": {
+      "@ssv/source": "./hydrate-dev.ts",
       "types": "./hydrate/index.d.ts",
       "import": "./hydrate/index.mjs",
       "require": "./hydrate/index.js",
@@ -90,6 +91,7 @@
     "signal-polyfill": "catalog:"
   },
   "devDependencies": {
+    "@rollup/plugin-replace": "^6.0.3",
     "@types/node": "catalog:",
     "jsdom": "catalog:",
     "oxlint": "catalog:",

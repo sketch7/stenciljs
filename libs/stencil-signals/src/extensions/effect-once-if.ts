@@ -13,7 +13,7 @@ export function effectOnceIf<T>(condition: () => T, execution: (value: NonNullab
 	const innerRef = effect(() => {
 		const value = condition();
 		if (value) {
-			untracked(() => execution(value as NonNullable<T>));
+			untracked(() => execution(value));
 			// Only dispose if setup has completed (innerRef is assigned).
 			// During TC39 synchronous first run, isSetup is still false.
 			if (isSetup) {

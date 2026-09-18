@@ -32,18 +32,18 @@ export default function Layout({ children }: { children: React.ReactNode }): JSX
 
 	// Track OS theme changes while in system mode.
 	useEffect(() => {
-		if (themePref !== "system") {
-			return;
+		if (themePref === "system") {
+			const mq = globalThis.matchMedia("(prefers-color-scheme: dark)");
+			const handler = (e: MediaQueryListEvent) => setSysDark(e.matches);
+			mq.addEventListener("change", handler);
+			return () => mq.removeEventListener("change", handler);
 		}
-		const mq = globalThis.matchMedia("(prefers-color-scheme: dark)");
-		const handler = (e: MediaQueryListEvent) => setSysDark(e.matches);
-		mq.addEventListener("change", handler);
-		return () => mq.removeEventListener("change", handler);
+		return undefined;
 	}, [themePref]);
 
 	// Apply resolved theme to DOM + persist preference.
 	useEffect(() => {
-		document.documentElement.dataset["theme"] = resolvedTheme;
+		document.documentElement.dataset.theme = resolvedTheme;
 		localStorage.setItem("ssv-theme", themePref);
 		// Write a cookie so the server can resolve the correct theme for SSR (no-JS support).
 		// Cookie Store API (Chrome/Edge/Safari 17+). Browsers without it (Firefox) receive
@@ -170,14 +170,14 @@ function Sidebar({ themePref, onThemePrefChange }: SidebarProps): JSX.Element {
 
 	const handleThemeClick = useCallback(
 		(e: React.MouseEvent<HTMLButtonElement>) => {
-			onThemePrefChange((e.currentTarget as HTMLButtonElement).dataset["pref"] as ThemePref);
+			onThemePrefChange((e.currentTarget as HTMLButtonElement).dataset.pref as ThemePref);
 		},
 		[onThemePrefChange],
 	);
 
 	return (
 		<aside className="sticky top-0 flex h-screen w-52 shrink-0 flex-col overflow-y-auto border-r border-(--color-border) bg-(--color-surface)">
-			<div className="flex items-center border-b border-(--color-border) px-4 py-4">
+			<div className="flex items-center border-b border-(--color-border) p-4">
 				<a
 					href="/"
 					className="text-sm font-semibold tracking-tight text-(--color-fg) transition-colors hover:text-(--color-primary)">

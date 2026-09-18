@@ -74,7 +74,7 @@ function addSseClient(sessionId: string, send: SseSendFn): void {
 	if (!sseClients.has(sessionId)) {
 		sseClients.set(sessionId, new Set());
 	}
-	sseClients.get(sessionId)!.add(send);
+	sseClients.get(sessionId)?.add(send);
 }
 
 function removeSseClient(sessionId: string, send: SseSendFn): void {
@@ -111,14 +111,14 @@ function getAvailableChampions(session: DraftSession): string[] {
 function autoSimulate(session: DraftSession): void {
 	while (session.phase !== "finished" && session.phase !== "waiting") {
 		const turn = TURN_ORDER[session.currentTurnIndex];
-		if (!turn || turn.team !== "red") {
+		if (turn?.team !== "red") {
 			break;
 		}
 		const available = getAvailableChampions(session);
 		if (available.length === 0) {
 			break;
 		}
-		const championId = available[Math.floor(Math.random() * available.length)]!;
+		const championId = available[Math.floor(Math.random() * available.length)];
 		const turnIdx = session.currentTurnIndex;
 		if (turn.action === "ban") {
 			session.redBans[turn.slot] = championId;
@@ -339,7 +339,7 @@ export const draftApi = new Hono()
 			return c.json({ error: "No available champions" }, 400);
 		}
 
-		const championId = available[Math.floor(Math.random() * available.length)]!;
+		const championId = available[Math.floor(Math.random() * available.length)];
 		const turnIdx = session.currentTurnIndex;
 
 		if (currentTurn.action === "ban") {

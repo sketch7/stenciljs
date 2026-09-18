@@ -34,7 +34,7 @@ describe("useMutation", () => {
 
 	it("transitions to success after mutateAsync resolves", async () => {
 		using m = await mount(() => ({
-			mutation: useMutation({ mutationFn: (v: number) => Promise.resolve(v * 2) }, qc),
+			mutation: useMutation({ mutationFn: async (v: number) => v * 2 }, qc),
 		}));
 
 		const result = await m.mutation().mutateAsync(5);
@@ -49,7 +49,9 @@ describe("useMutation", () => {
 		using m = await mount(() => ({
 			mutation: useMutation(
 				{
-					mutationFn: () => Promise.reject(new Error("fail")),
+					mutationFn: async () => {
+						throw new Error("fail");
+					},
 				},
 				qc,
 			),
@@ -58,7 +60,7 @@ describe("useMutation", () => {
 		await m.mutation().mutateAsync().catch(noop);
 		await vi.waitFor(() => expect(m.mutation().isError).toBeTruthy());
 
-		expect((m.mutation().error as Error).message).toBe("fail");
+		expect(m.mutation().error!.message).toBe("fail");
 	});
 
 	it("mutate() fire-and-forget — does not throw", async () => {
@@ -72,7 +74,7 @@ describe("useMutation", () => {
 
 	it("exposes variables during and after mutation", async () => {
 		using m = await mount(() => ({
-			mutation: useMutation({ mutationFn: (v: string) => Promise.resolve(v.toUpperCase()) }, qc),
+			mutation: useMutation({ mutationFn: async (v: string) => v.toUpperCase() }, qc),
 		}));
 
 		await m.mutation().mutateAsync("hello");
@@ -82,7 +84,7 @@ describe("useMutation", () => {
 
 	it("reset() returns to idle state", async () => {
 		using m = await mount(() => ({
-			mutation: useMutation({ mutationFn: (v: number) => Promise.resolve(v) }, qc),
+			mutation: useMutation({ mutationFn: async (v: number) => v }, qc),
 		}));
 
 		await m.mutation().mutateAsync(1);
@@ -96,7 +98,7 @@ describe("useMutation", () => {
 
 	it("triggers requestUpdate when mutation state changes", async () => {
 		using m = await mount(() => ({
-			mutation: useMutation({ mutationFn: (v: number) => Promise.resolve(v) }, qc),
+			mutation: useMutation({ mutationFn: async (v: number) => v }, qc),
 		}));
 
 		await m.mutation().mutateAsync(42);
@@ -106,7 +108,7 @@ describe("useMutation", () => {
 
 	it("does not trigger requestUpdate after disconnect", async () => {
 		using m = await mount(() => ({
-			mutation: useMutation({ mutationFn: (v: number) => Promise.resolve(v) }, qc),
+			mutation: useMutation({ mutationFn: async (v: number) => v }, qc),
 		}));
 		m.disconnect();
 
@@ -120,7 +122,7 @@ describe("useMutation", () => {
 	it("onSuccess callback fires with result data", async () => {
 		const onSuccess = vi.fn<(data: number, variables: number, context: undefined, mutation: unknown) => void>();
 		using m = await mount(() => ({
-			mutation: useMutation({ mutationFn: (v: number) => Promise.resolve(v + 1), onSuccess }, qc),
+			mutation: useMutation({ mutationFn: async (v: number) => v + 1, onSuccess }, qc),
 		}));
 
 		await m.mutation().mutateAsync(9);
@@ -131,7 +133,7 @@ describe("useMutation", () => {
 
 	it("component subclass pattern", async () => {
 		class ComponentLike extends TestHost {
-			readonly mutation = useMutation({ mutationFn: (v: string) => Promise.resolve(v) }, qc);
+			readonly mutation = useMutation({ mutationFn: async (v: string) => v }, qc);
 		}
 		using comp = await mount(() => {}, { hostFactory: () => new ComponentLike() });
 

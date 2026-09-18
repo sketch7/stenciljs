@@ -9,7 +9,7 @@ import { useMouseController } from "./mouse-controller";
 	shadow: true,
 })
 export class AppMouseHost extends SsvElement {
-	#mouse = useMouseController();
+	readonly #mouse = useMouseController();
 
 	render() {
 		return (

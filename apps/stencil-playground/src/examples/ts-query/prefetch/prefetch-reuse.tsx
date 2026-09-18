@@ -1,8 +1,7 @@
 import { SsvElement } from "@ssv/stencil-core";
 import { Component, h } from "@stencil/core";
 
-import { prefetchPosts, usePrefetchedPosts } from "./prefetch.api";
-import type { Post } from "./prefetch.api";
+import { prefetchPosts, usePrefetchedPosts } from "../posts.hooks";
 
 /**
  * Demonstrates `prefetchPosts` — a reusable prefetch function defined outside the
@@ -44,7 +43,7 @@ export class AppTsQueryPrefetchReuse extends SsvElement {
 
 				{posts && (
 					<ul class="list">
-						{posts.map((post: Post) => (
+						{posts.map(post => (
 							<li key={post.id} class="item">
 								<span class="item-id">#{post.id}</span>
 								<span class="item-title">{post.title}</span>

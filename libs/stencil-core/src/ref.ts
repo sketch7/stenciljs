@@ -24,7 +24,7 @@ export type Ref<T> = (() => T) & { readonly current: T };
 export type WritableRef<T> = Omit<Ref<T>, "current"> & {
 	current: T;
 	/** Returns a read-only {@link Ref} view. The same object instance, narrowed to `Ref<T>`. */
-	asReadonly(): Ref<T>;
+	asReadonly: () => Ref<T>;
 };
 
 /**

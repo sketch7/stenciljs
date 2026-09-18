@@ -11,7 +11,9 @@ export function mergeProxy<TBase extends object, TPrimary extends object>(
 			if (Object.hasOwn(target, prop)) {
 				return Reflect.get(target, prop, receiver);
 			}
+			// oxlint-disable-next-line typescript/no-unsafe-assignment -- Reflect.get returns any
 			const val = Reflect.get(base as object, prop, base);
+			// oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/no-unsafe-return -- Reflect.get returns any
 			return typeof val === "function" ? val.bind(base) : val;
 		},
 	});

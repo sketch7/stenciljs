@@ -1,6 +1,7 @@
 import { SsvElement } from "@ssv/stencil-core";
-import { signal, useSignalWatcher } from "@ssv/stencil-signals";
-import { createNotifier, effect } from "@ssv/stencil-signals/extensions";
+import { computed, signal, useSignalWatcher } from "@ssv/stencil-signals";
+import { createNotifier, debounced, effect } from "@ssv/stencil-signals/extensions";
+import { watchState } from "@ssv/stencil-signals/store";
 import { Component, h } from "@stencil/core";
 
 import { todoStore } from "./todo.store";
@@ -13,7 +14,21 @@ import { todoStore } from "./todo.store";
 export class AppSignalsTodo extends SsvElement {
 	readonly _ = this.setup(useSignalWatcher());
 	readonly inputText = signal("");
+	readonly filterText = signal("");
+	readonly filter = debounced(this.filterText, 250);
 	readonly $addTodo = createNotifier();
+	readonly activeFilter = computed(() => this.filter().trim().toLowerCase());
+	readonly isDebouncing = computed(() => this.activeFilter() !== this.filterText().trim().toLowerCase());
+	readonly todoCount = computed(() => todoStore.todos().length);
+	readonly visibleTodos = computed(() => {
+		const activeFilter = this.activeFilter();
+		const todos = todoStore.todos();
+		return activeFilter ? todos.filter(todo => todo.text.toLowerCase().includes(activeFilter)) : todos;
+	});
+
+	readonly _stateLog = watchState(todoStore, state => {
+		console.warn("[todoStore] state changed", state);
+	});
 
 	readonly _addTodo = effect(
 		[this.$addTodo.listen],
@@ -40,7 +55,12 @@ export class AppSignalsTodo extends SsvElement {
 	render() {
 		const todos = todoStore.todos();
 		const completed = todoStore.completedCount();
-		const total = todos.length;
+		const total = this.todoCount();
+
+		const rawFilter = this.filterText();
+		const activeFilter = this.activeFilter();
+		const isDebouncing = this.isDebouncing();
+		const visibleTodos = this.visibleTodos();
 
 		return (
 			<div class="todo">
@@ -59,16 +79,33 @@ export class AppSignalsTodo extends SsvElement {
 				</div>
 
 				{total > 0 && (
+					<div class="filter-row">
+						<input
+							class="todo-input"
+							type="search"
+							placeholder="Filter tasks (debounced 250ms)…"
+							value={rawFilter}
+							onInput={e => this.filterText.set((e.target as HTMLInputElement).value)}
+						/>
+						{isDebouncing && <span class="filter-hint">filtering…</span>}
+					</div>
+				)}
+
+				{total > 0 && (
 					<p class="stats">
-						{completed} / {total} completed
+						{activeFilter
+							? `${visibleTodos.length} of ${total} shown · ${completed} completed`
+							: `${completed} / ${total} completed`}
 					</p>
 				)}
 
 				{todos.length === 0 ? (
 					<p class="empty">No tasks yet. Add one above!</p>
+				) : visibleTodos.length === 0 ? (
+					<p class="empty">No tasks match “{rawFilter.trim()}”.</p>
 				) : (
 					<ul class="list">
-						{todos.map(todo => (
+						{visibleTodos.map(todo => (
 							<li key={todo.id} class={`item ${todo.completed ? "item--done" : ""}`}>
 								<button
 									type="button"

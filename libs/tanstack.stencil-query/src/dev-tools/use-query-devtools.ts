@@ -1,4 +1,5 @@
 import { useLoadEffect } from "@ssv/stencil-core";
+import type { Ref } from "@ssv/stencil-core";
 import { Build } from "@stencil/core";
 import { onlineManager } from "@tanstack/query-core";
 import type { QueryClient } from "@tanstack/query-core";
@@ -30,7 +31,7 @@ export type UseQueryDevtoolsOptions = {
 	 */
 	enabled?: boolean;
 	/** Use an explicit `QueryClient` instead of the one from context. */
-	client?: QueryClient;
+	client?: QueryClient | Ref<QueryClient>;
 	/** Position of the TanStack logo button. Defaults to `'bottom-right'`. */
 	buttonPosition?: DevtoolsButtonPosition;
 	/** Position of the devtools panel. Defaults to `'bottom'`. */
@@ -74,7 +75,7 @@ export function useQueryDevtools(options?: UseQueryDevtoolsOptions): void {
 		return;
 	}
 
-	const enabled = options?.enabled ?? process.env.NODE_ENV === "development";
+	const enabled = options?.enabled ?? Build.isDev;
 	if (!enabled) {
 		return;
 	}
@@ -87,7 +88,7 @@ export function useQueryDevtools(options?: UseQueryDevtoolsOptions): void {
 			let devtools: TanstackQueryDevtools | undefined;
 			let container: HTMLDivElement | undefined;
 
-			(async () => {
+			void (async () => {
 				const { TanstackQueryDevtools: DevtoolsClass } = await import("@tanstack/query-devtools");
 				if (!active) {
 					return;

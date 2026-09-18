@@ -1,6 +1,7 @@
 // oxlint-disable-next-line import/no-unassigned-import -- registers the TC39 signal adapter
 import "@ssv/stencil-signals/tc39";
 import { TestHost, mount } from "@ssv/stencil-core/testing";
+import { signal } from "@ssv/stencil-signals";
 import { QueryClient } from "@tanstack/query-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -65,29 +66,16 @@ describe("$useQuery", () => {
 			query: $useQuery(
 				{
 					queryKey: ["failing"],
-					queryFn: () => Promise.reject(new Error("boom")),
+					queryFn: async () => {
+						throw new Error("boom");
+					},
 					retry: false,
 				},
 				qc,
 			),
 		}));
 		await vi.waitFor(() => expect(m.query.isError()).toBeTruthy());
-		expect((m.query.error() as Error).message).toBe("boom");
-	});
-
-	it("updates options reactively — switches queryKey on re-render", async () => {
-		let key = "a";
-		qc.setQueryData(["a"], "result-a");
-		qc.setQueryData(["b"], "result-b");
-
-		using m = await mount(() => ({
-			query: $useQuery(() => ({ queryKey: [key], queryFn: vi.fn<() => unknown>() }), qc),
-		}));
-		expect(m.query.data()).toBe("result-a");
-
-		key = "b";
-		m.render();
-		expect(m.query.data()).toBe("result-b");
+		expect(m.query.error()!.message).toBe("boom");
 	});
 
 	it("clears data and unsubscribes after disconnect", async () => {
@@ -141,7 +129,7 @@ describe("$useQuery", () => {
 			resolveFn = resolve;
 		});
 		using m = await mount(() => ({
-			query: $useQuery({ queryKey: ["loading"], queryFn: () => pending }, qc),
+			query: $useQuery({ queryKey: ["loading"], queryFn: async () => pending }, qc),
 		}));
 		// mount() calls render(), establishing subscription → starts fetch → isLoading = true
 		expect(m.query.isLoading()).toBeTruthy();
@@ -152,17 +140,16 @@ describe("$useQuery", () => {
 	});
 
 	it("exposes isFetched — false before first fetch, true after data arrives", async () => {
-		using m = await mount(
-			() => ({ query: $useQuery({ queryKey: ["fetched"], queryFn: () => Promise.resolve("done") }, qc) }),
-			{ afterConnect: mounted => expect(mounted.query.isFetched()).toBeFalsy() },
-		);
+		using m = await mount(() => ({ query: $useQuery({ queryKey: ["fetched"], queryFn: async () => "done" }, qc) }), {
+			afterConnect: mounted => expect(mounted.query.isFetched()).toBeFalsy(),
+		});
 		await vi.waitFor(() => expect(m.query.isFetched()).toBeTruthy());
 	});
 
 	it("delivers updated data via signals when queryFn returns a new value for the same key", async () => {
 		let value = "initial";
 		// oxlint-disable-next-line vitest/prefer-mock-promise-shorthand -- closure must re-read `value` at call time; mockResolvedValue captures it once at setup
-		const queryFn = vi.fn<() => Promise<string>>().mockImplementation(() => Promise.resolve(value));
+		const queryFn = vi.fn<() => Promise<string>>().mockImplementation(async () => value);
 
 		using m = await mount(() => ({
 			query: $useQuery({ queryKey: ["test"], queryFn }, qc),
@@ -178,26 +165,6 @@ describe("$useQuery", () => {
 		expect(queryFn).toHaveBeenCalledTimes(2);
 	});
 
-	it("re-requests and delivers new data via signals when queryKey changes", async () => {
-		let key = "a";
-		// oxlint-disable-next-line vitest/prefer-mock-promise-shorthand -- closure must re-read `key` at call time; mockResolvedValue captures it once at setup
-		const queryFn = vi.fn<() => Promise<string>>().mockImplementation(() => Promise.resolve(`data-for-${key}`));
-
-		using m = await mount(() => ({
-			query: $useQuery(() => ({ queryKey: [key], queryFn }), qc),
-		}));
-
-		await vi.waitFor(() => expect(m.query.isSuccess()).toBeTruthy());
-		expect(m.query.data()).toBe("data-for-a");
-
-		key = "b";
-		m.render(); // switches observer to key "b" → triggers new fetch
-
-		await vi.waitFor(() => expect(m.query.data()).toBe("data-for-b"));
-		expect(m.query.isSuccess()).toBeTruthy();
-		expect(queryFn).toHaveBeenCalledTimes(2);
-	});
-
 	it("exposes isRefetching — true while a background refetch is in-flight", async () => {
 		let resolve!: (v: string) => void;
 		qc.setQueryData(["refetch"], "initial");
@@ -205,7 +172,7 @@ describe("$useQuery", () => {
 			query: $useQuery(
 				{
 					queryKey: ["refetch"],
-					queryFn: () =>
+					queryFn: async () =>
 						new Promise<string>(r => {
 							resolve = r;
 						}),
@@ -222,5 +189,45 @@ describe("$useQuery", () => {
 		resolve("updated");
 		await vi.waitFor(() => expect(m.query.isRefetching()).toBeFalsy());
 		expect(m.query.isRefetching()).toBeFalsy();
+	});
+
+	describe("signal-derived options — client-side reactivity", () => {
+		it("retriggeres query when a signal queryKey changes — without explicit re-render", async () => {
+			const userId = signal(1);
+			// oxlint-disable-next-line vitest/prefer-mock-promise-shorthand -- closure must re-read `userId` at call time; mockResolvedValue captures it once at setup
+			const queryFn = vi.fn<() => Promise<string>>().mockImplementation(async () => `user-${userId()}`);
+
+			using m = await mount(() => ({
+				query: $useQuery(() => ({ queryKey: ["user", userId()], queryFn }), qc),
+			}));
+
+			await vi.waitFor(() => expect(m.query.isSuccess()).toBeTruthy());
+			expect(m.query.data()).toBe("user-1");
+
+			// Signal changes — should retrigger without an explicit m.render()
+			userId.set(2);
+
+			await vi.waitFor(() => expect(m.query.data()).toBe("user-2"));
+			expect(queryFn).toHaveBeenCalledTimes(2);
+		});
+
+		it("enables query when a signal-derived `enabled` changes from false to true — without explicit re-render", async () => {
+			const isEnabled = signal(false);
+			const queryFn = vi.fn<() => Promise<string>>().mockResolvedValue("data");
+
+			using m = await mount(() => ({
+				query: $useQuery(() => ({ queryKey: ["test"], queryFn, enabled: isEnabled() }), qc),
+			}));
+
+			// Initially disabled — query stays pending, queryFn never called
+			expect(m.query.isPending()).toBeTruthy();
+			expect(queryFn).not.toHaveBeenCalled();
+
+			// Enable via signal — should trigger fetch without m.render()
+			isEnabled.set(true);
+
+			await vi.waitFor(() => expect(m.query.isSuccess()).toBeTruthy());
+			expect(m.query.data()).toBe("data");
+		});
 	});
 });

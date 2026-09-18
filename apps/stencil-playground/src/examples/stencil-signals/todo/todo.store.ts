@@ -32,10 +32,13 @@ export const todoStore = signalStore(
 	withTodoComputed(),
 	withMethods(s => ({
 		add(text: string) {
-			patchState(s, state => ({
-				todos: [...state.todos, { id: state.nextId, text, completed: false }],
-				nextId: state.nextId + 1,
-			}));
+			patchState(s, state => {
+				const { todos, nextId } = state as { todos: Todo[]; nextId: number };
+				return {
+					todos: [...todos, { id: nextId, text, completed: false }],
+					nextId: nextId + 1,
+				};
+			});
 		},
 		toggle(id: number) {
 			s.todos.update(todos => todos.map(t => (t.id === id ? { ...t, completed: !t.completed } : t)));

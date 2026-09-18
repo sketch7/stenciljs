@@ -3,6 +3,9 @@ import type { VNode } from "@stencil/core";
 
 import { createContext, provideContext, useContext } from "../context";
 import { use } from "../hooks/use";
+import { createLogger } from "../internal";
+
+const log = createLogger("transfer-state");
 
 const SCRIPT_TYPE = "application/json";
 
@@ -16,7 +19,12 @@ const SCRIPT_TYPE = "application/json";
  * - `!("window" in globalThis)` — `true` in plain Node.js without a DOM environment, enabling
  *   use of this utility outside the Stencil hydrate bundle.
  *
- * @internal
+ * @example
+ * ```ts
+ * if (detectServer()) {
+ *   // server-only path
+ * }
+ * ```
  */
 export const detectServer: () => boolean = () => Build.isServer || !("window" in globalThis);
 
@@ -58,9 +66,9 @@ export function makeTransferKey<T>(key: string): TransferKey<T> {
  */
 export type TransferState = {
 	/** Returns the stored value for `key`, or `defaultValue` if absent. */
-	get<T>(key: TransferKey<T>, defaultValue?: T): T | undefined;
+	get: <T>(key: TransferKey<T>, defaultValue?: T) => T | undefined;
 	/** Stores `value` for `key`. */
-	set<T>(key: TransferKey<T>, value: T): void;
+	set: <T>(key: TransferKey<T>, value: T) => void;
 	/**
 	 * Registers a lazy factory for `key` — called at serialization time rather than at registration time.
 	 *
@@ -74,12 +82,12 @@ export type TransferState = {
 	 * ts.setLazy(MY_KEY, () => expensiveCompute());
 	 * ```
 	 */
-	setLazy<T>(key: TransferKey<T>, factory: () => T): void;
+	setLazy: <T>(key: TransferKey<T>, factory: () => T) => void;
 	/**
 	 * Server: calls `getValue()`, stores the result, and returns it.
 	 * Client: returns the value read from the serialized script tag (or `undefined` if absent).
 	 */
-	transfer<T>(key: TransferKey<T>, getValue: () => T): T | undefined;
+	transfer: <T>(key: TransferKey<T>, getValue: () => T) => T | undefined;
 	/**
 	 * Returns a `<script type="application/json">` VNode for explicit placement in `render()`.
 	 * **Server only** — returns `null` on the client and when no `id` is set (global no-op state).
@@ -95,7 +103,7 @@ export type TransferState = {
 	 * }
 	 * ```
 	 */
-	toScriptElement(): VNode | null;
+	toScriptElement: () => VNode | null;
 };
 
 class TransferStateImpl implements TransferState {
@@ -160,7 +168,7 @@ class TransferStateImpl implements TransferState {
 			return null;
 		}
 		// String child creates a text node — serialized verbatim inside <script> (NON_ESCAPABLE_CONTENT).
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		// oxlint-disable-next-line typescript/no-explicit-any, typescript/no-unsafe-argument -- Stencil h() requires any for non-intrinsic element names
 		return h("script" as any, { type: SCRIPT_TYPE, id: scriptId(this.#id) } as any, this.toJSON());
 	}
 }
@@ -202,6 +210,7 @@ export function provideTransferState(id: string): TransferState {
 			}
 			const script = host.getElement().shadowRoot?.querySelector(`#${scriptId(id)}`) as HTMLScriptElement | null;
 			if (script?.type === SCRIPT_TYPE) {
+				log.log(() => `[${id}] hostConnected  client: loaded state from script tag`);
 				state.fromJSON(script.textContent ?? "{}");
 				script.remove();
 			}
@@ -218,12 +227,15 @@ export function provideTransferState(id: string): TransferState {
 			if (!shadowRoot) {
 				return;
 			}
-			let script = shadowRoot.querySelector(`#${scriptId(id)}`) as HTMLScriptElement | null;
+			let script = shadowRoot.querySelector<HTMLScriptElement>(`#${scriptId(id)}`);
 			if (!script) {
+				log.log(() => `[${id}] hostDidLoad  server: creating and injecting state script`);
 				script = document.createElement("script");
 				script.type = SCRIPT_TYPE;
 				script.id = scriptId(id);
 				shadowRoot.append(script);
+			} else {
+				log.log(() => `[${id}] hostDidLoad  server: updating existing state script`);
 			}
 			script.textContent = state.toJSON();
 		},

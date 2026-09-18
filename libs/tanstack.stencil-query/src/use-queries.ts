@@ -43,9 +43,10 @@ export function useQueries<T extends any[], TCombinedResult = QueriesResults<T>>
 	getOptions: UseQueriesOptions<T, TCombinedResult> | (() => UseQueriesOptions<T, TCombinedResult>),
 	client?: QueryClient | Ref<QueryClient>,
 ): Ref<TCombinedResult> {
-	const { getCurrentResult } = useBaseQueriesObserver<TCombinedResult>(getOptions as never, client, {
+	const handle = useBaseQueriesObserver<TCombinedResult>(getOptions as never, client, {
 		onResult: (_result, requestUpdate) => requestUpdate(),
+		onRender: () => handle.reArm(),
 	});
 
-	return createRef(() => getCurrentResult());
+	return createRef(() => handle.getCurrentResult());
 }

@@ -1,3 +1,4 @@
+// oxlint-disable typescript/promise-function-async
 import type { ReactiveController } from "./reactive-controller";
 
 /**
@@ -71,25 +72,25 @@ export type ReactiveControllerRef = {
 	/** Live set of registered controllers. Exposed for host introspection (e.g. tests). */
 	readonly controllers: ReadonlySet<ReactiveController>;
 	/** Registers a controller and indexes the hooks it implements. Idempotent. */
-	add(controller: ReactiveController): void;
+	add: (controller: ReactiveController) => void;
 	/** Unregisters a controller from every hook index. */
-	remove(controller: ReactiveController): void;
+	remove: (controller: ReactiveController) => void;
 	/** Dispatches `hostConnected` to controllers that implement it. */
-	connected(): void;
+	connected: () => void;
 	/** Dispatches `hostDisconnected` to controllers that implement it. */
-	disconnected(): void;
+	disconnected: () => void;
 	/** Dispatches `hostWillLoad`, awaiting any returned promises in parallel. */
-	willLoad(): Promise<void> | void;
+	willLoad: () => Promise<void> | void;
 	/** Dispatches `hostDidLoad` to controllers that implement it. */
-	didLoad(): void;
+	didLoad: () => void;
 	/** Dispatches `hostWillRender`, awaiting any returned promises in parallel. */
-	willRender(): Promise<void> | void;
+	willRender: () => Promise<void> | void;
 	/** Dispatches `hostDidRender` to controllers that implement it. */
-	didRender(): void;
+	didRender: () => void;
 	/** Dispatches `hostWillUpdate`, awaiting any returned promises in parallel. */
-	willUpdate(): Promise<void> | void;
+	willUpdate: () => Promise<void> | void;
 	/** Dispatches `hostDidUpdate` to controllers that implement it. */
-	didUpdate(): void;
+	didUpdate: () => void;
 };
 
 /**

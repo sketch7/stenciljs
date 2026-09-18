@@ -55,14 +55,14 @@ export const preactAdapter: SignalAdapter = {
 		const wrapped = Object.assign(() => raw.value, {
 			set: (newVal: T) => {
 				// Apply custom equals if provided — Preact doesn't have native equals support.
-				if (eq && eq(raw.peek(), newVal)) {
+				if (eq?.(raw.peek(), newVal)) {
 					return;
 				}
 				raw.value = newVal;
 			},
 			update: (updater: (current: T) => T) => {
 				const next = updater(raw.peek());
-				if (eq && eq(raw.peek(), next)) {
+				if (eq?.(raw.peek(), next)) {
 					return;
 				}
 				raw.value = next;
@@ -93,7 +93,7 @@ export const preactAdapter: SignalAdapter = {
 	createEffect(
 		fn: (onCleanup: (cb: () => void) => void) => (() => void) | void,
 		options?: AdapterEffectOptions,
-	): { dispose(): void } {
+	): { dispose: () => void } {
 		const flushBetweenRuns = options?.flushBetweenRuns !== false;
 
 		if (flushBetweenRuns) {
@@ -188,7 +188,7 @@ export const preactAdapter: SignalAdapter = {
 				// `void` discards the value explicitly — the side-effect is the point.
 				for (const raw of snapshot) {
 					// oxlint-disable-next-line no-void
-					void ((raw as ReadonlySignal<unknown>).value as unknown);
+					void (raw as ReadonlySignal<unknown>).value;
 				}
 
 				if (firstRun) {

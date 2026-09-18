@@ -13,6 +13,7 @@
       },
       "outputs": ["{projectRoot}/dist"],
       "cache": true,
+      "inputs": ["default", { "env": "SSV_DEBUG" }],
       "dependsOn": ["^build"]
     },
     "build:stencil": {
@@ -39,7 +40,8 @@
       "options": {
         "command": "pnpm oxlint src/ tests/",
         "cwd": "libs/stencil-core"
-      }
+      },
+      "dependsOn": []
     },
     "fmt": {
       "executor": "nx:run-commands",

@@ -114,7 +114,7 @@ describe("useLoadEffect — named deps", () => {
 	it("cleanup runs on hostDisconnected", async () => {
 		using host = new TestHost();
 		const valRef = createWritableRef<number>(42);
-		const cleanup = vi.fn();
+		const cleanup = vi.fn<() => void>();
 		useLoadEffect(() => cleanup, { val: valRef });
 		await host.willLoad();
 		host.disconnect();
@@ -166,7 +166,7 @@ describe("useLoadEffect — named deps", () => {
 		it("calls cleanup before re-running setup on dep change", async () => {
 			using host = new TestHost();
 			const valRef = createWritableRef<number>(1);
-			const cleanup = vi.fn();
+			const cleanup = vi.fn<() => void>();
 			useLoadEffect(() => cleanup, { val: valRef });
 			await host.willLoad();
 

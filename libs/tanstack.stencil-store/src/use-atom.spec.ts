@@ -82,7 +82,7 @@ describe("useAtom", () => {
 		const atom = createAtom(1);
 		using m = await mount(() => {
 			useAtom(() => atom, {
-				compare: (a, b) => Math.abs((a as number) - (b as number)) < 5,
+				compare: (a, b) => Math.abs(a! - b!) < 5,
 			});
 		});
 
@@ -96,7 +96,7 @@ describe("useAtom", () => {
 		const atom = createAtom(1);
 		using m = await mount(() => ({
 			state: useAtom(() => atom, {
-				compare: (a, b) => Math.abs((a as number) - (b as number)) < 5,
+				compare: (a, b) => Math.abs(a! - b!) < 5,
 			}),
 		}));
 

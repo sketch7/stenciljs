@@ -16,7 +16,7 @@ export type DerivedAsyncOptions<T> = {
 	equal?: (a: T, b: T) => boolean;
 };
 
-export type DerivedAsyncFn<T> = (abortSignal: AbortSignal, previousValue?: T | undefined) => Promise<T> | T;
+export type DerivedAsyncFn<T> = (abortSignal: AbortSignal, previousValue?: T) => Promise<T> | T;
 
 /**
  * A read-only derived signal that owns an internal effect and can be stopped with `dispose()`.
@@ -41,7 +41,7 @@ function isThenable(x: unknown): x is PromiseLike<unknown> {
 export function derivedAsync<T>(fn: DerivedAsyncFn<T>, options?: DerivedAsyncOptions<T>): DisposableSignal<T> {
 	const opts = options ?? {};
 	if (peekCurrentHost() !== null) {
-		const initialSnapshot = opts.initialValue as T | undefined;
+		const initialSnapshot = opts.initialValue;
 		let whenSettled: Promise<void> | undefined;
 
 		const wrapper = bindToHostDisposable({
@@ -109,7 +109,7 @@ function _derivedAsyncCore<T>(fn: DerivedAsyncFn<T>, options: DerivedAsyncOption
 	const effectRef = adapter.createEffect(onCleanup => {
 		const previous = adapter.untrack((): T | undefined => {
 			const st = source.peek();
-			return st.kind === "value" ? (st.value as T | undefined) : undefined;
+			return st.kind === "value" ? st.value : undefined;
 		});
 
 		const controller = new AbortController();
@@ -144,12 +144,12 @@ function _derivedAsyncCore<T>(fn: DerivedAsyncFn<T>, options: DerivedAsyncOption
 					value => {
 						settleValue(value as T);
 					},
-					error => {
+					(error: unknown) => {
 						settleError(error);
 					},
 				);
 			} else {
-				settleValue(out as T);
+				settleValue(out);
 			}
 		} catch (error) {
 			settleError(error);
